@@ -1,0 +1,11 @@
+../Core/Src/octospi.c:30:6:MX_OCTOSPI1_Init	32	static
+../Core/Src/octospi.c:74:6:HAL_OSPI_MspInit	240	static
+../Core/Src/octospi.c:134:6:HAL_OSPI_MspDeInit	16	static
+../Core/Src/octospi.c:163:6:HW_OSPI_CS_SetLow	8	static
+../Core/Src/octospi.c:169:6:HW_OSPI_CS_SetHigh	8	static
+../Core/Src/octospi.c:175:6:SPI_Send_CMD	104	static
+../Core/Src/octospi.c:198:6:OSPI_Send_CMD	104	static
+../Core/Src/octospi.c:222:6:LAN9252_QSPI_ENABLE	24	static
+../Core/Src/octospi.c:232:6:LAN9252_SPISendCMD	32	static
+../Core/Src/octospi.c:241:10:LAN9252_SPI_READ	48	static
+../Core/Src/octospi.c:267:10:LAN9252_QSPI_READ	48	static

@@ -1,0 +1,321 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file    gpio.c
+  * @brief   This file provides code for the configuration
+  *          of all used GPIO pins.
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2023 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+
+/* Includes ------------------------------------------------------------------*/
+#include "gpio.h"
+
+/* USER CODE BEGIN 0 */
+#include "retarget.h"
+//#include "LAN9252.h"
+#include "ecatappl.h"
+/* USER CODE END 0 */
+
+/*----------------------------------------------------------------------------*/
+/* Configure GPIO                                                             */
+/*----------------------------------------------------------------------------*/
+/* USER CODE BEGIN 1 */
+
+/* USER CODE END 1 */
+
+/** Configure pins as
+        * Analog
+        * Input
+        * Output
+        * EVENT_OUT
+        * EXTI
+*/
+void MX_GPIO_Init(void)
+{
+
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4|OSPI5_ncs_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOG, GPIO_PIN_9|GPIO_PIN_10, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = LAN9252_IRQ_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(LAN9252_IRQ_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PE4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = LAN9252SYNC0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(LAN9252SYNC0_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = OSPI5_ncs_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(OSPI5_ncs_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB14 */
+  GPIO_InitStruct.Pin = GPIO_PIN_14;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = LAN9252SYNC1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(LAN9252SYNC1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PG9 PG10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PGPin PGPin */
+  GPIO_InitStruct.Pin = KEY1_Pin|KEY2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 7, 0);
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 6, 0);
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 7, 0);
+
+}
+
+/* USER CODE BEGIN 2 */
+uint32_t KeyVal = 0;
+
+//void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+//{
+//    uint16_t _keyState = 0;
+//    if (GPIO_Pin == GPIO_PIN_12)
+//    {
+//        _keyState = 0x0001;
+//        KeyVal = ((GPIO_Pin << 16) | _keyState);
+//        _keyState = 0x0000;
+//
+//    }
+//    else if (GPIO_Pin == GPIO_PIN_13)
+//    {
+//        _keyState = 0x0001;
+//        KeyVal = ((GPIO_Pin << 16) | _keyState);
+//        _keyState = 0x0000;
+//    }
+//    else
+//    {
+//        KeyVal = 0;
+//    }
+//}
+
+void Init_ESC(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct;
+
+    __HAL_RCC_GPIOE_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = GPIO_PIN_3;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+
+    HAL_NVIC_SetPriority(EXTI3_IRQn, 6, 0);
+    HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+}
+
+
+void Init_SYNC0(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct;
+
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = GPIO_PIN_13;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+    HAL_NVIC_SetPriority(EXTI15_10_IRQn, 7, 0);
+    HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+
+}
+
+
+void Init_SYNC1(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct;
+
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+    HAL_NVIC_SetPriority(EXTI2_IRQn, 7, 0);
+    HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+}
+
+//void EXTI2_IRQHandler(void)
+//{
+//
+//    if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_2) != RESET)
+//    {
+//        HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+//        Sync1_Isr();
+//        __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_2);
+//        HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+//
+//#ifdef INTERRUPTS_SUPPORTED
+//        if (IS_ESC_INT_ACTIVE)
+//        {
+//            DISABLE_ESC_INT();
+//            PDI_Isr();
+//            /* reset the interrupt flag */
+//            ACK_ESC_INT;
+//        }
+//#endif
+//
+//#if defined(INTERRUPTS_SUPPORTED) && defined(DC_SUPPORTED)
+//        if (IS_SYNC0_INT_ACTIVE)
+//        {
+//            Sync0_Isr();
+//            /* reset the interrupt flag */
+//            ACK_SYNC0_INT;
+//        }
+//    }
+//#endif
+//}
+//
+//void EXTI3_IRQHandler(void)
+//{
+//    if (__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_8) != RESET)
+//    {
+//        HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+//        PDI_Isr();
+//        __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_8);
+//        HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+//
+//#if defined (INTERRUPTS_SUPPORTED) && defined(DC_SUPPORTED)
+//        if (IS_SYNC0_INT_ACTIVE)
+//        {
+//            Sync0_Isr();
+//            /* reset the interrupt flag */
+//            ACK_SYNC0_INT;
+//        }
+//#endif
+//
+//#if defined (INTERRUPTS_SUPPORTED) && defined(DC_SUPPORTED)
+//        if (IS_SYNC1_INT_ACTIVE)
+//        {
+//            Sync1_Isr();
+//            /* reset the interrupt flag */
+//            ACK_SYNC1_INT;
+//        }
+//#endif
+//    }
+//}
+//
+//void EXTI15_10_IRQHandler(void)
+//{
+//    if(__HAL_GPIO_EXTI_GET_IT(GPIO_PIN_13) != RESET)
+//    {
+//        HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+//        Sync0_Isr();
+//        __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_9);
+//        HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+//
+//#ifdef INTERRUPTS_SUPPORTED
+//        if(IS_ESC_INT_ACTIVE)
+//        {
+//            DISABLE_ESC_INT();
+//            PDI_Isr();
+//            /* reset the interrupt flag */
+//            ACK_ESC_INT;
+//        }
+//#endif
+//
+//#if defined(INTERRUPTS_SUPPORTED) && defined(DC_SUPPORTED)
+//        if(IS_SYNC1_INT_ACTIVE)
+//        {
+//            Sync1_Isr();
+//            /* reset the interrupt flag */
+//            ACK_SYNC1_INT;
+//        }
+//#endif
+//    }
+//
+//
+//}
+
+
+
+
+
+void Disable_all_int(void )
+{
+//    HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+//
+//    HAL_NVIC_DisableIRQ(EXTI3_IRQn);
+//    HAL_NVIC_DisableIRQ(EXTI15_10_IRQn);
+//
+//    HAL_NVIC_DisableIRQ(TIM7_IRQn);
+
+}
+
+
+void Enable_all_int(void)
+{
+//    HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+//
+//    HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+//    HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+//
+//    HAL_NVIC_EnableIRQ(TIM7_IRQn);
+}
+
+
+
+
+/* USER CODE END 2 */
