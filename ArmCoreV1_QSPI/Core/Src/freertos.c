@@ -22,7 +22,7 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-
+#include "udp.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ecat_def.h"
@@ -132,7 +132,8 @@ void MX_FREERTOS_Init(void)
 void StartDefaultTask(void *argument)
 {
     /* init code for LWIP */
-//    MX_LWIP_Init();
+    MX_LWIP_Init();
+    UdpClientInit();
     /* USER CODE BEGIN StartDefaultTask */
     /* Infinite loop */
     for (;;)

@@ -1,4 +1,4 @@
-# Install script for directory: C:/CNPMprj/F4toH7(qspi)
+# Install script for directory: C:/FW-ArmCore/ArmCoreV1_QSPI
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "C:/CNPMprj/F4toH7(qspi)/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "C:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
