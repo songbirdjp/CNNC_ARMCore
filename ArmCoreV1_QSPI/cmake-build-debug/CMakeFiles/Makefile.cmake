@@ -7,11 +7,6 @@ set(CMAKE_DEPENDS_GENERATOR "MinGW Makefiles")
 # The top level Makefile was generated from the following files:
 set(CMAKE_MAKEFILE_DEPENDS
   "CMakeCache.txt"
-  "C:/FW-ArmCore/ArmCoreV1_QSPI/CMakeLists.txt"
-  "CMakeFiles/3.25.2/CMakeASMCompiler.cmake"
-  "CMakeFiles/3.25.2/CMakeCCompiler.cmake"
-  "CMakeFiles/3.25.2/CMakeCXXCompiler.cmake"
-  "CMakeFiles/3.25.2/CMakeSystem.cmake"
   "C:/Program Files/JetBrains/CLion 2023.1.1/bin/cmake/win/x64/share/cmake-3.25/Modules/CMakeASMCompiler.cmake.in"
   "C:/Program Files/JetBrains/CLion 2023.1.1/bin/cmake/win/x64/share/cmake-3.25/Modules/CMakeASMInformation.cmake"
   "C:/Program Files/JetBrains/CLion 2023.1.1/bin/cmake/win/x64/share/cmake-3.25/Modules/CMakeCCompiler.cmake.in"
@@ -107,6 +102,11 @@ set(CMAKE_MAKEFILE_DEPENDS
   "C:/Program Files/JetBrains/CLion 2023.1.1/bin/cmake/win/x64/share/cmake-3.25/Modules/Internal/FeatureTesting.cmake"
   "C:/Program Files/JetBrains/CLion 2023.1.1/bin/cmake/win/x64/share/cmake-3.25/Modules/Platform/Generic.cmake"
   "C:/Program Files/JetBrains/CLion 2023.1.1/bin/cmake/win/x64/share/cmake-3.25/Modules/ProcessorCount.cmake"
+  "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI/CMakeLists.txt"
+  "CMakeFiles/3.25.2/CMakeASMCompiler.cmake"
+  "CMakeFiles/3.25.2/CMakeCCompiler.cmake"
+  "CMakeFiles/3.25.2/CMakeCXXCompiler.cmake"
+  "CMakeFiles/3.25.2/CMakeSystem.cmake"
   )
 
 # The corresponding makefile is:

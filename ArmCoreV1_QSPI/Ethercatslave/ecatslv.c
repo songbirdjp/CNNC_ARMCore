@@ -416,10 +416,16 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
 /* ECATCHANGE_START(V5.11) HW2*/
     //Check if the start address and length are even 16Bit addresses
     if ((SMLength & 0x1) > 0)
+    {
+        printf("sm1");
         return ALSTATUSCODE_INVALIDSMCFG;
+    }
 
     if ((SMAddress & 0x1) > 0)
+    {
+        printf("sm2");
         return ALSTATUSCODE_INVALIDSMCFG;
+    }
 /* ECATCHANGE_END(V5.11) HW2*/
 
     if (!(pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE))
@@ -466,10 +472,16 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
 /* ECATCHANGE_START(V5.11) HW2*/
     //Check if the start address and length are even 16Bit addresses
     if ((SMLength & 0x1) > 0)
+    {
+//        printf("sm3");
         return ALSTATUSCODE_INVALIDSMCFG;
+    }
 
     if ((SMAddress & 0x1) > 0)
+    {
+//        printf("sm4");
         return ALSTATUSCODE_INVALIDSMCFG;
+    }
 /* ECATCHANGE_END(V5.11) HW2*/
 
       if (!(pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE))
@@ -518,57 +530,95 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
 /* ECATCHANGE_START(V5.11) HW2*/
     //Check if the start address and length are even 16Bit addresses
     if ((SMLength & 0x1) > 0)
+    {
+//        printf("sm5 = %x\r\n",SMLength);
         return ALSTATUSCODE_INVALIDSMCFG;
+    }
+    
 
     if ((SMAddress & 0x1) > 0)
+    {
+//        printf("sm6");
         return ALSTATUSCODE_INVALIDSMCFG;
+    }
 /* ECATCHANGE_END(V5.11) HW2*/
-
+//#define    SYNCMANCHODDADDRESS                                     0x00 /**< \brief Emergency and Diagnosis code for an odd SyncManager address*/
+//#define    SYNCMANCHADDRESS                                         0x01 /**< \brief Emergency and Diagnosis code for an invalid SyncManager address*/
+//#define    SYNCMANCHSIZE                                            0x02 /**< \brief Emergency and Diagnosis code for an invalid  SyncManager size*/
+//#define    SYNCMANCHSETTINGS                                        0x03 /**< \brief Emergency and Diagnosis code for an invalid SyncManager settings*/
         if ((pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE) != 0 && SMLength == 0 )
             /* the SM3 size is 0 and the SM3 is active */
             result = SYNCMANCHSETTINGS+1;
         else if (pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE)
         {
             /* Sync Manager Channel 3 is active, input size has to greater 0 */
+//            printf("112\r\n");
             if ( SMLength != nPdInputSize || nPdInputSize == 0 || SMLength > MAX_PD_INPUT_SIZE)
                 /* sizes don't match */
-                result = SYNCMANCHSIZE+1;
+            {
+                printf("113\r\n");
+                printf("SMLength = %d\r\n",SMLength);
+                printf("nPdInputSize = %d\r\n",nPdInputSize);
+                //printf("MAX_PD_INPUT_SIZE = %x\r\n",MAX_PD_INPUT_SIZE);
+                result = SYNCMANCHSIZE + 1;
+            }
             else
                 /* sizes matches */
             if ( (pSyncMan->Settings[SM_SETTING_CONTROL_OFFSET] & SM_SETTING_DIRECTION_MASK) == SM_SETTING_DIRECTION_READ_VALUE )
             {
                 /* settings match */
+                printf("114\r\n");
                 if ( ( ( nAlStatus == STATE_PREOP )&&( SMAddress >= MIN_PD_READ_ADDRESS )&&( SMAddress <= MAX_PD_READ_ADDRESS ) )
                    ||( ( nAlStatus != STATE_PREOP )&&( SMAddress == nEscAddrInputData ) )
                     )
                 {
                     /* addresses match */
-
+                    printf("115\r\n");
                     if ( (pSyncMan->Settings[SM_SETTING_CONTROL_OFFSET] & SM_SETTING_MODE_MASK) == SM_SETTING_MODE_ONE_BUFFER_VALUE )
                         /* inputs are running in 1-Buffer-Mode, reset flag b3BufferMode */
+                    {
                         b3BufferMode = FALSE;
+                        printf("116\r\n");
+                    }
                 }
                 else
                     /* input address is out of the allowed area or has changed in SAFEOP or OP */
-                    result = SYNCMANCHADDRESS+1;
+                {
+                    result = SYNCMANCHADDRESS + 1;
+                    printf("117\r\n");
+                }
             }
             else
                 /* input settings do not match */
-                result = SYNCMANCHSETTINGS+1;
+            {
+                result = SYNCMANCHSETTINGS + 1;
+                printf("118\r\n");
+            }
         }
         else if ( SMLength != 0 || nPdInputSize != 0 )
             /* input size is not zero although the SM3 channel is not enabled */
-            result = SYNCMANCHSIZE+1;
+        {
+            result = SYNCMANCHSIZE + 1;
+            printf("119\r\n");
+        }
 
 
 
         if ( result != 0 )
         {
+            printf("result = %x\r\n",result);
             result = ALSTATUSCODE_INVALIDSMINCFG;
         }
     }
-
-
+    /*******************add for testing **************/
+    pSyncMan = GetSyncMan(PROCESS_DATA_OUT);
+    SMLength = pSyncMan->Length;
+    SMAddress = pSyncMan->PhysicalStartAddress;
+    printf("SMLength = %d\r\n",SMLength);
+    printf("nPdOutputSize 222= %d\r\n",nPdOutputSize);
+    printf("sDOOutputs.u16SubIndex0 =0x%x\r\n",sDOOutputs.u16SubIndex0);
+    //printf("sDOOutputs.u16SubIndex0 =0x%x\r\n",sDIputs.u16SubIndex0);
+    /**************************************/
 //    else
     if ( result == 0 && maxChannel > PROCESS_DATA_OUT )
     {
@@ -583,10 +633,16 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
 /* ECATCHANGE_START(V5.11) HW2*/
     //Check if the start address and length are even 16Bit addresses
     if ((SMLength & 0x1) > 0)
+    {
+        printf("sm7");
         return ALSTATUSCODE_INVALIDSMCFG;
+    }
 
     if ((SMAddress & 0x1) > 0)
+    {
+        printf("sm8");
         return ALSTATUSCODE_INVALIDSMCFG;
+    }
 /* ECATCHANGE_END(V5.11) HW2*/
 
     if ( (pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE) != 0 && SMLength == 0 )
@@ -595,6 +651,10 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
         else if (pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE)
         {
             /* Sync Manager Channel 2 is active, output size has to greater 0 */
+            printf("213\r\n");
+            printf("SMLength = %d\r\n",SMLength);
+            printf("nPdOutputSize111 = %d\r\n",nPdOutputSize);
+//            printf("MAX_PD_INPUT_SIZE = %x\r\n",MAX_PD_INPUT_SIZE);
             if ( SMLength == nPdOutputSize && nPdOutputSize != 0 && SMLength <= ((UINT16)MAX_PD_OUTPUT_SIZE))
 
             {
@@ -639,6 +699,7 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
             /* output size is not zero although the SM2 channel is not enabled */
             result = SYNCMANCHSIZE+1;
 
+            printf("result = %x\r\n",result);
         if ( result != 0 )
         {
             result = ALSTATUSCODE_INVALIDSMOUTCFG;
@@ -655,7 +716,7 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
             pSyncMan = GetSyncMan(i);
 /*ECATCHANGE_END(V5.11) HW1*/
             SMActivate = pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET];
-            printf("i < nMaxSyncMan , SMActivate = %0x \r\n ",SMActivate);
+//            printf("i < nMaxSyncMan , SMActivate = %0x \r\n ",SMActivate);
         }
     }
     return result;
@@ -734,6 +795,25 @@ UINT16 StartInputHandler(void)
        || ((nEscAddrInputData + nPdInputSize * nPdInputBuffer) > u16EscAddrReceiveMbx && (nEscAddrInputData < (u16EscAddrReceiveMbx + u16ReceiveMbxSize)))
         )
     {
+        uint16_t tmp = u16EscAddrReceiveMbx && (nEscAddrInputData < (u16EscAddrReceiveMbx + u16ReceiveMbxSize));
+//        printf("nEscAddrInputData = %x\r\n",nEscAddrInputData);
+//        printf("nPdInputSize = %x\r\n",nPdInputSize);
+//        printf("nPdInputBuffer = %x\r\n",nPdInputBuffer);
+//        printf("(nEscAddrInputData + nPdInputSize * nPdInputBuffer) = %x\r\n",(nEscAddrInputData + nPdInputSize * nPdInputBuffer));
+//
+//        printf("u16EscAddrSendMbx = %x\r\n",u16EscAddrSendMbx);
+//        printf("nEscAddrInputData = %x\r\n",nEscAddrInputData);
+//        printf("u16EscAddrSendMbx = %x\r\n",u16EscAddrSendMbx);
+//        printf("u16SendMbxSize = %x\r\n",u16SendMbxSize);
+//
+//        printf("u16EscAddrReceiveMbx = %x\r\n",u16EscAddrReceiveMbx);
+//        printf("nEscAddrInputData = %x\r\n",nEscAddrInputData);
+//        printf("u16EscAddrReceiveMbx = %x\r\n",u16EscAddrReceiveMbx);
+//        printf("u16ReceiveMbxSize = %x\r\n",u16ReceiveMbxSize);
+
+
+//        printf("tmp = %x\r\n",tmp);
+
         return ALSTATUSCODE_INVALIDSMINCFG;
     }
 
@@ -1444,6 +1524,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
     /* check the SYNCM settings depending on the state transition */
     switch ( stateTrans )
     {
+        printf("stateTrans = %x\r\n",stateTrans);
     case INIT_2_PREOP:
     case OP_2_PREOP:
     case SAFEOP_2_PREOP:
@@ -1461,8 +1542,9 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
             could be adapted (changed by PDO-Assign and/or PDO-Mapping)
             if result is unequal 0, the slave will stay in PREOP and set
             the ErrorInd Bit (bit 4) of the AL-Status */
+            printf("p2S1 =%x\r\n",nPdOutputSize);//0
         result = APPL_GenerateMapping(&nPdInputSize,&nPdOutputSize);
-
+            printf("p2S2 =%x\r\n",nPdOutputSize);//5
         if (result != 0)
             break;
         }
@@ -1474,6 +1556,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
            if result is unequal 0, the slave will stay in or
            switch to PREOP and set the ErrorInd Bit (bit 4) of the AL-Status */
         printf("checkSmSettings ,state SAFEOP&OP ... \r\n");
+//printf("smsize = %x\r\n",SMLength);
         result = CheckSmSettings(nMaxSyncMan);
         break;
     }
@@ -1510,7 +1593,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
               if result is unequal 0, the slave will stay in INIT
               and sets the ErrorInd Bit (bit 4) of the AL-Status */
             result = MBX_StartMailboxHandler();
-                printf("MBX_StartMailboxHandler in ecatslv.c line 1492 , result is : %0x \r\n",result);
+//                printf("MBX_StartMailboxHandler in ecatslv.c line 1492 , result is : %0x \r\n",result);
             if (result == 0)
             {
                 bApplEsmPending = FALSE;

@@ -132,14 +132,49 @@ void MX_FREERTOS_Init(void)
 void StartDefaultTask(void *argument)
 {
     /* init code for LWIP */
-    MX_LWIP_Init();
-    UdpClientInit();
+    //MX_LWIP_Init();
+    //UdpClientInit();
     /* USER CODE BEGIN StartDefaultTask */
     /* Infinite loop */
     for (;;)
     {
-//        printf("StartDefaultTask\r\n");
-        osDelay(1);
+//        printf("InfoOut contents: \r\n");
+//        for (int i = 0; i < 8; i++)
+//        {
+//            printf("InfoOut[%d] = %d\r\n",i,sDOOutputs.InfoOut[i]);
+//        }
+//        printf("\r\n");
+//        for (int i = 0; i < 8; i++)
+//        {
+//            printf("%d\r\n", sDOOutputs.DataOut1[i]);
+//        }
+//        printf("\r\n");
+//        for (int i = 0; i < 8; i++)
+//        {
+//            printf("%d\r\n", sDOOutputs.DataOut2[i]);
+//        }
+//        printf("\r\n");
+//        for (int i = 0; i < 8; i++)
+//        {
+//            printf("%d\r\n", sDOOutputs.DataOut3[i]);
+//        }
+//        printf("\r\n");
+//        for (int i = 0; i < 8; i++)
+//        {
+//            printf("%d\r\n", sDOOutputs.DataOut4[i]);
+//        }
+//        printf("\r\n");
+//        for (int i = 0; i < 8; i++)
+//        {
+//            printf("%d\r\n", sDOOutputs.DataOut8[i]);
+//        }
+//        for (int i = 0; i < 8; i++)
+//        {
+//            printf("%d\r\n", sDOOutputs.DataOut12[i]);
+//        }
+//        printf("\r\n");
+
+        osDelay(100);
     }
     /* USER CODE END StartDefaultTask */
 }
@@ -159,9 +194,9 @@ void Ethercatfunc(void *argument)
     /* Infinite loop */
     for (;;)
     {
-
+//        printf("Ethercat Mainloop running1\r\n");
         MainLoop();
-//        printf("Ethercat Mainloop running\r\n");
+//        printf("Ethercat Mainloop running2\r\n");
         osDelay(1);//todo : if sth happened,check this delay
 
     }

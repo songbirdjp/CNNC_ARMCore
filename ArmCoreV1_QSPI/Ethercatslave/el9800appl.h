@@ -44,106 +44,128 @@ V5.01 : Start file change log
  * @{
  */
 /** \brief 0x1601 (Digital output RxPDO) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex 0*/
-   UINT32   aEntries[9]; /**< \brief Entry buffer*/
+typedef struct OBJ_STRUCT_PACKED_START
+{
+    UINT16 u16SubIndex0; /**< \brief SubIndex 0*/
+    UINT32 aEntries[13]; /**< \brief Entry buffer*/
 } OBJ_STRUCT_PACKED_END
-TOBJ1601;
+        TOBJ1601;
 
 
 /** \brief 0x1A00 (Digital input TxPDO) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex 0*/
-   UINT32   aEntries[9]; /**< \brief Entry buffer*/
+typedef struct OBJ_STRUCT_PACKED_START
+{
+    UINT16 u16SubIndex0; /**< \brief SubIndex 0*/
+    UINT32 aEntries[13]; /**< \brief Entry buffer*/
 } OBJ_STRUCT_PACKED_END
-TOBJ1A00;
+        TOBJ1A00;
 
 
 /** \brief 0x1A02 (Analog input TxPDO) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex 0*/
-   UINT32   aEntries[8]; /**< \brief Entry buffer*/
-} OBJ_STRUCT_PACKED_END
-TOBJ1A02;
+//typedef struct OBJ_STRUCT_PACKED_START
+//{
+//    UINT16 u16SubIndex0; /**< \brief SubIndex 0*/
+//    UINT32 aEntries[8]; /**< \brief Entry buffer*/
+//} OBJ_STRUCT_PACKED_END
+//        TOBJ1A02;
 /** @}*/
 
 
 /**
  * \addtogroup SmAssignObjects SyncManager Assignment Objects
- * SyncManager 2 : 0x1C12 
+ * SyncManager 2 : 0x1C12
  * <br>SyncManager 3 : 0x1C13
  * @{
  */
 /** \brief 0x1C12 (SyncManager 2 assignment) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex 0*/
-   UINT16   aEntries[1]; /**< \brief Entry buffer*/
+typedef struct OBJ_STRUCT_PACKED_START
+{
+    UINT16 u16SubIndex0; /**< \brief SubIndex 0*/
+    UINT16 aEntries[1]; /**< \brief Entry buffer*/
 } OBJ_STRUCT_PACKED_END
-TOBJ1C12;
+        TOBJ1C12;
 
 
 /** \brief 0x1C13 (SyncManager 3 assignment) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex 0*/
-   UINT16   aEntries[2]; /**< \brief Entry buffer*/
+typedef struct OBJ_STRUCT_PACKED_START
+{
+    UINT16 u16SubIndex0; /**< \brief SubIndex 0*/
+    UINT16 aEntries[2]; /**< \brief Entry buffer*/
 } OBJ_STRUCT_PACKED_END
-TOBJ1C13;
+        TOBJ1C13;
 /** @}*/
 
 
 /**
  * \addtogroup PDO Process Data Objects
  * Digital Inputs : 0x6000<br>
- * Analog Inputs : 0x6010<br> 
+ * Analog Inputs : 0x6010<br>
  * Digital Outputs : 0x7020
  * @{
  */
 /** \brief 0x6000 (Digital input object) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex 0*/
-   BOOLEAN(bSwitch1); /**< \brief Switch 1*/
-   BOOLEAN(bSwitch2); /**< \brief Switch 2*/
-   BOOLEAN(bSwitch3); /**< \brief Switch 3*/
-   BOOLEAN(bSwitch4); /**< \brief Switch 4*/
-   BOOLEAN(bSwitch5); /**< \brief Switch 5*/
-   BOOLEAN(bSwitch6); /**< \brief Switch 6*/
-   BOOLEAN(bSwitch7); /**< \brief Switch 7*/
-   BOOLEAN(bSwitch8); /**< \brief Switch 8*/
-   ALIGN8(SubIndex009) /**< \brief 8Bit alignment*/
+typedef struct OBJ_STRUCT_PACKED_START
+{
+    UINT16 u16SubIndex0; /**< \brief SubIndex 0*/
+    UINT16 InfoIn[8];
+    UINT16 DataIn1[8];
+    UINT16 DataIn2[8];
+    UINT16 DataIn3[8];
+    UINT16 DataIn4[8];
+    UINT16 DataIn5[8];
+    UINT16 DataIn6[8];
+    UINT16 DataIn7[8];
+    UINT16 DataIn8[8];
+    UINT16 DataIn9[8];
+    UINT16 DataIn10[8];
+    UINT16 DataIn11[8];
+    UINT16 DataIn12[8];
+
 } OBJ_STRUCT_PACKED_END
-TOBJ6000;
+        TOBJ6000;
 
 
-/** \brief 0x6020 (Analog input object) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex 0*/
-   BOOLEAN(bUnderrange); /**< \brief (SI1) Analog input under range*/
-   BOOLEAN(bOverrange); /**< \brief (SI2) Analog input over range*/
-   BIT2(b2Limit1); /**< \brief (SI3) Analog input 1st limit*/
-   BIT2(b2Limit2); /**< \brief (SI5) Analog input 2nd limit*/
-   ALIGN2(SubIndex006) /**< \brief 2Bit alignment*/
-   ALIGN6(SubIndex007) /**< \brief 2Bit alignment*/
-   BOOLEAN(bTxPDOState); /**< \brief (SI15) TxPdo state*/
-   BOOLEAN(bTxPDOToggle); /**< \brief (SI16) TxPdo toggle*/
-   INT16   i16Analoginput; /**< \brief (SI17) Analog input value*/
-} OBJ_STRUCT_PACKED_END
-TOBJ6020;
+///** \brief 0x6020 (Analog input object) data structure*/
+//typedef struct OBJ_STRUCT_PACKED_START
+//{
+//    UINT16 u16SubIndex0; /**< \brief SubIndex 0*/
+//    BOOLEAN(bUnderrange); /**< \brief (SI1) Analog input under range*/
+//    BOOLEAN(bOverrange); /**< \brief (SI2) Analog input over range*/
+//    BIT2(b2Limit1); /**< \brief (SI3) Analog input 1st limit*/
+//    BIT2(b2Limit2); /**< \brief (SI5) Analog input 2nd limit*/
+//    ALIGN2(SubIndex006) /**< \brief 2Bit alignment*/
+//    ALIGN6(SubIndex007) /**< \brief 2Bit alignment*/
+//    BOOLEAN(bTxPDOState); /**< \brief (SI15) TxPdo state*/
+//    BOOLEAN(bTxPDOToggle); /**< \brief (SI16) TxPdo toggle*/
+//    INT16 i16Analoginput; /**< \brief (SI17) Analog input value*/
+//} OBJ_STRUCT_PACKED_END
+//        TOBJ6020;
 
+//typedef struct OBJ_ARRAY_OF_UINT_START
+//{
+//    UINT16 aint1;
+//
+//}OBJ_ARRAY_OF_UINT_END TOBJARRAY16;
 
 /** \brief 0x7010 (Digital output object) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex 0*/
-   BOOLEAN(bLED1); /**< \brief LED 1*/
-   BOOLEAN(bLED2); /**< \brief LED 2*/
-   BOOLEAN(bLED3); /**< \brief LED 3*/
-   BOOLEAN(bLED4); /**< \brief LED 4*/
-   BOOLEAN(bLED5); /**< \brief LED 5*/
-   BOOLEAN(bLED6); /**< \brief LED 6*/
-   BOOLEAN(bLED7); /**< \brief LED 7*/
-   BOOLEAN(bLED8); /**< \brief LED 8*/
-   ALIGN8(SubIndex008) /**< \brief 8Bit alignment*/
+typedef struct OBJ_STRUCT_PACKED_START
+{
+    UINT16 u16SubIndex0; /**< \brief SubIndex 0*/
+    UINT16 InfoOut[8];
+    UINT16 DataOut1[8];
+    UINT16 DataOut2[8];
+    UINT16 DataOut3[8];
+    UINT16 DataOut4[8];
+    UINT16 DataOut5[8];
+    UINT16 DataOut6[8];
+    UINT16 DataOut7[8];
+    UINT16 DataOut8[8];
+    UINT16 DataOut9[8];
+    UINT16 DataOut10[8];
+    UINT16 DataOut11[8];
+    UINT16 DataOut12[8];
 } OBJ_STRUCT_PACKED_END
-TOBJ7010;
+        TOBJ7010;
 /** @}*/
 
 
@@ -153,20 +175,21 @@ TOBJ7010;
  * @{
  */
 /** \brief 0x8020 (Analog input settings object) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex 0*/
-   BOOLEAN(bEnableuserscale); /**< \brief Enable user scaling*/
-   BIT3(b3Presentation); /**< \brief Value presentation*/
-   ALIGN2(SubIndex005) /**< \brief 2Bit Alignment*/
-   BOOLEAN(bEnablelimit1); /**< \brief Enable limit 1*/
-   BOOLEAN(bEnablelimit2); /**< \brief Enable limit 2*/
-   ALIGN8(SubIndex009) /**< \brief 8Bit Alignment*/
-   INT16   i16Offset; /**< \brief Value offset*/
-   INT32   i32Gain; /**< \brief Value gain*/
-   INT16   i16Limit1; /**< \brief Value limit 1*/
-   INT16   i16Limit2; /**< \brief Value limit 2*/
+typedef struct OBJ_STRUCT_PACKED_START
+{
+    UINT16 u16SubIndex0; /**< \brief SubIndex 0*/
+    BOOLEAN(bEnableuserscale); /**< \brief Enable user scaling*/
+    BIT3(b3Presentation); /**< \brief Value presentation*/
+    ALIGN2(SubIndex005) /**< \brief 2Bit Alignment*/
+    BOOLEAN(bEnablelimit1); /**< \brief Enable limit 1*/
+    BOOLEAN(bEnablelimit2); /**< \brief Enable limit 2*/
+    ALIGN8(SubIndex009) /**< \brief 8Bit Alignment*/
+    INT16 i16Offset; /**< \brief Value offset*/
+    INT32 i32Gain; /**< \brief Value gain*/
+    INT16 i16Limit1; /**< \brief Value limit 1*/
+    INT16 i16Limit2; /**< \brief Value limit 2*/
 } OBJ_STRUCT_PACKED_END
-TOBJ8020;
+        TOBJ8020;
 /** @}*/
 
 
@@ -176,34 +199,36 @@ TOBJ8020;
  * @{
  */
 /** \brief 0xF000 (Modular Device Profile) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex0*/
-   UINT16   u16Moduleindexdistance; /**< \brief Module Index distance
-                                     * 
+typedef struct OBJ_STRUCT_PACKED_START
+{
+    UINT16 u16SubIndex0; /**< \brief SubIndex0*/
+    UINT16 u16Moduleindexdistance; /**< \brief Module Index distance
+                                     *
                                      * Index distance between two modules (maximum number of objects per module and area)<br>
                                      * Default: 0x10*/
-   UINT16   u16Maximumnumberofmodules; /**< \brief Maximum number of modules*/
+    UINT16 u16Maximumnumberofmodules; /**< \brief Maximum number of modules*/
 } OBJ_STRUCT_PACKED_END
-TOBJF000;
+        TOBJF000;
 
 
 /** \brief 0xF010 (Module Profile List) data structure*/
-typedef struct OBJ_STRUCT_PACKED_START {
-   UINT16   u16SubIndex0; /**< \brief SubIndex0*/
-   UINT32   aEntries[3]; /**< \brief Module profile information buffer
-                          * 
+typedef struct OBJ_STRUCT_PACKED_START
+{
+    UINT16 u16SubIndex0; /**< \brief SubIndex0*/
+    UINT32 aEntries[3]; /**< \brief Module profile information buffer
+                          *
                           * Bit 0..15: Profile number of the module on position 1<br>
                           * Bit 16..31: Profile specific*/
 } OBJ_STRUCT_PACKED_END
-TOBJF010;
+        TOBJF010;
 /** @}*/
 
 #endif //_EL9800APPL_H_
 
 #ifdef _EVALBOARD_
-    #define PROTO
+#define PROTO
 #else
-    #define PROTO extern
+#define PROTO extern
 #endif
 
 
@@ -223,7 +248,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asPDOAssignEntryDesc[] = {
    {DEFTYPE_UNSIGNED16, 0x10, ACCESS_READ}};
 /** @}*/
 
-   
+
 /**
  * \addtogroup EnumObjects Enum Objects
  * @{
@@ -257,7 +282,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x0800[] =
 */
 /**
  * \brief Object 0x1601 (Digital output RxPDO) entry descriptions
- * 
+ *
  * SubIndex 0 : read only<br>
  * SubIndex x : read only<br>
  *  (x > 0)
@@ -269,10 +294,17 @@ OBJCONST TSDOINFOENTRYDESC	OBJMEM asEntryDesc0x1601[] = {
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
-   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ}};
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ}
+};
 
 /**
  * \brief Object 0x1601 (Digital output RxPDO) name
@@ -285,7 +317,7 @@ OBJCONST UCHAR OBJMEM aName0x1601[] = "DO RxPDO-Map\000\377";
 
 /**
  * \brief Object 0x1601 (Digital output RxPDO) variable to handle object data
- * 
+ *
  * SubIndex 0 : 1<br>
  * SubIndex 1 : 0x7010.1 1bit (Reference to LED1)<br>
  * SubIndex 2 : 0x7010.1 1bit (Reference to LED2)<br>
@@ -298,7 +330,7 @@ OBJCONST UCHAR OBJMEM aName0x1601[] = "DO RxPDO-Map\000\377";
  */
 PROTO TOBJ1601 sDORxPDOMap
 #ifdef _EVALBOARD_
- = {9, {0x70100101, 0x70100201, 0x70100301, 0x70100401,0x70100501, 0x70100601, 0x70100701, 0x70100801, 0x08}}
+= {13, {0x70100180,0x70100280,0x70100380,0x70100480,0x70100580,0x70100680,0x70100780,0x70100880,0x70100980,0x70100A80,0x70100B80,0x70100C80,0x70100D80}}
 #endif
 ;
 /** @}*/
@@ -313,7 +345,7 @@ PROTO TOBJ1601 sDORxPDOMap
 #ifdef _OBJD_
 /**
  * \brief Entry descriptions of TxPDO Parameter object (0x1802)
- * 
+ *
  * Subindex 0<br>
  * SubIndex 1 - 5 : not defined<br>
  * SubIndex 6 : Exclude TxPDOs<br>
@@ -343,14 +375,14 @@ OBJCONST UCHAR OBJMEM aName0x1802[] = "TxPDO Parameter\000\000\000\000\000\000Ex
 
 /**
  * \brief Object 0x1802 (TxPDO Parameter) variable to handle object data
- * 
+ *
  * Only Subindex0 for this Object is stored here (all values are stored in other structures, see "ReadObject0x1802" for more details)
  */
 PROTO UINT16 TxPDO1802Subindex0
 #ifdef _EVALBOARD_
-    = 9
+= 9
 #endif
-    ;
+;
 /** @}*/
 
 
@@ -373,10 +405,18 @@ OBJCONST TSDOINFOENTRYDESC	OBJMEM asEntryDesc0x1A00[] = {
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
-   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ}};
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+   {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ},
+};//for transmiting addr,like 0x70101008 etc. cjh tag
+
 
 
 /**
@@ -390,7 +430,7 @@ OBJCONST UCHAR OBJMEM aName0x1A00[] = "DI TxPDO-Map\000\377";
 
 /**
  * \brief Object 0x1A00 (Digital Input TxPDO) variable to handle object data
- * 
+ *
  * SubIndex 0 : 1<br>
  * SubIndex 1 : 0x6000.1 1bit (Reference to SWITCH1)<br>
  * SubIndex 2 : 0x6000.1 1bit (Reference to SWITCH2)<br>
@@ -403,7 +443,7 @@ OBJCONST UCHAR OBJMEM aName0x1A00[] = "DI TxPDO-Map\000\377";
  */
 PROTO TOBJ1A00 sDITxPDOMap
 #ifdef _EVALBOARD_
- = {9, {0x60000101, 0x60000201, 0x60000301, 0x60000401,0x60000501, 0x60000601, 0x60000701, 0x60000801, 0x08}}
+= {13, {0x60000180,0x60000280,0x60000380,0x60000480,0x60000580,0x60000680,0x60000780,0x60000880,0x60000980,0x60000A80,0x60000B80,0x60000C80,0x60000D80}}
 #endif
 ;
 
@@ -440,7 +480,7 @@ OBJCONST UCHAR OBJMEM aName0x1A02[] = "AI TxPDO-Map\000\377";
 
 /**
  * \brief Object 0x1A02 (Analog Input TxPDO) variable to handle object data
- * 
+ *
  * SubIndex 0 : 1<br>
  * SubIndex 1 : 0x6020.1 1bit (Reference to Analog under range)<br>
  * SubIndex 2 : 0x6020.2 1bit (Reference to Analog over range)<br>
@@ -451,11 +491,11 @@ OBJCONST UCHAR OBJMEM aName0x1A02[] = "AI TxPDO-Map\000\377";
  * SubIndex 7 : 0x1802.9 1bit (Reference to TxPDO Toggle (stored in analog input struct))<br>
  * SubIndex 8 : 0x6020.17 16bit (Reference to Analog input value)
  */
-PROTO TOBJ1A02 sAITxPDOMap
-#ifdef _EVALBOARD_
-= {8, {0x60200101, 0x60200201, 0x60200302, 0x60200502, 0x08, 0x18020701, 0x18020901, 0x60201110}}
-#endif
-;
+//PROTO TOBJ1A02 sAITxPDOMap
+//#ifdef _EVALBOARD_
+//= {8, {0x60200101, 0x60200201, 0x60200302, 0x60200502, 0x08, 0x18020701, 0x18020901, 0x60201110}}
+//#endif
+//;
 /** @}*/
 
 
@@ -465,8 +505,8 @@ PROTO TOBJ1A02 sAITxPDOMap
  */
 #ifdef _OBJD_
 /**
- * \brief 0x1C12 (SyncManager 2 assignment) object name 
- * 
+ * \brief 0x1C12 (SyncManager 2 assignment) object name
+ *
  * No entry names defined because the object code is ARRAY and all entry names are "SubIndex 000"
  */
 OBJCONST UCHAR OBJMEM aName0x1C12[] = "RxPDO assign";
@@ -475,7 +515,7 @@ OBJCONST UCHAR OBJMEM aName0x1C12[] = "RxPDO assign";
 
 /**
  * \brief 0x1C12 (SyncManager 2 assignment) variable to handle object data
- * 
+ *
  * SubIndex 0 : 1<br>
  * SubIndex 1 : 0x1601
  */
@@ -488,8 +528,8 @@ PROTO TOBJ1C12 sRxPDOassign
 
 #ifdef _OBJD_
 /**
- * \brief 0x1C13 (SyncManager 3 assignment) object name 
- * 
+ * \brief 0x1C13 (SyncManager 3 assignment) object name
+ *
  * No entry names defined because the object code is ARRAY and all entry names are "SubIndex 000"
  */
 OBJCONST UCHAR OBJMEM aName0x1C13[] = "TxPDO assign";
@@ -498,14 +538,14 @@ OBJCONST UCHAR OBJMEM aName0x1C13[] = "TxPDO assign";
 
 /**
  * \brief 0x1C13 (SyncManager 3 assignment) variable to handle object data
- * 
+ *
  * SubIndex 0 : 1<br>
  * SubIndex 1 : 0x1A00<br>
  * SubIndex 2 : 0x1A02
  */
 PROTO TOBJ1C13 sTxPDOassign
 #ifdef _EVALBOARD_
-= {0x02, {0x1A00, 0x1A02}}
+= {0x01, {0x1A00}}
 #endif
 ;
 /** @}*/
@@ -525,32 +565,55 @@ PROTO TOBJ1C13 sTxPDOassign
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
    {DEFTYPE_UNSIGNED8, 0x8, ACCESS_READ }, /* Subindex 000 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_TXPDOMAPPING}, /* SubIndex 001: Switch 1 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_TXPDOMAPPING}, /* SubIndex 002: Switch 2 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_TXPDOMAPPING}, /* SubIndex 003: Switch 3 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_TXPDOMAPPING}, /* SubIndex 004: Switch 4 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_TXPDOMAPPING}, /* SubIndex 005: Switch 5 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_TXPDOMAPPING}, /* SubIndex 006: Switch 6 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_TXPDOMAPPING}, /* SubIndex 007: Switch 7 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_TXPDOMAPPING}, /* SubIndex 008: Switch 8 */
-   {0x0000, 0x08, 0}}; /* Subindex 009 for align */
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},//ref ETG.1020 page105 cjh tag
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_TXPDOMAPPING},
+}; /* Subindex 009 for align */
 
 /**
  * \brief 0x6000 (Digital input object) object and entry names
  */
-OBJCONST UCHAR OBJMEM aName0x6000[] = "DI Inputs\000Switch 1\000Switch 2\000Switch 3\000Switch 4\000Switch 5\000Switch 6\000Switch 7\000Switch 8\000\000\377";
+OBJCONST UCHAR OBJMEM aName0x6000[] = "DI Inputs\000InfoIn\000DataIn1\000DataIn2\000DataIn3\000DataIn4\000DataIn5\000DataIn6\000DataIn7\000DataIn8\000DataIn9\000DataIn10\000DataIn11\000DataIn12\000\377";
 #endif //#ifdef _OBJD_
 
 
 /**
  * \brief 0x6000 (Digital input object) variable to handle object data
- * 
+ *
  * SubIndex 0 : 1<br>
  * SubIndex x : every switch value is 0 by default
  */
 PROTO TOBJ6000 sDIInputs
 #ifdef _EVALBOARD_
-= {8, 0x00, 0x00, 0x00, 0x00,0x00, 0x00, 0x00, 0x00, 0}
+= {13,
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+}
 #endif
 ;
 
@@ -609,13 +672,13 @@ OBJCONST UCHAR OBJMEM aName0x6020[] = "AI Inputs\000Underrange\000Overrange\000L
 
 /**
  * \brief 0x6020 (Analog input object) variable to handle object data
- * 
+ *
  */
-PROTO TOBJ6020 sAIInputs
-#ifdef _EVALBOARD_
-= {17, 0x00, 0x00, 0x00, 0x00, 0, 0, 0x00, 0x00, 0x7FFF}
-#endif
-;
+//PROTO TOBJ6020 sAIInputs
+//#ifdef _EVALBOARD_
+//= {17, 0x00, 0x00, 0x00, 0x00, 0, 0, 0x00, 0x00, 0x7FFF}
+//#endif
+//;
 
 
 
@@ -629,31 +692,54 @@ PROTO TOBJ6020 sAIInputs
 #ifdef _OBJD_
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
    {DEFTYPE_UNSIGNED8, 0x8, ACCESS_READ }, /* Subindex 000 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_RXPDOMAPPING}, /* SubIndex 001: LED 1 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_RXPDOMAPPING}, /* SubIndex 002: LED 2 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_RXPDOMAPPING}, /* SubIndex 003: LED 3 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_RXPDOMAPPING}, /* SubIndex 004: LED 4 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_RXPDOMAPPING}, /* SubIndex 005: LED 5 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_RXPDOMAPPING}, /* SubIndex 006: LED 6 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_RXPDOMAPPING}, /* SubIndex 007: LED 7 */
-   {DEFTYPE_BOOLEAN, 0x01, ACCESS_READ | OBJACCESS_RXPDOMAPPING}, /* SubIndex 008: LED 8 */
-   {0x0000, 0x08, 0}}; /* Subindex 008 for align */
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},/* SubIndex 001: LED 1 */
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING},
+   {DEFTYPE_UNICODE_STRING, 0x80, ACCESS_READ | OBJACCESS_RXPDOMAPPING}
+}; /* Subindex 008 for align */
 
 
-/**
+/*
  * \brief 0x6000 (Digital input object) object and entry names
  */
-OBJCONST UCHAR OBJMEM aName0x7010[] = "DO Outputs\000LED 1\000LED 2\000LED 3\000LED 4\000LED 5\000LED 6\000LED 7\000LED 8\000\000\377";
+OBJCONST UCHAR OBJMEM aName0x7010[] = "DO Outputs\000InfoOut\000DataOut1\000DataOut2\000DataOut3\000DataOut4\000DataOut5\000DataOut6\000DataOut7\000DataOut8\000DataOut9\000DataOut10\000DataOut11\000DataOut12\000DataOut13\000\377";
 #endif //#ifdef _OBJD_
 
 
 /**
  * \brief 0x6020 (Analog input object) variable to handle object data
- * 
+ *
  */
 PROTO TOBJ7010 sDOOutputs
 #ifdef _EVALBOARD_
-= {8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0}
+= {13,
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+   {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+}
 #endif
 ;
 /** @}*/
@@ -731,7 +817,7 @@ PROTO TOBJ8020 sAISettings
  * @{
  */
 #ifdef _OBJD_
-/** 
+/**
  * \brief 0xF000 (Modular Device Profile) entry descriptions
  *
  * Subindex 000<br>
@@ -767,7 +853,7 @@ PROTO TOBJF000 sModulardeviceprofile
 
 
 #ifdef _OBJD_
-/** 
+/**
  * \brief 0xF010 (Module profile list) entry descriptions
  *
  * Subindex 0<br>
@@ -791,7 +877,7 @@ OBJCONST UCHAR OBJMEM aName0xF010[] = "Module profile list";
 
 /**
  *\brief 0xF010 (Module profile list) variable to handle object data
- * 
+ *
  * SubIndex 0 : 3
  * SubIndex 1 : 100 (Digital Input SubProfile)
  * SubIndex 2 : 200 (Digital Output SubProfile)
@@ -812,29 +898,29 @@ PROTO UINT8 ReadObject0x1802( UINT16 index, UINT8 subindex, UINT32 dataSize, UIN
 
 /**
  *\brief EL9800 Application specific object dictionary
- * 
+ *
  */
 TOBJECT    OBJMEM ApplicationObjDic[] = {
    /* Enum 0x0800 */
    {NULL,NULL, 0x0800, {DEFTYPE_ENUM, 0x02 | (OBJCODE_REC << 8)}, asEntryDesc0x0800, 0, apEnum0800 },
    /* Object 0x1601 */
-   {NULL,NULL,  0x1601, {DEFTYPE_PDOMAPPING, 9 | (OBJCODE_REC << 8)}, asEntryDesc0x1601, aName0x1601, &sDORxPDOMap, NULL, NULL, 0x0000 },
+   {NULL,NULL,  0x1601, {DEFTYPE_PDOMAPPING, 13| (OBJCODE_REC << 8)}, asEntryDesc0x1601, aName0x1601, &sDORxPDOMap, NULL, NULL, 0x0000 },//1
    /* Object 0x1802 */
    {NULL,NULL,  0x1802, {DEFTYPE_RECORD, 9 | (OBJCODE_REC << 8)}, asEntryDesc0x1802, aName0x1802,&TxPDO1802Subindex0, ReadObject0x1802, NULL, 0x0000 },
    /* Object 0x1A00 */
-   {NULL,NULL,   0x1A00, {DEFTYPE_PDOMAPPING, 9 | (OBJCODE_REC << 8)}, asEntryDesc0x1A00, aName0x1A00, &sDITxPDOMap, NULL, NULL, 0x0000 },
+   {NULL,NULL,   0x1A00, {DEFTYPE_PDOMAPPING, 13 | (OBJCODE_REC << 8)}, asEntryDesc0x1A00, aName0x1A00, &sDITxPDOMap, NULL, NULL, 0x0000 },//2
    /* Object 0x1A02 */
-   {NULL,NULL,   0x1A02, {DEFTYPE_PDOMAPPING, 8 | (OBJCODE_REC << 8)}, asEntryDesc0x1A02, aName0x1A02, &sAITxPDOMap, NULL, NULL, 0x0000 },
+   //{NULL,NULL,   0x1A02, {DEFTYPE_PDOMAPPING, 8 | (OBJCODE_REC << 8)}, asEntryDesc0x1A02, aName0x1A02, &sAITxPDOMap, NULL, NULL, 0x0000 },
     /* Object 0x1C12 */
    {NULL,NULL,   0x1C12, {DEFTYPE_UNSIGNED16, 1 | (OBJCODE_ARR << 8)}, asPDOAssignEntryDesc, aName0x1C12, &sRxPDOassign, NULL, NULL, 0x0000 },
    /* Object 0x1C13 */
    {NULL,NULL,   0x1C13, {DEFTYPE_UNSIGNED16, 2 | (OBJCODE_ARR << 8)}, asPDOAssignEntryDesc, aName0x1C13, &sTxPDOassign, NULL, NULL, 0x0000 },
    /* Object 0x6000 */
-   {NULL,NULL,   0x6000, {DEFTYPE_RECORD, 8 | (OBJCODE_REC << 8)}, asEntryDesc0x6000, aName0x6000, &sDIInputs, NULL, NULL, 0x0000 },
+   {NULL,NULL,   0x6000, {DEFTYPE_RECORD, 13 | (OBJCODE_REC << 8)}, asEntryDesc0x6000, aName0x6000, &sDIInputs, NULL, NULL, 0x0000 },//3
    /* Object 0x6020 */
-   {NULL,NULL,   0x6020, {DEFTYPE_RECORD, 17 | (OBJCODE_REC << 8)}, asEntryDesc0x6020, aName0x6020, &sAIInputs, NULL, NULL, 0x0000 },
+   //{NULL,NULL,   0x6020, {DEFTYPE_RECORD, 17 | (OBJCODE_REC << 8)}, asEntryDesc0x6020, aName0x6020, &sAIInputs, NULL, NULL, 0x0000 },
    /* Object 0x7010 */
-   {NULL,NULL,   0x7010, {DEFTYPE_RECORD, 8 | (OBJCODE_REC << 8)}, asEntryDesc0x7010, aName0x7010, &sDOOutputs, NULL, NULL, 0x0000 },
+   {NULL,NULL,   0x7010, {DEFTYPE_RECORD, 13 | (OBJCODE_REC << 8)}, asEntryDesc0x7010, aName0x7010, &sDOOutputs, NULL, NULL, 0x0000 },//7010
     /* Object 0x8020 */
     {NULL,NULL,   0x8020, {DEFTYPE_RECORD, 20 | (OBJCODE_REC << 8)}, asEntryDesc0x8020, aName0x8020, &sAISettings, NULL, NULL, 0x0008 },
     /* Object 0xF000 */
@@ -846,19 +932,29 @@ TOBJECT    OBJMEM ApplicationObjDic[] = {
 
 PROTO void APPL_Application(void);
 
-PROTO void   APPL_AckErrorInd(UINT16 stateTrans);
+PROTO void APPL_AckErrorInd(UINT16 stateTrans);
+
 PROTO UINT16 APPL_StartMailboxHandler(void);
+
 PROTO UINT16 APPL_StopMailboxHandler(void);
+
 PROTO UINT16 APPL_StartInputHandler(UINT16 *pIntMask);
+
 PROTO UINT16 APPL_StopInputHandler(void);
+
 PROTO UINT16 APPL_StartOutputHandler(void);
+
 PROTO UINT16 APPL_StopOutputHandler(void);
 
-PROTO UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize);
-PROTO void APPL_InputMapping(UINT16* pData);
-PROTO void APPL_OutputMapping(UINT16* pData);
+PROTO UINT16 APPL_GenerateMapping(UINT16 *pInputSize, UINT16 *pOutputSize);
+
+PROTO void APPL_InputMapping(UINT16 *pData);
+
+PROTO void APPL_OutputMapping(UINT16 *pData);
 
 PROTO int ECT_main(void);
-PROTO GPIO_PinState GPIO_ChangeAuto(void);
+
+PROTO uint16_t GPIO_ChangeAuto(void);
+
 #undef PROTO
 /** @}*/

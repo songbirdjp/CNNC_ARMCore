@@ -56,10 +56,10 @@ RM = "C:\Program Files\JetBrains\CLion 2023.1.1\bin\cmake\win\x64\bin\cmake.exe"
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = C:\FW-ArmCore\ArmCoreV1_QSPI
+CMAKE_SOURCE_DIR = E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = C:\FW-ArmCore\ArmCoreV1_QSPI\cmake-build-debug
+CMAKE_BINARY_DIR = E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\cmake-build-debug
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -86,9 +86,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start C:\FW-ArmCore\ArmCoreV1_QSPI\cmake-build-debug\CMakeFiles C:\FW-ArmCore\ArmCoreV1_QSPI\cmake-build-debug\\CMakeFiles\progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\cmake-build-debug\CMakeFiles E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\cmake-build-debug\\CMakeFiles\progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start C:\FW-ArmCore\ArmCoreV1_QSPI\cmake-build-debug\CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\cmake-build-debug\CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -127,6 +127,30 @@ ETHERCAT_CNNCPM.elf: cmake_check_build_system
 ETHERCAT_CNNCPM.elf/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/build
 .PHONY : ETHERCAT_CNNCPM.elf/fast
+
+Core/Src/RS485.obj: Core/Src/RS485.c.obj
+.PHONY : Core/Src/RS485.obj
+
+# target to build an object file
+Core/Src/RS485.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/RS485.c.obj
+.PHONY : Core/Src/RS485.c.obj
+
+Core/Src/RS485.i: Core/Src/RS485.c.i
+.PHONY : Core/Src/RS485.i
+
+# target to preprocess a source file
+Core/Src/RS485.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/RS485.c.i
+.PHONY : Core/Src/RS485.c.i
+
+Core/Src/RS485.s: Core/Src/RS485.c.s
+.PHONY : Core/Src/RS485.s
+
+# target to generate assembly for a file
+Core/Src/RS485.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/RS485.c.s
+.PHONY : Core/Src/RS485.c.s
 
 Core/Src/freertos.obj: Core/Src/freertos.c.obj
 .PHONY : Core/Src/freertos.obj
@@ -3529,6 +3553,9 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... ETHERCAT_CNNCPM.elf
+	@echo ... Core/Src/RS485.obj
+	@echo ... Core/Src/RS485.i
+	@echo ... Core/Src/RS485.s
 	@echo ... Core/Src/freertos.obj
 	@echo ... Core/Src/freertos.i
 	@echo ... Core/Src/freertos.s

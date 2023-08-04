@@ -184,8 +184,9 @@ BOOL bInitFinished = FALSE; /** < \brief indicates if the initialization is fini
 void PDO_InputMapping(void)
 {
     APPL_InputMapping((UINT16 *) aPdInputData);
-//    printf("sw : %0x\r\n",aPdInputData[0]);
+//    printf("aPdInputData : %0x\r\n",aPdInputData[0]);
     HW_EscWriteIsr(((MEM_ADDR *) aPdInputData), nEscAddrInputData, nPdInputSize);
+//    printf("nPdInputSize : %0x\r\n",nPdInputSize);
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -325,6 +326,7 @@ void PDI_Isr(void)
             {
                 /* slave is in OP, update the outputs */
                 PDO_OutputMapping();
+//                printf("PDIisr11111111111111111111\r\n");
             }
             else
             {
@@ -452,6 +454,7 @@ void Sync0_Isr(void)
         {
             /* Output mapping was not done by the PDI ISR */
             PDO_OutputMapping();
+//            printf("sync011111111111111111\r\n");
         }
 
         /* Application is synchronized to SYNC0 event*/
@@ -735,6 +738,7 @@ void MainLoop(void)
                 {
                     /* update the outputs */
                     PDO_OutputMapping();
+//                    printf("mainloop1111111111111111\r\n");
                 }
             }
             else if (nPdOutputSize == 0)

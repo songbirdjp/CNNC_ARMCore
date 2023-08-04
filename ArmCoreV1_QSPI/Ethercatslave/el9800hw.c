@@ -403,7 +403,7 @@ UINT8 HW_Init(void)
 #ifdef SPI_Connect    //�������ԣ���ȡ����ֵ0x87654321
         readData = 0x55aa55aa;
         readData = SPIReadDWord(0x64);
-//        printf("read test byte reg (0x64), readData is  : %0x, \r\n", readData);
+        printf("read test byte reg (0x64), readData is  : %0x, \r\n", readData);
         HAL_Delay(1);
     }
         while (!(readData==0x87654321));
@@ -416,7 +416,12 @@ UINT8 HW_Init(void)
 #endif
 
 #endif
-
+//uint16_t  tmp0x0007;
+//HW_EscReadDWord(tmp0x0007,0x0007);
+//printf("tmp0x0007 = %x\r\n",tmp0x0007);
+//    uint16_t  tmp0x0004;
+//    HW_EscReadDWord(tmp0x0004,0x0004);
+//    printf("tmp0x0004 = %x\r\n",tmp0x0004);
 
 /*ECATCHANGE_START(V5.11) EL9800 2*/
     do

@@ -39,7 +39,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "ETHERCAT_CNNCPM.elf::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-ETHERCAT_CNNCPM.elf-Debug-272d979155a7813afd08.json",
+					"jsonFile" : "target-ETHERCAT_CNNCPM.elf-Debug-9ece79b91a5480634c1a.json",
 					"name" : "ETHERCAT_CNNCPM.elf",
 					"projectIndex" : 0
 				}
@@ -49,8 +49,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "C:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug",
-		"source" : "C:/FW-ArmCore/ArmCoreV1_QSPI"
+		"build" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI/cmake-build-debug",
+		"source" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI"
 	},
 	"version" : 
 	{

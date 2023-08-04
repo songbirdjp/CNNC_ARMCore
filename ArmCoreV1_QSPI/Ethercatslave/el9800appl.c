@@ -180,23 +180,50 @@ UINT16 APPL_StartOutputHandler(void)
 UINT16 APPL_StopOutputHandler(void)
 {
 /*ECATCHANGE_START(V5.11) EL9800 1*/
-    sDOOutputs.bLED1 = 0;
-    sDOOutputs.bLED2 = 0;
-    sDOOutputs.bLED3 = 0;
-    sDOOutputs.bLED4 = 0;
-    sDOOutputs.bLED5 = 0;
-    sDOOutputs.bLED7 = 0;
-    sDOOutputs.bLED6 = 0;
-    sDOOutputs.bLED8 = 0;
-    LED_1(sDOOutputs.bLED1);
-    LED_2(sDOOutputs.bLED2);
-    LED_3(sDOOutputs.bLED3);
-    LED_4(sDOOutputs.bLED4);
-    LED_5(sDOOutputs.bLED5);
-    LED_6(sDOOutputs.bLED6);
-    LED_7(sDOOutputs.bLED7);
-    LED_8(sDOOutputs.bLED8);
+//    sDOOutputs.bLED1 = 0;
+//    sDOOutputs.bLED2 = 1;
+//    sDOOutputs.bLED3 = 0;
+//    sDOOutputs.bLED4 = 0;
+//    sDOOutputs.bLED5 = 0;
+//    sDOOutputs.bLED7 = 0;
+//    sDOOutputs.bLED6 = 1;
+//    sDOOutputs.bLED8 = 0;
+//    sDOOutputs.bLED9 = 0;
+//    sDOOutputs.bLED10 = 1;
+//    sDOOutputs.bLED11 = 0;
+//    sDOOutputs.bLED12 = 0;
+//    sDOOutputs.bLED13 = 0;
+//    sDOOutputs.bLED14 = 0;
+//    sDOOutputs.bLED15 = 1;
+//    sDOOutputs.bLED16 = 0;
+//    sDOOutputs.bLED17 = 0x10;
+//    sDOOutputs.bLED18 = 0x10;
+//    sDOOutputs.bLED19 = 0x10;
+//    sDOOutputs.bLED20 = 0x10;
+//    LED_1(sDOOutputs.bLED1);
+//    LED_2(sDOOutputs.bLED2);
+//    LED_3(sDOOutputs.bLED3);
+//    LED_4(sDOOutputs.bLED4);
+//    LED_5(sDOOutputs.bLED5);
+//    LED_6(sDOOutputs.bLED6); sDIInputs.InfoIn[0] = 0x2345;
+////    sDIInputs.InfoIn[1] = 0x0000;
+////    sDIInputs.InfoIn[2] = 0xffff;
+////    sDIInputs.InfoIn[3] = 0x0000;
+////    sDIInputs.InfoIn[4] = 0xffff;
+////    sDIInputs.InfoIn[5] = 0x0000;
+////    sDIInputs.InfoIn[6] = 0xffff;
+////    sDIInputs.InfoIn[7] = 0x0000;
+////
+////    sDIInputs.DataIn1[0] = 0xffff;
+////    sDIInputs.DataIn1[1] = 0xffff;
+////    sDIInputs.DataIn1[2] = 0x0101;
+////    sDIInputs.DataIn1[3] = 0xffff;
+////    sDIInputs.DataIn1[4] = 0x0101;
+//    LED_7(sDOOutputs.bLED7);
+//    LED_8(sDOOutputs.bLED8);
+//
 
+    // printf("sDOOutputs.bLED9 = %xr\n",sDOOutputs.bLED9);
 //    LED_1                        = sDOOutputs.bLED1;
 //    LED_2                        = sDOOutputs.bLED2;
 //    LED_3                        = sDOOutputs.bLED3;
@@ -233,15 +260,22 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize, UINT16 *pOutputSize)
     for (PDOAssignEntryCnt = 0; PDOAssignEntryCnt < sRxPDOassign.u16SubIndex0; PDOAssignEntryCnt++)
     {
         pPDO = OBJ_GetObjectHandle(sRxPDOassign.aEntries[PDOAssignEntryCnt]);
+//        printf("sRxPDOassign.aEntries[PDOAssignEntryCnt] = %x\r\n",sRxPDOassign.aEntries[PDOAssignEntryCnt]);//1601
         if (pPDO != NULL)
         {
             PDOSubindex0 = *((UINT16 *) pPDO->pVarPtr);
+//            printf("PDOIdx  = %x\r\n",PDOSubindex0);
             for (PDOEntryCnt = 0; PDOEntryCnt < PDOSubindex0; PDOEntryCnt++)
             {
+                uint32_t tmp = OBJ_GetEntryOffset((PDOEntryCnt + 1), pPDO);
+//                printf("(OBJ_GetEntryOffset((PDOEntryCnt + 1), pPDO) = %ld\r\n",tmp);
                 pPDOEntry = (UINT32 *) ((UINT8 *) pPDO->pVarPtr +
                                         (OBJ_GetEntryOffset((PDOEntryCnt + 1), pPDO) >> 3));    //goto PDO entry
                 // we increment the expected output size depending on the mapped Entry
+//                printf("PDOIdx  = %x\r\n",PDOSubindex0);
+//                printf("pPDOEntry = %ld\r\n",*pPDOEntry);
                 OutputSize += (UINT16) ((*pPDOEntry) & 0xFF);
+//                printf("OutputSize = %d\r\n",OutputSize);
             }
         }
         else
@@ -308,13 +342,36 @@ void APPL_InputMapping(UINT16 *pData)
         {
             /* TxPDO 1 */
             case 0x1A00:
-                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[1]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[1]);
+////                printf("*pTmpData++ = %x \r\n",*pTm/pData);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[2]);
+////                printf("*pTmpData++ = %x \r\n",*pTmpData);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[3]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[4]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[5]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[6]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[7]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[8]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[9]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[10]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[11]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[12]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[13]);
+                for (int i = 1; i < 105; i++)
+                {
+                    *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[i]);
+
+
+                }
+
+//            printf("case 0x1A00 \r\n");
                 break;
                 /* TxPDO 3 */
-            case 0x1A02:
-                *pTmpData++ = SWAPWORD(((UINT16 * ) & sAIInputs)[1]);
-                *pTmpData++ = SWAPWORD(((UINT16 * ) & sAIInputs)[2]);
-                break;
+//            case 0x1A02:
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sAIInputs)[1]);
+//                *pTmpData++ = SWAPWORD(((UINT16 * ) & sAIInputs)[2]);
+////                printf("case 0x1A02\r\n");
+//                break;
         }
     }
 }
@@ -338,7 +395,15 @@ void APPL_OutputMapping(UINT16 *pData)
         {
             /* RxPDO 2 */
             case 0x1601:
-                ((UINT16 *) &sDOOutputs)[1] = SWAPWORD(*pTmpData++);
+                for (int i = 1; i < 105; i++)
+                {
+                    ((UINT16 *) &sDOOutputs)[i] = SWAPWORD(*pTmpData++);
+                }
+//                ((UINT16 *) &sDOOutputs)[1] = SWAPWORD(*pTmpData++);
+//                ((UINT16 *) &sDOOutputs)[2] = SWAPWORD(*pTmpData++);
+//                ((UINT16 *) &sDOOutputs)[3] = SWAPWORD(*pTmpData++);
+//                ((UINT16 *) &sDOOutputs)[4] = SWAPWORD(*pTmpData++);
+//                printf("sDOOutputs.u16SubIndex0 =0x%x\r\n",sDOOutputs.u16SubIndex0);
                 break;
         }
     }
@@ -353,57 +418,74 @@ void APPL_Application(void)
 {
 //    printf("APP data change \r\n  ");
     UINT32 uhADCxConvertedValue;
-    LED_1(sDOOutputs.bLED1);
-    LED_2(sDOOutputs.bLED2);
-    LED_3(sDOOutputs.bLED3);
-    LED_4(sDOOutputs.bLED4);
-    LED_5(sDOOutputs.bLED5);
-    LED_6(sDOOutputs.bLED6);
-    LED_7(sDOOutputs.bLED7);
-    LED_8(sDOOutputs.bLED8);
-//    LED_1                        = sDOOutputs.bLED1;
-//    LED_2                        = sDOOutputs.bLED2;
-//    LED_3                        = sDOOutputs.bLED3;
-//    LED_4                        = sDOOutputs.bLED4;
-//    LED_5                        = sDOOutputs.bLED5;
-//    LED_7                        = sDOOutputs.bLED7;
-//    LED_6                        = sDOOutputs.bLED6;
-//    LED_8                        = sDOOutputs.bLED8;
 
-//		sDIInputs.bSwitch1    = SWITCH_1;
-//		sDIInputs.bSwitch2    = SWITCH_2;
-//		sDIInputs.bSwitch3    = SWITCH_3;
-//    sDIInputs.bSwitch4    = SWITCH_4;
-//    sDIInputs.bSwitch5    = SWITCH_5;
-//    sDIInputs.bSwitch6    = SWITCH_6;
-//    sDIInputs.bSwitch7    = SWITCH_7;
-//    sDIInputs.bSwitch8    = SWITCH_8;
-    sDIInputs.bSwitch1 = GPIO_ChangeAuto();
-    sDIInputs.bSwitch2 = GPIO_ChangeAuto() + 1;
-    sDIInputs.bSwitch3 = GPIO_ChangeAuto();
-    sDIInputs.bSwitch4 = GPIO_ChangeAuto() + 1;
-    sDIInputs.bSwitch5 = GPIO_ChangeAuto();// SWITCH_5;
-    sDIInputs.bSwitch6 = GPIO_ChangeAuto() + 1;//SWITCH_6;
-    sDIInputs.bSwitch7 = GPIO_ChangeAuto();
-    sDIInputs.bSwitch8 = GPIO_ChangeAuto() + 1;
+//    memccpy(((UINT16 * ) & sDIInputs)[1],tempBuffer,104);
+//    sDIInputs.InfoIn[0] = 0x0001;
+//    sDIInputs.InfoIn[1] = 0x0002;
+//    sDIInputs.InfoIn[2] = 0x0003;
+//    sDIInputs.InfoIn[3] = 0x0004;
+//    sDIInputs.InfoIn[4] = 0x0005;
+//    sDIInputs.InfoIn[5] = 0x0006;
+//    sDIInputs.InfoIn[6] = 0x0007;
+//    sDIInputs.InfoIn[7] = 0x0008;
+//    sDIInputs.DataIn1[1] = 0x1fff;
+//    sDIInputs.DataIn12[4] = 0x205;
+//    sDIInputs.DataIn12[5] = 0x206;
+//    sDIInputs.DataIn12[6] = 0x207;
+//    sDIInputs.DataIn12[7] = 0x208;
 
-    /* start the conversion of the A/D converter */
 
-//AD1CON1bits.SAMP = 0; // start Converting
-//while (!AD1CON1bits.DONE);// conversion done?
-//sAIInputs.i16Analoginput = ADC1BUF0; // yes then get ADC value
-//////not used
-//		HAL_ADC_Start_DMA(&hadc1,(uint32_t *)&uhADCxConvertedValue,1);
-//		sAIInputs.i16Analoginput = uhADCxConvertedValue;
-//    /* we toggle the TxPDO Toggle after updating the data of the corresponding TxPDO */
-//    sAIInputs.bTxPDOToggle ^= 1;
-//
-//    /* we simulate a problem of the analog input, if the Switch4 is on in this example,
-//       in this case the TxPDO State has to set to indicate the problem to the master */
-//    if ( sDIInputs.bSwitch4 )
-//        sAIInputs.bTxPDOState = 1;
-//    else
-//        sAIInputs.bTxPDOState = 0;
+    UINT16 *InfoIn1PTR = sDIInputs.InfoIn;
+    UINT16 *DataIn1PTR = sDIInputs.DataIn1;
+    UINT16 *DataIn2PTR = sDIInputs.DataIn2;
+    UINT16 *DataIn3PTR = sDIInputs.DataIn3;
+    UINT16 *DataIn4PTR = sDIInputs.DataIn4;
+    UINT16 *DataIn5PTR = sDIInputs.DataIn5;
+    UINT16 *DataIn6PTR = sDIInputs.DataIn6;
+    UINT16 *DataIn7PTR = sDIInputs.DataIn7;
+    UINT16 *DataIn8PTR = sDIInputs.DataIn8;
+    UINT16 *DataIn9PTR = sDIInputs.DataIn9;
+    UINT16 *DataIn10PTR = sDIInputs.DataIn10;
+    UINT16 *DataIn11PTR = sDIInputs.DataIn11;
+    UINT16 *DataIn12PTR = sDIInputs.DataIn12;
+
+    UINT16 *InfoOutPTR = sDOOutputs.InfoOut;
+    UINT16 *DataOut1PTR = sDOOutputs.DataOut1;
+    UINT16 *DataOut2PTR = sDOOutputs.DataOut2;
+    UINT16 *DataOut3PTR = sDOOutputs.DataOut3;
+    UINT16 *DataOut4PTR = sDOOutputs.DataOut4;
+    UINT16 *DataOut5PTR = sDOOutputs.DataOut5;
+    UINT16 *DataOut6PTR = sDOOutputs.DataOut6;
+    UINT16 *DataOut7PTR = sDOOutputs.DataOut7;
+    UINT16 *DataOut8PTR = sDOOutputs.DataOut8;
+    UINT16 *DataOut9PTR = sDOOutputs.DataOut9;
+    UINT16 *DataOut10PTR = sDOOutputs.DataOut10;
+    UINT16 *DataOut11PTR = sDOOutputs.DataOut11;
+    UINT16 *DataOut12PTR = sDOOutputs.DataOut12;
+
+
+    memcpy(InfoIn1PTR, InfoOutPTR, sizeof(UINT16) * 8);
+    memcpy(DataIn1PTR, DataOut1PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn2PTR, DataOut2PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn3PTR, DataOut3PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn4PTR, DataOut4PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn5PTR, DataOut5PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn6PTR, DataOut6PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn7PTR, DataOut7PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn8PTR, DataOut8PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn9PTR, DataOut9PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn10PTR, DataOut10PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn11PTR, DataOut11PTR, sizeof(UINT16) * 8);
+    memcpy(DataIn12PTR, DataOut12PTR, sizeof(UINT16) * 8);
+
+//    printf("InfoIN contents: \r\n");
+//    for (int i = 0; i < 8; i++) {
+//        printf("%x\r\n", sDIInputs.InfoIn[i]);
+//    }
+//    printf("InfoOut contents: \r\n");
+//    for (int i = 0; i < 8; i++) {
+//        printf("%x\r\n", sDOOutputs.InfoOut[i]);
+//    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -443,7 +525,7 @@ UINT8 ReadObject0x1802(UINT16 index, UINT8 subindex, UINT32 dataSize, UINT16 MBX
         //Reset Buffer
         *pu8Data = 0;
 
-        *pu8Data = sAIInputs.bTxPDOState;
+        //*pu8Data = sAIInputs.bTxPDOState;
     }
     else if (subindex == 9)
     {
@@ -453,7 +535,7 @@ UINT8 ReadObject0x1802(UINT16 index, UINT8 subindex, UINT32 dataSize, UINT16 MBX
         //Reset Buffer
         *pu8Data = 0;
 
-        *pu8Data = sAIInputs.bTxPDOToggle;
+        //*pu8Data = sAIInputs.bTxPDOToggle;
     }
     else
         return ABORTIDX_SUBINDEX_NOT_EXISTING;
@@ -475,17 +557,14 @@ int ECT_main(void)
     MainInit();
 
 
-
-
     HW_Release();
     return 0;
 }
-
-/** @} */
-GPIO_PinState GPIO_ChangeAuto(void)
+uint16_t GPIO_ChangeAuto(void)
 {
-    GPIO_PinState bitstatus;
+    uint16_t bitstatus;
     uint32_t curtime = HAL_GetTick();
-    bitstatus = curtime % 2;
+    bitstatus = (uint16_t) (curtime % 3);
+//    printf("bitstatus = %d\r\n",bitstatus);
     return bitstatus;
 }

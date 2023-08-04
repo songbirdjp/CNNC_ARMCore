@@ -15,7 +15,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-addr2line.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-addr2line.exe"
 		},
 		{
 			"name" : "CMAKE_ASM_COMPILER_AR",
@@ -31,7 +31,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc-ar.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-gcc-ar.exe"
 		},
 		{
 			"name" : "CMAKE_ASM_COMPILER_RANLIB",
@@ -47,7 +47,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc-ranlib.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-gcc-ranlib.exe"
 		},
 		{
 			"name" : "CMAKE_ASM_COMPILER_WORKS",
@@ -163,7 +163,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug"
+			"value" : "e:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI/cmake-build-debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -286,22 +286,6 @@
 			"value" : "C:/Program Files/JetBrains/CLion 2023.1.1/bin/cmake/win/x64/bin/ctest.exe"
 		},
 		{
-			"name" : "CMAKE_CXX_COMPILER",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "CXX compiler"
-				}
-			],
-			"type" : "STRING",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-g++.exe"
-		},
-		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
 			"properties" : 
 			[
@@ -315,7 +299,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc-ar.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-gcc-ar.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_RANLIB",
@@ -331,7 +315,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc-ranlib.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-gcc-ranlib.exe"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS",
@@ -414,22 +398,6 @@
 			"value" : "-O2 -g -DNDEBUG"
 		},
 		{
-			"name" : "CMAKE_C_COMPILER",
-			"properties" : 
-			[
-				{
-					"name" : "ADVANCED",
-					"value" : "1"
-				},
-				{
-					"name" : "HELPSTRING",
-					"value" : "C compiler"
-				}
-			],
-			"type" : "STRING",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc.exe"
-		},
-		{
 			"name" : "CMAKE_C_COMPILER_AR",
 			"properties" : 
 			[
@@ -443,7 +411,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc-ar.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-gcc-ar.exe"
 		},
 		{
 			"name" : "CMAKE_C_COMPILER_RANLIB",
@@ -459,7 +427,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-gcc-ranlib.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-gcc-ranlib.exe"
 		},
 		{
 			"name" : "CMAKE_C_FLAGS",
@@ -683,7 +651,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:\\cliontools\\gcc-arm-none-eabi-10.3-2021.10\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include/c++/10.3.1;c:\\cliontools\\gcc-arm-none-eabi-10.3-2021.10\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include/c++/10.3.1/arm-none-eabi;c:\\cliontools\\gcc-arm-none-eabi-10.3-2021.10\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include/c++/10.3.1/backward;c:\\cliontools\\gcc-arm-none-eabi-10.3-2021.10\\bin\\../lib/gcc/arm-none-eabi/10.3.1/include;c:\\cliontools\\gcc-arm-none-eabi-10.3-2021.10\\bin\\../lib/gcc/arm-none-eabi/10.3.1/include-fixed;c:\\cliontools\\gcc-arm-none-eabi-10.3-2021.10\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include"
+			"value" : "c:\\clionplugin\\gcc\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include/c++/10.3.1;c:\\clionplugin\\gcc\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include/c++/10.3.1/arm-none-eabi;c:\\clionplugin\\gcc\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include/c++/10.3.1/backward;c:\\clionplugin\\gcc\\bin\\../lib/gcc/arm-none-eabi/10.3.1/include;c:\\clionplugin\\gcc\\bin\\../lib/gcc/arm-none-eabi/10.3.1/include-fixed;c:\\clionplugin\\gcc\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include"
 		},
 		{
 			"name" : "CMAKE_EXTRA_GENERATOR_C_SYSTEM_DEFINED_MACROS",
@@ -707,7 +675,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "c:\\cliontools\\gcc-arm-none-eabi-10.3-2021.10\\bin\\../lib/gcc/arm-none-eabi/10.3.1/include;c:\\cliontools\\gcc-arm-none-eabi-10.3-2021.10\\bin\\../lib/gcc/arm-none-eabi/10.3.1/include-fixed;c:\\cliontools\\gcc-arm-none-eabi-10.3-2021.10\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include"
+			"value" : "c:\\clionplugin\\gcc\\bin\\../lib/gcc/arm-none-eabi/10.3.1/include;c:\\clionplugin\\gcc\\bin\\../lib/gcc/arm-none-eabi/10.3.1/include-fixed;c:\\clionplugin\\gcc\\bin\\../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/include"
 		},
 		{
 			"name" : "CMAKE_FIND_PACKAGE_REDIRECTS_DIR",
@@ -719,7 +687,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug/CMakeFiles/pkgRedirects"
+			"value" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI/cmake-build-debug/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -779,7 +747,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "C:/FW-ArmCore/ArmCoreV1_QSPI"
+			"value" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -807,7 +775,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-ld.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-ld.exe"
 		},
 		{
 			"name" : "CMAKE_MAKE_PROGRAM",
@@ -919,7 +887,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-nm.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-nm.exe"
 		},
 		{
 			"name" : "CMAKE_NUMBER_OF_MAKEFILES",
@@ -995,7 +963,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-ranlib.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-ranlib.exe"
 		},
 		{
 			"name" : "CMAKE_READELF",
@@ -1011,7 +979,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-readelf.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-readelf.exe"
 		},
 		{
 			"name" : "CMAKE_ROOT",
@@ -1231,7 +1199,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "C:/ClionTools/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-strip.exe"
+			"value" : "C:/CLIONPLUGIN/gcc/bin/arm-none-eabi-strip.exe"
 		},
 		{
 			"name" : "CMAKE_VERBOSE_MAKEFILE",
@@ -1259,7 +1227,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug"
+			"value" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI/cmake-build-debug"
 		},
 		{
 			"name" : "ETHERCAT_CNNCPM_IS_TOP_LEVEL",
@@ -1283,7 +1251,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "C:/FW-ArmCore/ArmCoreV1_QSPI"
+			"value" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI"
 		},
 		{
 			"name" : "ProcessorCount_cmd_getconf",

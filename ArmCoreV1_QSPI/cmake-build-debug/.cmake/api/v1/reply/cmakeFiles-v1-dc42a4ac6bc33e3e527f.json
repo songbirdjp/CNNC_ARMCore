@@ -1207,8 +1207,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "C:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug",
-		"source" : "C:/FW-ArmCore/ArmCoreV1_QSPI"
+		"build" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI/cmake-build-debug",
+		"source" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI"
 	},
 	"version" : 
 	{

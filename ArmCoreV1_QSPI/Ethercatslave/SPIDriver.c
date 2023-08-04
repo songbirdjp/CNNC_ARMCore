@@ -90,13 +90,13 @@ void Delay(UINT16 Count)
 
 void SPIWriteByte(uint8_t _data)
 {
-    printf("SPIWriteByte");
+//    printf("SPIWriteByte");
     OSPIWrite(_data);
 }
 
 uint8_t SPIReadByte()
 {
-    printf("SPIReadByte");
+//    printf("SPIReadByte");
     return OSPIRead();
 }
 
@@ -308,11 +308,11 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 
     /*get the UINT8 lenth for first read*/
     //Auto increment is supported in SPIO
-    param32_1.Val = SPIReadDWord(PRAM_READ_FIFO_REG);
-    nReadSpaceAvblCount--;
-    nBytePosition = (Address & 0x03);
-    nlength = (4 - nBytePosition) > Count ? Count : (4 - nBytePosition);
-    memcpy(ReadBuffer + i, &param32_1.v[nBytePosition], nlength);
+//    param32_1.Val = SPIReadDWord(PRAM_READ_FIFO_REG);
+//    nReadSpaceAvblCount--;
+//    nBytePosition = (Address & 0x03);
+//    nlength = (4 - nBytePosition) > Count ? Count : (4 - nBytePosition);
+//    memcpy(ReadBuffer + i, &param32_1.v[nBytePosition], nlength);
 //    Count -= nlength;
 //    i += nlength;
     if (Count > 0)
@@ -320,7 +320,7 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
         uint8_t tempBuff[Count];
         CSLOW();
         qspi_readBurstMode(PRAM_READ_FIFO_REG,tempBuff,Count);
-        memcpy((ReadBuffer+i) ,tempBuff,Count);
+        memcpy(ReadBuffer ,tempBuff,Count);
         nReadSpaceAvblCount = nReadSpaceAvblCount - Count / 4;//不一定用到
         CSHIGH();
         return;
@@ -360,6 +360,7 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 {
     uint8_t tempBuff[Count];
+    uint8_t testBuff[Count];
     UINT32_VAL param32_1 = {0};
     UINT8 i = 0, nlength, nBytePosition, nWrtSpcAvlCount;
 
@@ -402,19 +403,19 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 
     /*Write data to Write FIFO) */
     /*get the byte lenth for first read*/
-    nBytePosition = (Address & 0x03);
+//    nBytePosition = (Address & 0x03);
+//
+//    nlength = (4 - nBytePosition) > Count ? Count : (4 - nBytePosition);
+//
+//    param32_1.Val = 0;
+//    memcpy(&param32_1.v[nBytePosition], WriteBuffer + i, nlength);
+//
+//    SPIWriteDWord(PRAM_WRITE_FIFO_REG, param32_1.Val);
 
-    nlength = (4 - nBytePosition) > Count ? Count : (4 - nBytePosition);
-
-    param32_1.Val = 0;
-    memcpy(&param32_1.v[nBytePosition], WriteBuffer + i, nlength);
-
-    SPIWriteDWord(PRAM_WRITE_FIFO_REG, param32_1.Val);
-
-    nWrtSpcAvlCount--;
+//    nWrtSpcAvlCount--;
 //    Count -= nlength;
 //    i += nlength;
-
+    memcpy(testBuff, WriteBuffer , Count);
     //Auto increment mode
     CSLOW();
 
@@ -434,8 +435,8 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 //        Count -= nlength;
 //        nWrtSpcAvlCount--;
 //    }
-    memcpy(tempBuff, (WriteBuffer+i), nlength);
-    nWrtSpcAvlCount = nWrtSpcAvlCount - Count;
+    memcpy(tempBuff, WriteBuffer, Count);//change count from nlength
+//    nWrtSpcAvlCount = nWrtSpcAvlCount - Count;
     qspi_writeBurstMode(PRAM_WRITE_FIFO_REG,tempBuff,Count);
     CSHIGH();
     return;

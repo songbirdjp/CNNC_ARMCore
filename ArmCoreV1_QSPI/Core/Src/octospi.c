@@ -222,7 +222,7 @@ uint32_t lan9252_read_32(uint32_t address)
         else
         {
 
-            printf("HAL_OSPI_Receive error \n"); //test by yh
+//            printf("HAL_OSPI_Receive error \n"); //test by yh
             Error_Handler();
         }
 
@@ -231,7 +231,7 @@ uint32_t lan9252_read_32(uint32_t address)
     else
     {
 
-        printf("HAL_OSPI_ReceiveCMD err \n"); //test by yh
+//        printf("HAL_OSPI_ReceiveCMD err \n"); //test by yh
         Error_Handler();
     }
 

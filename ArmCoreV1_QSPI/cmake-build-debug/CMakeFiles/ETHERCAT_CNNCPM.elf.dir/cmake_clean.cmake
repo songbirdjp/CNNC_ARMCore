@@ -1,4 +1,6 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/RS485.c.obj"
+  "CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/RS485.c.obj.d"
   "CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/freertos.c.obj"
   "CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/freertos.c.obj.d"
   "CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/gpio.c.obj"

@@ -171,9 +171,13 @@ OBJCONST TOBJECT OBJMEM *  OBJ_GetObjectHandle( UINT16 index )
     while (pObjEntry!= NULL)
     {
         if (pObjEntry->Index == index)
+        {
+            printf("pObjEntry = 0x%x\r\n",pObjEntry);
             return pObjEntry;
+        }
         pObjEntry = (TOBJECT OBJMEM *) pObjEntry->pNext;
     }
+    printf("pObjEntry asfsafasgwegd\r\n");
     return 0;
 }
 

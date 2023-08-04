@@ -576,6 +576,7 @@ UINT16 COE_AddObjectToDic(TOBJECT OBJMEM * pNewObjEntry)
             ObjDicList = pNewObjEntry;
             ObjDicList->pNext = NULL;
             ObjDicList->pPrev = NULL;
+//            printf("COE_AddObjectToDic111111111111\r\n");
             return 0;
         }
         else if(ObjDicList->Index > pNewObjEntry->Index)
@@ -585,6 +586,7 @@ UINT16 COE_AddObjectToDic(TOBJECT OBJMEM * pNewObjEntry)
             pNewObjEntry->pNext = ObjDicList;
             ObjDicList->pPrev = pNewObjEntry;
             ObjDicList = pNewObjEntry;
+//            printf("COE_AddObjectToDic22222222222222222221\r\n");
             return 0;
         }
         else
@@ -606,7 +608,7 @@ UINT16 COE_AddObjectToDic(TOBJECT OBJMEM * pNewObjEntry)
                         pDicEntry->pPrev->pNext = pNewObjEntry;
 
                     pDicEntry->pPrev = pNewObjEntry;
-
+//                    printf("COE_AddObjectToDic333333333333333\r\n");
                     return 0;
                 }
                 else if(pDicEntry->pNext == NULL)
@@ -615,11 +617,13 @@ UINT16 COE_AddObjectToDic(TOBJECT OBJMEM * pNewObjEntry)
                     pDicEntry->pNext = pNewObjEntry;
                     pNewObjEntry->pPrev = pDicEntry;
                     pNewObjEntry->pNext = NULL;
+//                    printf("COE_AddObjectToDic444444444444444444111\r\n");
                     return 0;
                 }
                 else
                 {
                     /*The new object index is smaller than the current index. Get next object handle.*/
+//                    printf("COE_AddObjectToDic5555555555551\r\n");
                     pDicEntry = pDicEntry->pNext;
                 }
             }
@@ -716,12 +720,14 @@ UINT16 COE_ObjDictionaryInit(void)
     ObjDicList = NULL;
 
     result = AddObjectsToObjDictionary((TOBJECT OBJMEM *) GenObjDic);
-
+//    printf("COE_ObjDictionaryIni1 = %x\r\n",result);
     if(result != 0)
         return result;
     if(ApplicationObjDic != NULL)
     {
+
         result = AddObjectsToObjDictionary((TOBJECT OBJMEM *) ApplicationObjDic);
+//        printf("COE_ObjDictionaryInit2 = %x\r\n",result);
     }
 
     return result;
