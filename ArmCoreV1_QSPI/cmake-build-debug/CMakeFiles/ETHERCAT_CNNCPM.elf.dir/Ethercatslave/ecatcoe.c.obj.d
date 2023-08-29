@@ -1,6 +1,6 @@
 CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Ethercatslave/ecatcoe.c.obj: \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Ethercatslave\ecatcoe.c \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Ethercatslave\ecat_def.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Ethercatslave\ecatcoe.c \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Ethercatslave\ecat_def.h \
  c:\clionplugin\gcc\arm-none-eabi\include\stdlib.h \
  c:\clionplugin\gcc\arm-none-eabi\include\machine\ieeefp.h \
  c:\clionplugin\gcc\arm-none-eabi\include\_ansi.h \
@@ -22,6 +22,6 @@ CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Ethercatslave/ecatcoe.c.obj: \
  c:\clionplugin\gcc\arm-none-eabi\include\sys\_locale.h \
  c:\clionplugin\gcc\arm-none-eabi\include\strings.h \
  c:\clionplugin\gcc\arm-none-eabi\include\sys\string.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Ethercatslave\sdoserv.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Ethercatslave\ecatcoe.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Ethercatslave\mailbox.h
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Ethercatslave\sdoserv.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Ethercatslave\ecatcoe.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Ethercatslave\mailbox.h

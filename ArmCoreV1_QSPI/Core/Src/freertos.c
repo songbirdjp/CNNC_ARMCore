@@ -22,13 +22,14 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-#include "udp.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ecat_def.h"
 #include "applInterface.h"
 #include "el9800hw.h"
 #include "el9800appl.h"
+#include "queue.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,16 +54,47 @@
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-        .name = "defaultTask",
-        .stack_size = 1024 * 4,
-        .priority = (osPriority_t) osPriorityNormal,
+  .name = "defaultTask",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for EthercatSlave */
 osThreadId_t EthercatSlaveHandle;
 const osThreadAttr_t EthercatSlave_attributes = {
-        .name = "EthercatSlave",
-        .stack_size = 1024 * 4,
-        .priority = (osPriority_t) osPriorityNormal1,
+  .name = "EthercatSlave",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for TCPClient */
+osThreadId_t TCPClientHandle;
+const osThreadAttr_t TCPClient_attributes = {
+  .name = "TCPClient",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for DataProcess */
+osThreadId_t DataProcessHandle;
+const osThreadAttr_t DataProcess_attributes = {
+  .name = "DataProcess",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal,
+};
+/* Definitions for Console */
+osThreadId_t ConsoleHandle;
+const osThreadAttr_t Console_attributes = {
+  .name = "Console",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for networkRecvQueue */
+osMessageQueueId_t networkRecvQueueHandle;
+const osMessageQueueAttr_t networkRecvQueue_attributes = {
+  .name = " networkRecvQueue"
+};
+/* Definitions for CmdQueue */
+osMessageQueueId_t CmdQueueHandle;
+const osMessageQueueAttr_t CmdQueue_attributes = {
+  .name = "CmdQueue"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,11 +103,12 @@ const osThreadAttr_t EthercatSlave_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
-
 void Ethercatfunc(void *argument);
+void TCPClientTask(void *argument);
+void DataProccessTask(void *argument);
+void StartConsoleTask(void *argument);
 
 extern void MX_LWIP_Init(void);
-
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
@@ -83,42 +116,57 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
   * @param  None
   * @retval None
   */
-void MX_FREERTOS_Init(void)
-{
-    /* USER CODE BEGIN Init */
+void MX_FREERTOS_Init(void) {
+  /* USER CODE BEGIN Init */
 
-    /* USER CODE END Init */
+  /* USER CODE END Init */
 
-    /* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
     /* add mutexes, ... */
-    /* USER CODE END RTOS_MUTEX */
+  /* USER CODE END RTOS_MUTEX */
 
-    /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
     /* add semaphores, ... */
-    /* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE END RTOS_SEMAPHORES */
 
-    /* USER CODE BEGIN RTOS_TIMERS */
+  /* USER CODE BEGIN RTOS_TIMERS */
     /* start timers, add new ones, ... */
-    /* USER CODE END RTOS_TIMERS */
+  /* USER CODE END RTOS_TIMERS */
 
-    /* USER CODE BEGIN RTOS_QUEUES */
+  /* Create the queue(s) */
+  /* creation of networkRecvQueue */
+   networkRecvQueueHandle = osMessageQueueNew (16, sizeof(uint16_t), & networkRecvQueue_attributes);
+
+  /* creation of CmdQueue */
+  CmdQueueHandle = osMessageQueueNew (16, sizeof(struct CmdMessage), &CmdQueue_attributes);
+
+  /* USER CODE BEGIN RTOS_QUEUES */
     /* add queues, ... */
-    /* USER CODE END RTOS_QUEUES */
+  /* USER CODE END RTOS_QUEUES */
 
-    /* Create the thread(s) */
-    /* creation of defaultTask */
-    defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-    /* creation of EthercatSlave */
-    EthercatSlaveHandle = osThreadNew(Ethercatfunc, NULL, &EthercatSlave_attributes);
+  /* creation of EthercatSlave */
+  EthercatSlaveHandle = osThreadNew(Ethercatfunc, NULL, &EthercatSlave_attributes);
 
-    /* USER CODE BEGIN RTOS_THREADS */
+  /* creation of TCPClient */
+  TCPClientHandle = osThreadNew(TCPClientTask, NULL, &TCPClient_attributes);
+
+  /* creation of DataProcess */
+  DataProcessHandle = osThreadNew(DataProccessTask, NULL, &DataProcess_attributes);
+
+  /* creation of Console */
+  ConsoleHandle = osThreadNew(StartConsoleTask, NULL, &Console_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
-    /* USER CODE END RTOS_THREADS */
+  /* USER CODE END RTOS_THREADS */
 
-    /* USER CODE BEGIN RTOS_EVENTS */
+  /* USER CODE BEGIN RTOS_EVENTS */
     /* add events, ... */
-    /* USER CODE END RTOS_EVENTS */
+  /* USER CODE END RTOS_EVENTS */
 
 }
 
@@ -131,12 +179,11 @@ void MX_FREERTOS_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
-    /* init code for LWIP */
-    //MX_LWIP_Init();
-    //UdpClientInit();
-    /* USER CODE BEGIN StartDefaultTask */
+  /* init code for LWIP */
+  MX_LWIP_Init();
+  /* USER CODE BEGIN StartDefaultTask */
     /* Infinite loop */
-    for (;;)
+    for(;;)
     {
 //        printf("InfoOut contents: \r\n");
 //        for (int i = 0; i < 8; i++)
@@ -176,7 +223,7 @@ void StartDefaultTask(void *argument)
 
         osDelay(100);
     }
-    /* USER CODE END StartDefaultTask */
+  /* USER CODE END StartDefaultTask */
 }
 
 /* USER CODE BEGIN Header_Ethercatfunc */
@@ -188,11 +235,11 @@ void StartDefaultTask(void *argument)
 /* USER CODE END Header_Ethercatfunc */
 void Ethercatfunc(void *argument)
 {
-    /* USER CODE BEGIN Ethercatfunc */
+  /* USER CODE BEGIN Ethercatfunc */
 
     MainInit();
     /* Infinite loop */
-    for (;;)
+    for(;;)
     {
 //        printf("Ethercat Mainloop running1\r\n");
         MainLoop();
@@ -200,7 +247,71 @@ void Ethercatfunc(void *argument)
         osDelay(1);//todo : if sth happened,check this delay
 
     }
-    /* USER CODE END Ethercatfunc */
+  /* USER CODE END Ethercatfunc */
+}
+
+/* USER CODE BEGIN Header_TCPClientTask */
+/**
+* @brief Function implementing the TCPClient thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_TCPClientTask */
+void TCPClientTask(void *argument)
+{
+  /* USER CODE BEGIN TCPClientTask */
+    /* Infinite loop */
+    for(;;)
+    {
+        osDelay(1);
+    }
+  /* USER CODE END TCPClientTask */
+}
+
+/* USER CODE BEGIN Header_DataProccessTask */
+/**
+* @brief Function implementing the DataProcess thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_DataProccessTask */
+void DataProccessTask(void *argument)
+{
+  /* USER CODE BEGIN DataProccessTask */
+    /* Infinite loop */
+    for(;;)
+    {
+        osDelay(1);
+    }
+  /* USER CODE END DataProccessTask */
+}
+
+/* USER CODE BEGIN Header_StartConsoleTask */
+/**
+* @brief Function implementing the Console thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartConsoleTask */
+void StartConsoleTask(void *argument)
+{
+  /* USER CODE BEGIN StartConsoleTask */
+    /* Infinite loop */
+    for(;;)
+    {
+#if UART_Control
+        if(uxQueueMessagesWaitingFromISR(CmdQueueHandle))
+        {
+            xQueueReceiveFromISR(CmdQueueHandle, &CmdMsg, 0);
+            //printf("CmdMsg.Cmd = %x,CmdMsg.Parameter = %x\r\n", CmdMsg.Cmd, CmdMsg.Parameter);
+            ExecuteConsoleCmd(CmdMsg.Cmd, CmdMsg.Parameter);
+        }
+#else
+        vTaskSuspend(ConsoleHandle);
+#endif
+        osDelay(1);
+    }
+  /* USER CODE END StartConsoleTask */
 }
 
 /* Private application code --------------------------------------------------*/

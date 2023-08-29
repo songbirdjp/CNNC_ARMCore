@@ -1,12 +1,12 @@
 CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.c.obj: \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart_ex.c \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Core\Inc/stm32h7xx_hal_conf.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_rcc.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_def.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\CMSIS\Device\ST\STM32H7xx\Include/stm32h7xx.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\CMSIS\Device\ST\STM32H7xx\Include/stm32h723xx.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\CMSIS\Include/core_cm7.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart_ex.c \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Core\Inc/stm32h7xx_hal_conf.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_rcc.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_def.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\CMSIS\Device\ST\STM32H7xx\Include/stm32h7xx.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\CMSIS\Device\ST\STM32H7xx\Include/stm32h723xx.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\CMSIS\Include/core_cm7.h \
  c:\clionplugin\gcc\lib\gcc\arm-none-eabi\10.3.1\include\stdint.h \
  c:\clionplugin\gcc\arm-none-eabi\include\stdint.h \
  c:\clionplugin\gcc\arm-none-eabi\include\machine\_default_types.h \
@@ -14,12 +14,12 @@ CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ha
  c:\clionplugin\gcc\arm-none-eabi\include\_newlib_version.h \
  c:\clionplugin\gcc\arm-none-eabi\include\sys\_intsup.h \
  c:\clionplugin\gcc\arm-none-eabi\include\sys\_stdint.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\CMSIS\Include/cmsis_version.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\CMSIS\Include/cmsis_compiler.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\CMSIS\Include/cmsis_gcc.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\CMSIS\Include/mpu_armv7.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\CMSIS\Device\ST\STM32H7xx\Include/system_stm32h7xx.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/Legacy/stm32_hal_legacy.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\CMSIS\Include/cmsis_version.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\CMSIS\Include/cmsis_compiler.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\CMSIS\Include/cmsis_gcc.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\CMSIS\Include/mpu_armv7.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\CMSIS\Device\ST\STM32H7xx\Include/system_stm32h7xx.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/Legacy/stm32_hal_legacy.h \
  c:\clionplugin\gcc\lib\gcc\arm-none-eabi\10.3.1\include\stddef.h \
  c:\clionplugin\gcc\arm-none-eabi\include\math.h \
  c:\clionplugin\gcc\arm-none-eabi\include\sys\reent.h \
@@ -32,25 +32,29 @@ CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ha
  c:\clionplugin\gcc\arm-none-eabi\include\sys\lock.h \
  c:\clionplugin\gcc\arm-none-eabi\include\sys\cdefs.h \
  c:\clionplugin\gcc\arm-none-eabi\include\_ansi.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_rcc_ex.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_gpio.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_gpio_ex.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_dma.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_dma_ex.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_mdma.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_eth.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_eth_ex.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_exti.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_cortex.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_flash.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_flash_ex.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_hsem.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_i2c.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_i2c_ex.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_ospi.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_pwr.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_pwr_ex.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_tim.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_tim_ex.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_uart.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_uart_ex.h
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_rcc_ex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_gpio.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_gpio_ex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_dma.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_dma_ex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_mdma.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_eth.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_eth_ex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_exti.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_cortex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_flash.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_flash_ex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_hsem.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_i2c.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_i2c_ex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_ospi.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_pwr.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_pwr_ex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_sdram.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_ll_fmc.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_spi.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_spi_ex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_tim.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_tim_ex.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_uart.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Drivers\STM32H7xx_HAL_Driver\Inc/stm32h7xx_hal_uart_ex.h

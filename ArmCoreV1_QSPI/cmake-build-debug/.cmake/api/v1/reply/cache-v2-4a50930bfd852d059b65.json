@@ -163,7 +163,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "e:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI/cmake-build-debug"
+			"value" : "e:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -687,7 +687,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI/cmake-build-debug/CMakeFiles/pkgRedirects"
+			"value" : "E:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug/CMakeFiles/pkgRedirects"
 		},
 		{
 			"name" : "CMAKE_GENERATOR",
@@ -747,7 +747,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI"
+			"value" : "E:/FW-ArmCore/ArmCoreV1_QSPI"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -1227,7 +1227,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI/cmake-build-debug"
+			"value" : "E:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug"
 		},
 		{
 			"name" : "ETHERCAT_CNNCPM_IS_TOP_LEVEL",
@@ -1251,7 +1251,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "E:/ArmCorev1ECAT104uint/ArmCoreV1_QSPI"
+			"value" : "E:/FW-ArmCore/ArmCoreV1_QSPI"
 		},
 		{
 			"name" : "ProcessorCount_cmd_getconf",

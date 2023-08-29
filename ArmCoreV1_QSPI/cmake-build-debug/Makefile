@@ -56,10 +56,10 @@ RM = "C:\Program Files\JetBrains\CLion 2023.1.1\bin\cmake\win\x64\bin\cmake.exe"
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI
+CMAKE_SOURCE_DIR = E:\FW-ArmCore\ArmCoreV1_QSPI
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\cmake-build-debug
+CMAKE_BINARY_DIR = E:\FW-ArmCore\ArmCoreV1_QSPI\cmake-build-debug
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -86,9 +86,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\cmake-build-debug\CMakeFiles E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\cmake-build-debug\\CMakeFiles\progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start E:\FW-ArmCore\ArmCoreV1_QSPI\cmake-build-debug\CMakeFiles E:\FW-ArmCore\ArmCoreV1_QSPI\cmake-build-debug\\CMakeFiles\progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\cmake-build-debug\CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start E:\FW-ArmCore\ArmCoreV1_QSPI\cmake-build-debug\CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -128,6 +128,30 @@ ETHERCAT_CNNCPM.elf/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/build
 .PHONY : ETHERCAT_CNNCPM.elf/fast
 
+Core/Src/Console.obj: Core/Src/Console.c.obj
+.PHONY : Core/Src/Console.obj
+
+# target to build an object file
+Core/Src/Console.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/Console.c.obj
+.PHONY : Core/Src/Console.c.obj
+
+Core/Src/Console.i: Core/Src/Console.c.i
+.PHONY : Core/Src/Console.i
+
+# target to preprocess a source file
+Core/Src/Console.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/Console.c.i
+.PHONY : Core/Src/Console.c.i
+
+Core/Src/Console.s: Core/Src/Console.c.s
+.PHONY : Core/Src/Console.s
+
+# target to generate assembly for a file
+Core/Src/Console.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/Console.c.s
+.PHONY : Core/Src/Console.c.s
+
 Core/Src/RS485.obj: Core/Src/RS485.c.obj
 .PHONY : Core/Src/RS485.obj
 
@@ -151,6 +175,30 @@ Core/Src/RS485.s: Core/Src/RS485.c.s
 Core/Src/RS485.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/RS485.c.s
 .PHONY : Core/Src/RS485.c.s
+
+Core/Src/fmc.obj: Core/Src/fmc.c.obj
+.PHONY : Core/Src/fmc.obj
+
+# target to build an object file
+Core/Src/fmc.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/fmc.c.obj
+.PHONY : Core/Src/fmc.c.obj
+
+Core/Src/fmc.i: Core/Src/fmc.c.i
+.PHONY : Core/Src/fmc.i
+
+# target to preprocess a source file
+Core/Src/fmc.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/fmc.c.i
+.PHONY : Core/Src/fmc.c.i
+
+Core/Src/fmc.s: Core/Src/fmc.c.s
+.PHONY : Core/Src/fmc.s
+
+# target to generate assembly for a file
+Core/Src/fmc.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/fmc.c.s
+.PHONY : Core/Src/fmc.c.s
 
 Core/Src/freertos.obj: Core/Src/freertos.c.obj
 .PHONY : Core/Src/freertos.obj
@@ -200,6 +248,30 @@ Core/Src/gpio.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/gpio.c.s
 .PHONY : Core/Src/gpio.c.s
 
+Core/Src/httpserver.obj: Core/Src/httpserver.c.obj
+.PHONY : Core/Src/httpserver.obj
+
+# target to build an object file
+Core/Src/httpserver.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/httpserver.c.obj
+.PHONY : Core/Src/httpserver.c.obj
+
+Core/Src/httpserver.i: Core/Src/httpserver.c.i
+.PHONY : Core/Src/httpserver.i
+
+# target to preprocess a source file
+Core/Src/httpserver.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/httpserver.c.i
+.PHONY : Core/Src/httpserver.c.i
+
+Core/Src/httpserver.s: Core/Src/httpserver.c.s
+.PHONY : Core/Src/httpserver.s
+
+# target to generate assembly for a file
+Core/Src/httpserver.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/httpserver.c.s
+.PHONY : Core/Src/httpserver.c.s
+
 Core/Src/main.obj: Core/Src/main.c.obj
 .PHONY : Core/Src/main.obj
 
@@ -223,6 +295,30 @@ Core/Src/main.s: Core/Src/main.c.s
 Core/Src/main.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/main.c.s
 .PHONY : Core/Src/main.c.s
+
+Core/Src/nonRealtimeDataProcess.obj: Core/Src/nonRealtimeDataProcess.c.obj
+.PHONY : Core/Src/nonRealtimeDataProcess.obj
+
+# target to build an object file
+Core/Src/nonRealtimeDataProcess.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/nonRealtimeDataProcess.c.obj
+.PHONY : Core/Src/nonRealtimeDataProcess.c.obj
+
+Core/Src/nonRealtimeDataProcess.i: Core/Src/nonRealtimeDataProcess.c.i
+.PHONY : Core/Src/nonRealtimeDataProcess.i
+
+# target to preprocess a source file
+Core/Src/nonRealtimeDataProcess.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/nonRealtimeDataProcess.c.i
+.PHONY : Core/Src/nonRealtimeDataProcess.c.i
+
+Core/Src/nonRealtimeDataProcess.s: Core/Src/nonRealtimeDataProcess.c.s
+.PHONY : Core/Src/nonRealtimeDataProcess.s
+
+# target to generate assembly for a file
+Core/Src/nonRealtimeDataProcess.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/nonRealtimeDataProcess.c.s
+.PHONY : Core/Src/nonRealtimeDataProcess.c.s
 
 Core/Src/octospi.obj: Core/Src/octospi.c.obj
 .PHONY : Core/Src/octospi.obj
@@ -271,6 +367,78 @@ Core/Src/retarget.s: Core/Src/retarget.c.s
 Core/Src/retarget.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/retarget.c.s
 .PHONY : Core/Src/retarget.c.s
+
+Core/Src/sdram_fmc_drv.obj: Core/Src/sdram_fmc_drv.c.obj
+.PHONY : Core/Src/sdram_fmc_drv.obj
+
+# target to build an object file
+Core/Src/sdram_fmc_drv.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/sdram_fmc_drv.c.obj
+.PHONY : Core/Src/sdram_fmc_drv.c.obj
+
+Core/Src/sdram_fmc_drv.i: Core/Src/sdram_fmc_drv.c.i
+.PHONY : Core/Src/sdram_fmc_drv.i
+
+# target to preprocess a source file
+Core/Src/sdram_fmc_drv.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/sdram_fmc_drv.c.i
+.PHONY : Core/Src/sdram_fmc_drv.c.i
+
+Core/Src/sdram_fmc_drv.s: Core/Src/sdram_fmc_drv.c.s
+.PHONY : Core/Src/sdram_fmc_drv.s
+
+# target to generate assembly for a file
+Core/Src/sdram_fmc_drv.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/sdram_fmc_drv.c.s
+.PHONY : Core/Src/sdram_fmc_drv.c.s
+
+Core/Src/socket.obj: Core/Src/socket.c.obj
+.PHONY : Core/Src/socket.obj
+
+# target to build an object file
+Core/Src/socket.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/socket.c.obj
+.PHONY : Core/Src/socket.c.obj
+
+Core/Src/socket.i: Core/Src/socket.c.i
+.PHONY : Core/Src/socket.i
+
+# target to preprocess a source file
+Core/Src/socket.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/socket.c.i
+.PHONY : Core/Src/socket.c.i
+
+Core/Src/socket.s: Core/Src/socket.c.s
+.PHONY : Core/Src/socket.s
+
+# target to generate assembly for a file
+Core/Src/socket.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/socket.c.s
+.PHONY : Core/Src/socket.c.s
+
+Core/Src/spi.obj: Core/Src/spi.c.obj
+.PHONY : Core/Src/spi.obj
+
+# target to build an object file
+Core/Src/spi.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/spi.c.obj
+.PHONY : Core/Src/spi.c.obj
+
+Core/Src/spi.i: Core/Src/spi.c.i
+.PHONY : Core/Src/spi.i
+
+# target to preprocess a source file
+Core/Src/spi.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/spi.c.i
+.PHONY : Core/Src/spi.c.i
+
+Core/Src/spi.s: Core/Src/spi.c.s
+.PHONY : Core/Src/spi.s
+
+# target to generate assembly for a file
+Core/Src/spi.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/spi.c.s
+.PHONY : Core/Src/spi.c.s
 
 Core/Src/stm32h7xx_hal_msp.obj: Core/Src/stm32h7xx_hal_msp.c.obj
 .PHONY : Core/Src/stm32h7xx_hal_msp.obj
@@ -487,6 +655,54 @@ Core/Src/usart.s: Core/Src/usart.c.s
 Core/Src/usart.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/usart.c.s
 .PHONY : Core/Src/usart.c.s
+
+Core/Src/w5500.obj: Core/Src/w5500.c.obj
+.PHONY : Core/Src/w5500.obj
+
+# target to build an object file
+Core/Src/w5500.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/w5500.c.obj
+.PHONY : Core/Src/w5500.c.obj
+
+Core/Src/w5500.i: Core/Src/w5500.c.i
+.PHONY : Core/Src/w5500.i
+
+# target to preprocess a source file
+Core/Src/w5500.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/w5500.c.i
+.PHONY : Core/Src/w5500.c.i
+
+Core/Src/w5500.s: Core/Src/w5500.c.s
+.PHONY : Core/Src/w5500.s
+
+# target to generate assembly for a file
+Core/Src/w5500.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/w5500.c.s
+.PHONY : Core/Src/w5500.c.s
+
+Core/Src/wizchip_conf.obj: Core/Src/wizchip_conf.c.obj
+.PHONY : Core/Src/wizchip_conf.obj
+
+# target to build an object file
+Core/Src/wizchip_conf.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/wizchip_conf.c.obj
+.PHONY : Core/Src/wizchip_conf.c.obj
+
+Core/Src/wizchip_conf.i: Core/Src/wizchip_conf.c.i
+.PHONY : Core/Src/wizchip_conf.i
+
+# target to preprocess a source file
+Core/Src/wizchip_conf.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/wizchip_conf.c.i
+.PHONY : Core/Src/wizchip_conf.c.i
+
+Core/Src/wizchip_conf.s: Core/Src/wizchip_conf.c.s
+.PHONY : Core/Src/wizchip_conf.s
+
+# target to generate assembly for a file
+Core/Src/wizchip_conf.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Core/Src/wizchip_conf.c.s
+.PHONY : Core/Src/wizchip_conf.c.s
 
 Core/Startup/startup_stm32h723zgtx.obj: Core/Startup/startup_stm32h723zgtx.s.obj
 .PHONY : Core/Startup/startup_stm32h723zgtx.obj
@@ -976,6 +1192,78 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.c.s
 .PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.c.s
 
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.obj: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.obj
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.obj
+
+# target to build an object file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.obj
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.obj
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.i: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.i
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.i
+
+# target to preprocess a source file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.i
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.i
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.s: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.s
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.s
+
+# target to generate assembly for a file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.s
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.c.s
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.obj: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.obj
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.obj
+
+# target to build an object file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.obj
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.obj
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.i: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.i
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.i
+
+# target to preprocess a source file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.i
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.i
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.s: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.s
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.s
+
+# target to generate assembly for a file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.s
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c.s
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.obj: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.obj
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.obj
+
+# target to build an object file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.obj
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.obj
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.i: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.i
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.i
+
+# target to preprocess a source file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.i
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.i
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.s: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.s
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.s
+
+# target to generate assembly for a file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.s
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c.s
+
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.obj: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.c.obj
 .PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.obj
 
@@ -1071,6 +1359,30 @@ Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.s: Drivers/STM32H7xx_HAL_
 Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.c.s
 .PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.c.s
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.obj: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.obj
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.obj
+
+# target to build an object file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.obj
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.obj
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.i: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.i
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.i
+
+# target to preprocess a source file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.i
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.i
+
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.s: Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.s
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.s
+
+# target to generate assembly for a file
+Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\ETHERCAT_CNNCPM.elf.dir\build.make CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.s
+.PHONY : Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.c.s
 
 Ethercatslave/SPIDriver.obj: Ethercatslave/SPIDriver.c.obj
 .PHONY : Ethercatslave/SPIDriver.obj
@@ -3553,24 +3865,45 @@ help:
 	@echo ... edit_cache
 	@echo ... rebuild_cache
 	@echo ... ETHERCAT_CNNCPM.elf
+	@echo ... Core/Src/Console.obj
+	@echo ... Core/Src/Console.i
+	@echo ... Core/Src/Console.s
 	@echo ... Core/Src/RS485.obj
 	@echo ... Core/Src/RS485.i
 	@echo ... Core/Src/RS485.s
+	@echo ... Core/Src/fmc.obj
+	@echo ... Core/Src/fmc.i
+	@echo ... Core/Src/fmc.s
 	@echo ... Core/Src/freertos.obj
 	@echo ... Core/Src/freertos.i
 	@echo ... Core/Src/freertos.s
 	@echo ... Core/Src/gpio.obj
 	@echo ... Core/Src/gpio.i
 	@echo ... Core/Src/gpio.s
+	@echo ... Core/Src/httpserver.obj
+	@echo ... Core/Src/httpserver.i
+	@echo ... Core/Src/httpserver.s
 	@echo ... Core/Src/main.obj
 	@echo ... Core/Src/main.i
 	@echo ... Core/Src/main.s
+	@echo ... Core/Src/nonRealtimeDataProcess.obj
+	@echo ... Core/Src/nonRealtimeDataProcess.i
+	@echo ... Core/Src/nonRealtimeDataProcess.s
 	@echo ... Core/Src/octospi.obj
 	@echo ... Core/Src/octospi.i
 	@echo ... Core/Src/octospi.s
 	@echo ... Core/Src/retarget.obj
 	@echo ... Core/Src/retarget.i
 	@echo ... Core/Src/retarget.s
+	@echo ... Core/Src/sdram_fmc_drv.obj
+	@echo ... Core/Src/sdram_fmc_drv.i
+	@echo ... Core/Src/sdram_fmc_drv.s
+	@echo ... Core/Src/socket.obj
+	@echo ... Core/Src/socket.i
+	@echo ... Core/Src/socket.s
+	@echo ... Core/Src/spi.obj
+	@echo ... Core/Src/spi.i
+	@echo ... Core/Src/spi.s
 	@echo ... Core/Src/stm32h7xx_hal_msp.obj
 	@echo ... Core/Src/stm32h7xx_hal_msp.i
 	@echo ... Core/Src/stm32h7xx_hal_msp.s
@@ -3598,6 +3931,12 @@ help:
 	@echo ... Core/Src/usart.obj
 	@echo ... Core/Src/usart.i
 	@echo ... Core/Src/usart.s
+	@echo ... Core/Src/w5500.obj
+	@echo ... Core/Src/w5500.i
+	@echo ... Core/Src/w5500.s
+	@echo ... Core/Src/wizchip_conf.obj
+	@echo ... Core/Src/wizchip_conf.i
+	@echo ... Core/Src/wizchip_conf.s
 	@echo ... Core/Startup/startup_stm32h723zgtx.obj
 	@echo ... Drivers/BSP/Components/lan8742/lan8742.obj
 	@echo ... Drivers/BSP/Components/lan8742/lan8742.i
@@ -3659,6 +3998,15 @@ help:
 	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.obj
 	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.i
 	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.s
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.obj
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.i
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sdram.s
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.obj
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.i
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.s
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.obj
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.i
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.s
 	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.obj
 	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.i
 	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.s
@@ -3671,6 +4019,9 @@ help:
 	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.obj
 	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.i
 	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_uart_ex.s
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.obj
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.i
+	@echo ... Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_ll_fmc.s
 	@echo ... Ethercatslave/SPIDriver.obj
 	@echo ... Ethercatslave/SPIDriver.i
 	@echo ... Ethercatslave/SPIDriver.s

@@ -1,5 +1,5 @@
 CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Middlewares/Third_Party/FreeRTOS/Source/event_groups.c.obj: \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\event_groups.c \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\event_groups.c \
  c:\clionplugin\gcc\arm-none-eabi\include\stdlib.h \
  c:\clionplugin\gcc\arm-none-eabi\include\machine\ieeefp.h \
  c:\clionplugin\gcc\arm-none-eabi\include\_ansi.h \
@@ -17,20 +17,20 @@ CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Middlewares/Third_Party/FreeRTOS/Source/event
  c:\clionplugin\gcc\arm-none-eabi\include\sys\cdefs.h \
  c:\clionplugin\gcc\arm-none-eabi\include\machine\stdlib.h \
  c:\clionplugin\gcc\arm-none-eabi\include\alloca.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/FreeRTOS.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/FreeRTOS.h \
  c:\clionplugin\gcc\lib\gcc\arm-none-eabi\10.3.1\include\stdint.h \
  c:\clionplugin\gcc\arm-none-eabi\include\stdint.h \
  c:\clionplugin\gcc\arm-none-eabi\include\sys\_intsup.h \
  c:\clionplugin\gcc\arm-none-eabi\include\sys\_stdint.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Core\Inc/FreeRTOSConfig.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/projdefs.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/portable.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/deprecated_definitions.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM4F/portmacro.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/mpu_wrappers.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/task.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/list.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/timers.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/task.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/event_groups.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/timers.h
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Core\Inc/FreeRTOSConfig.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/projdefs.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/portable.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/deprecated_definitions.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM4F/portmacro.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/mpu_wrappers.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/task.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/list.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/timers.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/task.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/event_groups.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/timers.h

@@ -1,5 +1,5 @@
 CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Middlewares/Third_Party/FreeRTOS/Source/stream_buffer.c.obj: \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\stream_buffer.c \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\stream_buffer.c \
  c:\clionplugin\gcc\lib\gcc\arm-none-eabi\10.3.1\include\stdint.h \
  c:\clionplugin\gcc\arm-none-eabi\include\stdint.h \
  c:\clionplugin\gcc\arm-none-eabi\include\machine\_default_types.h \
@@ -22,13 +22,13 @@ CMakeFiles/ETHERCAT_CNNCPM.elf.dir/Middlewares/Third_Party/FreeRTOS/Source/strea
  c:\clionplugin\gcc\arm-none-eabi\include\sys\_locale.h \
  c:\clionplugin\gcc\arm-none-eabi\include\strings.h \
  c:\clionplugin\gcc\arm-none-eabi\include\sys\string.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/FreeRTOS.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Core\Inc/FreeRTOSConfig.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/projdefs.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/portable.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/deprecated_definitions.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM4F/portmacro.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/mpu_wrappers.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/task.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/list.h \
- E:\ArmCorev1ECAT104uint\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/stream_buffer.h
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/FreeRTOS.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Core\Inc/FreeRTOSConfig.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/projdefs.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/portable.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/deprecated_definitions.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\portable\GCC\ARM_CM4F/portmacro.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/mpu_wrappers.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/task.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/list.h \
+ E:\FW-ArmCore\ArmCoreV1_QSPI\Middlewares\Third_Party\FreeRTOS\Source\include/stream_buffer.h

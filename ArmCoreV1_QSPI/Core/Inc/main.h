@@ -34,7 +34,10 @@ extern "C" {
 #include "retarget.h"
 #include "global.h"
 #include "octospi.h"
-
+#include "w5500.h"
+#include "spi.h"
+#include "httpserver.h"
+#include "nonRealtimeDataProcess.h"
 #include "el9800appl.h"
 
 /* USER CODE END Includes */
@@ -68,11 +71,17 @@ void Error_Handler(void);
 #define LAN9252SYNC0_Pin GPIO_PIN_13
 #define LAN9252SYNC0_GPIO_Port GPIOC
 #define LAN9252SYNC0_EXTI_IRQn EXTI15_10_IRQn
+#define W5500_INT_Pin GPIO_PIN_0
+#define W5500_INT_GPIO_Port GPIOB
 #define OSPI5_ncs_Pin GPIO_PIN_11
 #define OSPI5_ncs_GPIO_Port GPIOE
 #define LAN9252SYNC1_Pin GPIO_PIN_2
 #define LAN9252SYNC1_GPIO_Port GPIOD
 #define LAN9252SYNC1_EXTI_IRQn EXTI2_IRQn
+#define W5500_RST_Pin GPIO_PIN_3
+#define W5500_RST_GPIO_Port GPIOD
+#define SPI1_NCS_Pin GPIO_PIN_10
+#define SPI1_NCS_GPIO_Port GPIOG
 #define KEY1_Pin GPIO_PIN_12
 #define KEY1_GPIO_Port GPIOG
 #define KEY2_Pin GPIO_PIN_13
@@ -80,6 +89,39 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 void SystemClock_Config(void);
+#define CMD_HELP_MODE                   1
+#define CMD_CLEAR_MODE                  2
+#define CMD_STATE_MACHINE_MODE          3
+#define CMD_SEND_DATA_MODE              4
+#define CMD_RECV_DATA_MODE              5
+#define CMD_POSITION_MODE               6
+#define CMD_HOME_MODE                   20
+#define CMD_AUTO_MODE                   21
+#define CMD_META_DATA_MODE                 99
+
+#define StateMachineIdle                1
+#define StateMachineInit                2
+#define StateMachinePrepare             3
+#define StateMachineReady               4
+#define StateMachineServo               5
+#define StateMachineFault               6
+#define StateMachineShutDown            7
+
+#define SendEtherNetData                1
+#define SendEtherCATData                2
+
+
+struct CmdMessage
+{
+    uint16_t Cmd;
+    uint16_t Parameter;
+};//cjh add
+
+
+extern struct CmdMessage CmdMsg;//cjh add
+extern UINT16   state_setting;
+void ExecuteConsoleCmd(uint16_t _consoleCmd,uint16_t _consolePara);//cjh add
+void Entry2HelpMode(void);//cjh add
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
