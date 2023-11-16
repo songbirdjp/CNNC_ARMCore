@@ -927,8 +927,14 @@ void wizchip_gettimeout(wiz_NetTimeout *nettime)
     nettime->time_100us = getRTR();
 }
 
-wiz_NetInfo gWIZNETINFO = {.mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x72},
+wiz_NetInfo gWIZNETINFO = {
+#ifdef BANKA
+        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x72},
         .ip =  {192, 168, 10, 71},
+#else
+        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x71},
+        .ip =  {192, 168, 10, 72},
+#endif
         .sn =  {255, 255, 255, 0},
         .gw =  {192, 168, 0, 1},
         .dns = {180, 76, 76, 76},
@@ -960,6 +966,7 @@ void ChipParametersConfiguration(void)
             while (1);
         }
     } while (tmp == PHY_LINK_OFF);
+
 }
 
 //初始化网络参数 mac ip等
@@ -972,7 +979,7 @@ void NetworkParameterConfiguration(void)  //Intialize the network information to
     ctlnetwork(CN_GET_NETINFO, (void *) &tempINFO);
     ctlwizchip(CW_GET_ID, (void *) tmpstr);
   //  printf("set -- mac:0x%x.0x%x.0x%x.0x%x.0x%x.0x%x ip:%d.%d.%d.%d mask:%d.%d.%d.%d\r\n", gWIZNETINFO.mac[0], gWIZNETINFO.mac[1], gWIZNETINFO.mac[2], gWIZNETINFO.mac[3],gWIZNETINFO.mac[4], gWIZNETINFO.mac[5], gWIZNETINFO.ip[0], gWIZNETINFO.ip[1], gWIZNETINFO.ip[2], gWIZNETINFO.ip[3],gWIZNETINFO.sn[0], gWIZNETINFO.sn[1], gWIZNETINFO.sn[2], gWIZNETINFO.sn[3]);
-    printf("get -- mac:0x%x.0x%x.0x%x.0x%x.0x%x.0x%x ip:%d.%d.%d.%d mask:%d.%d.%d.%d\r\n", tempINFO.mac[0], tempINFO.mac[1], tempINFO.mac[2], tempINFO.mac[3],tempINFO.mac[4], tempINFO.mac[5],tempINFO.ip[0], tempINFO.ip[1], tempINFO.ip[2], tempINFO.ip[3],tempINFO.sn[0], tempINFO.sn[1], tempINFO.sn[2], tempINFO.sn[3]);
+    printf("get --ip:%d.%d.%d.%d\r\n", tempINFO.ip[0], tempINFO.ip[1], tempINFO.ip[2], tempINFO.ip[3]);
 }
 
 //W5500初始化
@@ -981,15 +988,10 @@ void W5500_ChipInit(void)
     printf("W5500_ChipInit\r\n");
     W5500_RESET();
 
-    reg_wizchip_cris_cbfunc(SPI_CrisEnter, SPI_CrisExit); //注册临界函数
+   // reg_wizchip_cris_cbfunc(SPI_CrisEnter, SPI_CrisExit); //注册临界函数
     reg_wizchip_cs_cbfunc(SPI_CS_Select, SPI_CS_Deselect); //注册SPI片选函数
     reg_wizchip_spi_cbfunc(SPI_ReadByte, SPI_WriteByte); //注册SPI读写函数
     ChipParametersConfiguration();//初始化芯片
-    /*   uint8_t  version= getVERSIONR();
-       for(;;){
-           printf("version is %d\r\n", version);
-           HAL_Delay(100);
-       }*/
 
     NetworkParameterConfiguration();//初始化网络参数配置 MAC IP等
 }
@@ -1014,6 +1016,7 @@ void SPI_CrisEnter(void)
     __set_PRIMASK(1);
 }
 
+
 void SPI_CrisExit(void)
 {
     __set_PRIMASK(0);
@@ -1031,20 +1034,20 @@ void SPI_CS_Deselect(void)
 
 void SPI1_CS_HIGH()
 {
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_10, GPIO_PIN_SET);
 }
 
 void SPI1_CS_LOW()
 {
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_10, GPIO_PIN_RESET);
 }
 
 void W5500_RST_High()
 {
-    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
 }
 
 void W5500_RST_Low()
 {
-    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_RESET);
 }

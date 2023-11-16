@@ -675,12 +675,12 @@ UINT16 MainInit(void)
     COE_ObjInit();
 //    printf("COE_ObjInit done ... \r\n");
 
-
     /*Timer initialization*/
     u16BusCycleCntMs = 0;
     StartTimerCnt = 0;
     bCycleTimeMeasurementStarted = FALSE;
-
+    ringb_init(&ringbufCtrl, recvRingBuf, RINGBUF_ITEM_NUM);
+    FPGA_ReadByteArray(dmaBuf, RECV_BUF_LEN);
     /*indicate that the slave stack initialization finished*/
     bInitFinished = TRUE;
 

@@ -4,22 +4,24 @@
 #include "retarget.h"
 #include "socket.h"
 #include "string.h"
-#include "stdbool.h"
 #include "stdlib.h"
-#include "cmsis_os.h"
-#include "httpserver.h"
+
+#define SOCK_TCPS        0
 
 uint8_t DstIP[4] = {192, 168, 10, 100};//while stm32 is tcp client
 uint16_t DstPort = 8000;
-
+uint8_t ret;
 TCP_DATA_t recvInfo;
-extern TCP_DATA_t RecvByUART;
+uint16_t *feedback, feedback16Len;
 uint32_t crtTick, oldTick;
-#define SOCK_TCPS        0
-#define RX_BUF_SIZE 512
+static uint16_t loop_cnt = 0;
 
-uint8_t rxBuffer[RX_BUF_SIZE];
-int _numbers[MAX_HTTPSEND_NUMBERS];
+void TCPFeedbackInit(void)
+{
+    feedback16Len = (3+sizeof(interlockFeedback)/2) + (3+sizeof(secondPosFeedback)/2);
+    feedback = (uint16_t*)pvPortMalloc(feedback16Len);
+    memset(feedback, 0, feedback16Len*2);
+}
 
 void do_tcpc(void)
 {
@@ -32,31 +34,42 @@ void do_tcpc(void)
             break;
         case SOCK_INIT:                      /*socket处于初始化状态*/
           //  printf("try to connect %d.%d.%d.%d: %d...\r\n", DstIP[0],DstIP[1],DstIP[2],DstIP[3],DstPort);
-            connect(0, DstIP, DstPort);/*socket连接服务器*/
-            //printf("CLIENT_SOCK_INIT\r\n");
+            ret = connect(0, DstIP, DstPort);/*socket连接服务器*/
+          //  printf("CLIENT_SOCK_INIT %d\r\n", ret);
             break;
         case SOCK_ESTABLISHED:               /*socket处于连接建立状态*/
             if (getSn_IR(0) & Sn_IR_CON)
             {
                 printf("socket0: Connected to %d.%d.%d.%d: %d...\r\n", DstIP[0],DstIP[1],DstIP[2],DstIP[3],DstPort);
                 setSn_IR(0, Sn_IR_CON);      /*清除接收中断标志位*/
+               // sendFB = 1;
             }
             recvInfo.Len = getSn_RX_RSR(0);            /*获取接收的数据长度*/
 
             if (recvInfo.Len > 0)  //接收到数据
             {
                // printf("socket0: Recv data %d bytes.\r\n", recvInfo.Len);
-             //   crtTick = xTaskGetTickCount();
-                printf("recv period = %d ms\r\n", (crtTick - oldTick)*portTICK_RATE_MS);
-             //   oldTick = crtTick;
-
+                //  oldTick = crtTick;
+             //   oldTick = xTaskGetTickCount();
                 recv(0, recvInfo.gDATABUF, recvInfo.Len);     /*接收来自Server的数据*/
-                osMessageQueuePut(networkRecvQueueHandle, &recvInfo, 0, 10);
+                ntrRecvParamAndPlan(&recvInfo);
+                sendFeedback();
+              //  crtTick = xTaskGetTickCount();
+             //   printf("%d ", (crtTick - oldTick)*portTICK_RATE_MS);
+                break;
             }
+
+            if((rtBeamData.planCmd == NO_USE) && (loop_cnt++ > 99))
+            {
+                sendFeedback();
+                loop_cnt = 0;
+            }
+         //   osDelay(10);
             break;
         case SOCK_CLOSE_WAIT:        /*socket处于等待关闭状态*/
             close(0);
-//            printf("SOCK_CLOSE_WAIT\r\n");
+          //  sendFB = 0;
+            printf("SOCK_CLOSE_WAIT\r\n");
             break;
     }
 }

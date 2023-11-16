@@ -17,11 +17,11 @@ typedef struct {
     uint16_t Len;
 }TCP_DATA_t;
 
-extern TCP_DATA_t recvInfo;
-extern TCP_DATA_t RecvByUART;
 extern int _numbers[MAX_HTTPSEND_NUMBERS];
+extern uint16_t *feedback, feedback16Len;
 
 void do_tcpc(void);
+void TCPFeedbackInit(void);
 void do_tcp_server(void);
 int parse_http_request(char *request);
 void SendHttpResponse_Get(int sn);

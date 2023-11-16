@@ -1429,7 +1429,6 @@ void SetALStatus(UINT8 alStatus, UINT16 alStatusCode)
         nAlStatus = alStatus;
     }
 
-
     if (alStatusCode != 0xFFFF)
     {
         Value = SWAPWORD(Value);

@@ -31,14 +31,16 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "retarget.h"
+//#include "retarget.h"
 #include "global.h"
 #include "octospi.h"
 #include "w5500.h"
 #include "spi.h"
 #include "httpserver.h"
 #include "nonRealtimeDataProcess.h"
+#include "fpga_rw.h"
 #include "el9800appl.h"
+#include "sdram_fmc_drv.h"
 
 /* USER CODE END Includes */
 
@@ -68,18 +70,27 @@ void Error_Handler(void);
 #define LAN9252_IRQ_Pin GPIO_PIN_3
 #define LAN9252_IRQ_GPIO_Port GPIOE
 #define LAN9252_IRQ_EXTI_IRQn EXTI3_IRQn
-#define LAN9252SYNC0_Pin GPIO_PIN_13
-#define LAN9252SYNC0_GPIO_Port GPIOC
-#define LAN9252SYNC0_EXTI_IRQn EXTI15_10_IRQn
-#define W5500_INT_Pin GPIO_PIN_0
-#define W5500_INT_GPIO_Port GPIOB
+#define CHIP_RUN_LED_Pin GPIO_PIN_1
+#define CHIP_RUN_LED_GPIO_Port GPIOC
 #define OSPI5_ncs_Pin GPIO_PIN_11
 #define OSPI5_ncs_GPIO_Port GPIOE
+#define SPI3_NCS_Pin GPIO_PIN_12
+#define SPI3_NCS_GPIO_Port GPIOD
+#define DriveBoardCtrl_Pin GPIO_PIN_13
+#define DriveBoardCtrl_GPIO_Port GPIOD
+#define CarrierServoSignal_Pin GPIO_PIN_3
+#define CarrierServoSignal_GPIO_Port GPIOG
 #define LAN9252SYNC1_Pin GPIO_PIN_2
 #define LAN9252SYNC1_GPIO_Port GPIOD
 #define LAN9252SYNC1_EXTI_IRQn EXTI2_IRQn
 #define W5500_RST_Pin GPIO_PIN_3
 #define W5500_RST_GPIO_Port GPIOD
+#define W5500_INT_Pin GPIO_PIN_4
+#define W5500_INT_GPIO_Port GPIOD
+#define WATCHDOG2_Pin GPIO_PIN_7
+#define WATCHDOG2_GPIO_Port GPIOD
+#define WATCHDOG1_Pin GPIO_PIN_9
+#define WATCHDOG1_GPIO_Port GPIOG
 #define SPI1_NCS_Pin GPIO_PIN_10
 #define SPI1_NCS_GPIO_Port GPIOG
 #define KEY1_Pin GPIO_PIN_12
@@ -110,6 +121,8 @@ void SystemClock_Config(void);
 #define SendEtherNetData                1
 #define SendEtherCATData                2
 
+//#define BANKA
+//#define TEST
 
 struct CmdMessage
 {

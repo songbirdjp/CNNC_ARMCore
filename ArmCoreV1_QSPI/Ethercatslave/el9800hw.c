@@ -801,7 +801,14 @@ void HW_EscWriteIsr(MEM_ADDR *pData, UINT16 Address, UINT16 Len)
 void  EscIsr(void)
 {
 //    printf("ESCIsr in \r\n");//test by yh
-    HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_10);
+    static uint32_t count = 0;
+    count++;
+    if ((count % 500) == 0)
+    {
+        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_2);
+    }
+
+
     HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
 
     PDI_Isr();
@@ -856,7 +863,7 @@ void  TimerIsr(void)
 //		LEDtus=!LEDtus;
         SYSruncon = 0;
 //		HAL_GPIO_WritePin(GPIOC,GPIO_PIN_14, LEDtus);
-        HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_9);
+        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
     }
 }
 

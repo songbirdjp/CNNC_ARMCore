@@ -1,4 +1,4 @@
-# Install script for directory: E:/FW-ArmCore/ArmCoreV1_QSPI
+# Install script for directory: D:/software backup/ArmCoreV1_QSPI_allCPFinish/ArmCoreV1_QSPI _carrier
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "E:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "D:/software backup/ArmCoreV1_QSPI_allCPFinish/ArmCoreV1_QSPI _carrier/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

@@ -28,7 +28,6 @@ V5.01 : Start file change log
 -----------------------------------------------------------------------------------------*/
 #include "ecatappl.h"
 
-
 /*-----------------------------------------------------------------------------------------
 ------
 ------    Defines and Typedef
@@ -930,6 +929,8 @@ TOBJECT    OBJMEM ApplicationObjDic[] = {
    {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL}};
 #endif    //#ifdef _OBJD_
 
+#define RINGBUF_ITEM_NUM   3
+
 PROTO void APPL_Application(void);
 
 PROTO void APPL_AckErrorInd(UINT16 stateTrans);
@@ -955,6 +956,13 @@ PROTO void APPL_OutputMapping(UINT16 *pData);
 PROTO int ECT_main(void);
 
 PROTO uint16_t GPIO_ChangeAuto(void);
+
+PROTO int ringb_init(RINGBUFFER * ringqp, uint8_t * array_ptr, uint8_t size);
+PROTO int ringb_push(RINGBUFFER * ringqp, uint8_t *data);
+
+PROTO uint8_t recvRingBuf[RECV_BUF_LEN*RINGBUF_ITEM_NUM];
+PROTO RINGBUFFER ringbufCtrl;
+PROTO uint8_t dmaBuf[RECV_BUF_LEN];
 
 #undef PROTO
 /** @}*/

@@ -55,29 +55,29 @@
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 1024 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for EthercatSlave */
 osThreadId_t EthercatSlaveHandle;
 const osThreadAttr_t EthercatSlave_attributes = {
   .name = "EthercatSlave",
-  .stack_size = 1024 * 4,
+  .stack_size = 4096 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for TCPClient */
 osThreadId_t TCPClientHandle;
 const osThreadAttr_t TCPClient_attributes = {
   .name = "TCPClient",
-  .stack_size = 1024 * 4,
+  .stack_size = 8192 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for DataProcess */
 osThreadId_t DataProcessHandle;
 const osThreadAttr_t DataProcess_attributes = {
   .name = "DataProcess",
-  .stack_size = 1024 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
+  .stack_size = 2048 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for Console */
 osThreadId_t ConsoleHandle;
@@ -85,11 +85,6 @@ const osThreadAttr_t Console_attributes = {
   .name = "Console",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for networkRecvQueue */
-osMessageQueueId_t networkRecvQueueHandle;
-const osMessageQueueAttr_t networkRecvQueue_attributes = {
-  .name = " networkRecvQueue"
 };
 /* Definitions for CmdQueue */
 osMessageQueueId_t CmdQueueHandle;
@@ -108,7 +103,6 @@ void TCPClientTask(void *argument);
 void DataProccessTask(void *argument);
 void StartConsoleTask(void *argument);
 
-extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
@@ -134,9 +128,6 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
-  /* creation of networkRecvQueue */
-   networkRecvQueueHandle = osMessageQueueNew (16, sizeof(uint16_t), & networkRecvQueue_attributes);
-
   /* creation of CmdQueue */
   CmdQueueHandle = osMessageQueueNew (16, sizeof(struct CmdMessage), &CmdQueue_attributes);
 
@@ -179,12 +170,13 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
-  /* init code for LWIP */
-  MX_LWIP_Init();
   /* USER CODE BEGIN StartDefaultTask */
+    osDelay(1000);//delay 1s
+    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_9, GPIO_PIN_SET);//watchdog signal 2
     /* Infinite loop */
     for(;;)
     {
+        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_7);//watchdog signal 1
 //        printf("InfoOut contents: \r\n");
 //        for (int i = 0; i < 8; i++)
 //        {
@@ -260,9 +252,13 @@ void Ethercatfunc(void *argument)
 void TCPClientTask(void *argument)
 {
   /* USER CODE BEGIN TCPClientTask */
+
+    W5500_ChipInit();
+    TCPFeedbackInit();
     /* Infinite loop */
     for(;;)
     {
+        do_tcpc();
         osDelay(1);
     }
   /* USER CODE END TCPClientTask */
@@ -278,10 +274,13 @@ void TCPClientTask(void *argument)
 void DataProccessTask(void *argument)
 {
   /* USER CODE BEGIN DataProccessTask */
+    nrtInit();
     /* Infinite loop */
+  //  osDelay(500);
     for(;;)
     {
-        osDelay(1);
+        nrtDataMainLoop();
+      //  osDelay(1);
     }
   /* USER CODE END DataProccessTask */
 }

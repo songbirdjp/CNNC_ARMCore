@@ -46,26 +46,27 @@ void SDRAM_Init(void)
     //所以,COUNT=64*1000*100/8192-20=761
     HAL_SDRAM_ProgramRefreshRate(&hsdram1,918);
 }
-#define BLOCK 128
+
 //SDRAM内存测试
+#define BLOCK 16*1024
 void fsmc_sdram_test(void)
 {
     uint32_t i=0;
-    uint16_t temp=0;
+    uint32_t temp=0;
     uint32_t sval=0;	//在地址0读到的数据
 
     //每隔16K字节,写入一个数据,总共写入2048个数据,刚好是32M字节
-    for(i=0;i<512;i+=BLOCK)
+    for(i=0;i<32*1024*1024;i+=BLOCK)
     {
-        *(__IO u_int16_t*)(SDRAM_BANK1_ADDR+i)=temp;
+        *(__IO u_int32_t*)(SDRAM_BANK1_ADDR+i)=temp;
         temp++;
     }
     //依次读出之前写入的数据,进行校验
-    for(i=0;i<512;i+=BLOCK)
+    for(i=0;i<32*1024*1024;i+=BLOCK)
     {
-        temp=*(__IO u_int16_t*)(SDRAM_BANK1_ADDR+i);
+        temp=*(__IO u_int32_t*)(SDRAM_BANK1_ADDR+i);
         if(i==0)sval=temp;
         else if(temp<=sval) break;//后面读出的数据一定要比第一次读到的数据大.
-        printf("SDRAM Capacity:%dBlock\r\n",(uint16_t)(temp-sval+1));//打印SDRAM容量
+        printf("SDRAM Capacity:%dKB\r\n",(uint16_t)(temp-sval+1)*16);//打印SDRAM容量
     }
 }
