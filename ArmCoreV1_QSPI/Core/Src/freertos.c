@@ -276,7 +276,7 @@ void DataProccessTask(void *argument)
   /* USER CODE BEGIN DataProccessTask */
     nrtInit();
     /* Infinite loop */
-  //  osDelay(500);
+   // osDelay(500);
     for(;;)
     {
         nrtDataMainLoop();

@@ -19,6 +19,7 @@ static uint32_t CrcTable[CRC_TABLE_SIZE];
 static uint32_t crcCal = 0xffffffff;
 static uint16_t lastPackIndex = 0;
 static __IO u_int8_t* pSDRAM;
+static __IO u_int8_t* pSDRAMCAL;
 RT_BEAM_DATA rtBeamData;
 INTERLOCK_FEEDBACK interlockFeedback;
 SECOND_POS_FEEDBACK secondPosFeedback;
@@ -36,6 +37,7 @@ void nrtInit(void)
 {
     InitCrc32Table();
     pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+    pSDRAMCAL = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
 #if 1
     for(uint8_t i = 0; i < TOTAL_FPGA_CMD_NUM; i++)
     {
@@ -234,8 +236,8 @@ void ntrRecvParamAndPlan(TCP_DATA_t* info)
                     4 + RT_SDRAM_PAYLOAD_LEN
                     * rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
             if (rtBeamData.totalBeam >= MAX_BEAM_NUM) printf("Warn: beam > 30, will not be sent to FPGA!\r\n");
-            printf("Beam %d transfer finish, size is %d, crc is %u\r\n",
-                   rtBeamData.totalBeam, rtBeamData.oneBeamSize[rtBeamData.totalBeam], crcInData);
+            printf("Beam %d transfer finish, size %ld, total RI %d\r\n",
+                   rtBeamData.totalBeam, rtBeamData.oneBeamSize[rtBeamData.totalBeam], rtBeamData.totalRIInBeam[rtBeamData.totalBeam]);
             calCarrierTrajectory();
 #if 0
             pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
@@ -305,6 +307,8 @@ void sendCPtoFPGA(uint16_t beamIndex, uint16_t RIIndex)
     pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
     pBeamData = pSDRAM;
 
+   // rtBeamData.totalBeam = 2;
+  //  rtBeamData.totalRIInBeam[1] = 0x704;
     if((beamIndex <= 0) || (beamIndex > rtBeamData.totalBeam) || (RIIndex <= 0) || (RIIndex > rtBeamData.totalRIInBeam[beamIndex]))
     {
         printf("Error: Invalid beam/RI index %d,%d,%d,%d\r\n",
@@ -334,14 +338,21 @@ void sendCPtoFPGA(uint16_t beamIndex, uint16_t RIIndex)
     memcpy(secondPosFeedback.leafSecondPos,  rtBeamData.rtPosUpload, 82*2);
     secondPosFeedback.carrierSecondPos = rtBeamData.rtPosUpload[82];
     memcpy(secondPosFeedback.jawSecondPos,  &rtBeamData.rtPosUpload[83], 2*2);
+
+  /*  makeSingleSendAry(24, pBeamData, 166, 1,1);
+    pBeamData += 166;
+    pBeamData += 4;//skip X/Y Jaw pos
+    makeSingleSendAry(24, pBeamData, 8, 0,1);//CP limit pos
+    for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  printf("%x ",sndCtrl.cmdSendBuf[i]);
+    printf("\r\n");*/
 #else
   //  makeSingleSendAry(24, pBeamData, RT_DOWNLOAD_PAYLOAD_LEN, 1);
     makeSingleSendAry(24, pBeamData, 166, 1,1);
     pBeamData += 166;
     pBeamData += 4;//skip X/Y Jaw pos
     makeSingleSendAry(24, pBeamData, 8, 0,1);//CP limit pos
-  //  for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  printf("%x ",sndCtrl.cmdSendBuf[i]);
-  //  printf("\r\n");
+   // for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  printf("%x ",sndCtrl.cmdSendBuf[i]);
+   // printf("\r\n");
 
     FPGA_WriteByteArray(sndCtrl.cmdSendBuf, MAX_CMD_DATA_SIZE);
 #endif
@@ -379,14 +390,18 @@ void calMaxMinPos(uint16_t *pos)
     carrierPosCal.carrierPosMaxH = (carMax&0xff00) >> 8;
 
     //  printf("%u %d ", max, possibleMin);
-   //   printf("c(Min:%u Max:%u)\r\n", carMin, carMax);
+    //  printf("c(Min:%u Max:%u)\r\n", carMin, carMax);
 }
 
 uint16_t rdCarrierPosFromSDRAM(uint16_t ri, bool type) //1: min pos 0: max pos
 {
     uint16_t pos;
-    pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
-    uint8_t *pBeamData = pSDRAM;
+    pSDRAMCAL = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+    uint8_t *pBeamData = pSDRAMCAL;
+    for(uint8_t i = 1; i < rtBeamData.totalBeam; i++)
+    {
+        pBeamData += rtBeamData.oneBeamSize[i];
+    }   //skip front beams
 
     pBeamData += 4;//totalRI + Beam index
     pBeamData += RT_SDRAM_PAYLOAD_LEN*(ri - 1);//nRI
@@ -398,26 +413,32 @@ uint16_t rdCarrierPosFromSDRAM(uint16_t ri, bool type) //1: min pos 0: max pos
     return pos;
 }
 
-void wrCarrierPos2SDRAM(uint16_t ri)
+void wrCarrierPos2SDRAM(uint16_t ri, uint16_t pos)
 {
-    pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
-    uint8_t *pBeamData = pSDRAM;
+    pSDRAMCAL = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+    uint8_t *pBeamData = pSDRAMCAL;
+    for(uint8_t i = 1; i < rtBeamData.totalBeam; i++)
+    {
+        pBeamData += rtBeamData.oneBeamSize[i];
+    }   //skip front beams
 
+    printf("sd %d %u\r\n",ri, pos);
     pBeamData += 4;//totalRI + Beam index
     pBeamData += RT_SDRAM_PAYLOAD_LEN*(ri - 1);//nRI
     pBeamData += 166;//skip RI + 82 leaf pos = 83*2B
-    *pBeamData++ = carrierPosCal.carrierPos[ri-1]&0x00ff;
-    *pBeamData = (carrierPosCal.carrierPos[ri-1]&0xff00) >> 8;
+    *pBeamData++ = pos&0x00ff;
+    *pBeamData = (pos&0xff00) >> 8;
 }
 
 #if 1
 uint16_t findSlowestPeriod(uint16_t changeSpeedRI, float_t farmostSpeed, uint16_t farmostRI,int8_t dir)
 {
-    uint16_t calRI = MAX_CP_IN_BEAM - changeSpeedRI, minSpeedRI = 0,i;
-    float_t speedArry[MAX_CP_IN_BEAM];//speedArry[calRI + 1];
+    uint16_t /*calRI = MAX_CP_IN_BEAM - changeSpeedRI,*/ minSpeedRI = 0,i,carrierPos;
+    uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
+    float_t speedArry[totalRI];//speedArry[calRI + 1];
     float_t startPos, middlePos;
 
-    for(i = changeSpeedRI; i <= MAX_CP_IN_BEAM; i++)
+    for(i = changeSpeedRI; i <= totalRI; i++)
     {
         if(i == changeSpeedRI)
         {
@@ -444,7 +465,8 @@ uint16_t findSlowestPeriod(uint16_t changeSpeedRI, float_t farmostSpeed, uint16_
             for( i = (changeSpeedRI+1); i <= minSpeedRI; i++)//calculate each pos between start and slowest loop
             {
                 startPos += dir*speedArry[minSpeedRI];
-                carrierPosCal.carrierPos[i] = (uint16_t)(startPos+0.5*dir);
+                carrierPos = (uint16_t)(startPos+0.5*dir);
+                wrCarrierPos2SDRAM(i,carrierPos);
               //  printf("slow %f carrierPosCal.carrierPos[%d]:%u\r\n", speedArry[minSpeedRI],i, carrierPosCal.carrierPos[i]);
             }
             return minSpeedRI;
@@ -473,7 +495,7 @@ uint16_t findSlowestPeriod(uint16_t changeSpeedRI, float_t farmostSpeed, uint16_
               printf("skip %d %u\r\n", i, middlePos0);//skip the speed not pass all previous periods
               break;
           }
-          carrierPosCal.carrierPos[i] = middlePos0;
+          wrCarrierPos2SDRAM(i,middlePos0);
           // printf("middle pos %d:%u\r\n", i, middlePos0);
         //  printf("fast %f carrierPosCal.carrierPos[%d]:%u\r\n", speed, i, carrierPosCal.carrierPos[i]);
       }
@@ -486,11 +508,12 @@ uint16_t calculateOneMovement(uint16_t startRI, int8_t dir)//calculate carrier p
     uint16_t changeSpeedRI = startRI;
     float_t startPosF, middlePosF;
     uint16_t middlePosMin,middlePosMax/*,startPosU, middlePosU*/;
-    uint16_t calRI = MAX_CP_IN_BEAM - startRI, maxSpeedRI,i,j;
-    float_t speedArry[MAX_CP_IN_BEAM], speedMax;
+    uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
+    uint16_t /*calRI = MAX_CP_IN_BEAM - startRI, */maxSpeedRI,i,j;
+    float_t speedArry[totalRI], speedMax;
     bool skipFlag = 0;
 
-    for(i = startRI; i <= MAX_CP_IN_BEAM; i++)  //find out the fastest period, and its speed should satisfy all previous period
+    for(i = startRI; i <= totalRI; i++)  //find out the fastest period, and its speed should satisfy all previous period
     {
         if(i == startRI)
         {
@@ -567,22 +590,25 @@ uint16_t calculateOneMovement(uint16_t startRI, int8_t dir)//calculate carrier p
 uint16_t findDirection(uint16_t startRI)
 {
     uint16_t intersectMin, minInterRI, intersectMax, maxInterRI,pauseRI,i;
-    uint16_t posMin, posMax;
+    uint16_t posMin, posMax, carrierPos;
+    uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
 
     intersectMin =  rdCarrierPosFromSDRAM(startRI, MIN);
     intersectMax =  rdCarrierPosFromSDRAM(startRI, MAX);
-    printf("start ri %d %u %u\r\n", startRI, intersectMin, intersectMax);
-    for(uint16_t ri = startRI; ri <= MAX_CP_IN_BEAM; ri++) {
+    printf("total ri %d start ri %d %u %u\r\n", totalRI, startRI, intersectMin, intersectMax);
+    for(uint16_t ri = startRI; ri <= totalRI; ri++) {
         //the first stage - find out the carrier prepare pos and fix move direction
         // we need to calculate public intersection, choose intersection edge as carrier prepare pos
-       // printf("first stage......\r\n");
+        //printf("%d ", ri);
         posMin =  rdCarrierPosFromSDRAM(ri, MIN);
         posMax =  rdCarrierPosFromSDRAM(ri, MAX);
         if (intersectMax < posMin)
         {
             //determine the init pos for the first stage, choose right edge which is closest
             //  carrierInitPos = intersectMax;
-            for (i = 0; i <= maxInterRI; i++) carrierPosCal.carrierPos[i] = intersectMax;
+            for (i = 1; i <= maxInterRI; i++){
+                wrCarrierPos2SDRAM(i, intersectMax);
+            }
             printf("Forward out-of-range ri %d min pos %u, start ri %d init pos %u\r\n", ri, posMin, maxInterRI, intersectMax);
             pauseRI = calculateOneMovement(maxInterRI, 1);//move forward, calculate next movement
             carrierPosCal.pausePos = rdCarrierPosFromSDRAM(pauseRI, MIN);
@@ -595,7 +621,9 @@ uint16_t findDirection(uint16_t startRI)
         } else if (intersectMin > posMax) {
             //choose left edge
             //  carrierInitPos = intersectMin;
-            for (i = 0; i <= minInterRI; i++) carrierPosCal.carrierPos[i] = intersectMin;
+            for (i = 1; i <= minInterRI; i++){
+                wrCarrierPos2SDRAM(i,intersectMin);
+            }
             printf("Backward out-of-range ri %d max pos %u, start ri %d init pos %u\r\n", ri, posMax, minInterRI, intersectMin);
             pauseRI = calculateOneMovement(minInterRI, -1);//move backward
             carrierPosCal.pausePos = rdCarrierPosFromSDRAM(pauseRI, MAX);
@@ -616,15 +644,16 @@ uint16_t findDirection(uint16_t startRI)
                 intersectMax = posMax;
                 maxInterRI = ri;
             }
-           // printf("%d (%u, %u)\r\n", ri, intersectMin, intersectMax);
+          //  printf("%d (%u, %u)\r\n", ri, intersectMin, intersectMax);
 
-            if (ri == MAX_CP_IN_BEAM) { //can't find no-intersection period
-                pauseRI = MAX_CP_IN_BEAM;
-                for (i = (startRI+ 1); i < MAX_CP_IN_BEAM; i++){
-                    carrierPosCal.carrierPos[i] = carrierPosCal.pausePos; //choose left edge of intersection as carrier init pos,maybe right?
-                   // printf("carrierPosCal.carrierPos[%d]:%u\r\n",i,carrierPosCal.carrierPos[i]);
+            if (ri == totalRI) { //can't find no-intersection period
+                pauseRI = totalRI;
+                for (i = startRI; i <= totalRI; i++){
+                    if(carrierPosCal.pausePos == 0) carrierPosCal.pausePos = intersectMin;
+                    wrCarrierPos2SDRAM(i,carrierPosCal.pausePos);
+                    // printf("carrierPos[%d]:%u\r\n",i,carrierPosCal.pausePos);
                 }
-                printf("can't find no-intersection period\r\n");
+                printf("can't find no-intersection period %u\r\n", carrierPosCal.pausePos);
             }
         }
     }
@@ -635,15 +664,21 @@ uint16_t findDirection(uint16_t startRI)
 
 void calCarrierTrajectory(void)
 {
-    pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
-    uint8_t *pBeamData = pSDRAM;
+    pSDRAMCAL = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+    uint8_t *pBeamData = pSDRAMCAL;
     uint16_t leafPos[80];
-    uint16_t startRI, pauseRI, i;
+    uint16_t startRI, pauseRI;
+    uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
   //  uint16_t point[MAX_CP_IN_BEAM]={7761, 14378,21133,28037,35100,42333,49748,57362};
-
+    memset(&carrierPosCal, 0, sizeof(carrierPosCal));
+    for(uint8_t i = 1; i < rtBeamData.totalBeam; i++)
+    {
+        pBeamData += rtBeamData.oneBeamSize[i];
+    }   //skip front beams
   //  printf("####%x %x#####\r\n", pBeamData[0],pBeamData[1]);
     pBeamData += 4; //totalRI + Beam index
-    for(uint16_t ri = 1; ri <= MAX_CP_IN_BEAM; ri++)
+  //  for(uint16_t ri = 1; ri <= MAX_CP_IN_BEAM; ri++)
+    for(uint16_t ri = 1; ri <= totalRI; ri++)
     {
         pBeamData += 4;//RI + 1st insert leaf
         memcpy(leafPos, pBeamData, 160); //copy out 80 leaf pos in RI
@@ -665,7 +700,7 @@ void calCarrierTrajectory(void)
         *pBeamData++ = carrierPosCal.carrierPosMaxH;//write carrier max to JAWY
         *pBeamData++ = carrierPosCal.carrierPosMaxL;
         pBeamData += 8;//CP lim pos(8B)
-        //   printf("[min:%u max:%u]\r\n",rdCarrierPosFromSDRAM(ri, MIN),rdCarrierPosFromSDRAM(ri, MAX));
+         //  printf("[min:%u max:%u]\r\n",rdCarrierPosFromSDRAM(ri, MIN),rdCarrierPosFromSDRAM(ri, MAX));
 #else
         pBeamData += RT_SAVE_PAYLOAD_LEN;
 #endif
@@ -675,15 +710,15 @@ void calCarrierTrajectory(void)
     do{
         pauseRI = findDirection(pauseRI);
     }
-    while(pauseRI != MAX_CP_IN_BEAM);
+    while(pauseRI != totalRI);
 
-    for(i = 1; i <=MAX_CP_IN_BEAM; i++) wrCarrierPos2SDRAM(i);
+   // for(i = 1; i <=totalRI; i++) wrCarrierPos2SDRAM(i);
     printf("carrier calculate finish!\r\n");
 #endif
 }
 //uint8_t aaaa[RT_DOWNLOAD_PAYLOAD_LEN];
 //uint8_t a;
-
+static bool calCarrierFlag0 = 1;
 void nrtDataMainLoop(void)
 {
   //  for(uint8_t i = 0; i < RT_DOWNLOAD_PAYLOAD_LEN; i++)    aaaa[i] = i;
@@ -691,16 +726,20 @@ void nrtDataMainLoop(void)
  //   makeSingleSendAry(24, aaaa, RT_DOWNLOAD_PAYLOAD_LEN, 1);
  //   FPGA_WriteByteArray(sndCtrl.cmdSendBuf, sndCtrl.singleSize[24]);
    // FPGA_WriteByteArray(sndCtrl.paramSendBuf, sndCtrl.singleSize[24]);
-    /*   if(calCarrierFlag){
+#if 0
+       if(calCarrierFlag0){
+           rtBeamData.totalBeam = 1;
+           rtBeamData.totalRIInBeam[rtBeamData.totalBeam] = 1501;
            calCarrierTrajectory();
-           calCarrierFlag = 0;
+           calCarrierFlag0 = 0;
        }
+
        else{
            rtBeamData.totalBeam = 1;
-           rtBeamData.totalRIInBeam[1] = MAX_CP_IN_BEAM;
-           sendCPtoFPGA(1, 10);
-       }*/
-
+           rtBeamData.totalRIInBeam[1] = 0x704;
+           sendCPtoFPGA(1, 1320);
+       }
+#endif
     if(rtBeamData.fsmState == FSM_IDLE)
     {
         if(rtBeamData.planCmd == CLOSE_PLAN)

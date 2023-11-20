@@ -56,10 +56,10 @@ RM = "C:\Program Files\JetBrains\CLion 2023.1.1\bin\cmake\win\x64\bin\cmake.exe"
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier"
+CMAKE_SOURCE_DIR = "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier_all"
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier\cmake-build-debug"
+CMAKE_BINARY_DIR = "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier_all\cmake-build-debug"
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -86,9 +86,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier\cmake-build-debug\CMakeFiles" "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier\cmake-build-debug\\CMakeFiles\progress.marks"
+	$(CMAKE_COMMAND) -E cmake_progress_start "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier_all\cmake-build-debug\CMakeFiles" "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier_all\cmake-build-debug\\CMakeFiles\progress.marks"
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier\cmake-build-debug\CMakeFiles" 0
+	$(CMAKE_COMMAND) -E cmake_progress_start "D:\software backup\ArmCoreV1_QSPI_allCPFinish\ArmCoreV1_QSPI _carrier_all\cmake-build-debug\CMakeFiles" 0
 .PHONY : all
 
 # The main clean target

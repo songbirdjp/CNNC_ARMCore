@@ -585,19 +585,20 @@ void APPL_Application(void)
         }
         oldPlanCmd = rtBeamData.planCmd;
     }
+
     if(((rtBeamData.fsmState == FSM_IDLE)||(rtBeamData.fsmState == FSM_SERVO))&&(rtBeamData.beamIndex > 0))
     {
       //  crtTick = HAL_GetTick();
        // printf("%d-", (crtTick - oldTick));
      //  oldTick = crtTick;
         if(oldBeamIndex != rtBeamData.beamIndex){
-         //   printf("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
+          //  printf("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
             sendCPtoFPGA(rtBeamData.beamIndex, rtBeamData.radiationIndex);
             oldRadiationIndex = rtBeamData.radiationIndex;
             oldBeamIndex = rtBeamData.beamIndex;
         }
         else if(oldRadiationIndex != rtBeamData.radiationIndex){
-         //   printf("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
+          //  printf("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
             sendCPtoFPGA(rtBeamData.beamIndex, rtBeamData.radiationIndex);
             oldRadiationIndex = rtBeamData.radiationIndex;
             oldBeamIndex = rtBeamData.beamIndex;

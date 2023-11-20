@@ -5,7 +5,7 @@
 #include "fpga_rw.h"
 
 #define MAX_BEAM_NUM    30
-#define MAX_CP_IN_BEAM 1501//max. 3601
+//#define MAX_CP_IN_BEAM 1501//max. 3601
 
 typedef struct {
     uint16_t frmTag;
@@ -62,7 +62,7 @@ typedef struct {
     uint8_t carrierPosMaxH;
     uint8_t carrierPosMinL;//[MAX_CP_IN_BEAM];
     uint8_t carrierPosMinH;
-    uint16_t carrierPos[MAX_CP_IN_BEAM];
+    uint16_t carrierPos;//[MAX_CP_IN_BEAM];
     uint16_t pausePos;
 }CARRIER_POS;
 
