@@ -5,7 +5,6 @@
 #include "fpga_rw.h"
 
 #define MAX_BEAM_NUM    30
-//#define MAX_CP_IN_BEAM 1501//max. 3601
 
 typedef struct {
     uint16_t frmTag;
@@ -65,6 +64,12 @@ typedef struct {
     uint16_t carrierPos;//[MAX_CP_IN_BEAM];
     uint16_t pausePos;
 }CARRIER_POS;
+
+typedef struct {
+    uint16_t ri;
+    float_t speed;
+    uint8_t retCode;
+}CARRIER_PERIOD_INFO;
 
 enum serverFsmStates {FSM_NOSTATE,FSM_INIT,FSM_IDLE,FSM_PREPARE,FSM_READY,FSM_SERVO,FSM_MANUAL,FSM_FAULT,FSM_SHUTDOWN};
 enum planCommand {NO_USE,SEND_PLAN,CLOSE_PLAN};

@@ -18,12 +18,12 @@
 static uint32_t CrcTable[CRC_TABLE_SIZE];
 static uint32_t crcCal = 0xffffffff;
 static uint16_t lastPackIndex = 0;
-static __IO u_int8_t* pSDRAM;
-static __IO u_int8_t* pSDRAMCAL;
+static __IO uint8_t* pSDRAM;
+static __IO uint8_t* pSDRAMCAL;
 RT_BEAM_DATA rtBeamData;
 INTERLOCK_FEEDBACK interlockFeedback;
 SECOND_POS_FEEDBACK secondPosFeedback;
-static bool calCarrierFlag = 0;
+//static bool calCarrierFlag = 0;
 static FRAME_HEAD frameHead;
 static FRAME_END frameEnd;
 
@@ -422,23 +422,58 @@ void wrCarrierPos2SDRAM(uint16_t ri, uint16_t pos)
         pBeamData += rtBeamData.oneBeamSize[i];
     }   //skip front beams
 
-    printf("sd %d %u\r\n",ri, pos);
+   // printf("sd %d %u\r\n",ri, pos);
     pBeamData += 4;//totalRI + Beam index
     pBeamData += RT_SDRAM_PAYLOAD_LEN*(ri - 1);//nRI
     pBeamData += 166;//skip RI + 82 leaf pos = 83*2B
     *pBeamData++ = pos&0x00ff;
     *pBeamData = (pos&0xff00) >> 8;
 }
-
 #if 1
-uint16_t findSlowestPeriod(uint16_t changeSpeedRI, float_t farmostSpeed, uint16_t farmostRI,int8_t dir)
+void calEachCarrierPosBtw(uint16_t changeSpeedRI, uint16_t farmostRI,int8_t dir)
+{
+    //  printf("==%d\r\n", i);
+    float_t startPos,middlePos;
+    float_t speed = 0;
+    uint16_t middlePosMin, middlePosMax, middlePos0,i;
+
+    if (dir > 0) {
+        startPos = (float_t)rdCarrierPosFromSDRAM(changeSpeedRI, MAX);
+        middlePos = (float_t) rdCarrierPosFromSDRAM(farmostRI, MIN);//calculate each pos between start and farmost loop
+        speed = (middlePos - startPos) / (float_t) (farmostRI - changeSpeedRI);
+    } else if (dir < 0) {
+        startPos = (float_t)rdCarrierPosFromSDRAM(changeSpeedRI, MIN);
+        middlePos = (float_t) rdCarrierPosFromSDRAM(farmostRI, MAX);
+        speed = (startPos - middlePos) / (float_t) (farmostRI - changeSpeedRI);
+    }
+
+    //  printf("%d - %d: %f %f %f\r\n", changeSpeedRI,farmostRI,speed,startPos,middlePos);
+    for (i = (changeSpeedRI + 1); i <= farmostRI; i++) {
+        startPos += dir * speed;
+        middlePos0 = (uint16_t) (startPos + 0.5 * dir);//rounding off
+        middlePosMin = rdCarrierPosFromSDRAM(i, MIN);
+        middlePosMax = rdCarrierPosFromSDRAM(i, MAX);
+        if ((middlePos0 < middlePosMin) || (middlePos0 > middlePosMax)) {
+            printf("skip %d %u\r\n", i, middlePos0);//skip the speed not pass all previous periods
+            break;
+        }
+        wrCarrierPos2SDRAM(i,middlePos0);
+        // printf("middle pos %d:%u\r\n", i, middlePos0);
+        //  printf("fast %f carrierPosCal.carrierPos[%d]:%u\r\n", speed, i, carrierPosCal.carrierPos[i]);
+    }
+}
+
+CARRIER_PERIOD_INFO findConstraintPos(uint16_t changeSpeedRI, float_t farmostSpeed, uint16_t farmostRI,int8_t dir)
 {
     uint16_t /*calRI = MAX_CP_IN_BEAM - changeSpeedRI,*/ minSpeedRI = 0,i,carrierPos;
-    uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
-    float_t speedArry[totalRI];//speedArry[calRI + 1];
+  //  uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
+    float_t speedArry[farmostRI];//speedArry[calRI + 1];
     float_t startPos, middlePos;
+    CARRIER_PERIOD_INFO slow;
 
-    for(i = changeSpeedRI; i <= totalRI; i++)
+  //  printf("start ri %d puase ri %d\r\n", changeSpeedRI,farmostRI);
+ //   for(i = changeSpeedRI; i <= totalRI; i++)
+    for(i = changeSpeedRI; i <= farmostRI; i++)
     {
         if(i == changeSpeedRI)
         {
@@ -457,8 +492,13 @@ uint16_t findSlowestPeriod(uint16_t changeSpeedRI, float_t farmostSpeed, uint16_
             middlePos = (float_t)rdCarrierPosFromSDRAM(i, MIN);
             speedArry[i] = (startPos - middlePos)/(float_t)(i - changeSpeedRI);//constraint
         }
-       // printf("speed %d: %f\r\n", i, speedArry[i]);
+     //   printf("speed %d: %f\r\n", i, speedArry[i]);
+        if(speedArry[i] < -1e-6){
+            slow.ri = i;
+            slow.retCode = 1;
 
+            return slow;
+        }
         if(( farmostSpeed - speedArry[i] ) > 1e-6)
         {
             minSpeedRI = i;
@@ -467,66 +507,44 @@ uint16_t findSlowestPeriod(uint16_t changeSpeedRI, float_t farmostSpeed, uint16_
                 startPos += dir*speedArry[minSpeedRI];
                 carrierPos = (uint16_t)(startPos+0.5*dir);
                 wrCarrierPos2SDRAM(i,carrierPos);
-              //  printf("slow %f carrierPosCal.carrierPos[%d]:%u\r\n", speedArry[minSpeedRI],i, carrierPosCal.carrierPos[i]);
+                printf("slow %f carrierPos[%d]:%u\r\n", speedArry[minSpeedRI],i, carrierPos);
             }
-            return minSpeedRI;
+
+            slow.ri = minSpeedRI;
+            slow.retCode = 2;
+            return slow;
         }
     }
-#if 1
-  //  printf("==%d\r\n", i);
-      float_t speed = 0;
-      uint16_t middlePosMin, middlePosMax, middlePos0;
 
-      if (dir > 0) {
-          middlePos = (float_t) rdCarrierPosFromSDRAM(farmostRI, MIN);
-          speed = (middlePos - startPos) / (float_t) (farmostRI - changeSpeedRI);
-      } else if (dir < 0) {
-          middlePos = (float_t) rdCarrierPosFromSDRAM(farmostRI, MAX);
-          speed = (startPos - middlePos) / (float_t) (farmostRI - changeSpeedRI);
-      }
-
-      //  printf("%d - %d: %f %f %f\r\n", changeSpeedRI,farmostRI,speed,startPos,middlePos);
-      for (i = (changeSpeedRI + 1); i <= farmostRI; i++) {
-          startPos += dir * speed;
-          middlePos0 = (uint16_t) (startPos + 0.5 * dir);//rounding off
-          middlePosMin = rdCarrierPosFromSDRAM(i, MIN);
-          middlePosMax = rdCarrierPosFromSDRAM(i, MAX);
-          if ((middlePos0 < middlePosMin) || (middlePos0 > middlePosMax)) {
-              printf("skip %d %u\r\n", i, middlePos0);//skip the speed not pass all previous periods
-              break;
-          }
-          wrCarrierPos2SDRAM(i,middlePos0);
-          // printf("middle pos %d:%u\r\n", i, middlePos0);
-        //  printf("fast %f carrierPosCal.carrierPos[%d]:%u\r\n", speed, i, carrierPosCal.carrierPos[i]);
-      }
-#endif
-      return 0;
+    slow.retCode = 3;
+    return slow;
 }
 
-uint16_t calculateOneMovement(uint16_t startRI, int8_t dir)//calculate carrier pos from start to pause
+CARRIER_PERIOD_INFO findFarmostPos(uint16_t startRI, uint16_t pauseRI, int8_t dir)
 {
-    uint16_t changeSpeedRI = startRI;
+    uint16_t i;
+   // uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.totalBeam],i;
     float_t startPosF, middlePosF;
-    uint16_t middlePosMin,middlePosMax/*,startPosU, middlePosU*/;
-    uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
-    uint16_t /*calRI = MAX_CP_IN_BEAM - startRI, */maxSpeedRI,i,j;
-    float_t speedArry[totalRI], speedMax;
-    bool skipFlag = 0;
+    float_t speedArry[pauseRI]/*, speedMax*/;
+    CARRIER_PERIOD_INFO fastest;
 
-    for(i = startRI; i <= totalRI; i++)  //find out the fastest period, and its speed should satisfy all previous period
+    for(i = startRI; i <= pauseRI; i++)  //find out the fastest period, and its speed should satisfy all previous period
     {
         if(i == startRI)
         {
             if(dir > 0){
                 startPosF = (float_t)rdCarrierPosFromSDRAM(i, MAX);
+                printf("startPosF: %f\r\n", startPosF);
             }
             else if(dir < 0){
                 startPosF = (float_t)rdCarrierPosFromSDRAM(i, MIN);
                 printf("startPosF: %f\r\n", startPosF);
             }
 
-            speedMax = 0;
-            maxSpeedRI = 1 + startRI;
+          //  speedMax = 0;
+          //  maxSpeedRI = 1 + startRI;
+            fastest.speed = 0;
+            fastest.ri = 1 + startRI;
             speedArry[0] = 0;
             continue;
         }
@@ -540,51 +558,50 @@ uint16_t calculateOneMovement(uint16_t startRI, int8_t dir)//calculate carrier p
             speedArry[i - startRI] = (startPosF - middlePosF)/(float_t)(i - startRI);//should reach
         }
 
-        if(( speedArry[i - startRI] - speedMax ) > 1e-6)
+        if(( speedArry[i - startRI] - fastest.speed ) > 1e-6)//find the farmost period in this direction
         {
-#if 0
-            uint16_t middleRI, middlePos;
-            printf("speed %d: %f\r\n", i, speedArry[i - startRI]);
-            for( j = 1; j <= i - startRI; j++)//calculate each pos between start and farmost loop
-            {
-                startPosF += dir*speedArry[i - startRI];
-                middleRI = startRI + j;
-                middlePos = (uint16_t)(startPosF+0.5);//rounding off
-             //   printf("middle pos %d:%u\r\n", middleRI, middlePos);
-                middlePosMin = rdCarrierPosFromSDRAM(middleRI, MIN);
-                middlePosMax = rdCarrierPosFromSDRAM(middleRI, MAX);
-                if((middlePos < middlePosMin) || (middlePos > middlePosMax))
-                {
-                    skipFlag = 1;//skip the speed not pass all previous periods
-                    break;
-                }
-            }
-            if(skipFlag){
-                skipFlag = 0;
-                speedMax = speedArry[i - startRI];
-                maxSpeedRI = i;
-                if(dir > 0) startPosF = (float_t)rdCarrierPosFromSDRAM(startRI, MAX);
-                else if(dir < 0) startPosF = (float_t)rdCarrierPosFromSDRAM(startRI, MIN);
-                printf("skip %d %f\r\n",i,speedMax);
-                continue;
-            }
-#endif
-            speedMax = speedArry[i - startRI];
-            maxSpeedRI = i;
-            if(dir > 0) startPosF = (float_t)rdCarrierPosFromSDRAM(startRI, MAX);
-            else if(dir < 0) startPosF = (float_t)rdCarrierPosFromSDRAM(startRI, MIN);
+            fastest.speed = speedArry[i - startRI];
+            fastest.ri = i;
+            printf("max speed %d: %f\r\n", fastest.ri, fastest.speed);
+          //  if(dir > 0) startPosF = (float_t)rdCarrierPosFromSDRAM(startRI, MAX);
+           // else if(dir < 0) startPosF = (float_t)rdCarrierPosFromSDRAM(startRI, MIN);
         }
     }
 
-#if 1
-    do{
-        changeSpeedRI = findSlowestPeriod(changeSpeedRI, speedMax,maxSpeedRI, dir);
-    }
-    while(changeSpeedRI != 0);
+    return fastest;
+}
 
-#endif
-    printf("maxSpeed %d: %f\r\n", maxSpeedRI, speedMax);
-    return maxSpeedRI;
+uint16_t calculateOneMovement(uint16_t startRI, int8_t dir)//calculate carrier pos from start to pause
+{
+    uint8_t state = 1;
+    CARRIER_PERIOD_INFO maxSpeedPeriod, constraintPeriod;
+    uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
+	//printf("startRI %d\r\n", startRI);
+    constraintPeriod.ri = startRI;
+    while(1)
+    {
+        switch(state)
+        {
+            case 1:
+				printf("step 1 ");
+                maxSpeedPeriod = findFarmostPos(startRI, totalRI, dir);
+                state = 2;
+                break;
+            case 2:
+				printf("step 2 ");
+                constraintPeriod =
+                        findConstraintPos(constraintPeriod.ri, maxSpeedPeriod.speed,maxSpeedPeriod.ri, dir);
+                state = constraintPeriod.retCode;
+                if(state == 1)  totalRI = constraintPeriod.ri;
+                break;
+            case 3:
+				printf("step 3 ");
+                calEachCarrierPosBtw(constraintPeriod.ri, maxSpeedPeriod.ri,dir);
+                printf("maxSpeed %d: %f\r\n", maxSpeedPeriod.ri, maxSpeedPeriod.speed);
+                return maxSpeedPeriod.ri;
+            default:break;
+        }
+    }
 }
 
 uint16_t findDirection(uint16_t startRI)
@@ -606,7 +623,7 @@ uint16_t findDirection(uint16_t startRI)
         {
             //determine the init pos for the first stage, choose right edge which is closest
             //  carrierInitPos = intersectMax;
-            for (i = 1; i <= maxInterRI; i++){
+            for (i = startRI; i <= maxInterRI; i++){
                 wrCarrierPos2SDRAM(i, intersectMax);
             }
             printf("Forward out-of-range ri %d min pos %u, start ri %d init pos %u\r\n", ri, posMin, maxInterRI, intersectMax);
@@ -621,7 +638,7 @@ uint16_t findDirection(uint16_t startRI)
         } else if (intersectMin > posMax) {
             //choose left edge
             //  carrierInitPos = intersectMin;
-            for (i = 1; i <= minInterRI; i++){
+            for (i = startRI; i <= minInterRI; i++){
                 wrCarrierPos2SDRAM(i,intersectMin);
             }
             printf("Backward out-of-range ri %d max pos %u, start ri %d init pos %u\r\n", ri, posMax, minInterRI, intersectMin);
@@ -629,10 +646,6 @@ uint16_t findDirection(uint16_t startRI)
             carrierPosCal.pausePos = rdCarrierPosFromSDRAM(pauseRI, MAX);
             printf("pause ri %d\r\n", pauseRI);
             break;
-//                    carrierNextStartPos = carrierPosCal.carrierPosMax[ri];
-//                    nextStartRI = ri;
-//                    printf("Backward find the first no-inter point: %d(%u,%u) init pos %u next pos %u\r\n",
-//                           ri,carrierPosCal.carrierPosMin[ri],carrierPosCal.carrierPosMax[ri],carrierInitPos,carrierNextStartPos);
         }else //calculate carrier pos intersection for each RI
         {
             if (intersectMin < posMin) {
@@ -653,7 +666,7 @@ uint16_t findDirection(uint16_t startRI)
                     wrCarrierPos2SDRAM(i,carrierPosCal.pausePos);
                     // printf("carrierPos[%d]:%u\r\n",i,carrierPosCal.pausePos);
                 }
-                printf("can't find no-intersection period %u\r\n", carrierPosCal.pausePos);
+                printf("can't find no-intersection period - prepare pos:%u\r\n", carrierPosCal.pausePos);
             }
         }
     }

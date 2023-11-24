@@ -76,7 +76,7 @@ const osThreadAttr_t TCPClient_attributes = {
 osThreadId_t DataProcessHandle;
 const osThreadAttr_t DataProcess_attributes = {
   .name = "DataProcess",
-  .stack_size = 2048 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for Console */

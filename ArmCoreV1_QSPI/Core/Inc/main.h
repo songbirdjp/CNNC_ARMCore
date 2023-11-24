@@ -121,7 +121,8 @@ void SystemClock_Config(void);
 #define SendEtherNetData                1
 #define SendEtherCATData                2
 
-//#define BANKA
+
+#define BANKA
 //#define TEST
 
 struct CmdMessage

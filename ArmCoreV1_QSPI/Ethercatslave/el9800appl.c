@@ -572,14 +572,14 @@ void APPL_Application(void)
         uint8_t newState = rtBeamData.fsmState;
         makeSingleSendAry(25, &newState, 1, 1,1);//0x50
         FPGA_WriteByteArray(sndCtrl.cmdSendBuf, sndCtrl.singleSize[25]);
-        oldState = rtBeamData.fsmState;
+        oldState = newState;
     }
     if(oldPlanCmd != rtBeamData.planCmd){
         printf("plan cmd: %d -> %d\r\n",oldPlanCmd,rtBeamData.planCmd);
         if(rtBeamData.planCmd == SEND_PLAN){//Plan send start
             oldBeamIndex = oldRadiationIndex = 0;
         }
-        if((rtBeamData.planCmd == NO_USE)&&(oldPlanCmd == SEND_PLAN)){ //Plan send finish
+        else if((rtBeamData.planCmd == NO_USE)&&(oldPlanCmd == SEND_PLAN)){ //Plan send finish
             secondPosFeedback.packIndexInOneBeam = 0;
             secondPosFeedback.errorCode = 0;
         }

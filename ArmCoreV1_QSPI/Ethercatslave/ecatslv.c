@@ -1523,7 +1523,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
     /* check the SYNCM settings depending on the state transition */
     switch ( stateTrans )
     {
-        printf("stateTrans = %x\r\n",stateTrans);
+      //  printf("stateTrans = %x\r\n",stateTrans);
     case INIT_2_PREOP:
     case OP_2_PREOP:
     case SAFEOP_2_PREOP:
