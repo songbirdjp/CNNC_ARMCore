@@ -1,3 +1,0 @@
-C:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-release/CMakeFiles/ETHERCAT_CNNCPM.elf.dir
-C:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-release/CMakeFiles/edit_cache.dir
-C:/FW-ArmCore/ArmCoreV1_QSPI/cmake-build-release/CMakeFiles/rebuild_cache.dir
