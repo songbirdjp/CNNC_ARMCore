@@ -1,9 +1,10 @@
 # 添加文件路径
 .idea/
 .vscode/
+/build/
 /cmake-build-debug/
 /cmake-build-release/
-
+/Debug/
 # 添加文件类型
 *.launch
 *.zip
