@@ -50,13 +50,35 @@ else ()
     add_compile_options(-Og -g)
 endif ()
 
-include_directories(Core/Inc Drivers/STM32H7xx_HAL_Driver/Inc Drivers/STM32H7xx_HAL_Driver/Inc/Legacy Drivers/CMSIS/Device/ST/STM32H7xx/Include Drivers/CMSIS/Include Middlewares/Third_Party/FreeRTOS/Source/include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F Ethercatslave)
+include_directories(
+    libraries/STM32H7xx_HAL_Driver/Inc 
+    libraries/STM32H7xx_HAL_Driver/Inc/Legacy 
+    libraries/CMSIS/Device/ST/STM32H7xx/Include 
+    libraries/CMSIS/Include 
+    rtos/Third_Party/FreeRTOS/Source/include 
+    rtos/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 
+    rtos/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F 
+    drivers/external_drivers/lan9252 
+    drivers/external_drivers/sdram 
+    drivers/external_drivers/w5500 
+    drivers/internal_drivers/dma 
+    drivers/internal_drivers/fmc 
+    drivers/internal_drivers/gpio 
+    drivers/internal_drivers/octospi 
+    drivers/internal_drivers/spi 
+    drivers/internal_drivers/timer 
+    drivers/internal_drivers/uart 
+    # components/cm_backtrace 
+    # components/finsh 
+    # components/ulog 
+    board/board_config/inc
+    application)
 
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32H723xx)
 
-file(GLOB_RECURSE SOURCES "Core/*.*" "Middlewares/*.*" "Drivers/*.*" "Ethercatslave/*.*")
+file(GLOB_RECURSE SOURCES "libraries/*.*" "rtos/*.*" "drivers/*.*" "components/*.*" "board/*.*" "application/*.*")
 
-set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32H723ZGTX_FLASH.ld)
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/board/linker_scripts/STM32H723ZGTX_FLASH.ld)
 
 add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map)
 add_link_options(-mcpu=cortex-m7 -mthumb -mthumb-interwork)

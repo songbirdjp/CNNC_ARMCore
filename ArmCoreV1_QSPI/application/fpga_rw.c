@@ -1,6 +1,6 @@
 #include "fpga_rw.h"
+#include "stm32h7xx_hal.h"
 #include "spi.h"
-#include "malloc.h"
 
 bool DMATransmitting = 0;
 SEND_CONTROL sndCtrl;

@@ -45,9 +45,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
  *******************************************************************************/
 
 #include "SPIDriver.h"
-#include "retarget.h"
-//#include "../Common/UserDataTypes.h"
-// "9252_HW.h"
 
 void Delay(UINT16 Count)
 {

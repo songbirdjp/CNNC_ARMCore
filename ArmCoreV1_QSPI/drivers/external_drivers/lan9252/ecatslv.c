@@ -172,7 +172,6 @@ V4.00 ECAT 7: The return values for the AL-StatusCode were changed to UINT16
 
 #define    _ECATSLV_    1
 #include "ecatslv.h"
-#include "retarget.h"
 #undef    _ECATSLV_
 /* ECATCHANGE_START(V5.11) ECAT10*/
 /*remove definition of _ECATSLV_ (#ifdef is used in ecatslv.h)*/

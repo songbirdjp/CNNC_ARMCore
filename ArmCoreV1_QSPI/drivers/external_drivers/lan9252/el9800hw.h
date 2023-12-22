@@ -25,7 +25,7 @@ V5.01 : Start file change log
 ------    Includes
 ------
 -----------------------------------------------------------------------------------------*/
-#include  "esc.h"
+#include "esc.h"
 #include "octospi.h"
 #include "stm32h7xx_hal.h"
 #include "stm32h7xx_hal_cortex.h"

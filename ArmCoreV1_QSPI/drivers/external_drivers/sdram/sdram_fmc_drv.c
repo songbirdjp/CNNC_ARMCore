@@ -1,5 +1,5 @@
-#include"fmc.h"
-#include"sdram_fmc_drv.h"
+#include "fmc.h"
+#include "sdram_fmc_drv.h"
 #include "core_cm7.h"
 
 uint8_t SDRAM_Send_Cmd(uint8_t bankx,uint8_t cmd,uint8_t refresh,uint16_t regval)
@@ -24,15 +24,15 @@ uint8_t SDRAM_Send_Cmd(uint8_t bankx,uint8_t cmd,uint8_t refresh,uint16_t regval
 void SDRAM_Init(void)
 {
     uint32_t temp=0;
-
     //SDRAM控制器初始化完成以后还需要按照如下顺序初始化SDRAM
-    SDRAM_Send_Cmd(0,FMC_SDRAM_CMD_CLK_ENABLE,1,0); //时钟配置使能
-    HAL_Delay(1);                                  //至少延时200us
+    SDRAM_Send_Cmd(0,FMC_SDRAM_CMD_CLK_ENABLE,1,0);//时钟配置使能
+    HAL_Delay(1);                                   //至少延时200us
     SDRAM_Send_Cmd(0,FMC_SDRAM_CMD_PALL,1,0);       //对所有存储区预充电
     SDRAM_Send_Cmd(0,FMC_SDRAM_CMD_AUTOREFRESH_MODE,8,0);//设置自刷新次数
     //配置模式寄存器,SDRAM的bit0~bit2为指定突发访问的长度，
     //bit3为指定突发访问的类型，bit4~bit6为CAS值，bit7和bit8为运行模式
     //bit9为指定的写突发模式，bit10和bit11位保留位
+    
     temp=(uint32_t)SDRAM_MODEREG_BURST_LENGTH_1          |	//设置突发长度:1(可以是1/2/4/8)
          SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL   |	//设置突发类型:连续(可以是连续/交错)
          SDRAM_MODEREG_CAS_LATENCY_2           |	//设置CAS值:3(可以是2/3)
@@ -58,13 +58,13 @@ void fsmc_sdram_test(void)
     //每隔16K字节,写入一个数据,总共写入2048个数据,刚好是32M字节
     for(i=0;i<32*1024*1024;i+=BLOCK)
     {
-        *(__IO u_int32_t*)(SDRAM_BANK1_ADDR+i)=temp;
+        *(__IO uint32_t*)(SDRAM_BANK1_ADDR+i)=temp;
         temp++;
     }
     //依次读出之前写入的数据,进行校验
     for(i=0;i<32*1024*1024;i+=BLOCK)
     {
-        temp=*(__IO u_int32_t*)(SDRAM_BANK1_ADDR+i);
+        temp=*(__IO uint32_t*)(SDRAM_BANK1_ADDR+i);
         if(i==0)sval=temp;
         else if(temp<=sval) break;//后面读出的数据一定要比第一次读到的数据大.
         printf("SDRAM Capacity:%dKB\r\n",(uint16_t)(temp-sval+1)*16);//打印SDRAM容量

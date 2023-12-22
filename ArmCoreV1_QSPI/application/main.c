@@ -115,6 +115,9 @@ int main(void)
     HW_Init();//EtherCAT Hardware Init
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);//leaf servo drive signal
     HAL_GPIO_WritePin(GPIOG, GPIO_PIN_3, GPIO_PIN_SET);//carrier servo drive signal
+
+    
+
     printf("Init ok\r\n");
   /* USER CODE END 2 */
 

@@ -36,8 +36,8 @@ void calCarrierTrajectory(void);
 void nrtInit(void)
 {
     InitCrc32Table();
-    pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
-    pSDRAMCAL = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+    pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
+    pSDRAMCAL = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
 #if 1
     for(uint8_t i = 0; i < TOTAL_FPGA_CMD_NUM; i++)
     {
@@ -240,7 +240,7 @@ void ntrRecvParamAndPlan(TCP_DATA_t* info)
                    rtBeamData.totalBeam, rtBeamData.oneBeamSize[rtBeamData.totalBeam], rtBeamData.totalRIInBeam[rtBeamData.totalBeam]);
             calCarrierTrajectory();
 #if 0
-            pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+            pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
             pBeamData = pSDRAM + 6;
             sndCtrl.pCrt = sndCtrl.paramSendBuf;
             makeSingleSendAry(24, pBeamData, RT_DOWNLOAD_PAYLOAD_LEN, 1);
@@ -304,7 +304,7 @@ void sendCPtoFPGA(uint16_t beamIndex, uint16_t RIIndex)
 {
     uint8_t *pBeamData;
 
-    pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+    pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     pBeamData = pSDRAM;
 
    // rtBeamData.totalBeam = 2;
@@ -396,7 +396,7 @@ void calMaxMinPos(uint16_t *pos)
 uint16_t rdCarrierPosFromSDRAM(uint16_t ri, bool type) //1: min pos 0: max pos
 {
     uint16_t pos;
-    pSDRAMCAL = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+    pSDRAMCAL = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     uint8_t *pBeamData = pSDRAMCAL;
     for(uint8_t i = 1; i < rtBeamData.totalBeam; i++)
     {
@@ -415,7 +415,7 @@ uint16_t rdCarrierPosFromSDRAM(uint16_t ri, bool type) //1: min pos 0: max pos
 
 void wrCarrierPos2SDRAM(uint16_t ri, uint16_t pos)
 {
-    pSDRAMCAL = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+    pSDRAMCAL = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     uint8_t *pBeamData = pSDRAMCAL;
     for(uint8_t i = 1; i < rtBeamData.totalBeam; i++)
     {
@@ -677,7 +677,7 @@ uint16_t findDirection(uint16_t startRI)
 
 void calCarrierTrajectory(void)
 {
-    pSDRAMCAL = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+    pSDRAMCAL = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     uint8_t *pBeamData = pSDRAMCAL;
     uint16_t leafPos[80];
     uint16_t startRI, pauseRI;
@@ -761,7 +761,7 @@ void nrtDataMainLoop(void)
          //   uint32_t crc;
 
             printf("Clear plan data!!!\r\n");
-            pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+            pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
             pBeamData = pSDRAM;
             for(uint8_t i = 1; i <= rtBeamData.totalBeam; i++){
                 memset(pBeamData, 0, rtBeamData.oneBeamSize[i]);
@@ -773,7 +773,7 @@ void nrtDataMainLoop(void)
             }
 
             rtBeamData.totalBeam = 0;
-            pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
+            pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
             memset(rtBeamData.totalRIInBeam, 0, MAX_BEAM_NUM);
             memset(rtBeamData.oneBeamSize, 0, MAX_BEAM_NUM);
         }

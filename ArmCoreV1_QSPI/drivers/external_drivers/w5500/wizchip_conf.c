@@ -53,7 +53,6 @@
 //
 #include "main.h"
 #include "wizchip_conf.h"
-#include "retarget.h"
 #include "socket.h"
 #include "string.h"
 #include "stdbool.h"

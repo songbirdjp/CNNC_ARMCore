@@ -22,7 +22,6 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
-#include "retarget.h"
 //#include "LAN9252.h"
 #include "ecatappl.h"
 /* USER CODE END 0 */

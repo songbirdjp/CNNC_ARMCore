@@ -132,7 +132,6 @@ V4.07 ECAT 1: The sources for SPI and MCI were merged (in ecat_def.h<br>
 /* ECATCHANGE_END(V5.11) ECAT10*/
 
 #include "ecatcoe.h"
-#include "retarget.h"
 
 /*--------------------------------------------------------------------------------------
 ------
