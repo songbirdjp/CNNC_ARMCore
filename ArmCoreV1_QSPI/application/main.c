@@ -34,6 +34,7 @@
 #include "applInterface.h"
 #include "cm_backtrace.h"
 #include "ulog.h"
+#include "finsh.h"
 //#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
@@ -124,6 +125,10 @@ int main(void)
 
     ulog_init(ULOG_DEBUG_LEVEL);
     
+#ifdef RT_USING_FINSH
+    finsh_system_init();
+#endif
+
     LOG_I("Init ok\r\n");
   /* USER CODE END 2 */
 

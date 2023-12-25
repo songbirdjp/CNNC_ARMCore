@@ -69,7 +69,7 @@ include_directories(
     drivers/internal_drivers/timer 
     drivers/internal_drivers/uart 
     components/cm_backtrace 
-    # components/finsh 
+    components/finsh 
     components/ulog 
     board/board_config/inc
     application)
