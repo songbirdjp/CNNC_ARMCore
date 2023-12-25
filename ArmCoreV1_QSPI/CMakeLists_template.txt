@@ -54,9 +54,9 @@ include_directories(
     libraries/STM32H7xx_HAL_Driver/Inc/Legacy 
     libraries/CMSIS/Device/ST/STM32H7xx/Include 
     libraries/CMSIS/Include 
-    rtos/Third_Party/FreeRTOS/Source/include 
-    rtos/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 
-    rtos/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F 
+    Middlewares/Third_Party/FreeRTOS/Source/include 
+    Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 
+    Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F 
     drivers/external_drivers/lan9252 
     drivers/external_drivers/sdram 
     drivers/external_drivers/w5500 
@@ -75,7 +75,7 @@ include_directories(
 
 add_definitions(${defines})
 
-file(GLOB_RECURSE SOURCES "libraries/*.*" "rtos/*.*" "drivers/*.*" "components/*.*" "board/*.*" "application/*.*")
+file(GLOB_RECURSE SOURCES "libraries/*.*" "Middlewares/*.*" "drivers/*.*" "components/*.*" "board/*.*" "application/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/board/linker_scripts/STM32H723ZGTX_FLASH.ld)
 
