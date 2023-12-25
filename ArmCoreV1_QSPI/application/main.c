@@ -32,6 +32,7 @@
 //#include "retarget.h"
 //#include "LAN9252.h"
 #include "applInterface.h"
+#include "cm_backtrace.h"
 //#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
@@ -119,6 +120,9 @@ int main(void)
     
 
     printf("Init ok\r\n");
+
+    /* CmBacktrace initialize */
+    cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", "0.0.1");
   /* USER CODE END 2 */
 
   /* Init scheduler */
