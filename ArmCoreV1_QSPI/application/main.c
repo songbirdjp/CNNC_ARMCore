@@ -33,6 +33,7 @@
 //#include "LAN9252.h"
 #include "applInterface.h"
 #include "cm_backtrace.h"
+#include "ulog.h"
 //#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
@@ -117,12 +118,13 @@ int main(void)
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);//leaf servo drive signal
     HAL_GPIO_WritePin(GPIOG, GPIO_PIN_3, GPIO_PIN_SET);//carrier servo drive signal
 
-    
-
-    printf("Init ok\r\n");
 
     /* CmBacktrace initialize */
     cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", "0.0.1");
+
+    ulog_init(ULOG_DEBUG_LEVEL);
+    
+    LOG_I("Init ok\r\n");
   /* USER CODE END 2 */
 
   /* Init scheduler */
