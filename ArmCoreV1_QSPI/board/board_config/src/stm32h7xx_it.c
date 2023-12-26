@@ -63,7 +63,7 @@ extern DMA_HandleTypeDef hdma_spi3_rx;
 extern DMA_HandleTypeDef hdma_spi3_tx;
 extern SPI_HandleTypeDef hspi2;
 extern SPI_HandleTypeDef hspi3;
-extern UART_HandleTypeDef huart1;
+// extern UART_HandleTypeDef huart1;
 extern TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN EV */
@@ -228,16 +228,17 @@ void SPI2_IRQHandler(void)
 /**
   * @brief This function handles USART1 global interrupt.
   */
-void USART1_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART1_IRQn 0 */
+// #include "drv_uart.h"
+// void USART1_IRQHandler(void)
+// {
+//   /* USER CODE BEGIN USART1_IRQn 0 */
 
-  /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
-  /* USER CODE BEGIN USART1_IRQn 1 */
+//   /* USER CODE END USART1_IRQn 0 */
+//   HAL_UART_IRQHandler(&(console_handle_get()->uart));
+//   /* USER CODE BEGIN USART1_IRQn 1 */
 
-  /* USER CODE END USART1_IRQn 1 */
-}
+//   /* USER CODE END USART1_IRQn 1 */
+// }
 
 /**
   * @brief This function handles DMA1 stream7 global interrupt.

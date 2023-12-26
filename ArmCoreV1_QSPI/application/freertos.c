@@ -83,14 +83,14 @@ const osThreadAttr_t DataProcess_attributes = {
 osThreadId_t ConsoleHandle;
 const osThreadAttr_t Console_attributes = {
   .name = "Console",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for CmdQueue */
-osMessageQueueId_t CmdQueueHandle;
-const osMessageQueueAttr_t CmdQueue_attributes = {
-  .name = "CmdQueue"
-};
+// osMessageQueueId_t CmdQueueHandle;
+// const osMessageQueueAttr_t CmdQueue_attributes = {
+//   .name = "CmdQueue"
+// };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -129,7 +129,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of CmdQueue */
-  CmdQueueHandle = osMessageQueueNew (16, sizeof(struct CmdMessage), &CmdQueue_attributes);
+//   CmdQueueHandle = osMessageQueueNew (16, sizeof(struct CmdMessage), &CmdQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
     /* add queues, ... */
@@ -306,9 +306,11 @@ void StartConsoleTask(void *argument)
             ExecuteConsoleCmd(CmdMsg.Cmd, CmdMsg.Parameter);
         }
 #else
-        vTaskSuspend(ConsoleHandle);
+        // vTaskSuspend(ConsoleHandle);
 #endif
-        osDelay(1);
+
+        console_cmd_process();
+
     }
   /* USER CODE END StartConsoleTask */
 }

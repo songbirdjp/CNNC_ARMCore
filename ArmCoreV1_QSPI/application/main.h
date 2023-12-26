@@ -125,17 +125,7 @@ void SystemClock_Config(void);
 #define BANKA
 //#define TEST
 
-struct CmdMessage
-{
-    uint16_t Cmd;
-    uint16_t Parameter;
-};//cjh add
 
-
-extern struct CmdMessage CmdMsg;//cjh add
-extern UINT16   state_setting;
-void ExecuteConsoleCmd(uint16_t _consoleCmd,uint16_t _consolePara);//cjh add
-void Entry2HelpMode(void);//cjh add
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

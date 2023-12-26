@@ -35,6 +35,7 @@
 #include "cm_backtrace.h"
 #include "ulog.h"
 #include "finsh.h"
+#include "console.h"
 //#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
@@ -105,14 +106,15 @@ int main(void)
   MX_DMA_Init();
   MX_OCTOSPI1_Init();
   MX_SPI1_Init();
-  MX_USART1_UART_Init();
+//   MX_USART1_UART_Init();
+
   MX_FMC_Init();
   MX_SPI2_Init();
   MX_TIM2_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
     //RetargetInit(&hlpuart1);
-    start_uart_receive();
+    // start_uart_receive();
     SDRAM_Init();
    // fsmc_sdram_test();
     HW_Init();//EtherCAT Hardware Init
@@ -124,6 +126,8 @@ int main(void)
     cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", "0.0.1");
 
     ulog_init(ULOG_DEBUG_LEVEL);
+    
+    device_console_init(CONSOLE_NAME_DEFAULT);
     
 #ifdef RT_USING_FINSH
     finsh_system_init();
