@@ -9,19 +9,13 @@
 #include "stdbool.h"
 
 #define MAX_HTTPSEND_NUMBERS 64
-#define DATA_BUF_SIZE  2048
 
-typedef struct {
-    uint8_t gDATABUF[DATA_BUF_SIZE];
-    uint16_t Len;
-}TCP_DATA_t;
+
 
 extern int _numbers[MAX_HTTPSEND_NUMBERS];
-extern uint16_t *feedback, feedback16Len;
 
-void do_tcpc(void);
-void TCPFeedbackInit(void);
-void do_tcp_server(void);
+
+
 int parse_http_request(char *request);
 void SendHttpResponse_Get(int sn);
 void led_on(uint8_t led_num);

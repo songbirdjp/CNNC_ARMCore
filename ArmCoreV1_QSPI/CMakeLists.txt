@@ -72,6 +72,7 @@ include_directories(
     components/finsh 
     components/ulog 
     board/board_config/inc
+    application/tcp 
     application)
 
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32H723xx)

@@ -30,11 +30,14 @@
 #include "el9800hw.h"
 #include "el9800appl.h"
 #include "queue.h"
+#include "tcp_config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define DATA_PROCESS_FPGA_EVENT   (1<<0)
+#define DATA_PROCESS_LAN_EVENT    (1<<1)
+#define DATA_PROCESS_TCP_EVENT    (1<<2)
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -86,11 +89,52 @@ const osThreadAttr_t Console_attributes = {
   .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for tcp_irq_thread */
+osThreadId_t tcp_irq_threadHandle;
+const osThreadAttr_t tcp_irq_thread_attributes = {
+  .name = "tcp_irq_thread",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
+};
+
+/* Definitions for recv_data_process_thread */
+osThreadId_t recv_data_process_threadHandle;
+const osThreadAttr_t recv_data_process_thread_attributes = {
+  .name = "recv_data_process_thread",
+  .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
+};
+
 /* Definitions for CmdQueue */
 // osMessageQueueId_t CmdQueueHandle;
 // const osMessageQueueAttr_t CmdQueue_attributes = {
 //   .name = "CmdQueue"
 // };
+
+/* Definitions for tcp_rx_queue */
+osMessageQueueId_t tcp_rx_queueHandle;
+const osMessageQueueAttr_t tcp_rx_queue_attributes = {
+  .name = "tcp_rx_queue"
+};
+
+/* Definitions for tcp_access_mutex */
+osMutexId_t tcp_access_mutexHandle;
+const osMutexAttr_t tcp_access_mutex_attributes = {
+  .name = "tcp_access_mutex",
+  .attr_bits = osMutexRecursive | osMutexPrioInherit
+};
+
+/* Definitions for tcp_irq_event */
+osEventFlagsId_t tcp_irq_eventHandle;
+const osEventFlagsAttr_t tcp_irq_event_attributes = {
+  .name = "tcp_irq_event"
+};
+
+/* Definitions for data_process_event */
+osEventFlagsId_t data_process_eventHandle;
+const osEventFlagsAttr_t data_process_event_attributes = {
+  .name = "data_process_event"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -102,6 +146,8 @@ void Ethercatfunc(void *argument);
 void TCPClientTask(void *argument);
 void DataProccessTask(void *argument);
 void StartConsoleTask(void *argument);
+void tcp_client_entry(void *argument);
+void data_process_entry(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -116,7 +162,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
-    /* add mutexes, ... */
+  /* creation of tcp_access_mutex */
+  tcp_access_mutexHandle = osMutexNew(&tcp_access_mutex_attributes);
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
@@ -132,7 +179,8 @@ void MX_FREERTOS_Init(void) {
 //   CmdQueueHandle = osMessageQueueNew (16, sizeof(struct CmdMessage), &CmdQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
-    /* add queues, ... */
+  /* creation of tcp_rx_queue */
+  tcp_rx_queueHandle = osMessageQueueNew (3, sizeof(TCP_DATA_t), &tcp_rx_queue_attributes);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -151,12 +199,18 @@ void MX_FREERTOS_Init(void) {
   /* creation of Console */
   ConsoleHandle = osThreadNew(StartConsoleTask, NULL, &Console_attributes);
 
+  /* creation of tcp_irq_thread */
+  tcp_irq_threadHandle = osThreadNew(tcp_client_entry, NULL, &tcp_irq_thread_attributes);
+
+  /* creation of recv_data_process_thread */
+  recv_data_process_threadHandle = osThreadNew(data_process_entry, NULL, &recv_data_process_thread_attributes);
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
-    /* add events, ... */
+  /* creation of data_process_event */
+  data_process_eventHandle = osEventFlagsNew(&data_process_event_attributes);
   /* USER CODE END RTOS_EVENTS */
 
 }
@@ -212,7 +266,6 @@ void StartDefaultTask(void *argument)
 //            printf("%d\r\n", sDOOutputs.DataOut12[i]);
 //        }
 //        printf("\r\n");
-
         osDelay(100);
     }
   /* USER CODE END StartDefaultTask */
@@ -253,13 +306,37 @@ void TCPClientTask(void *argument)
 {
   /* USER CODE BEGIN TCPClientTask */
 
-    W5500_ChipInit();
-    TCPFeedbackInit();
+    int8_t ret = 0;
+
+    ret = tcp_init(tcp_rx_queueHandle);
+    if (ret != 0)
+    {
+        printf("tcp init err\r\n");
+        return;
+    }
     /* Infinite loop */
     for(;;)
     {
-        do_tcpc();
-        osDelay(1);
+        osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
+
+        while(tcp_link_detect() == false)
+        {
+            printf("tcp link off\r\n");
+
+            tcp_link_state_recover();
+
+            osDelay(100);
+        }
+
+        ret = do_tcp_client(socket_num_get());
+        if (ret != 0)
+        {
+            printf("do_tcp_client err:%d\r\n", ret);
+        }
+
+        osMutexRelease(tcp_access_mutexHandle);
+
+        osDelay(100);
     }
   /* USER CODE END TCPClientTask */
 }
@@ -315,6 +392,104 @@ void StartConsoleTask(void *argument)
   /* USER CODE END StartConsoleTask */
 }
 
+/* USER CODE BEGIN Header_tcp_client_entry */
+/**
+* @brief Function implementing the tcp_irq_thread thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_tcp_client_entry */
+void tcp_client_entry(void *argument)
+{
+  /* USER CODE BEGIN tcp_client_entry */
+  /* Infinite loop */
+
+  for(;;)
+  {
+        while(tcp_link_status() == false)
+        {
+            osDelay(100);
+        }
+
+        tcp_data_recv_with_block();
+  }
+  /* USER CODE END tcp_client_entry */
+}
+
+/* USER CODE BEGIN Header_data_process_entry */
+/**
+* @brief Function implementing the recv_data_process_entry thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_data_process_entry */
+void data_process_entry(void *argument)
+{
+  /* USER CODE BEGIN data_process_entry */
+  /* Infinite loop */
+  osStatus_t stat = 0;
+  uint32_t event_flag = 0;
+  uint8_t pdo_output_data[MAX_PD_OUTPUT_SIZE] = {0};
+  uint8_t spi2_buf[RECV_BUF_LEN] = {0};
+  TCP_DATA_t tcp_info = {0};
+
+  for(;;)
+  {
+
+    // event_flag = osEventFlagsWait(data_process_eventHandle, DATA_PROCESS_SPI2_EVENT | DATA_PROCESS_LAN_EVENT | DATA_PROCESS_TCP_EVENT, osFlagsWaitAny, osWaitForever);
+    // if (event_flag & DATA_PROCESS_LAN_EVENT)
+    // {
+    //     // printf("recv DATA_PROCESS_LAN_EVENT\n");
+
+    //     stat = osMessageQueueGet(lan9252_rx_queueHandle, pdo_output_data, 0, 0);
+    //     if (stat == osOK)
+    //     {
+    //         APPL_OutputMapping((uint16_t *) pdo_output_data); // 对数据大小端进行转换
+
+    //         // printf("%x %x %x %x\n", sDOOutputs.InfoOut[0], sDOOutputs.InfoOut[1], sDOOutputs.InfoOut[2], sDOOutputs.InfoOut[3]);
+    //     }
+    //     else
+    //     {
+    //         printf("no msg in lan9252 rx queue:%d\r\n", stat);
+    //     }
+    // }
+
+    // if (event_flag & DATA_PROCESS_SPI2_EVENT)
+    // {
+    //     stat = osMessageQueueGet(spi2_rx_queueHandle, spi2_buf, 0, 0);
+    //     if (stat == osOK)
+    //     {
+    //         APPL_Application_New(spi2_buf);
+    //     }
+    //     else
+    //     {
+    //         printf("no msg in spi2 rx queue:%d\r\n", stat);
+    //     }
+    // }
+
+    // if (event_flag & DATA_PROCESS_TCP_EVENT)
+    {
+        stat = osMessageQueueGet(tcp_rx_queueHandle, &tcp_info, 0, osWaitForever);
+        if (stat == osOK)
+        {
+            // ntrRecvParamAndPlan(&tcp_info);
+
+            osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
+            sendFeedback();
+            osMutexRelease(tcp_access_mutexHandle);
+
+            printf("tcp_info len:%d\r\n", tcp_info.Len);
+            printf("tcp_info %x %x %x %x\r\n", tcp_info.gDATABUF[0], tcp_info.gDATABUF[1], tcp_info.gDATABUF[2], tcp_info.gDATABUF[3]);
+        }
+        else
+        {
+            printf("no msg in tcp rx queue:%d\r\n", stat);
+        }        
+    }
+    
+  }
+  /* USER CODE END data_process_entry */
+}
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 

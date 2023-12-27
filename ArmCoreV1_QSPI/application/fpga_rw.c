@@ -138,7 +138,7 @@ void FPGA_WriteByteArray(uint8_t *pTxData, uint16_t size)
 
     dataOut_CS_Select();// cs high in interrupt callback
     DMATransmitting = 1;
-    HAL_SPI_Transmit_DMA(&hspi3,pTxData,size);
+    // HAL_SPI_Transmit_DMA(&hspi3,pTxData,size);
 
     //HAL_SPI_Transmit(&hspi3,pTxData,size,100);
   //  dataOut_CS_Deselect();
@@ -149,7 +149,7 @@ void FPGA_ReadByteArray(uint8_t *pRxData, uint16_t size)
    // uint8_t pTxData[size];
    // memset(pTxData, 0, size);
 
-    HAL_SPI_Receive_DMA(&hspi2,  pRxData , size);
+    // HAL_SPI_Receive_DMA(&hspi2,  pRxData , size);
   //  printf("read: ");
   //  for(uint16_t i = 0; i < size; i++)  printf("0x%x ",pRxData[i]);
   //  printf("\r\n");
@@ -157,7 +157,7 @@ void FPGA_ReadByteArray(uint8_t *pRxData, uint16_t size)
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-    if(hspi == &hspi3)
+    // if(hspi == &hspi3)
     {
        // printf("send irq!!!\r\n");
         dataOut_CS_Deselect();// set cs here
@@ -167,7 +167,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-    if(hspi == &hspi2)
+    // if(hspi == &hspi2)
     {
         ringb_push(&ringbufCtrl, dmaBuf);
         // FPGA_ReadByteArray(&ringbufCtrl.array[ringbufCtrl.tail*RECV_BUF_LEN], RECV_BUF_LEN);

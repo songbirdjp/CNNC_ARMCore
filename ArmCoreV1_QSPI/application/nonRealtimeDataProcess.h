@@ -3,6 +3,7 @@
 
 #include "cmsis_os.h"
 #include "fpga_rw.h"
+#include "tcp_config.h"
 
 #define MAX_BEAM_NUM    30
 
@@ -67,7 +68,7 @@ typedef struct {
 
 typedef struct {
     uint16_t ri;
-    float_t speed;
+    float speed;
     uint8_t retCode;
 }CARRIER_PERIOD_INFO;
 
@@ -84,5 +85,6 @@ void ntrRecvParamAndPlan(TCP_DATA_t* info);
 void nrtInit(void);
 void sendCPtoFPGA(uint16_t beamIndex, uint16_t RIIndex);
 void sendFeedback(void);
+uint16_t beam_cmd_get(void);
 
 #endif //W5500H7_NONREALTIMEDATAPROCESS_H

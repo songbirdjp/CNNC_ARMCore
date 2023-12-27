@@ -60,22 +60,22 @@ static int8_t console_opt_complete_read(DEVICE_UART *uart)
 
     return 0;
 }
-static int8_t device_console_opt_init(DEVICE_UART *console)
+static int8_t device_console_opt_init(DEVICE_UART *console, DEVICE_UART_OPT *console_opt)
 {
-    console_opt.before_write = console_opt_before_write;
-    console_opt.after_write = console_opt_after_write;
-    console_opt.complete_write = console_opt_complete_write;
-    console_opt.before_read = console_opt_before_read;
-    console_opt.complete_read = console_opt_complete_read;
+    console_opt->before_write = console_opt_before_write;
+    console_opt->after_write = console_opt_after_write;
+    console_opt->complete_write = console_opt_complete_write;
+    console_opt->before_read = console_opt_before_read;
+    console_opt->complete_read = console_opt_complete_read;
 
-    return uart_opt_init(console, &console_opt);
+    return uart_opt_init(console, console_opt);
 }
 #endif
 
 int8_t device_console_init(uint8_t *device_name)
 {
 #ifdef USING_UART_OPTION_FUNCTION
-    device_console_opt_init(&console);
+    device_console_opt_init(&console, &console_opt);
 #endif
 
     osMessageQueueAttr_t CmdQueue_attributes = {

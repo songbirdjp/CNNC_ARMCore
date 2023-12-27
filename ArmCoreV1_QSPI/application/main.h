@@ -36,7 +36,7 @@ extern "C" {
 #include "octospi.h"
 #include "w5500.h"
 #include "spi.h"
-#include "httpserver.h"
+// #include "httpserver.h"
 #include "nonRealtimeDataProcess.h"
 #include "fpga_rw.h"
 #include "el9800appl.h"
@@ -85,7 +85,7 @@ void Error_Handler(void);
 #define LAN9252SYNC1_EXTI_IRQn EXTI2_IRQn
 #define W5500_RST_Pin GPIO_PIN_3
 #define W5500_RST_GPIO_Port GPIOD
-#define W5500_INT_Pin GPIO_PIN_4
+#define W5500_INTn_Pin GPIO_PIN_4
 #define W5500_INT_GPIO_Port GPIOD
 #define WATCHDOG2_Pin GPIO_PIN_7
 #define WATCHDOG2_GPIO_Port GPIOD

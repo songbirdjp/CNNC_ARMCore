@@ -371,7 +371,10 @@ typedef enum
     CS_GET_INTERRUPT,       ///< get the socket interrupt. refer to @ref sockint_kind
 #if _WIZCHIP_ > 5100
     CS_SET_INTMASK,         ///< set the interrupt mask of socket with @ref sockint_kind, Not supported in W5100
-    CS_GET_INTMASK          ///< get the masked interrupt of socket. refer to @ref sockint_kind, Not supported in W5100
+    CS_GET_INTMASK,         ///< get the masked interrupt of socket. refer to @ref sockint_kind, Not supported in W5100
+    CS_GET_USE_STATUS,
+    CS_GET_SENDING_STATE,
+    CS_SET_SENDING_STATE
 #endif
 }ctlsock_type;
 

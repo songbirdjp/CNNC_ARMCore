@@ -63,6 +63,8 @@ static uint16_t sock_any_port = SOCK_ANY_PORT_NUM;
 static uint16_t sock_io_mode = 0;
 static uint16_t sock_is_sending = 0;
 
+static uint16_t sock_in_use = 0;
+
 static uint16_t sock_remained_size[_WIZCHIP_SOCK_NUM_] = {0,0,};
 
 //M20150601 : For extern decleation
@@ -186,6 +188,7 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
     //
     sock_io_mode |= ((flag & SF_IO_NONBLOCK) << sn);
     sock_is_sending &= ~(1<<sn);
+    sock_in_use |= (1<<sn);    
     sock_remained_size[sn] = 0;
     //M20150601 : repalce 0 with PACK_COMPLETED
     //sock_pack_info[sn] = 0;
@@ -232,6 +235,7 @@ int8_t close(uint8_t sn)
     sock_io_mode &= ~(1<<sn);
     //
     sock_is_sending &= ~(1<<sn);
+    sock_in_use &= ~(1<<sn);
     sock_remained_size[sn] = 0;
     sock_pack_info[sn] = 0;
     while(getSn_SR(sn) != SOCK_CLOSED);
@@ -289,6 +293,8 @@ int8_t connect(uint8_t sn, uint8_t * addr, uint16_t port)
         {
             return SOCKERR_SOCKCLOSED;
         }
+
+        osDelay(100);
     }
 
     return SOCK_OK;
@@ -811,6 +817,15 @@ int8_t  ctlsocket(uint8_t sn, ctlsock_type cstype, void* arg)
             break;
         case CS_GET_INTMASK:
             *((uint8_t*)arg) = getSn_IMR(sn);
+            break;
+        case CS_GET_USE_STATUS:
+            *((uint8_t*)arg) = (uint8_t)((sock_in_use >> sn) & 0x0001);
+            break;
+        case CS_GET_SENDING_STATE:
+            *((uint8_t*)arg) = (uint8_t)sock_is_sending;
+            break;
+        case CS_SET_SENDING_STATE:
+            sock_is_sending = *(uint16_t *)arg;
             break;
 #endif
         default:

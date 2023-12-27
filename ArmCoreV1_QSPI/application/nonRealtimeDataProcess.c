@@ -1,5 +1,6 @@
 #include "main.h"
 #include"sdram_fmc_drv.h"
+#include "socket.h"
 
 #define PARAM_SETTING_TAG 1
 #define PLAN_DATA_SETTING_TAG 2
@@ -32,6 +33,20 @@ CARRIER_POS carrierPosCal;
 bool InitCrc32Table(void);
 void sendParamtoFPGA(void);
 void calCarrierTrajectory(void);
+
+uint16_t *feedback, feedback16Len;
+void TCPFeedbackInit(void)
+{
+    feedback16Len = (3+sizeof(interlockFeedback)/2) + (3+sizeof(secondPosFeedback)/2);
+    feedback = (uint16_t*)pvPortMalloc(feedback16Len);
+    memset(feedback, 0, feedback16Len*2);
+}
+
+uint16_t beam_cmd_get(void)
+{
+    return rtBeamData.planCmd;
+}
+
 
 void nrtInit(void)
 {
@@ -109,7 +124,11 @@ void sendFeedback(void)
    // memset(pFDAry, 1, typeLen*2);
   //  printf("pack index %d\r\n", secondPosFeedback.packIndexInOneBeam);
 
-    send(0, feedback, feedback16Len*2);    //返回给服务器
+    int32_t ret = send(0, (uint8_t *)feedback, feedback16Len*2);    //返回给服务器
+    if (ret <= SOCK_BUSY)
+    {
+        printf("tcp client send err:%d\r\n", ret);
+    }
 }
 
 void ntrRecvParamAndPlan(TCP_DATA_t* info)

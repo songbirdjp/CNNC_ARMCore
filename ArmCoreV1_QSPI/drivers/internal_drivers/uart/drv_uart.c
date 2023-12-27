@@ -57,15 +57,30 @@ static int8_t uart_open(DEVICE_UART *uart)
 static int8_t uart_close(DEVICE_UART *uart)
 {
     HAL_StatusTypeDef ret = HAL_OK;
+    osStatus_t stat = osOK;
 
     if (uart->open_state)
     {
         ret = HAL_UART_DeInit((UART_HandleTypeDef *)uart);
         if (ret != HAL_OK)
         {
-            printf("uart close err:%d\r\n", ret);
+            printf("device %s deinit err:%d\r\n", uart->name, ret);
             return -1;
-        }   
+        }
+
+        stat = osEventFlagsDelete(uart->tx_event);
+        if (stat != osOK)
+        {
+            printf("device %s delete event err:%d\r\n", uart->name, stat);
+            return -2;
+        }
+
+        stat = osMutexDelete(uart->tx_mutex);
+        if (stat != osOK)
+        {
+            printf("device %s delete mutex err:%d\r\n", uart->name, stat);
+            return -3;
+        }
 
         uart->open_state = 0;
     }
@@ -83,7 +98,7 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
 
     if (!uart->open_state)
     {
-        printf("device uart is closed\r\n");
+        printf("device %s is closed\r\n", uart->name);
         return -1;
     }
 
@@ -98,7 +113,7 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
     ret = osMutexAcquire(uart->tx_mutex, timeout);
     if (ret != osOK)
     {
-        printf("uart acquire mutex err:%d\r\n", ret);
+        printf("device %s acquire mutex err:%d\r\n", uart->name, ret);
         return -2;
     }
 #endif
@@ -106,7 +121,7 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
     ret = HAL_UART_Transmit_DMA((UART_HandleTypeDef *)uart, buf, size);
     if (ret != HAL_OK)
     {
-        printf("uart write data err:%d\r\n", ret);
+        printf("device %s write data err:%d\r\n", uart->name, ret);
         return -3;
     }
 
@@ -121,7 +136,7 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
     ret = osEventFlagsWait(uart->tx_event, UART_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
     if (ret != UART_SEND_SUCCEED_EVENT)
     {
-        printf("uart wait event flag err:%d\r\n", ret);
+        printf("device %s  wait event flag err:%d\r\n", uart->name, ret);
         return -4;
     }
     osMutexRelease(uart->tx_mutex);
@@ -143,7 +158,7 @@ static int8_t uart_read(DEVICE_UART *uart, uint8_t *buf, uint32_t timeout)
 
     if (!uart->open_state)
     {
-        printf("device uart is closed\r\n");
+        printf("device %s is closed\r\n", uart->name);
         return -1;
     }
 
@@ -157,7 +172,7 @@ static int8_t uart_read(DEVICE_UART *uart, uint8_t *buf, uint32_t timeout)
     ret = osMessageQueueGet(uart->rx_queue, buf, 0, timeout);
     if (ret != osOK)
     {
-        printf("uart read data err:%d\r\n", ret);
+        printf("device %s read data err:%d\r\n", uart->name, ret);
         return -2;
     }
 
@@ -187,7 +202,7 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
 
     if (uart->open_state)
     {
-        printf("device uart is opened\r\n");
+        printf("device %s is opened\r\n", uart->name);
         return -2;
     }
 

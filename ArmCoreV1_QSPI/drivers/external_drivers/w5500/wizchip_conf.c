@@ -999,13 +999,13 @@ void SPI_WriteByte(uint8_t TxData)
 {
     uint8_t data;
   //  printf("TxData: 0x%x data: 0x%x\r\n", TxData ,data);
-    HAL_SPI_TransmitReceive(&hspi1, &TxData, &data, 1, 100);
+    // HAL_SPI_TransmitReceive(&hspi1, &TxData, &data, 1, 100);
 }
 
 uint8_t SPI_ReadByte(void)
 {
     uint8_t data[2] = {0xFF, 0xFF};
-    HAL_SPI_TransmitReceive(&hspi1, data, data + 1, 1, 100);
+    // HAL_SPI_TransmitReceive(&hspi1, data, data + 1, 1, 100);
 
     return data[1];
 }
