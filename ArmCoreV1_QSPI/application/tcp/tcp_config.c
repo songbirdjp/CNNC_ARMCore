@@ -1,4 +1,3 @@
-#include "tcp_config.h"
 #include "w5500_port.h"
 #include "socket.h"
 #include "nonRealtimeDataProcess.h"
@@ -195,7 +194,7 @@ int8_t tcp_init(osMessageQueueId_t queue)
 {
     int8_t ret = 0;
 
-    ret = device_w5500_init(local_netinfo_get());
+    ret = device_w5500_init(local_netinfo_get(), DEVICE_NAME_DEFAULT);
     if (ret != 0)
     {
         printf("device w5500 init err\r\n");

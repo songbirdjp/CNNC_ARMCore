@@ -53,18 +53,10 @@ static void w5500_reset_ctrl(uint8_t flag)
 }
 static void w5500_write_dma(uint8_t* buf, uint16_t len)
 {
-    while (((SPI_HandleTypeDef *)device_w5500_get())->State != HAL_SPI_STATE_READY)
-    {
-        osDelay(1);
-    }
     device_w5500_get()->write(device_w5500_get(), buf, len, 5000);
 }
 static void w5500_read_dma(uint8_t* buf, uint16_t len)
 {
-    while (((SPI_HandleTypeDef *)device_w5500_get())->State != HAL_SPI_STATE_READY)
-    {
-        osDelay(1);
-    }
     device_w5500_get()->read(device_w5500_get(), buf, len, 5000);
 }
 static uint8_t w5500_phy_link_status_get(void)
@@ -351,7 +343,7 @@ static int8_t device_w5500_irq_init(DEVICE_SPI *spi, uint8_t *node_name)
 }
 #endif
 
-int8_t device_w5500_init(wiz_NetInfo *net_info)
+int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
 {
     if (net_info == NULL)
     {
@@ -369,17 +361,17 @@ int8_t device_w5500_init(wiz_NetInfo *net_info)
     device_w5500_irq_init(&device_w5500, "irq_line_4");
 #endif
 
-    ret = spi_init(&device_w5500, DEVICE_NAME_SPI1, SPI_MASTER);
+    ret = spi_init(&device_w5500, device_name, SPI_MASTER);
     if (ret != 0)
     {
-        printf("device %s init err:%d\r\n", DEVICE_NAME_SPI1, ret);
+        printf("device %s init err:%d\r\n", device_name, ret);
         return ret;
     }
 
     ret = device_w5500_get()->open(device_w5500_get());
     if (ret != 0)
     {
-        printf("device %s open err:%d\r\n", DEVICE_NAME_SPI1, ret);
+        printf("device %s open err:%d\r\n", device_name, ret);
         return ret;
     }
 

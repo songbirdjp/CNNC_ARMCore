@@ -1,5 +1,5 @@
-#ifndef __W5500_CONFIG_PORT_H__
-#define __W5500_CONFIG_PORT_H__
+#ifndef __W5500_PORT_H__
+#define __W5500_PORT_H__
 
 #include "wizchip_conf.h"
 #include "cmsis_os2.h"
@@ -8,7 +8,9 @@
 extern "C" {
 #endif
 
-int8_t device_w5500_init(wiz_NetInfo *net_info);
+#define DEVICE_NAME_DEFAULT     "spi1"
+
+int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name);
 int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len);
 int8_t device_w5500_rx_queue_init(osMessageQueueId_t queue);
 int8_t device_w5500_interrupt_init(uint8_t sn);

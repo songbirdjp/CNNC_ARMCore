@@ -3,14 +3,13 @@
 
 #include "stdint.h"
 #include "cmsis_os2.h"
-#include "drv_spi.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define DEVICE_SEND_TO_FPGA_NAME_DEFAULT    DEVICE_NAME_SPI3
-#define DEVICE_RECV_FROM_FPGA_NAME_DEFAULT  DEVICE_NAME_SPI2
+#define DEVICE_SEND_TO_FPGA_NAME_DEFAULT    "spi3"
+#define DEVICE_RECV_FROM_FPGA_NAME_DEFAULT  "spi2"
 
 
 int8_t device_send_to_fpga_init(uint8_t *device_name);

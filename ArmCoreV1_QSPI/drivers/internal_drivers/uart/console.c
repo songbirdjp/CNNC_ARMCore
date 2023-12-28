@@ -1,5 +1,12 @@
-#include "console.h"
+#include "drv_uart.h"
 #include "shell.h"
+
+#define CONSOLE_CMD_MAX_LENGTH      128
+struct CmdMessage
+{
+    uint8_t buf[CONSOLE_CMD_MAX_LENGTH];
+    uint16_t len;
+};
 
 static DEVICE_UART console = {0};
 
