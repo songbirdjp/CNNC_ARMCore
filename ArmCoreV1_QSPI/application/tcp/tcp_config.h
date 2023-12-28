@@ -23,7 +23,7 @@ int8_t do_tcp_client(uint8_t sn);
 uint8_t socket_num_get(void);
 uint8_t tcp_link_detect(void);
 int8_t tcp_link_state_recover(void);
-int8_t tcp_data_recv_with_block(void);
+int32_t tcp_data_recv_with_block(void);
 
 #ifdef __cplusplus
 }

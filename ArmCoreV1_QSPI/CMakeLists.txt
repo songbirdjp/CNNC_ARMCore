@@ -71,8 +71,10 @@ include_directories(
     components/cm_backtrace 
     components/finsh 
     components/ulog 
+    components/utilities 
     board/board_config/inc
     application/tcp 
+    application/fpga 
     application)
 
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32H723xx)

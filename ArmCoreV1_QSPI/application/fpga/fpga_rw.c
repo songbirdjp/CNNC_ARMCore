@@ -1,6 +1,6 @@
 #include "fpga_rw.h"
 #include "stm32h7xx_hal.h"
-#include "spi.h"
+#include "fpga_port.h"
 
 bool DMATransmitting = 0;
 SEND_CONTROL sndCtrl;
@@ -169,7 +169,7 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     // if(hspi == &hspi2)
     {
-        ringb_push(&ringbufCtrl, dmaBuf);
+        // ringb_push(&ringbufCtrl, dmaBuf);
         // FPGA_ReadByteArray(&ringbufCtrl.array[ringbufCtrl.tail*RECV_BUF_LEN], RECV_BUF_LEN);
        // ringbufCtrl.tail = (ringbufCtrl.tail + 1) % ringbufCtrl.size ;
       //  DMACnt++;
@@ -180,3 +180,78 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
      //   printf("\r\n");
     }
 }
+
+
+/************************************************************************************************************/
+static uint8_t recv_buf[RECV_BUF_LEN];
+
+int8_t fun_cb(void *arg)
+{
+    extern osEventFlagsId_t data_process_eventHandle;
+    osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT);
+}
+
+int8_t recv_from_fpga_init(osMessageQueueId_t queue)
+{
+    int8_t ret = 0;
+
+    if (queue == NULL)
+    {
+        printf("queue is null\r\n");
+        return -1;
+    }
+
+    ret = device_recv_from_fpga_init(DEVICE_RECV_FROM_FPGA_NAME_DEFAULT);
+    if (ret != 0)
+    {
+        printf("device %s init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        return -2;
+
+    }
+
+    ret = device_recv_from_fpga_buffer_init(recv_buf, sizeof(recv_buf));
+    if (ret != 0)
+    {
+        printf("device %s buffer init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        return -3;
+    }
+
+    ret = device_recv_from_fpga_queue_init(queue, fun_cb);
+    if (ret != 0)
+    {
+        printf("device %s queue init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        return -4;
+    }
+
+    ret = device_recv_from_fpga_open();
+    if (ret != 0)
+    {
+        printf("device %s open err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        return -5;
+    }
+
+    return ret;
+
+}
+
+int8_t send_to_fpga_init(void)
+{
+    int8_t ret = 0;
+
+    ret = device_send_to_fpga_init(DEVICE_SEND_TO_FPGA_NAME_DEFAULT);
+    if (ret != 0)
+    {
+        printf("device %s init err:%d\r\n", DEVICE_SEND_TO_FPGA_NAME_DEFAULT, ret);
+        return -1;
+    }
+
+    device_send_to_fpga_open();
+
+    return 0;
+}
+
+int8_t send_to_fpga_write(uint8_t *buf, uint16_t size, uint32_t timeout)
+{
+    return device_send_to_fpga_write(buf, size, timeout);
+}
+

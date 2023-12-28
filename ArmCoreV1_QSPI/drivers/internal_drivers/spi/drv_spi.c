@@ -30,6 +30,11 @@ static void RxCpltCallback(SPI_HandleTypeDef *hspi)
         {
             printf("%s queue put err:%d\r\n", spi->name, ret);
         }
+
+        if (spi->rx_queue_cb != NULL)
+        {
+            spi->rx_queue_cb((void *)spi);
+        }
     }
 }
 
@@ -175,7 +180,6 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
     }
 #endif
 
-
     if (spi->master_or_slave == SPI_MASTER)
     {
         ret = HAL_SPI_Receive_DMA((SPI_HandleTypeDef *)spi, buf, size);
@@ -184,6 +188,13 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
             printf("device %s receive dma err:%d\r\n", spi->name, ret);
             return -2;
         }
+
+#ifdef USING_SPI_OPTION_FUNCTION
+        if (spi->opt.after_read != NULL)
+        {
+            spi->opt.after_read(spi);
+        }
+#endif
 
         ret = osEventFlagsWait(spi->rx_event, SPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
         if (ret != SPI_RECV_SUCCEED_EVENT)
@@ -194,6 +205,13 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
     }
     else
     {
+#ifdef USING_SPI_OPTION_FUNCTION
+        if (spi->opt.after_read != NULL)
+        {
+            spi->opt.after_read(spi);
+        }
+#endif
+
         ret = osMessageQueueGet(spi->rx_queue, buf, 0, timeout);
         if (ret != osOK)
         {
@@ -246,7 +264,7 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     {
         MX_SPI3_Init((SPI_HandleTypeDef *)spi);
     }
-        else if (!memcmp(device_name, DEVICE_NAME_SPI6, sizeof(DEVICE_NAME_SPI6)))
+    else if (!memcmp(device_name, DEVICE_NAME_SPI6, sizeof(DEVICE_NAME_SPI6)))
     {
         MX_SPI6_Init((SPI_HandleTypeDef *)spi);
     }
@@ -304,13 +322,14 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     spi->write = spi_write;
     spi->read = spi_read;
     spi->ioctl = NULL;
+    spi->rx_queue_cb = NULL;
 
     /* 8. open device */
-    return spi->open(spi);
+    return 0;//spi->open(spi);
 }
 
 
-int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue)
+int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue, int8_t (*rx_queue_cb)(void *arg))
 {
     if (spi == NULL)
     {
@@ -319,6 +338,7 @@ int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue)
     }
 
     spi->rx_queue = queue;
+    spi->rx_queue_cb = rx_queue_cb;
 
     return 0;
 }

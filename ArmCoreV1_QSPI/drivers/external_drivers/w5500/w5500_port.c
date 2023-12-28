@@ -161,12 +161,11 @@ static void W5500_interrupt_status_print(uint8_t sn)
     // }
 }
 
-static int8_t w5500_irq_process(void)
+static int32_t w5500_irq_process(void)
 {
     uint16_t interrupt_type = 0; // SIR << 8 | IR
     uint8_t reg_ir = 0, reg_sir = 0, reg_sn_ir = 0;
     uint8_t sn = 0;
-    osStatus_t stat = osOK;
     uint32_t clr_cnt = 0;
     int32_t recv_ret = 0;
    
@@ -228,7 +227,7 @@ static int8_t w5500_irq_process(void)
     }
 
     DEVICE_SPI *dev = device_w5500_get();
-    uint16_t recv_len = 0;
+    int32_t recv_len = 0;
 
     // printf("sn:%d\r\n", sn);
 
@@ -248,15 +247,16 @@ static int8_t w5500_irq_process(void)
                 if (recv_ret <= SOCK_BUSY)
                 {
                     printf("tcp client receive err:%d\r\n", recv_ret);
+                    return recv_ret;
                 }
 
                 *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* TODO: must according to static TCP_DATA_t */
 
-                stat = osMessageQueuePut(dev->rx_queue, dev->rx_buf, 0, 100);
-                if (stat != osOK)
+                recv_ret = osMessageQueuePut(dev->rx_queue, dev->rx_buf, 0, 100);
+                if (recv_ret != osOK)
                 {
-                    printf("w5500 queue put err:%d\r\n", stat);
-                    break;
+                    printf("w5500 queue put err:%d\r\n", recv_ret);
+                    return recv_ret;
                 }
             }
             break;
@@ -268,7 +268,7 @@ static int8_t w5500_irq_process(void)
             break;
     }
 
-    return 0;
+    return recv_len;
 }
 
 /*
@@ -301,6 +301,12 @@ static int8_t w5500_opt_before_read(DEVICE_SPI *spi)
 
     return 0;
 }
+static int8_t w5500_opt_after_read(DEVICE_SPI *spi)
+{
+    // printf("after read\r\n");
+
+    return 0;
+}
 static int8_t w5500_opt_complete_read(DEVICE_SPI *spi)
 {
     // printf("complete read\r\n");
@@ -313,6 +319,7 @@ static int8_t device_w5500_opt_init(DEVICE_SPI *spi, DEVICE_SPI_OPT *spi_opt)
     spi_opt->after_write = w5500_opt_after_write;
     spi_opt->complete_write = w5500_opt_complete_write;
     spi_opt->before_read = w5500_opt_before_read;
+    spi_opt->after_read = w5500_opt_after_read;
     spi_opt->complete_read = w5500_opt_complete_read;
 
     return spi_opt_init(spi, spi_opt);
@@ -369,6 +376,13 @@ int8_t device_w5500_init(wiz_NetInfo *net_info)
         return ret;
     }
 
+    ret = device_w5500_get()->open(device_w5500_get());
+    if (ret != 0)
+    {
+        printf("device %s open err:%d\r\n", DEVICE_NAME_SPI1, ret);
+        return ret;
+    }
+
     return w5500_chip_init(net_info);;
 }
 
@@ -379,7 +393,7 @@ int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len)
 
 int8_t device_w5500_rx_queue_init(osMessageQueueId_t queue)
 {
-    return spi_rx_queue_init(device_w5500_get(), queue);
+    return spi_rx_queue_init(device_w5500_get(), queue, NULL);
 }
 
 int8_t device_w5500_interrupt_init(uint8_t sn)
@@ -418,9 +432,9 @@ int8_t device_w5500_link_state_recover(uint8_t sn)
 
     return 0;
 }
-int8_t device_w5500_data_recv_with_block(void)
+int32_t device_w5500_data_recv_with_block(void)
 {
-    int8_t ret = 0;
+    int32_t ret = 0;
 
     ret = device_irq_wait_with_block(device_w5500_get(), osWaitForever);
     if (ret != 0)
@@ -433,7 +447,7 @@ int8_t device_w5500_data_recv_with_block(void)
     osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
 
     ret = w5500_irq_process();
-    if (ret != 0)
+    if (ret < 0)
     {
         printf("irq process err:%d\r\n", ret);
     }

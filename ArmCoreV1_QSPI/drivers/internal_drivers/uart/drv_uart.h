@@ -23,6 +23,7 @@ typedef struct drv_opt
     int8_t (*complete_write)(struct drv_uart *uart);
 
     int8_t (*before_read)(struct drv_uart *uart);
+    int8_t (*after_read)(struct drv_uart *uart);
     int8_t (*complete_read)(struct drv_uart *uart);
 
 }DEVICE_UART_OPT;

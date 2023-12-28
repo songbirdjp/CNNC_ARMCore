@@ -40,7 +40,7 @@ static uint16_t *remote_port_get(void)
 
 static TCP_DATA_t recvInfo = {0};
 
-static uint8_t tcp_link_state = false;
+static volatile uint8_t tcp_link_state = false;
 uint8_t tcp_link_status(void)
 {
     return tcp_link_state;
@@ -225,7 +225,7 @@ int8_t tcp_link_state_recover(void)
     return device_w5500_link_state_recover(socket_num_get());
 }
 
-int8_t tcp_data_recv_with_block(void)
+int32_t tcp_data_recv_with_block(void)
 {
     return device_w5500_data_recv_with_block();
 }

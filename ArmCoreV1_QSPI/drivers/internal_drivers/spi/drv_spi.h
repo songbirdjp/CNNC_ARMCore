@@ -25,6 +25,7 @@ typedef struct drv_opt
     int8_t (*complete_write)(struct drv_spi *spi);
 
     int8_t (*before_read)(struct drv_spi *spi);
+    int8_t (*after_read)(struct drv_spi *spi);
     int8_t (*complete_read)(struct drv_spi *spi);
 
 }DEVICE_SPI_OPT;
@@ -62,7 +63,7 @@ struct drv_spi
     uint8_t open_state;
     SPI_MODE master_or_slave;    /* 1: master    0:slave */
     osMessageQueueId_t rx_queue;
-    osEventFlagsId_t rx_event;
+    osEventFlagsId_t rx_event;  /* for master mode */
     osMutexId_t tx_mutex;
     osEventFlagsId_t tx_event;
 
@@ -78,6 +79,7 @@ struct drv_spi
     int8_t (*write)(struct drv_spi *spi, uint8_t *buf, uint16_t size, uint32_t timeout);
     int8_t (*read)(struct drv_spi *spi, uint8_t *buf, uint16_t size, uint32_t timeout);
     int8_t (*ioctl)(struct drv_spi *spi, uint8_t cmd, void *arg);
+    int8_t (*rx_queue_cb)(void *arg); /* for slave mode */
 
 #ifdef USING_SPI_OPTION_FUNCTION
     struct drv_opt opt;
@@ -89,7 +91,7 @@ typedef struct drv_spi DEVICE_SPI;
 
 
 int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode);
-int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue);
+int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue, int8_t (*rx_queue_cb)(void *arg));
 int8_t spi_dma_rx_buf_init(DEVICE_SPI *spi, uint8_t *buf, uint16_t len);
 
 #ifdef USING_SPI_OPTION_FUNCTION

@@ -14,7 +14,7 @@ int8_t device_w5500_rx_queue_init(osMessageQueueId_t queue);
 int8_t device_w5500_interrupt_init(uint8_t sn);
 uint8_t device_w5500_phy_link_status_get(void);
 int8_t device_w5500_link_state_recover(uint8_t sn);
-int8_t device_w5500_data_recv_with_block(void);
+int32_t device_w5500_data_recv_with_block(void);
 
 #ifdef __cplusplus
 }

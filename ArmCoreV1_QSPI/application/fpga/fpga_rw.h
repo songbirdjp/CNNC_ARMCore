@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "stdbool.h"
+#include "cmsis_os2.h"
 
 #define TOTAL_FPGA_CMD_NUM    26
 #define HEAD_LEN    5
@@ -107,4 +108,23 @@ void FPGA_WriteByteArray(uint8_t *pTxData, uint16_t size);
 void FPGA_ReadByteArray(uint8_t *pRxData, uint16_t size);
 void makeSingleSendAry(uint8_t index, uint8_t * pData, uint8_t size, bool isFirstSegment, bool isCmd);
 void makeParamSendAry(uint8_t * pData);
+
+
+
+
+
+/*************************************************************/
+
+#define DATA_PROCESS_FPGA_EVENT   (1<<0)
+
+struct send_to_fpga_msg
+{
+    uint8_t buf[MAX_CMD_DATA_SIZE];
+    uint8_t len;
+};
+
+int8_t recv_from_fpga_init(osMessageQueueId_t queue);
+int8_t send_to_fpga_init(void);
+int8_t send_to_fpga_write(uint8_t *buf, uint16_t size, uint32_t timeout);
+
 #endif //W5500H7_FPGA_RW_H

@@ -58,7 +58,7 @@
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for EthercatSlave */
@@ -97,6 +97,14 @@ const osThreadAttr_t tcp_irq_thread_attributes = {
   .priority = (osPriority_t) osPriorityAboveNormal,
 };
 
+/* Definitions for fpga_communication_thread */
+osThreadId_t fpga_communication_threadHandle;
+const osThreadAttr_t fpga_communication_thread_attributes = {
+  .name = "fpga_communication_thread",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal7,
+};
+
 /* Definitions for recv_data_process_thread */
 osThreadId_t recv_data_process_threadHandle;
 const osThreadAttr_t recv_data_process_thread_attributes = {
@@ -117,17 +125,23 @@ const osMessageQueueAttr_t tcp_rx_queue_attributes = {
   .name = "tcp_rx_queue"
 };
 
+/* Definitions for send_to_fpga_queue */
+osMessageQueueId_t send_to_fpga_queueHandle;
+const osMessageQueueAttr_t send_to_fpga_queue_attributes = {
+  .name = "send_to_fpga_queue"
+};
+
+/* Definitions for recv_from_fpga_queue */
+osMessageQueueId_t recv_from_fpga_queueHandle;
+const osMessageQueueAttr_t recv_from_fpga_queue_attributes = {
+.name = "recv_from_fpga_queue"
+};
+
 /* Definitions for tcp_access_mutex */
 osMutexId_t tcp_access_mutexHandle;
 const osMutexAttr_t tcp_access_mutex_attributes = {
   .name = "tcp_access_mutex",
   .attr_bits = osMutexRecursive | osMutexPrioInherit
-};
-
-/* Definitions for tcp_irq_event */
-osEventFlagsId_t tcp_irq_eventHandle;
-const osEventFlagsAttr_t tcp_irq_event_attributes = {
-  .name = "tcp_irq_event"
 };
 
 /* Definitions for data_process_event */
@@ -147,6 +161,7 @@ void TCPClientTask(void *argument);
 void DataProccessTask(void *argument);
 void StartConsoleTask(void *argument);
 void tcp_client_entry(void *argument);
+void fpga_communication_entry(void *argument);
 void data_process_entry(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -181,6 +196,12 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_QUEUES */
   /* creation of tcp_rx_queue */
   tcp_rx_queueHandle = osMessageQueueNew (3, sizeof(TCP_DATA_t), &tcp_rx_queue_attributes);
+
+  /* creation of send_to_fpga_queueHandle */
+  send_to_fpga_queueHandle = osMessageQueueNew (10, sizeof(struct send_to_fpga_msg), &send_to_fpga_queue_attributes);
+
+  /* creation of recv_from_fpga_queueHandle */
+  recv_from_fpga_queueHandle = osMessageQueueNew (3, RECV_BUF_LEN, &recv_from_fpga_queue_attributes);
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -201,6 +222,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of tcp_irq_thread */
   tcp_irq_threadHandle = osThreadNew(tcp_client_entry, NULL, &tcp_irq_thread_attributes);
+
+  /* creation of fpga_communication_threadHandle */
+  fpga_communication_threadHandle = osThreadNew(fpga_communication_entry, NULL, &fpga_communication_thread_attributes);
 
   /* creation of recv_data_process_thread */
   recv_data_process_threadHandle = osThreadNew(data_process_entry, NULL, &recv_data_process_thread_attributes);
@@ -228,6 +252,7 @@ void StartDefaultTask(void *argument)
     osDelay(1000);//delay 1s
     HAL_GPIO_WritePin(GPIOG, GPIO_PIN_9, GPIO_PIN_SET);//watchdog signal 2
     /* Infinite loop */
+    // struct send_to_fpga_msg recv_buf = {0,1,2,3,4,5,6};
     for(;;)
     {
         HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_7);//watchdog signal 1
@@ -267,6 +292,9 @@ void StartDefaultTask(void *argument)
 //        }
 //        printf("\r\n");
         osDelay(100);
+
+        // recv_buf.len = 6;
+        // osMessageQueuePut(send_to_fpga_queueHandle, &recv_buf, 0, 0);
     }
   /* USER CODE END StartDefaultTask */
 }
@@ -403,6 +431,7 @@ void tcp_client_entry(void *argument)
 {
   /* USER CODE BEGIN tcp_client_entry */
   /* Infinite loop */
+  int32_t ret = 0;
 
   for(;;)
   {
@@ -411,9 +440,57 @@ void tcp_client_entry(void *argument)
             osDelay(100);
         }
 
-        tcp_data_recv_with_block();
+        ret = tcp_data_recv_with_block();
+        if (ret < 0)
+        {
+            printf("tcp recv data err:%d\r\n", ret);
+        }
+        else if (ret > 0)
+        {
+            osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_TCP_EVENT);
+        }
+
+        
   }
   /* USER CODE END tcp_client_entry */
+}
+
+/* USER CODE BEGIN Header_fpga_communication_entry */
+/**
+* @brief Function implementing the tcp_irq_thread thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_fpga_communication_entry */
+void fpga_communication_entry(void *argument)
+{
+  /* USER CODE BEGIN fpga_communication_entry */
+  /* Infinite loop */
+  int8_t ret = 0;
+  osStatus_t stat = osOK;
+  struct send_to_fpga_msg recv_buf = {0};
+
+  send_to_fpga_init();
+  recv_from_fpga_init(recv_from_fpga_queueHandle);
+  
+  for(;;)
+  {
+    stat = osMessageQueueGet(send_to_fpga_queueHandle, &recv_buf, 0, osWaitForever);
+    if (stat != osOK)
+    {
+        printf("get queue err:%d\r\n", stat);
+    }
+  
+    ret = send_to_fpga_write(recv_buf.buf, recv_buf.len, 1000);
+    if (ret != 0)
+    {
+        printf("send data to fpga err:%d\r\n", ret);
+    }
+
+    // printf("recv_buf.len:%d\r\n", recv_buf.len);
+    // printf("%x %x %x %x %x %x\r\n", recv_buf.buf[0], recv_buf.buf[1], recv_buf.buf[2], recv_buf.buf[3], recv_buf.buf[4], recv_buf.buf[5]);
+  }
+  /* USER CODE END fpga_communication_entry */
 }
 
 /* USER CODE BEGIN Header_data_process_entry */
@@ -430,13 +507,13 @@ void data_process_entry(void *argument)
   osStatus_t stat = 0;
   uint32_t event_flag = 0;
   uint8_t pdo_output_data[MAX_PD_OUTPUT_SIZE] = {0};
-  uint8_t spi2_buf[RECV_BUF_LEN] = {0};
+  uint8_t recv_from_fpga_buf[RECV_BUF_LEN];
   TCP_DATA_t tcp_info = {0};
 
   for(;;)
   {
 
-    // event_flag = osEventFlagsWait(data_process_eventHandle, DATA_PROCESS_SPI2_EVENT | DATA_PROCESS_LAN_EVENT | DATA_PROCESS_TCP_EVENT, osFlagsWaitAny, osWaitForever);
+    event_flag = osEventFlagsWait(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT | DATA_PROCESS_LAN_EVENT | DATA_PROCESS_TCP_EVENT, osFlagsWaitAny, osWaitForever);
     // if (event_flag & DATA_PROCESS_LAN_EVENT)
     // {
     //     // printf("recv DATA_PROCESS_LAN_EVENT\n");
@@ -454,25 +531,27 @@ void data_process_entry(void *argument)
     //     }
     // }
 
-    // if (event_flag & DATA_PROCESS_SPI2_EVENT)
-    // {
-    //     stat = osMessageQueueGet(spi2_rx_queueHandle, spi2_buf, 0, 0);
-    //     if (stat == osOK)
-    //     {
-    //         APPL_Application_New(spi2_buf);
-    //     }
-    //     else
-    //     {
-    //         printf("no msg in spi2 rx queue:%d\r\n", stat);
-    //     }
-    // }
-
-    // if (event_flag & DATA_PROCESS_TCP_EVENT)
+    if (event_flag & DATA_PROCESS_FPGA_EVENT)
     {
-        stat = osMessageQueueGet(tcp_rx_queueHandle, &tcp_info, 0, osWaitForever);
+        stat = osMessageQueueGet(recv_from_fpga_queueHandle, recv_from_fpga_buf, 0, 0);
         if (stat == osOK)
         {
-            // ntrRecvParamAndPlan(&tcp_info);
+            // APPL_Application_New(recv_from_fpga_buf);
+
+            printf("buf: %x %x %x %x\r\n", recv_from_fpga_buf[0], recv_from_fpga_buf[1], recv_from_fpga_buf[2], recv_from_fpga_buf[3]);
+        }
+        else
+        {
+            printf("no msg in spi2 rx queue:%d\r\n", stat);
+        }
+    }
+
+    if (event_flag & DATA_PROCESS_TCP_EVENT)
+    {
+        stat = osMessageQueueGet(tcp_rx_queueHandle, &tcp_info, 0, 0);
+        if (stat == osOK)
+        {
+            ntrRecvParamAndPlan(&tcp_info);
 
             osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
             sendFeedback();
@@ -484,12 +563,13 @@ void data_process_entry(void *argument)
         else
         {
             printf("no msg in tcp rx queue:%d\r\n", stat);
-        }        
+        }
     }
     
   }
   /* USER CODE END data_process_entry */
 }
+
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 

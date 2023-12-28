@@ -70,7 +70,9 @@ include_directories(
     components/cm_backtrace 
     components/finsh 
     components/ulog 
-    board/board_config/inc
+    components/utilities 
+    board/board_config/inc 
+    application/tcp 
     application)
 
 add_definitions(${defines})

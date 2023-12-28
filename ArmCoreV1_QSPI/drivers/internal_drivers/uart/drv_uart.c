@@ -169,6 +169,13 @@ static int8_t uart_read(DEVICE_UART *uart, uint8_t *buf, uint32_t timeout)
     }
 #endif
 
+#ifdef USING_UART_OPTION_FUNCTION
+    if (uart->opt.after_read != NULL)
+    {
+        uart->opt.after_read(uart);
+    }
+#endif 
+
     ret = osMessageQueueGet(uart->rx_queue, buf, 0, timeout);
     if (ret != osOK)
     {
@@ -260,7 +267,7 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     uart->ioctl = NULL;
 
     /* 7. open device */
-    return uart->open(uart);
+    return 0;//uart->open(uart);
 }
 
 int8_t uart_rx_queue_init(DEVICE_UART *uart, osMessageQueueId_t queue)

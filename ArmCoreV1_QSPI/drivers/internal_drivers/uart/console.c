@@ -54,6 +54,12 @@ static int8_t console_opt_before_read(DEVICE_UART *uart)
 
     return 0;
 }
+static int8_t console_opt_after_read(DEVICE_UART *uart)
+{
+    // printf("after read\r\n");
+
+    return 0;
+}
 static int8_t console_opt_complete_read(DEVICE_UART *uart)
 {
     // printf("complete read\r\n");
@@ -66,6 +72,7 @@ static int8_t device_console_opt_init(DEVICE_UART *console, DEVICE_UART_OPT *con
     console_opt->after_write = console_opt_after_write;
     console_opt->complete_write = console_opt_complete_write;
     console_opt->before_read = console_opt_before_read;
+    console_opt->after_read = console_opt_after_read;
     console_opt->complete_read = console_opt_complete_read;
 
     return uart_opt_init(console, console_opt);
@@ -92,7 +99,13 @@ int8_t device_console_init(uint8_t *device_name)
     uint16_t rx_buf_len = sizeof(struct CmdMessage) - sizeof(uint16_t); /* indicate rx buf max len */
     uart_dma_rx_buf_init(&console, rx_buf, rx_buf_len);
 
-    return uart_init(&console, device_name);
+    int8_t ret = uart_init(&console, device_name);
+    if (ret != 0)
+    {
+        return ret;
+    }
+
+    return console.open(&console);
 }
 
 int8_t console_cmd_process(void)
