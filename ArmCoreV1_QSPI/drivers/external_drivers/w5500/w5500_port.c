@@ -428,7 +428,7 @@ int32_t device_w5500_data_recv_with_block(void)
 {
     int32_t ret = 0;
 
-    ret = device_irq_wait_with_block(device_w5500_get(), osWaitForever);
+    ret = device_irq_wait_with_block(device_w5500_get(), "irq_line_4", ' ', osWaitForever);
     if (ret != 0)
     {
         printf("irq wait err:%d\r\n", ret);
