@@ -258,10 +258,8 @@ void MBX_Init(void)
     {
         UINT16 sm1Activate = 0;
         HW_EscReadWord(sm1Activate,(ESC_SYNCMAN_ACTIVE_OFFSET + SIZEOF_SM_REGISTER));
-//        printf("MBX_Init : read sm1Activate(0x806+8) = %0x \r\n",sm1Activate);
         sm1Activate &= SWAPWORD(~0x0200);
         HW_EscWriteWord(sm1Activate,(ESC_SYNCMAN_ACTIVE_OFFSET + SIZEOF_SM_REGISTER));
-//        printf("MBX_Init : write sm1Activate(0x806+8) = %0x \r\n",sm1Activate);
     }
     bMbxRunning = FALSE;
     bSendMbxIsFull = FALSE;

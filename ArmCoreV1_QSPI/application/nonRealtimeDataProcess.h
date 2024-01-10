@@ -87,4 +87,7 @@ void sendCPtoFPGA(uint16_t beamIndex, uint16_t RIIndex);
 void sendFeedback(void);
 uint16_t beam_cmd_get(void);
 
+int8_t non_realtime_fpga_data_process(uint8_t *recvBuf);
+int8_t non_realtime_data_process_init(void);
+
 #endif //W5500H7_NONREALTIMEDATAPROCESS_H

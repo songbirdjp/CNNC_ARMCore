@@ -159,7 +159,6 @@ typedef struct STRUCT_PACKED_START
 
 /*SyncManger active (0x0806) access*/
 #define SM_SETTING_ACTIVATE_OFFSET          1 /**< \brief Offset to value of register 0x0806*/
-//#define SM_SETTING_ENABLE_VALUE             0x0001 /**< \brief SyncManager enable*/
 #define SM_SETTING_ENABLE_VALUE             0x0001 /**< \brief SyncManager enable*/
 #define SM_SETTING_REPAET_REQ_MASK          0x0002 /**< \brief SyncManager Repeat request*/
 #define SM_SETTING_REPEAT_REQ_SHIFT         0 /**< \brief SyncManager Repeat request shift*/

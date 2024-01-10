@@ -32,19 +32,16 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern OSPI_HandleTypeDef hospi1;
+// extern OSPI_HandleTypeDef hospi1;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_OCTOSPI1_Init(void);
+void MX_OCTOSPI1_Init(OSPI_HandleTypeDef *hospi1);
 
 /* USER CODE BEGIN Prototypes */
-uint32_t lan9252_read_32 (uint32_t address);
-void lan9252_write_32 (uint16_t address, uint32_t val);
-void OSPIWrite(uint8_t _data);
-uint8_t OSPIRead(void);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

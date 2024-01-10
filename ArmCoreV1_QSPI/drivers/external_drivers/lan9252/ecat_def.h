@@ -27,7 +27,7 @@ EL9800_HW: Shall be set if the Slave code is executed on the PIC mounted on the 
 This settings should also be enabled if the ESC is connected via a serial interface and no specific hardware access files are avilable yet.<br>
 NOTE: The PDI type needs also to be configured in the "ESC_CONFIG_DATA". */
 #ifndef EL9800_HW
-#define EL9800_HW                                 1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#define EL9800_HW                                 0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
@@ -55,13 +55,13 @@ from Texas Instruments) */
 /** 
 CONTROLLER_16BIT: Shall be set if the host controller is a 16Bit architecture */
 #ifndef CONTROLLER_16BIT
-#define CONTROLLER_16BIT                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#define CONTROLLER_16BIT                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
 CONTROLLER_32BIT: Shall be set if the host controller is a 32Bit architecture */
 #ifndef CONTROLLER_32BIT
-#define CONTROLLER_32BIT                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#define CONTROLLER_32BIT                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
@@ -75,7 +75,7 @@ This processor is mounted on the Beckhoff Slave Evaluation Board (Hardware versi
 _PIC24: Microchip PIC24HJ128GP306 Specific Code <br>
 This processor is mounted on the Beckhoff Slave Evaluation Board (Hardware version up to EL9800_4A). */
 #ifndef _PIC24
-#define _PIC24                                    1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#define _PIC24                                    0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
@@ -193,7 +193,7 @@ Select this setting to test the slave stack or a master implementation. For furt
 /** 
 EL9800_APPLICATION: Should be set if the Slave Sample Code runs on an EL9800_x Evaluation Board. */
 #ifndef EL9800_APPLICATION
-#define EL9800_APPLICATION                        1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#define EL9800_APPLICATION                        0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
@@ -219,7 +219,7 @@ NOTE: The file "EtherCATSampleLibrary.h" includes the library interface (maybe n
 USE_DEFAULT_MAIN: Set to 1 if the main function of a default application shall be used.<br>
 Otherwise the Init functions and the mainloop handler shall be called for a user specific function (see ET9300 Application Note for further details www.beckhoff.com/english.asp?download/ethercat_development_products.htm?id=71003127100387). */
 #ifndef USE_DEFAULT_MAIN
-#define USE_DEFAULT_MAIN                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#define USE_DEFAULT_MAIN                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
@@ -642,7 +642,7 @@ does not support different memory types, OBJSTRCPY shall be defined to a 'normal
 /** 
 MAKE_HUGE_PTR: Should be defined to the initialize a pointer variable with an absolute address */
 #ifndef MAKE_HUGE_PTR
-#define MAKE_HUGE_PTR 
+#define MAKE_HUGE_PTR                             _mkhp
 #endif
 
 /** 
@@ -707,13 +707,13 @@ if the microcontroller does not support different memory types, VARMEM shall be 
 /** 
 MEM_ADDR: Type to access local memory addresses */
 #ifndef MEM_ADDR
-#define MEM_ADDR                                  UINT16
+#define MEM_ADDR                                  UINT32
 #endif
 
 /** 
 GET_MEM_SIZE(ByteSize): Round up the byte size to next matching memory boundary depending on "MEM_ADDR" */
 #ifndef GET_MEM_SIZE
-#define GET_MEM_SIZE(ByteSize)                    (((ByteSize)+1) >> 1)
+#define GET_MEM_SIZE(ByteSize)                    (((ByteSize)+3) >> 2)
 #endif
 
 /** 
@@ -769,13 +769,13 @@ OBJ_STRUCT_PACKED_END: Is defined after the typedef struct {} construct to pack 
 /** 
 OBJ_DWORD_ALIGN: Shall be set if the object structures are not Byte aligned and the Code is executed on an 32bit platform */
 #ifndef OBJ_DWORD_ALIGN
-#define OBJ_DWORD_ALIGN                           1//0
+#define OBJ_DWORD_ALIGN                           1
 #endif
 
 /** 
 OBJ_WORD_ALIGN: Shall be set if the object structures are not Byte aligned and the Code is executed on an 16bit platform */
 #ifndef OBJ_WORD_ALIGN
-#define OBJ_WORD_ALIGN                            0//1
+#define OBJ_WORD_ALIGN                            0
 #endif
 
 
@@ -838,12 +838,7 @@ DEVICE_PROFILE_TYPE: Slave device type (Object 0x1000)  */
 /** 
 DEVICE_NAME: Name of the slave device (Object 0x1008) */
 #ifndef DEVICE_NAME
-	#ifdef SPI_Connect	
-	#define DEVICE_NAME                               "LAN9252___SPI"        	
-	#else
-	#define DEVICE_NAME                               "LAN9252_16HBI" 
-	#endif
-
+#define DEVICE_NAME                               "LAN9252___SPI"
 #endif
 
 /** 
@@ -867,17 +862,13 @@ DEVICE_HW_VERSION_LEN: Length of 'DEVICE_HW_VERSION' without '\0' */
 /** 
 DEVICE_SW_VERSION: Software version of the slave device (Object 0x100A) */
 #ifndef DEVICE_SW_VERSION
-	#ifdef SPI_Connect	
-	#define DEVICE_SW_VERSION                         "0.1"        	
-	#else
-	#define DEVICE_SW_VERSION                         "0.2"
-	#endif
+#define DEVICE_SW_VERSION                         "5.11"
 #endif
 
 /** 
 DEVICE_SW_VERSION_LEN: Length of 'DEVICE_SW_VERSION' without '\0' */
 #ifndef DEVICE_SW_VERSION_LEN
-#define DEVICE_SW_VERSION_LEN                     0x3
+#define DEVICE_SW_VERSION_LEN                     0x4
 #endif
 
 /** 
@@ -953,14 +944,14 @@ MAX_MBX_READ_ADDRESS: Maximum address for the read (send) mailbox (Sync Manager 
 /** 
 MAX_PD_OUTPUT_SIZE: Maximum size of the process output data (Sync Manager 2) for cyclic exchange. */
 #ifndef MAX_PD_OUTPUT_SIZE
-#define MAX_PD_OUTPUT_SIZE                        0x0FF//This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!// change by cjh 
+#define MAX_PD_OUTPUT_SIZE                        0x0FF //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
 MIN_PD_CYCLE_TIME: Minimum cycle time in ns the slave is supporting <br>
 (entry 0x1C32:05 or entry 0x1C33:05) */
 #ifndef MIN_PD_CYCLE_TIME
-#define MIN_PD_CYCLE_TIME                         0x186A0//0x7A120// 0x186A0--100us
+#define MIN_PD_CYCLE_TIME                         0x186A0
 #endif
 
 /** 

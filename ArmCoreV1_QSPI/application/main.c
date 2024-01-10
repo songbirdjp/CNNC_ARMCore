@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "dma.h"
+#include "mdma.h"
 #include "octospi.h"
 #include "spi.h"
 #include "tim.h"
@@ -31,7 +32,6 @@
 /* USER CODE BEGIN Includes */
 //#include "retarget.h"
 //#include "LAN9252.h"
-#include "applInterface.h"
 #include "cm_backtrace.h"
 #include "ulog.h"
 #include "finsh.h"
@@ -104,7 +104,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_OCTOSPI1_Init();
+  MX_MDMA_Init();
+  MX_BDMA_Init();
+//   MX_OCTOSPI1_Init();
 //   MX_SPI1_Init();
 //   MX_USART1_UART_Init();
 
@@ -117,31 +119,40 @@ int main(void)
     // start_uart_receive();
     SDRAM_Init();
    // fsmc_sdram_test();
-    HW_Init();//EtherCAT Hardware Init
+    
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);//leaf servo drive signal
     HAL_GPIO_WritePin(GPIOG, GPIO_PIN_3, GPIO_PIN_SET);//carrier servo drive signal
 
+    /* Console initialize */
+    device_console_init(CONSOLE_NAME_DEFAULT);
 
     /* CmBacktrace initialize */
     cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", "0.0.1");
 
     ulog_init(ULOG_DEBUG_LEVEL);
     
-    device_console_init(CONSOLE_NAME_DEFAULT);
+
+    // ethercat_slave_init();//EtherCAT Hardware Init
     
 #ifdef RT_USING_FINSH
     finsh_system_init();
 #endif
 
     LOG_I("Init ok\r\n");
+
+    printf("HAL_RCC_GetSysClockFreq:%.2f M\r\n", HAL_RCC_GetSysClockFreq()/1000000.0);
+    
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();  /* Call init function for freertos objects (in freertos.c) */
+  osKernelInitialize();
+
+  /* Call init function for freertos objects (in freertos.c) */
   MX_FREERTOS_Init();
 
   /* Start scheduler */
   osKernelStart();
+
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */

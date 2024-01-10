@@ -68,11 +68,14 @@ include_directories(
     drivers/internal_drivers/spi 
     drivers/internal_drivers/timer 
     drivers/internal_drivers/uart 
+    drivers/internal_drivers/bdma 
+    drivers/internal_drivers/mdma 
     components/cm_backtrace 
     components/finsh 
     components/ulog 
     components/utilities 
     board/board_config/inc
+    application/ethercat 
     application/tcp 
     application/fpga 
     application)

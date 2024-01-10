@@ -15,10 +15,8 @@
 	
   Change History:
     Version		Changes
-	0.1			Initial version.
-	0.2			-
-	0.3			-	
-	0.4 		-
+	1.3			Initial version.
+
 *******************************************************************************/
 
 // DOM-IGNORE-BEGIN
@@ -52,13 +50,16 @@
 // *****************************************************************************
 // *****************************************************************************
 
-//#include "plib.h"
+
 #ifndef SPIDRIVER_H
 #define	SPIDRIVER_H
-#include "el9800hw.h"
-#include "octospi.h"
-#include "stm32h7xx_hal.h"
+
 #include "ecat_def.h"
+#include "stdint.h"
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
 	// *****************************************************************************
 	// *****************************************************************************
 	// Section: File Scope or Global Data Types
@@ -94,26 +95,11 @@
 	#define ESC_READ_BYTE 		0xC0
 	#define ESC_CSR_BUSY		0x80
 
-        #define SYS_FREQ_MHZ     80
+  
+	#define SPIWriteByte(UINT8) SPIWrite(UINT8)
+	#define SPIReadByte() SPIRead()
 
-	#define SPI_CLK_DIV(MHz) ((SYS_FREQ_MHZ/(2*MHz))-1)
-
-	#define SPI_MODE0 0
-	#define SPI_MODE1 1
-	#define SPI_MODE2 2
-	#define SPI_MODE3 3
-
-	#define SPIGet()     SPI4BUF
-	#define CSLOW()      HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_RESET)
-	#define CSHIGH()     HAL_GPIO_WritePin(GPIOE, GPIO_PIN_11, GPIO_PIN_SET)
-
-
-//	#define SPIWriteByte(UINT8)     OSPIWrite(uint8_t _data)
-//	#define SPIReadByte()       OSPIRead()
-
-	/////////////////////////////////////////////////////////////////////////////////
-	
-	
+/*TODO**********************************************************************************/	
 typedef union
 {
 	uint32_t Val;
@@ -147,23 +133,18 @@ typedef union
 
 	void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count);
 	void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count);
-	void SPIWriteRegister( UINT8 *WriteBuffer, UINT16 Address, UINT16 Count);
-	void SPIReadDRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count);
     void SPIReadRegUsingCSR(UINT8 *ReadBuffer, UINT16 Address, UINT8 Count);
     void SPIWriteRegUsingCSR( UINT8 *WriteBuffer, UINT16 Address, UINT8 Count);
 	void SPIWriteDWord (UINT16 Address, UINT32 Val);
 	UINT32 SPIReadDWord (UINT16 Address);
-	//void SPIOpen();
-//	uint8_t SPIRead();
-//	void SPIWrite(uint8_t data);
-	void SPIPut(UINT8 data);
     void SPIWriteBurstMode (UINT32 Val);
-//    UINT32 SPIReadBurstMode ();
+    UINT32 SPIReadBurstMode ();
     void SPISendAddr (UINT16 Address);
-uint32_t qspi_readBurstMode(uint16_t address,uint8_t *buff,uint32_t num);
-void qspi_writeBurstMode(uint16_t address,uint8_t *buff,uint32_t num);
     
-
+    
+#ifdef	__cplusplus
+}
+#endif
 
 #endif	/* PMPDRIVER_H */
 

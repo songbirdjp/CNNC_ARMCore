@@ -56,7 +56,6 @@ V5.01 : Start file change log
 #define     BIT6(x)                     unsigned short(x):6 /**< \brief Marco to define BIT5 object entry*/
 #define     BIT7(x)                     unsigned short(x):7 /**< \brief Marco to define BIT6 object entry*/
 #define     BIT8(x)                     unsigned short(x):8 /**< \brief Marco to define BIT7 object entry*/
-#define     BIT16(x)                     unsigned short(x):16 /**< \brief Marco to define BIT7 object entry*/
 #define     ALIGN0(x)
 #define     ALIGN1(x)                   unsigned short(x):1; /**< \brief Marco to define ALIGN1 object entry*/
 #define     ALIGN2(x)                   unsigned short(x):2; /**< \brief Marco to define ALIGN2 object entry*/

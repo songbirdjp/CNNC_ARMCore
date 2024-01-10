@@ -36,8 +36,9 @@ V5.01 : Start file change log
 
 #include "ecat_def.h"
 
-#include "el9800hw.h"
+#include  "esc.h"
 
+#include "9252_HW.h"
 
 /*-----------------------------------------------------------------------------------------
 ------

@@ -16,9 +16,7 @@
   Change History:
     Version		Changes
 	0.1			Initial version.
-	0.2			-
-	0.3			-	
-	0.4 		-
+	1.3			Re-arranged the function. Moved the other functions to PIC32SPIDriver.C
 *******************************************************************************/
 
 /*******************************************************************************
@@ -44,100 +42,51 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 (INCLUDING BUT NOT LIMITED TO ANY DEFENSE THEREOF), OR OTHER SIMILAR COSTS.
  *******************************************************************************/
 
+#include "9252_HW.h"
 #include "SPIDriver.h"
+#include "lan9252_port.h"
 
-void Delay(UINT16 Count)
+/*******************************************************************************
+  Function:
+	UINT32 SPIReadDWord (UINT16 Address)
+  Summary:
+    This function reads the LAN9252 CSR registers.        
+  
+*****************************************************************************/
+UINT32 SPIReadDWord (UINT16 Address)
 {
-    do
-    {
-//        __NOP;
+    UINT32 value;
 
-    } while (Count--);
-}
+    device_lan9252_data_read(Address, &value, sizeof(value));
 
-//void SPIPut(UINT8 data)
-//{
-////    // Wait for free buffer
-////    while(!SPI4STATbits.SPITBE);
-////    SPI4BUF = data;
-//
-////    // Wait for data UINT8
-////    while(!SPI4STATbits.SPIRBF);
-//
-//}
-//void SPIWrite(UINT8 data)
-//{
-////    SPIPut(data);
-////    SPIGet();
-//		HAL_SPI_Transmit(&hspi1 , &data, 1,1000);
-//}
-//UINT8 SPIRead()
-//{
-//    UINT8 data;
-////    SPIPut(0);
-////    data = (UINT8)SPIGet();
-//		HAL_SPI_Receive(&hspi5,&data,1,1000);
-//    return (data);
-//}
-
-//void SPIOpen()
-//{
-//
-//}
-
-void SPIWriteByte(uint8_t _data)
-{
-//    printf("SPIWriteByte");
-    OSPIWrite(_data);
-}
-
-uint8_t SPIReadByte()
-{
-//    printf("SPIReadByte");
-    return OSPIRead();
-}
-
-UINT32 SPIReadDWord(UINT16 Address)
-{
-    UINT32_VAL dwResult;
-    UINT16_VAL wAddr;
-    uint32_t value;
-
-    wAddr.Val = Address;
-//    //Assert CS line
-    CSLOW();
-//    //Write Command
-////    SPIWriteByte(CMD_FAST_READ);//changed by yh
-//    SPIWriteByte(CMD_SERIAL_READ);//changed by yh
-//    //Write Address
-//    SPIWriteByte(wAddr.byte.HB);
-//    SPIWriteByte(wAddr.byte.LB);
-//
-//    //Dummy Byte
-////    SPIWriteByte(CMD_FAST_READ_DUMMY);
-//    //Read Bytes
-//    dwResult.byte.LB = SPIReadByte();
-//    dwResult.byte.HB = SPIReadByte();
-//    dwResult.byte.UB = SPIReadByte();
-//    dwResult.byte.MB = SPIReadByte();
-//    //De-Assert CS line
-
-    value = lan9252_read_32(Address);
-    CSHIGH();
     return value;
 }
 
-void SPISendAddr(UINT16 Address)
+/*******************************************************************************
+  Function:
+	void SPISendAddr (UINT16 Address)
+  Summary:
+    This function write address to SPI data bus.        
+  
+*****************************************************************************/
+void SPISendAddr (UINT16 Address)
 {
     UINT16_VAL wAddr;
 
-    wAddr.Val = Address;
+    wAddr.Val  = Address;
     //Write Address
     SPIWriteByte(wAddr.byte.HB);
     SPIWriteByte(wAddr.byte.LB);
 }
 
-UINT32 SPIReadBurstMode()
+/*******************************************************************************
+  Function:
+	UINT32 SPIReadBurstMode ()
+  Summary:
+    This function read 4 bytes continuosly.        
+  
+*****************************************************************************/
+UINT32 SPIReadBurstMode ()
 {
     UINT32_VAL dwResult;
     //Read Bytes
@@ -145,15 +94,22 @@ UINT32 SPIReadBurstMode()
     dwResult.byte.HB = SPIReadByte();
     dwResult.byte.UB = SPIReadByte();
     dwResult.byte.MB = SPIReadByte();
-
+    
     return dwResult.Val;
 }
 
-void SPIWriteBurstMode(UINT32 Val)
+/*******************************************************************************
+  Function:
+	void SPIWriteBurstMode (UINT32 Val)
+  Summary:
+    This function writes 4 bytes continuosly.        
+  
+*****************************************************************************/
+void SPIWriteBurstMode (UINT32 Val)
 {
     UINT32_VAL dwData;
     dwData.Val = Val;
-
+    
     //Write Bytes
     SPIWriteByte(dwData.byte.LB);
     SPIWriteByte(dwData.byte.HB);
@@ -161,33 +117,57 @@ void SPIWriteBurstMode(UINT32 Val)
     SPIWriteByte(dwData.byte.MB);
 }
 
-void SPIWriteDWord(UINT16 Address, UINT32 Val)
+#define ADDRESS_AUTO_INCREMENT 0x40
+/*******************************************************************************
+  Function:
+	void SPIWriteBytes(UINT16 Address, UINT8 *Val, UINT8 nLenght)
+  Summary:
+    This function writes the LAN9252 CSR registers.        
+  
+*****************************************************************************/
+void SPIWriteBytes(UINT16 Address, UINT8 *Val, UINT8 nLenght)
 {
-    UINT32_VAL dwData;
+    UINT8 *dwData;
     UINT16_VAL wAddr;
 
-    wAddr.Val = Address;
-    dwData.Val = Val;
-//    //Assert CS line
+    wAddr.Val  = Address;
+    dwData = Val;
+    //Assert CS line
     CSLOW();
-//    //Write Command
-//    SPIWriteByte(CMD_SERIAL_WRITE);
-//    //Write Address
-//    SPIWriteByte(wAddr.byte.HB);
-//    SPIWriteByte(wAddr.byte.LB);
-//    //Write Bytes
-//    SPIWriteByte(dwData.byte.LB);
-//    SPIWriteByte(dwData.byte.HB);
-//    SPIWriteByte(dwData.byte.UB);
-//    SPIWriteByte(dwData.byte.MB);
-//
-//    //De-Assert CS line
-
-
-    lan9252_write_32(Address, Val);
+    //Write Command
+    SPIWriteByte(CMD_SERIAL_WRITE);
+    //Write Address
+    SPIWriteByte(wAddr.byte.HB|ADDRESS_AUTO_INCREMENT);
+    SPIWriteByte(wAddr.byte.LB);
+    //Write Bytes
+    while(nLenght--)
+    {
+     SPIWriteByte(*(dwData++));
+    }
+        
+    //De-Assert CS line
     CSHIGH();
 }
 
+/*******************************************************************************
+  Function:
+	void SPIWriteDWord (UINT16 Address, UINT32 Val)
+  Summary:
+    This function writes the LAN9252 CSR registers.        
+  
+*****************************************************************************/
+void SPIWriteDWord (UINT16 Address, UINT32 Val)
+{
+    device_lan9252_data_write(Address, &Val, sizeof(Val));
+}
+
+/*******************************************************************************
+  Function:
+   void SPIReadRegUsingCSR(UINT8 *ReadBuffer, UINT16 Address, UINT8 Count)
+  Summary:
+    This function reads the EtherCAT core registers using LAN9252 CSR registers.        
+  
+*****************************************************************************/
 void SPIReadRegUsingCSR(UINT8 *ReadBuffer, UINT16 Address, UINT8 Count)
 {
     UINT32_VAL param32_1 = {0};
@@ -200,33 +180,40 @@ void SPIReadRegUsingCSR(UINT8 *ReadBuffer, UINT16 Address, UINT8 Count)
     param32_1.v[2] = Count;
     param32_1.v[3] = ESC_READ_BYTE;
 
-    SPIWriteDWord(ESC_CSR_CMD_REG, param32_1.Val);
-//    HAL_Delay(1);//���������С�ȴ�����
+    SPIWriteDWord (ESC_CSR_CMD_REG, param32_1.Val);
+
     do
     {
-        param32_1.Val = SPIReadDWord(ESC_CSR_CMD_REG);
+        param32_1.Val = SPIReadDWord (ESC_CSR_CMD_REG);
+		
+    }while(param32_1.v[3] & ESC_CSR_BUSY);
 
-    } while (param32_1.v[3] & ESC_CSR_BUSY);
+    param32_1.Val = SPIReadDWord (ESC_CSR_DATA_REG);
 
-    param32_1.Val = SPIReadDWord(ESC_CSR_DATA_REG);
-
-
-    for (i = 0; i < Count; i++)
-        ReadBuffer[i] = param32_1.v[i];
+    
+    for(i=0;i<Count;i++)
+         ReadBuffer[i] = param32_1.v[i];
 
     return;
 }
 
-void SPIWriteRegUsingCSR(UINT8 *WriteBuffer, UINT16 Address, UINT8 Count)
+/*******************************************************************************
+  Function:
+   void SPIWriteRegUsingCSR( UINT8 *WriteBuffer, UINT16 Address, UINT8 Count)
+  Summary:
+    This function writes the EtherCAT core registers using LAN9252 CSR registers.        
+  
+*****************************************************************************/
+void SPIWriteRegUsingCSR( UINT8 *WriteBuffer, UINT16 Address, UINT8 Count)
 {
     UINT32_VAL param32_1 = {0};
     UINT8 i = 0;
     UINT16_VAL wAddr;
 
-    for (i = 0; i < Count; i++)
-        param32_1.v[i] = WriteBuffer[i];
+    for(i=0;i<Count;i++)
+         param32_1.v[i] = WriteBuffer[i];
 
-    SPIWriteDWord(ESC_CSR_DATA_REG, param32_1.Val);
+    SPIWriteDWord (ESC_CSR_DATA_REG, param32_1.Val);
 
 
     wAddr.Val = Address;
@@ -236,49 +223,47 @@ void SPIWriteRegUsingCSR(UINT8 *WriteBuffer, UINT16 Address, UINT8 Count)
     param32_1.v[2] = Count;
     param32_1.v[3] = ESC_WRITE_BYTE;
 
-    SPIWriteDWord(0x304, param32_1.Val);
-//        HAL_Delay(1);//���������С�ȴ�����
+    SPIWriteDWord (0x304, param32_1.Val);
     do
     {
-        param32_1.Val = SPIReadDWord(0x304);
+        param32_1.Val = SPIReadDWord (0x304);
 
-    } while (param32_1.v[3] & ESC_CSR_BUSY);
+    }while(param32_1.v[3] & ESC_CSR_BUSY);
 
     return;
 }
 
+/*******************************************************************************
+  Function:
+   void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
+  Summary:
+    This function reads the PDRAM using LAN9252 FIFO.        
+  
+*****************************************************************************/
 void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 {
     UINT32_VAL param32_1 = {0};
-    if (Count > 0)
-    {
-        uint8_t tempBuff[Count];
-    }
-    else
-    {
-        return;
-    }
-    UINT8 i = 0, nlength, nBytePosition;
+    UINT8 i = 0,nlength, nBytePosition;
     UINT8 nReadSpaceAvblCount;
-//    UINT16 RefAddr = Address;
+    UINT16 RefAddr = Address;
 
+	/*Reset/Abort any previous commands.*/
+    param32_1.Val = PRAM_RW_ABORT_MASK;                                                 
 
-    /*Reset/Abort any previous commands.*/
-    param32_1.Val = PRAM_RW_ABORT_MASK;
-
-    SPIWriteDWord(PRAM_READ_CMD_REG, param32_1.Val);
+    SPIWriteDWord (PRAM_READ_CMD_REG, param32_1.Val);
 
     /*The host should not modify this field unless the PRAM Read Busy
     (PRAM_READ_BUSY) bit is a 0.*/
-    do
+	do
     {
-        param32_1.Val = SPIReadDWord(PRAM_READ_CMD_REG);
+        param32_1.Val = SPIReadDWord (PRAM_READ_CMD_REG);
 
-    } while ((param32_1.v[3] & PRAM_RW_BUSY_8B));
-
-    /*Write address and length in the EtherCAT Process RAM Read Address and
-     * Length Register (ECAT_PRAM_RD_ADDR_LEN)*/
-    param32_1.w[0] = Address;
+    }while((param32_1.v[3] & PRAM_RW_BUSY_8B));
+    
+    /*Write Address and Length Register (PRAM_READ_ADDR_LEN) with the
+    starting UINT8 address and length) and Set PRAM Read Busy (PRAM_READ_BUSY) bit(-EtherCAT Process RAM Read Command Register)
+    to start read operatrion*/
+	param32_1.w[0] = Address;
     param32_1.w[1] = Count;
 
     SPIWriteDWord(PRAM_READ_ADDR_LEN_REG, param32_1.Val);
@@ -294,9 +279,9 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
     /*Read PRAM Read Data Available (PRAM_READ_AVAIL) bit is set*/
     do
     {
-        param32_1.Val = SPIReadDWord(PRAM_READ_CMD_REG);
+        param32_1.Val = SPIReadDWord (PRAM_READ_CMD_REG);
 
-    } while (!(param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK));
+    }while(!(param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK));
 
     nReadSpaceAvblCount = param32_1.v[1] & PRAM_SPACE_AVBL_COUNT_MASK;
 
@@ -314,12 +299,15 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 //    i += nlength;
     if (Count > 0)
     {
-        uint8_t tempBuff[Count];
-        CSLOW();
-        qspi_readBurstMode(PRAM_READ_FIFO_REG,tempBuff,Count);
-        memcpy(ReadBuffer ,tempBuff,Count);
-        nReadSpaceAvblCount = nReadSpaceAvblCount - Count / 4;//不一定用到
-        CSHIGH();
+        // uint8_t tempBuff[Count];
+        // CSLOW();
+        // qspi_readBurstMode(PRAM_READ_FIFO_REG,tempBuff,Count);
+        device_lan9252_data_read(PRAM_READ_FIFO_REG, ReadBuffer, Count);
+        // uint8_t buf[10] = {0};
+        // device_lan9252_read_write(PRAM_READ_FIFO_REG, ReadBuffer, Count);
+        // memcpy(ReadBuffer ,tempBuff,Count);
+        nReadSpaceAvblCount = nReadSpaceAvblCount - Count / 4;//不一定用�?
+        // CSHIGH();
         return;
     }
     else
@@ -353,30 +341,36 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 
     return;
 }
-
+        
+/*******************************************************************************
+  Function:
+   void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
+  Summary:
+    This function writes the PDRAM using LAN9252 FIFO.        
+  
+*****************************************************************************/
 void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 {
-    uint8_t tempBuff[Count];
-    uint8_t testBuff[Count];
     UINT32_VAL param32_1 = {0};
-    UINT8 i = 0, nlength, nBytePosition, nWrtSpcAvlCount;
+    UINT8 i = 0,nlength, nBytePosition,nWrtSpcAvlCount;
 
     /*Reset or Abort any previous commands.*/
-    param32_1.Val = PRAM_RW_ABORT_MASK;
+    param32_1.Val = PRAM_RW_ABORT_MASK;                                                
 
-    SPIWriteDWord(PRAM_WRITE_CMD_REG, param32_1.Val);
+    SPIWriteDWord (PRAM_WRITE_CMD_REG, param32_1.Val);
 
     /*Make sure there is no previous write is pending
     (PRAM Write Busy) bit is a 0 */
     do
     {
-        param32_1.Val = SPIReadDWord(PRAM_WRITE_CMD_REG);
+        param32_1.Val = SPIReadDWord (PRAM_WRITE_CMD_REG);
 
-    } while ((param32_1.v[3] & PRAM_RW_BUSY_8B));
+    }while((param32_1.v[3] & PRAM_RW_BUSY_8B));
 
     /*Write Address and Length Register (ECAT_PRAM_WR_ADDR_LEN) with the
-    starting UINT8 address and length)*/
-    param32_1.w[0] = Address;
+    starting UINT8 address and length) and write to the EtherCAT Process RAM Write Command Register (ECAT_PRAM_WR_CMD) with the  PRAM Write Busy
+    (PRAM_WRITE_BUSY) bit set*/
+	param32_1.w[0] = Address;
     param32_1.w[1] = Count;
 
     SPIWriteDWord(PRAM_WRITE_ADDR_LEN_REG, param32_1.Val);
@@ -391,14 +385,14 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
     /*Read PRAM write Data Available (PRAM_READ_AVAIL) bit is set*/
     do
     {
-        param32_1.Val = SPIReadDWord(PRAM_WRITE_CMD_REG);
+       param32_1.Val = SPIReadDWord (PRAM_WRITE_CMD_REG);
 
-    } while (!(param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK));
+    }while(!(param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK));
 
     /*Check write data available count*/
     nWrtSpcAvlCount = param32_1.v[1] & PRAM_SPACE_AVBL_COUNT_MASK;
 
-    /*Write data to Write FIFO) */
+    /*Write data to Write FIFO) */ 
     /*get the byte lenth for first read*/
 //    nBytePosition = (Address & 0x03);
 //
@@ -412,9 +406,9 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 //    nWrtSpcAvlCount--;
 //    Count -= nlength;
 //    i += nlength;
-    memcpy(testBuff, WriteBuffer , Count);
+    // memcpy(testBuff, WriteBuffer , Count);
     //Auto increment mode
-    CSLOW();
+    // CSLOW();
 
     //Write Command
 //    SPIWriteByte(CMD_SERIAL_WRITE);//todo :replace with single command functions
@@ -432,139 +426,136 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 //        Count -= nlength;
 //        nWrtSpcAvlCount--;
 //    }
-    memcpy(tempBuff, WriteBuffer, Count);//change count from nlength
+    // memcpy(tempBuff, WriteBuffer, Count);//change count from nlength
 //    nWrtSpcAvlCount = nWrtSpcAvlCount - Count;
-    qspi_writeBurstMode(PRAM_WRITE_FIFO_REG,tempBuff,Count);
-    CSHIGH();
+    // qspi_writeBurstMode(PRAM_WRITE_FIFO_REG,tempBuff,Count);
+    // CSHIGH();
+
+    device_lan9252_data_write(PRAM_WRITE_FIFO_REG, WriteBuffer, Count);
     return;
 }
 
-void SPIReadDRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
+/*******************************************************************************
+  Function:
+   void PDIReadReg(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
+  Summary:
+    This function reads the ESC registers using LAN9252 CSR or FIFO.         
+  
+*****************************************************************************/
+void PDIReadReg(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 {
-    if (Address >= 0x1000)
+    if (Address >= MIN_PD_READ_ADDRESS)
     {
-//        printf(">>>>R1000\r\n");
-//        HAL_Delay(1);
-        SPIReadPDRamRegister(ReadBuffer, Address, Count);
-       // printf("ReadBuffer = %x\r\n",ReadBuffer);
+        uint8_t num = 0;
+        uint8_t i = 0;
+
+        while (Count > 0)
+        {
+            if (Count > 128)
+            {
+                num = 128;
+            }
+            else
+            {
+                num = Count;
+            }
+
+            SPIReadPDRamRegister(ReadBuffer + 128 * i, Address + 128 * i, num);
+
+            Count -= num;
+            i++;
+        }
+
+        //  SPIReadPDRamRegister(ReadBuffer, Address,Count);
     }
     else
     {
-        SPIReadRegUsingCSR(ReadBuffer, Address, Count);
+         SPIReadRegUsingCSR(ReadBuffer, Address,Count);
     }
 }
 
-void SPIWriteRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
+/*******************************************************************************
+  Function:
+   void PDIWriteReg( UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
+  Summary:
+    This function writes the ESC registers using LAN9252 CSR or FIFO.        
+  
+*****************************************************************************/
+void PDIWriteReg( UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 {
+   
+   if (Address >= MIN_PD_WRITE_ADDRESS)
+   {
+        uint8_t num = 0;
+        uint8_t i = 0;
 
-    if (Address >= 0x1000)
-    {
-//        printf(">>>>W1000\r\n");
-//        HAL_Delay(1);
-       SPIWritePDRamRegister(WriteBuffer, Address, Count);
-       // printf("WriteBuffer = %x\r\n",WriteBuffer);
-    }
-    else
-    {
-        SPIWriteRegUsingCSR(WriteBuffer, Address, Count);
-    }
+        while (Count > 0)
+        {
+            if (Count > 128)
+            {
+                num = 128;
+            }
+            else
+            {
+                num = Count;
+            }
 
+            SPIWritePDRamRegister(WriteBuffer + 128 * i, Address + 128 * i, num);
+
+            Count -= num;
+            i++;
+        }    
+
+#if 0
+        for (uint8_t i = 0; i < 16; i++)
+        {
+            WriteBuffer[i] = i;
+        }
+#endif
+		// SPIWritePDRamRegister(WriteBuffer, Address,Count);
+
+   }
+   else
+   {
+		SPIWriteRegUsingCSR(WriteBuffer, Address,Count);
+   }
+    
 }
-uint32_t qspi_readBurstMode(uint16_t address,uint8_t *buff,uint32_t num)
-{
-    uint8_t data = 0xff;
-    OSPI_RegularCmdTypeDef sCommand = {0};
 
-    sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;
-//    sCommand.FlashId = HAL_OSPI_FLASH_ID_1;
-    sCommand.Instruction = 0X6B;
-//    sCommand.Instruction = 0X03;
-    sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;
-    sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;
-
-
-    sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;
-    sCommand.AddressSize = HAL_OSPI_ADDRESS_16_BITS;
-    sCommand.Address = address;
-
-    sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;
-    sCommand.DataMode = HAL_OSPI_DATA_4_LINES;
-//    sCommand.DataMode = HAL_OSPI_DATA_1_LINE;
-    sCommand.NbData = num;
-
-    sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;
-
-    sCommand.DummyCycles = 8;
-//    sCommand.DummyCycles = 0;
-    sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;
-    sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;
-    sCommand.InstructionDtrMode = HAL_OSPI_INSTRUCTION_DTR_DISABLE;
-
-    if(HAL_OSPI_Command(&hospi1,&sCommand,5000)==HAL_OK)
-    {
-//        printf("qspi_readByte_ReceiveCMD done \n"); //test by yh
-
-        if(HAL_OSPI_Receive(&hospi1, buff, 5000)==HAL_OK)
-        {
-//            printf("qspi_Receive done \n"); //test by yh
-        }
-        else
-        {
-//            printf("qspi_readByte_Receive error \n"); //test by yh
-            Error_Handler();
-        }
-
-
-    }
-    else
-    {
-//        printf("qspi_readByte_ReceiveCMD err \n"); //test by yh
-        Error_Handler();
-    }
-    return 0;
-
+/*******************************************************************************
+  Function:
+	UINT32 PDIReadLAN9252DirectReg( UINT16 Address)
+  Summary:
+    This function reads the LAN9252 CSR registers(Not ESC registers).        
+  
+*****************************************************************************/
+UINT32 PDIReadLAN9252DirectReg( UINT16 Address)
+{   
+    UINT32 data;
+    data = SPIReadDWord (Address);
+    return data;
 }
-void qspi_writeBurstMode(uint16_t address,uint8_t *buff,uint32_t num)
+
+/*******************************************************************************
+  Function:
+	void PDIWriteLAN9252DirectReg( UINT32 Val, UINT16 Address)
+  Summary:
+    This function writes the LAN9252 CSR registers(Not ESC registers).        
+  
+*****************************************************************************/
+void PDIWriteLAN9252DirectReg( UINT32 Val, UINT16 Address)
 {
-    OSPI_RegularCmdTypeDef sCommand = {0};
+    SPIWriteDWord (Address, Val);
+}
 
-    sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;
-    sCommand.Instruction = 0x62;
-//    sCommand.Instruction = 0x02;
-    sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;
-    sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;
-
-    sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;
-    sCommand.AddressSize = HAL_OSPI_ADDRESS_16_BITS;
-    sCommand.Address = address;
-
-    sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;
-    sCommand.DataMode = HAL_OSPI_DATA_4_LINES;
-//    sCommand.DataMode = HAL_OSPI_DATA_2_LINES;
-    sCommand.NbData = num;
-    sCommand.DummyCycles = 0;
-    sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;
-    sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;
-    sCommand.InstructionDtrMode = HAL_OSPI_INSTRUCTION_DTR_DISABLE;
-
-    if(HAL_OSPI_Command(&hospi1, &sCommand, 5000) == HAL_OK)
-    {
-//        printf("qspi_writeByete_transmitCMD \n"); //test by yh
-
-        if(HAL_OSPI_Transmit(&hospi1, buff, 5000) == HAL_OK)
-        {
-//            printf("qspi_writeByete_transmitCMD \n"); //test by yh
-        }
-        else
-        {
-//            printf("qspi_writeByete_Transmit err \n"); //test by yh
-            Error_Handler();
-        }
-
-    }
-    else
-    {
-//        printf("qspi_writeByete_transmitCMD errCode = %0x  \n",hospi1.ErrorCode); //test by yh
-        Error_Handler();
-    }
+/*******************************************************************************
+  Function:
+	void PDI_Init()
+  Summary:
+    This function initialize the PDI(SPI).        
+  
+*****************************************************************************/
+void PDI_Init()
+{
+    SPIOpen();  
 }

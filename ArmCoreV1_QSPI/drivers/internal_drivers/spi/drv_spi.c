@@ -549,7 +549,7 @@ int8_t device_irq_list_list(DEVICE_SPI *spi)
     return 0;
 }
 
-int8_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, char splitter, uint32_t timeout)
+int32_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, char splitter, uint32_t timeout)
 {
     if (spi == NULL || node_name == NULL)
     {
@@ -588,10 +588,9 @@ int8_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, char spli
     if ((ret & flag) != ret)
     {
         printf("device %s wait irq err:%u\r\n", spi->name, ret);
-        return ret;
     }
 
-    return 0;
+    return ret;
 }
 
 #endif

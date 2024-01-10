@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    gpio.h
-  * @brief   This file contains all the function prototypes for
-  *          the gpio.c file
+  * File Name          : mdma.h
+  * Description        : This file contains all the function prototypes for
+  *                      the mdma.c file
   ******************************************************************************
   * @attention
   *
@@ -17,16 +17,22 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __GPIO_H__
-#define __GPIO_H__
+#ifndef __mdma_H
+#define __mdma_H
 
 #ifdef __cplusplus
-extern "C" {
+ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+/* MDMA transfer handles -----------------------------------------------------*/
+extern MDMA_HandleTypeDef hmdma_octospi1_fifo_th;
+extern MDMA_HandleTypeDef hmdma_mdma_channel1_dma1_stream2_tc_0;
+extern MDMA_HandleTypeDef hmdma_mdma_channel2_dma1_stream5_tc_0;
 
 /* USER CODE BEGIN Includes */
 
@@ -36,7 +42,7 @@ extern "C" {
 
 /* USER CODE END Private defines */
 
-void MX_GPIO_Init(void);
+void MX_MDMA_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -45,5 +51,9 @@ void MX_GPIO_Init(void);
 #ifdef __cplusplus
 }
 #endif
-#endif /*__ GPIO_H__ */
 
+#endif /* __mdma_H */
+
+/**
+  * @}
+  */

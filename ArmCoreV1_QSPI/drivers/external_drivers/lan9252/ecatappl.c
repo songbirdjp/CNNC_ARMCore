@@ -110,9 +110,7 @@ V4.00 APPL 6: The main function was split in MainInit and MainLoop
 #include "ecatslv.h"
 
 #define    _ECATAPPL_ 1
-
 #include "ecatappl.h"
-
 #undef _ECATAPPL_
 /* ECATCHANGE_START(V5.11) ECAT10*/
 /*remove definition of _ECATAPPL_ (#ifdef is used in ecatappl.h)*/
@@ -123,13 +121,11 @@ V4.00 APPL 6: The main function was split in MainInit and MainLoop
 
 /* ECATCHANGE_START(V5.11) ECAT11*/
 #define _APPL_INTERFACE_ 1
-
 #include "applInterface.h"
-
 #undef _APPL_INTERFACE_
 /* ECATCHANGE_END(V5.11) ECAT11*/
 
-#include "el9800appl.h"
+#include "lan9252_app.h"
 
 
 
@@ -158,11 +154,11 @@ UINT16 u16BusCycleCntMs;        //used to calculate the bus cycle time in Ms
 UINT32 StartTimerCnt;    //variable to store the timer register value when get cycle time was triggered
 BOOL bCycleTimeMeasurementStarted; // indicates if the bus cycle measurement is started
 
-UINT16 aPdOutputData[(MAX_PD_OUTPUT_SIZE >> 1)];
-UINT16 aPdInputData[(MAX_PD_INPUT_SIZE >> 1)];
+UINT16             aPdOutputData[(MAX_PD_OUTPUT_SIZE>>1)];
+UINT16           aPdInputData[(MAX_PD_INPUT_SIZE>>1)];
 
 /*variables are declared in ecatslv.c*/
-extern VARVOLATILE UINT16 u16dummy;
+    extern VARVOLATILE UINT16    u16dummy;
 BOOL bInitFinished = FALSE; /** < \brief indicates if the initialization is finished*/
 /*-----------------------------------------------------------------------------------------
 ------
@@ -182,10 +178,8 @@ BOOL bInitFinished = FALSE; /** < \brief indicates if the initialization is fini
 *////////////////////////////////////////////////////////////////////////////////////////
 void PDO_InputMapping(void)
 {
-    APPL_InputMapping((UINT16 *) aPdInputData);
-//    printf("aPdInputData : %0x\r\n",aPdInputData[0]);
-    HW_EscWriteIsr(((MEM_ADDR *) aPdInputData), nEscAddrInputData, nPdInputSize);
-//    printf("nPdInputSize : %0x\r\n",nPdInputSize);
+    APPL_InputMapping((UINT16*)aPdInputData);
+    HW_EscWriteIsr(((MEM_ADDR *) aPdInputData), nEscAddrInputData, nPdInputSize );
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -196,9 +190,9 @@ void PDO_InputMapping(void)
 void PDO_OutputMapping(void)
 {
 
-    HW_EscReadIsr(((MEM_ADDR *) aPdOutputData), nEscAddrOutputData, nPdOutputSize);
+    HW_EscReadIsr(((MEM_ADDR *)aPdOutputData), nEscAddrOutputData, nPdOutputSize );
 
-    APPL_OutputMapping((UINT16 *) aPdOutputData);
+    APPL_OutputMapping((UINT16*) aPdOutputData);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -211,15 +205,13 @@ void PDO_OutputMapping(void)
 
 void ECAT_CheckTimer(void)
 {
-//    printf("ECAT_CheckTimer in \r\n");
-    if (sSyncManOutPar.u32CycleTime == 0)
+    if(sSyncManOutPar.u32CycleTime == 0)
     {
         u16BusCycleCntMs++;
     }
 
     /*decrement the state transition timeout counter*/
-//    printf("ECAT_CheckTimer :bEcatWaitForAlControlRes is %0x \r\n",bEcatWaitForAlControlRes);
-    if (bEcatWaitForAlControlRes && (EsmTimeoutCounter > 0))
+    if(bEcatWaitForAlControlRes &&  (EsmTimeoutCounter > 0))
     {
         EsmTimeoutCounter--;
     }
@@ -238,74 +230,70 @@ void ECAT_CheckTimer(void)
 void HandleBusCycleCalculation(void)
 {
     /*calculate the cycle time if device is in SM Sync mode and Cycle time was not calculated yet*/
-    if (!bDcSyncActive && bEscIntEnabled)
+    if ( !bDcSyncActive && bEscIntEnabled)
     {
         BOOL bTiggerCalcCycleTime = FALSE;
 
-        if (sSyncManOutPar.u16GetCycleTime == 1)
+        if(sSyncManOutPar.u16GetCycleTime == 1)
             bTiggerCalcCycleTime = TRUE;
-        if (bTiggerCalcCycleTime)
+        if(bTiggerCalcCycleTime)
         {
             /*get bus cycle time triggered */
             sSyncManOutPar.u32CycleTime = 0;
             sSyncManOutPar.u16GetCycleTime = 0;
 
-            sSyncManInPar.u32CycleTime = 0;
+            sSyncManInPar.u32CycleTime  = 0;
             sSyncManInPar.u16GetCycleTime = 0;
-
+            
             u16BusCycleCntMs = 0;
             bCycleTimeMeasurementStarted = TRUE;
             StartTimerCnt = (UINT32) HW_GetTimer();
         }
         else
         {
-            if (bCycleTimeMeasurementStarted == TRUE)
+            if(bCycleTimeMeasurementStarted == TRUE)
             {
-                UINT32 CurTimerCnt = (UINT32) HW_GetTimer();
+                UINT32 CurTimerCnt = (UINT32)HW_GetTimer();
 /*ECATCHANGE_START(V5.11) ECAT3*/
                 UINT32 CalcCycleTime = 0;
 
 
 #if ECAT_TIMER_INC_P_MS
-                CalcCycleTime = (UINT32) u16BusCycleCntMs * 1000000 +
-                                (((INT32) (CurTimerCnt - StartTimerCnt)) * 1000000 /
-                                 ECAT_TIMER_INC_P_MS);    //get elapsed cycle time in ns
+                CalcCycleTime = (UINT32)u16BusCycleCntMs * 1000000 + (((INT32)(CurTimerCnt-StartTimerCnt))*1000000/ECAT_TIMER_INC_P_MS);    //get elapsed cycle time in ns
 #endif
 
 /*ECATCHANGE_START(V5.11) ECAT4*/
                 sSyncManOutPar.u32CycleTime = CalcCycleTime;
 /*ECATCHANGE_END(V5.11) ECAT4*/
-                sSyncManInPar.u32CycleTime = CalcCycleTime;
+                sSyncManInPar.u32CycleTime  = CalcCycleTime;
                 u16BusCycleCntMs = 0;
                 StartTimerCnt = 0;
                 bCycleTimeMeasurementStarted = FALSE;
 
 /*ECATCHANGE_END(V5.11) ECAT3*/
-                /* CiA402 Motion controller cycle time is only set if DC Synchronisation is active*/
+            /* CiA402 Motion controller cycle time is only set if DC Synchronisation is active*/
             }
         }
     }
 }
-
 /*ECATCHANGE_END(V5.11) ECAT6*/
 
 void PDI_Isr(void)
 {
-//    printf("PDI_Isr start ... bEscIntEnabled is : %0x \r\n",bEscIntEnabled);
-    if (bEscIntEnabled)
+    if(bEscIntEnabled)
     {
         /* get the AL event register */
-        UINT16 ALEvent = HW_GetALEventRegister_Isr();
+        UINT16  ALEvent = HW_GetALEventRegister_Isr();
         ALEvent = SWAPWORD(ALEvent);
 
-        if (ALEvent & PROCESS_OUTPUT_EVENT)
+        if ( ALEvent & PROCESS_OUTPUT_EVENT )
         {
-            if (bDcRunning && bDcSyncActive)
+            if(bDcRunning && bDcSyncActive)
             {
                 /* Reset SM/Sync0 counter. Will be incremented on every Sync0 event*/
                 u16SmSync0Counter = 0;
             }
-            if (sSyncManOutPar.u16SmEventMissedCounter > 0)
+            if(sSyncManOutPar.u16SmEventMissedCounter > 0)
                 sSyncManOutPar.u16SmEventMissedCounter--;
 
 
@@ -314,29 +302,28 @@ void PDI_Isr(void)
             HandleBusCycleCalculation();
 /*ECATCHANGE_END(V5.11) ECAT6*/
 
-            /* Outputs were updated, set flag for watchdog monitoring */
-            bEcatFirstOutputsReceived = TRUE;
+        /* Outputs were updated, set flag for watchdog monitoring */
+        bEcatFirstOutputsReceived = TRUE;
 
 
-            /*
-                handle output process data event
-            */
-            if (bEcatOutputUpdateRunning)
-            {
-                /* slave is in OP, update the outputs */
-                PDO_OutputMapping();
-//                printf("PDIisr11111111111111111111\r\n");
-            }
-            else
-            {
-                /* Just acknowledge the process data event in the INIT,PreOP and SafeOP state */
-                HW_EscReadWordIsr(u16dummy, nEscAddrOutputData);
-                HW_EscReadWordIsr(u16dummy, (nEscAddrOutputData + nPdOutputSize - 2));
-            }
+        /*
+            handle output process data event
+        */
+        if ( bEcatOutputUpdateRunning )
+        {
+            /* slave is in OP, update the outputs */
+            PDO_OutputMapping();
+        }
+        else
+        {
+            /* Just acknowledge the process data event in the INIT,PreOP and SafeOP state */
+            HW_EscReadWordIsr(u16dummy,nEscAddrOutputData);
+            HW_EscReadWordIsr(u16dummy,(nEscAddrOutputData+nPdOutputSize-2));
+        }
         }
 
 /*ECATCHANGE_START(V5.11) ECAT4*/
-        if ((ALEvent & PROCESS_INPUT_EVENT) && (nPdOutputSize == 0))
+        if (( ALEvent & PROCESS_INPUT_EVENT ) && (nPdOutputSize == 0))
         {
             //calculate the bus cycle time if required
             HandleBusCycleCalculation();
@@ -346,127 +333,120 @@ void PDI_Isr(void)
         /*
             Call ECAT_Application() in SM Sync mode
         */
-//        if (sSyncManOutPar.u16SyncType == SYNCTYPE_SM_SYNCHRON)
-//        {
-//            /* The Application is synchronized to process data Sync Manager event*/
-//            ECAT_Application();
-//        }
-//
-//        if (bEcatInputUpdateRunning
-//            /*ECATCHANGE_START(V5.11) ESM7*/
-//            && ((sSyncManInPar.u16SyncType == SYNCTYPE_SM_SYNCHRON) ||
-//                (sSyncManInPar.u16SyncType == SYNCTYPE_SM2_SYNCHRON))
-///*ECATCHANGE_END(V5.11) ESM7*/
-//                )
-//        {
-//            /* EtherCAT slave is at least in SAFE-OPERATIONAL, update inputs */
-//            PDO_InputMapping();
-//        }
-        ECAT_Application();
-        PDO_InputMapping();
-        /*
-          Check if cycle exceed
-        */
-        /*if next SM event was triggered during runtime increment cycle exceed counter*/
-        ALEvent = HW_GetALEventRegister_Isr();
-        ALEvent = SWAPWORD(ALEvent);
-//        printf("HW_GetALEventRegister_Isr() is %0x \r\n",ALEvent);
-
-        if (ALEvent & PROCESS_OUTPUT_EVENT)
+        if (sSyncManOutPar.u16SyncType == SYNCTYPE_SM_SYNCHRON)
         {
-            sSyncManOutPar.u16CycleExceededCounter++;
-            sSyncManInPar.u16CycleExceededCounter = sSyncManOutPar.u16CycleExceededCounter;
-
-            /* Acknowledge the process data event*/
-            HW_EscReadWordIsr(u16dummy, nEscAddrOutputData);
-            HW_EscReadWordIsr(u16dummy, (nEscAddrOutputData + nPdOutputSize - 2));
+            /* The Application is synchronized to process data Sync Manager event*/
+            ECAT_Application();
         }
+
+    if ( bEcatInputUpdateRunning 
+/*ECATCHANGE_START(V5.11) ESM7*/
+       && ((sSyncManInPar.u16SyncType == SYNCTYPE_SM_SYNCHRON) || (sSyncManInPar.u16SyncType == SYNCTYPE_SM2_SYNCHRON))
+/*ECATCHANGE_END(V5.11) ESM7*/
+        )
+    {
+        /* EtherCAT slave is at least in SAFE-OPERATIONAL, update inputs */
+        PDO_InputMapping();
+    }
+    
+    /*
+      Check if cycle exceed
+    */
+    /*if next SM event was triggered during runtime increment cycle exceed counter*/
+    ALEvent = HW_GetALEventRegister_Isr();
+    ALEvent = SWAPWORD(ALEvent);
+
+    if ( ALEvent & PROCESS_OUTPUT_EVENT )
+    {
+        sSyncManOutPar.u16CycleExceededCounter++;
+        sSyncManInPar.u16CycleExceededCounter = sSyncManOutPar.u16CycleExceededCounter;
+
+      /* Acknowledge the process data event*/
+            HW_EscReadWordIsr(u16dummy,nEscAddrOutputData);
+            HW_EscReadWordIsr(u16dummy,(nEscAddrOutputData+nPdOutputSize-2));
+    }
     } //if(bEscIntEnabled)
 }
 
 void Sync0_Isr(void)
 {
-    Sync0WdCounter = 0;
+     Sync0WdCounter = 0;
 
-    if (bDcSyncActive)
+    if(bDcSyncActive)
     {
 
-        if (bEcatInputUpdateRunning)
+        if ( bEcatInputUpdateRunning )
         {
             LatchInputSync0Counter++;
         }
 
 /*ECATCHANGE_START(V5.11) ECAT4*/
-        if (u16SmSync0Value > 0)
+        if(u16SmSync0Value > 0)
         {
-            /* Check if Sm-Sync sequence is invalid */
-            if (u16SmSync0Counter > u16SmSync0Value)
-            {
-                /*ECATCHANGE_START(V5.11) COE3*/
-                if ((nPdOutputSize > 0) &&
-                    (sSyncManOutPar.u16SmEventMissedCounter <= sErrorSettings.u16SyncErrorCounterLimit))
-                {
-                    /*ECATCHANGE_END(V5.11) COE3*/
-                    sSyncManOutPar.u16SmEventMissedCounter = sSyncManOutPar.u16SmEventMissedCounter + 3;
-                }
+           /* Check if Sm-Sync sequence is invalid */
+           if (u16SmSync0Counter > u16SmSync0Value)
+           {
+              /*ECATCHANGE_START(V5.11) COE3*/
+              if ((nPdOutputSize > 0) && (sSyncManOutPar.u16SmEventMissedCounter <= sErrorSettings.u16SyncErrorCounterLimit))
+              {
+                 /*ECATCHANGE_END(V5.11) COE3*/
+                 sSyncManOutPar.u16SmEventMissedCounter = sSyncManOutPar.u16SmEventMissedCounter + 3;
+              }
 
 /*ECATCHANGE_START(V5.11) COE3*/
-                if ((nPdInputSize > 0) && (nPdOutputSize == 0) &&
-                    (sSyncManInPar.u16SmEventMissedCounter <= sErrorSettings.u16SyncErrorCounterLimit))
-                {
+           if ((nPdInputSize > 0) && (nPdOutputSize == 0) && (sSyncManInPar.u16SmEventMissedCounter <= sErrorSettings.u16SyncErrorCounterLimit))
+           {
 /*ECATCHANGE_END(V5.11) COE3*/
-                    sSyncManInPar.u16SmEventMissedCounter = sSyncManInPar.u16SmEventMissedCounter + 3;
-                }
+               sSyncManInPar.u16SmEventMissedCounter = sSyncManInPar.u16SmEventMissedCounter + 3;
+           }
 
-            } // if (u16SmSync0Counter > u16SmSync0Value)
+           } // if (u16SmSync0Counter > u16SmSync0Value)
 
+           
+           if ((nPdOutputSize == 0) && (nPdInputSize > 0))
+           {
+              /* Input only with DC, check if the last input data was read*/
+              UINT16  ALEvent = HW_GetALEventRegister_Isr();
+              ALEvent = SWAPWORD(ALEvent);
 
-            if ((nPdOutputSize == 0) && (nPdInputSize > 0))
-            {
-                /* Input only with DC, check if the last input data was read*/
-                UINT16 ALEvent = HW_GetALEventRegister_Isr();
-                ALEvent = SWAPWORD(ALEvent);
+              if ((ALEvent & PROCESS_INPUT_EVENT) == 0)
+              {
+                 /* no input data was read by the master, increment the sm missed counter*/
+                 u16SmSync0Counter++;
+              }
+              else
+              {
+                 /* Reset SM/Sync0 counter*/
+                 u16SmSync0Counter = 0;
 
-                if ((ALEvent & PROCESS_INPUT_EVENT) == 0)
-                {
-                    /* no input data was read by the master, increment the sm missed counter*/
-                    u16SmSync0Counter++;
-                }
-                else
-                {
-                    /* Reset SM/Sync0 counter*/
-                    u16SmSync0Counter = 0;
+                 sSyncManInPar.u16SmEventMissedCounter = 0;
 
-                    sSyncManInPar.u16SmEventMissedCounter = 0;
-
-                }
-            }
-            else
-            {
-                u16SmSync0Counter++;
-            }
+              }
+           }
+           else
+           {
+              u16SmSync0Counter++;
+           }
         }//SM -Sync monitoring enabled
 /*ECATCHANGE_END(V5.11) ECAT4*/
 
 
-        if (!bEscIntEnabled && bEcatOutputUpdateRunning)
+        if(!bEscIntEnabled && bEcatOutputUpdateRunning)
         {
             /* Output mapping was not done by the PDI ISR */
             PDO_OutputMapping();
-//            printf("sync011111111111111111\r\n");
         }
 
         /* Application is synchronized to SYNC0 event*/
         ECAT_Application();
 
-        if (bEcatInputUpdateRunning
-            && (LatchInputSync0Value > 0) &&
-            (LatchInputSync0Value == LatchInputSync0Counter)) /* Inputs shall be latched on a specific Sync0 event */
+        if ( bEcatInputUpdateRunning 
+           && (LatchInputSync0Value > 0) && (LatchInputSync0Value == LatchInputSync0Counter) ) /* Inputs shall be latched on a specific Sync0 event */
         {
             /* EtherCAT slave is at least in SAFE-OPERATIONAL, update inputs */
             PDO_InputMapping();
 
-            if (LatchInputSync0Value == 1)
+            if(LatchInputSync0Value == 1)
             {
                 /* if inputs are latched on every Sync0 event (otherwise the counter is reset on the next Sync1 event) */
                 LatchInputSync0Counter = 0;
@@ -480,17 +460,16 @@ void Sync1_Isr(void)
 {
     Sync1WdCounter = 0;
 
-    if (bEcatInputUpdateRunning
-        && (sSyncManInPar.u16SyncType == SYNCTYPE_DCSYNC1)
-        && (LatchInputSync0Value ==
-            0)) /* Inputs are latched on Sync1 (LatchInputSync0Value == 0), if LatchInputSync0Value > 0 inputs are latched with Sync0 */
-    {
-        /* EtherCAT slave is at least in SAFE-OPERATIONAL, update inputs */
-        PDO_InputMapping();
-    }
+        if ( bEcatInputUpdateRunning 
+            && (sSyncManInPar.u16SyncType == SYNCTYPE_DCSYNC1)
+            && (LatchInputSync0Value == 0)) /* Inputs are latched on Sync1 (LatchInputSync0Value == 0), if LatchInputSync0Value > 0 inputs are latched with Sync0 */
+        {
+            /* EtherCAT slave is at least in SAFE-OPERATIONAL, update inputs */
+            PDO_InputMapping();
+        }
 
-    /* Reset Sync0 latch counter (to start next Sync0 latch cycle) */
-    LatchInputSync0Counter = 0;
+        /* Reset Sync0 latch counter (to start next Sync0 latch cycle) */
+        LatchInputSync0Counter = 0;
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -505,11 +484,11 @@ void ECAT_SetLedIndication(void)
     static UINT16 RunCounter = 0;
     static UINT16 ErrorCounter = 0;
 
-    static UINT8 u8PrevErrorLed = LED_OFF;
-    static UINT8 u8PrevRunLed = LED_OFF;
+    static UINT8 u8PrevErrorLed = LED_OFF ;
+    static UINT8 u8PrevRunLed = LED_OFF ;
 
     // this code should be called every ms in average
-    if (bEcatOutputUpdateRunning)
+    if ( bEcatOutputUpdateRunning )
     {
         // in OP the EtherCAT state LED is always 1 and ErrorLED is 0
         bEtherCATRunLed = TRUE;
@@ -518,46 +497,46 @@ void ECAT_SetLedIndication(void)
     else
     {
         ms++;
-        if (ms == 50 || ms == 100 || ms == 150 || ms == 200)    //set flickering LED if required
+        if(ms == 50 || ms == 100 ||ms == 150 ||ms == 200)    //set flickering LED if required
         {
             /*Set run Led State*/
-            switch (nAlStatus & STATE_MASK)
+            switch ( nAlStatus & STATE_MASK)
             {
-                case STATE_INIT:
-                    // in INIT the EtherCAT state LED is off
-                    u8EcatRunLed = LED_OFF;
-                    break;
-                case STATE_PREOP:
-                    // in PREOP the EtherCAT state LED toggles every 200 ms
-                    u8EcatRunLed = LED_BLINKING;
-                    break;
-                case STATE_SAFEOP:
-                    // in SAFEOP the EtherCAT state LED is 200 ms on and 1s off
-                    u8EcatRunLed = LED_SINGLEFLASH;
-                    break;
-                case STATE_OP:
-                    u8EcatRunLed = LED_ON;
-                    break;
-                case STATE_BOOT:
-                    u8EcatRunLed = LED_FLICKERING;
-                    break;
-                default:
-                    u8EcatRunLed = LED_OFF;
-                    break;
+            case STATE_INIT:
+                // in INIT the EtherCAT state LED is off
+                u8EcatRunLed = LED_OFF;
+                break;
+            case STATE_PREOP:
+                // in PREOP the EtherCAT state LED toggles every 200 ms
+                u8EcatRunLed = LED_BLINKING;
+                break;
+            case STATE_SAFEOP:
+                // in SAFEOP the EtherCAT state LED is 200 ms on and 1s off
+                u8EcatRunLed = LED_SINGLEFLASH;
+                break;
+            case STATE_OP:
+                u8EcatRunLed = LED_ON;
+                break;
+            case STATE_BOOT:
+                u8EcatRunLed = LED_FLICKERING;
+                break;
+            default:
+                u8EcatRunLed = LED_OFF;
+            break;
             }//switch nAlStatus
 
             /*Calculate current Run LED state*/
-            if ((u8EcatRunLed & 0x20) || ms == 200)    //if fast flag or slow cycle event
+            if((u8EcatRunLed & 0x20) || ms == 200)    //if fast flag or slow cycle event
             {
                 UINT8 NumFlashes = 0;
-                if ((u8EcatRunLed & 0x1F) > 0)
-                    NumFlashes = (u8EcatRunLed & 0x1F) + ((u8EcatRunLed & 0x1F) - 1);    //total number
+                if ((u8EcatRunLed  & 0x1F) > 0)
+                    NumFlashes = (u8EcatRunLed & 0x1F)+((u8EcatRunLed & 0x1F)-1);    //total number
 
                 /*generate LED code*/
-                if (u8EcatRunLed != u8PrevRunLed)    //state changed start with active LED
+                if(u8EcatRunLed != u8PrevRunLed)    //state changed start with active LED
                 {
-                    if (u8EcatRunLed & 0x80)    //invert flag enable?
-                        bEtherCATRunLed = FALSE;
+                    if(u8EcatRunLed & 0x80)    //invert flag enable?
+                            bEtherCATRunLed = FALSE;
                     else
                         bEtherCATRunLed = TRUE;
 
@@ -565,22 +544,22 @@ void ECAT_SetLedIndication(void)
                 }
                 else    //second and following LED cycle
                 {
-                    if (u8EcatRunLed & 0x40)    //toggle LED bit on
+                    if(u8EcatRunLed & 0x40)    //toggle LED bit on
                     {
                         bEtherCATRunLed = !bEtherCATRunLed;
 
-                        if (NumFlashes)    //NumFlashes defined => limited LED toggle
+                        if(NumFlashes)    //NumFlashes defined => limited LED toggle
                         {
                             RunCounter++;
 
-                            if (RunCounter > NumFlashes)    //toggle led finished
+                            if(RunCounter > NumFlashes)    //toggle led finished
                             {
-                                if (u8EcatRunLed & 0x80)    //invert flag enable?
+                                if(u8EcatRunLed & 0x80)    //invert flag enable?
                                     bEtherCATRunLed = TRUE;
                                 else
                                     bEtherCATRunLed = FALSE;
 
-                                if (RunCounter >= (NumFlashes + 5))        //toggle time + 5 cycles low
+                                if(RunCounter >= (NumFlashes+5))        //toggle time + 5 cycles low
                                 {
                                     RunCounter = 0;
                                 }
@@ -594,16 +573,16 @@ void ECAT_SetLedIndication(void)
             }
 
             /*Calculate current Error LED state*/
-            if ((u8EcatErrorLed & 0x20) || ms == 200)    //if fast flag or slow cycle event
+            if((u8EcatErrorLed & 0x20) || ms == 200)    //if fast flag or slow cycle event
             {
                 UINT8 NumFlashes = 0;
-                if ((u8EcatErrorLed & 0x1F) > 0)
-                    NumFlashes = (u8EcatErrorLed & 0x1F) + ((u8EcatErrorLed & 0x1F) - 1);    //total number
+                if ((u8EcatErrorLed  & 0x1F) > 0)
+                    NumFlashes = (u8EcatErrorLed & 0x1F)+((u8EcatErrorLed & 0x1F)-1);    //total number
 
                 /*generate LED code*/
-                if (u8EcatErrorLed != u8PrevErrorLed)    //state changed start with active LED
+                if(u8EcatErrorLed != u8PrevErrorLed)    //state changed start with active LED
                 {
-                    if (u8EcatErrorLed & 0x80)    //invert flag enable?
+                    if(u8EcatErrorLed & 0x80)    //invert flag enable?
                         bEtherCATErrorLed = FALSE;
                     else
                         bEtherCATErrorLed = TRUE;
@@ -612,21 +591,21 @@ void ECAT_SetLedIndication(void)
                 }
                 else    //second and following LED cycle
                 {
-                    if (u8EcatErrorLed & 0x40)    //toggle LED bit on
+                    if(u8EcatErrorLed & 0x40)    //toggle LED bit on
                     {
                         bEtherCATErrorLed = !bEtherCATErrorLed;
 
-                        if (NumFlashes)    //NumFlashes defined => limited LED toggle
+                        if(NumFlashes)    //NumFlashes defined => limited LED toggle
                         {
                             ErrorCounter++;
 
-                            if (ErrorCounter > NumFlashes)    //toggle led finished
+                            if(ErrorCounter > NumFlashes)    //toggle led finished
                             {
-                                if (u8EcatErrorLed & 0x80)    //invert flag enable?
+                                if(u8EcatErrorLed & 0x80)    //invert flag enable?
                                     bEtherCATErrorLed = TRUE;
                                 else
                                     bEtherCATErrorLed = FALSE;
-                                if (ErrorCounter >= (NumFlashes + 5))        //toggle time + 5 cycles low
+                                if(ErrorCounter >= (NumFlashes+5))        //toggle time + 5 cycles low
                                     ErrorCounter = 0;
                             }
                         }
@@ -638,13 +617,13 @@ void ECAT_SetLedIndication(void)
                 u8PrevErrorLed = u8EcatErrorLed;
             }
 
-            if (ms == 200)
+            if(ms == 200)
                 ms = 0;
         }
-    }
+    }    
 
     /* set the EtherCAT-LED */
-    HW_SetLed(((UINT8) bEtherCATRunLed), ((UINT8) bEtherCATErrorLed));
+    HW_SetLed(((UINT8)bEtherCATRunLed),((UINT8)bEtherCATErrorLed));
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -669,22 +648,20 @@ UINT16 MainInit(void)
 
     /* initialize the EtherCAT Slave Interface */
     ECAT_Init();
-//    printf("ECAT_INIT done ...\r\n");
     /* initialize the objects */
     COE_ObjInit();
-//    printf("COE_ObjInit done ... \r\n");
+
 
     /*Timer initialization*/
     u16BusCycleCntMs = 0;
     StartTimerCnt = 0;
     bCycleTimeMeasurementStarted = FALSE;
-    ringb_init(&ringbufCtrl, recvRingBuf, RINGBUF_ITEM_NUM);
-    FPGA_ReadByteArray(dmaBuf, RECV_BUF_LEN);
+
     /*indicate that the slave stack initialization finished*/
     bInitFinished = TRUE;
 
 /*Application Init need to be called from the application layer*/
-    return Error;
+     return Error;
 }
 
 
@@ -698,99 +675,82 @@ UINT16 MainInit(void)
 void MainLoop(void)
 {
     /*return if initialization not finished */
-    if (bInitFinished == FALSE)
+    if(bInitFinished == FALSE)
         return;
 
 
 
-    /* FreeRun-Mode:  bEscIntEnabled = FALSE, bDcSyncActive = FALSE
-       Synchron-Mode: bEscIntEnabled = TRUE, bDcSyncActive = FALSE
-       DC-Mode:       bEscIntEnabled = TRUE, bDcSyncActive = TRUE */
-//    printf("bEscIntEnabled = %x bEcatFirstOutputsReceived = %x,bDcSyncActive = %x\r\n", bEscIntEnabled,
-//           bEcatFirstOutputsReceived, bDcSyncActive);
-    if (
+        /* FreeRun-Mode:  bEscIntEnabled = FALSE, bDcSyncActive = FALSE
+           Synchron-Mode: bEscIntEnabled = TRUE, bDcSyncActive = FALSE
+           DC-Mode:       bEscIntEnabled = TRUE, bDcSyncActive = TRUE */
+        if (
             (!bEscIntEnabled || !bEcatFirstOutputsReceived)     /* SM-Synchronous, but not SM-event received */
-            && !bDcSyncActive                                               /* DC-Synchronous */
+          && !bDcSyncActive                                               /* DC-Synchronous */
             )
-    {
-//        printf("SM-Synchronous, but not SM-event received  or DC-Synchronous \r\n");
-        /* if the application is running in ECAT Synchron Mode the function ECAT_Application is called
-           from the ESC interrupt routine (in mcihw.c or spihw.c),
-           in ECAT Synchron Mode it should be additionally checked, if the SM-event is received
-           at least once (bEcatFirstOutputsReceived = 1), otherwise no interrupt is generated
-           and the function ECAT_Application has to be called here (with interrupts disabled,
-           because the SM-event could be generated while executing ECAT_Application) */
-        if (!bEscIntEnabled)
         {
-//            printf("application is running in ECAT FreeRun Mode \r\n");
-            /* application is running in ECAT FreeRun Mode,
-               first we have to check, if outputs were received */
-            UINT16 ALEvent = HW_GetALEventRegister();
-            ALEvent = SWAPWORD(ALEvent);
-//            printf( "ALEvent(0x220) IS : %0x \r\n",ALEvent);
+            /* if the application is running in ECAT Synchron Mode the function ECAT_Application is called
+               from the ESC interrupt routine (in mcihw.c or spihw.c),
+               in ECAT Synchron Mode it should be additionally checked, if the SM-event is received
+               at least once (bEcatFirstOutputsReceived = 1), otherwise no interrupt is generated
+               and the function ECAT_Application has to be called here (with interrupts disabled,
+               because the SM-event could be generated while executing ECAT_Application) */
+            if ( !bEscIntEnabled )
+            {
+                /* application is running in ECAT FreeRun Mode,
+                   first we have to check, if outputs were received */
+                UINT16 ALEvent = HW_GetALEventRegister();
+                ALEvent = SWAPWORD(ALEvent);
 
-            if (ALEvent & PROCESS_OUTPUT_EVENT)
-            {
-                /* set the flag for the state machine behaviour */
-                bEcatFirstOutputsReceived = TRUE;
-                if (bEcatOutputUpdateRunning)
+                if ( ALEvent & PROCESS_OUTPUT_EVENT )
                 {
-                    /* update the outputs */
-                    PDO_OutputMapping();
-//                    printf("mainloop1111111111111111\r\n");
-                }
-            }
-            else if (nPdOutputSize == 0)
-            {
-                /* if no outputs are transmitted, the watchdog must be reset, when the inputs were read */
-                if (ALEvent & PROCESS_INPUT_EVENT)
-                {
-                    /* Outputs were updated, set flag for watchdog monitoring */
+                    /* set the flag for the state machine behaviour */
                     bEcatFirstOutputsReceived = TRUE;
+                    if ( bEcatOutputUpdateRunning )
+                    {
+                        /* update the outputs */
+                        PDO_OutputMapping();
+                    }
                 }
+                else if ( nPdOutputSize == 0 )
+                {
+                    /* if no outputs are transmitted, the watchdog must be reset, when the inputs were read */
+                    if ( ALEvent & PROCESS_INPUT_EVENT )
+                    {
+                        /* Outputs were updated, set flag for watchdog monitoring */
+                        bEcatFirstOutputsReceived = TRUE;
+                    }
+                }
+            }
+
+            DISABLE_ESC_INT();
+            ECAT_Application();
+
+            if ( bEcatInputUpdateRunning )
+            {
+                /* EtherCAT slave is at least in SAFE-OPERATIONAL, update inputs */
+                PDO_InputMapping();
+            }
+            ENABLE_ESC_INT();
+        }
+
+        /* there is no interrupt routine for the hardware timer so check the timer register if the desired cycle elapsed*/
+        {
+            UINT32 CurTimer = (UINT32)HW_GetTimer();
+
+            if(CurTimer>= ECAT_TIMER_INC_P_MS)
+            {
+                ECAT_CheckTimer();
+
+                HW_ClearTimer();
             }
         }
 
-//        DISABLE_ESC_INT
-        HAL_NVIC_DisableIRQ(EXTI3_IRQn);//changed by yh
-//        printf(" disable esc IRQ(pE3) ... \r\n");
-        ECAT_Application();
+        /* call EtherCAT functions */
+        ECAT_Main();
 
-
-        if (bEcatInputUpdateRunning)
-        {
-            /* EtherCAT slave is at least in SAFE-OPERATIONAL, update inputs */
-            PDO_InputMapping();
-//            printf("update inputs ... \r\n");//todo check here
-
-        }
-//        ENABLE_ESC_INT();
-        HAL_NVIC_EnableIRQ(EXTI3_IRQn);
-//        printf(" enable esc IRQ(pE3) ... \r\n");
-    }
-
-    /* there is no interrupt routine for the hardware timer so check the timer register if the desired cycle elapsed*/
-    {
-//        printf("there is no interrupt routine for the hardware timer so check the timer register if the desired cycle elapsed ... \r\n");
-        UINT32 CurTimer = (UINT32) HW_GetTimer();
-//        printf("CurTimer = %0x ... \r\n",CurTimer);
-        if (CurTimer >= ECAT_TIMER_INC_P_MS)
-        {
-//            printf("CurTimer >= ECAT_TIMER_INC_P_MS ... , CurTimer = %0x\r\n",CurTimer);
-            ECAT_CheckTimer();
-
-            HW_ClearTimer();
-        }
-//        printf("CurTimer < ECAT_TIMER_INC_P_MS ... \r\n");
-    }
-
-    /* call EtherCAT functions */
-//    printf("ECAT_Main start ... \r\n");
-    ECAT_Main();
-
-    /* call lower prior application part */
-    COE_Main();
-    CheckIfEcatError();
+        /* call lower prior application part */
+       COE_Main();
+       CheckIfEcatError();
 
 }
 

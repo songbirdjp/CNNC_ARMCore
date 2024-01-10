@@ -32,14 +32,12 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 //#include "retarget.h"
-#include "global.h"
 #include "octospi.h"
 #include "w5500.h"
 #include "spi.h"
 // #include "httpserver.h"
 #include "nonRealtimeDataProcess.h"
 #include "fpga_rw.h"
-#include "el9800appl.h"
 #include "sdram_fmc_drv.h"
 
 /* USER CODE END Includes */

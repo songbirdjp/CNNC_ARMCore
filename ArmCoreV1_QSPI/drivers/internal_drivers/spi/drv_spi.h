@@ -104,7 +104,7 @@ DEVICE_IRQ_LIST *device_irq_node_find(DEVICE_SPI *spi, uint8_t *node_name);
 int8_t device_irq_node_delete(DEVICE_SPI *spi, uint8_t *node_name);
 int8_t device_irq_list_clear(DEVICE_SPI *spi);
 int8_t device_irq_list_list(DEVICE_SPI *spi);
-int8_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, char splitter, uint32_t timeout);
+int32_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, char splitter, uint32_t timeout);
 #endif
 
 #ifdef __cplusplus

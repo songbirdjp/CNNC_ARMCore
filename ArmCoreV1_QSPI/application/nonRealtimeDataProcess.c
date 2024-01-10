@@ -805,3 +805,201 @@ void nrtDataMainLoop(void)
 
     osDelay(100);
 }
+
+
+
+/********************************************************************************************/
+#include "ethercat.h"
+
+int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
+{
+    uint32_t checkSum = 0;
+
+    for (uint16_t i = 2; i < (RECV_BUF_LEN - 1); i++) 
+    {
+        checkSum += recvBuf[i];
+    }
+
+    if (((uint8_t)checkSum != recvBuf[RECV_BUF_LEN - 1]) || (checkSum == 0))
+    {
+        printf("Checksum err 0x%x 0x%x 0x%x 0x%x 0x%x\r\n", recvBuf[0],recvBuf[1],recvBuf[2],recvBuf[3],recvBuf[4]);
+        return -1;
+    }
+    else
+    {
+        uint8_t i;
+        if (recvBuf[4] == PACKF0_CMD) 
+        {
+
+            for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
+            {   //RT 0 - 165 ：82 leaf and carrier pos
+                rtBeamData.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
+            }
+            rtBeamData.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
+            rtBeamData.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
+
+            for (i = 0; i < 164; i += 2) 
+            {  //NRT 0 - 163 ：82 leaf second pos
+                secondPosFeedback.leafSecondPos[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];                            
+            }
+            interlockFeedback.boardLoss = (recvBuf[FPGA_NRT_UPLOAD_START + 166] & 0xc0) >> 6;//NRT 166 bit6-7
+            interlockFeedback.FPGAStatus = (recvBuf[FPGA_NRT_UPLOAD_START + 166] << 8) + recvBuf[FPGA_NRT_UPLOAD_START + 167]; //NRT 166-167
+                    
+        }
+        else if (recvBuf[4] == PACKF1_CMD) 
+        {
+
+            for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
+            {   //RT 0 - 165 ：82 leaf and carrier pos
+                rtBeamData.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
+            }
+            rtBeamData.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
+            rtBeamData.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
+
+            for (i = 0; i < (NRT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
+            {//NRT 0 - 165 ：82 leaf and carrier interlock
+               interlockFeedback.leafNcarInterlock[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];
+            }
+            interlockFeedback.versionFPGA = (recvBuf[FPGA_NRT_UPLOAD_START + 166] << 8) + recvBuf[FPGA_NRT_UPLOAD_START + 167];//NRT 166-167
+                    
+        }
+    }
+
+    return 0;
+}
+
+static int8_t non_realtime_ethercat_data_process(void)
+{
+    static uint16_t oldState = 0, oldPlanCmd = 0, oldRadiationIndex = 0, oldBeamIndex = 0;
+
+    uint8_t recv_buf[255] = {0}, send_buf[255] = {0};
+    uint16_t *recv = ethercat_recv_data_get((uint16_t *)recv_buf);
+    uint16_t *send = ethercat_send_data_get((uint16_t *)send_buf);
+    if (recv == NULL || send == NULL)
+    {
+        printf("ethercat data get failed\r\n");
+        return -1;
+    }
+
+    #define INFO_OUT_OFFSET     1
+    #define DATA_OUT1_OFFSET    9
+
+    #define INFO_IN_OFFSET     1
+    #define DATA_IN1_OFFSET    9
+    #define DATA_IN2_OFFSET    17
+
+    uint16_t *InfoOutPTR = recv[INFO_OUT_OFFSET];
+    uint16_t *DataOut1PTR = recv[DATA_OUT1_OFFSET];
+    uint16_t *InfoIn1PTR = send[INFO_IN_OFFSET];    //echo
+    uint16_t *DataIn1PTR = send[DATA_IN1_OFFSET];   //fault info, use 2
+    uint16_t *DataIn2PTR = send[DATA_IN2_OFFSET];   //leaf pos 1-8
+
+    // uint32_t checkSum = 0;
+
+    // for (uint16_t i = 2; i < (RECV_BUF_LEN - 1); i++) 
+    // {
+    //     checkSum += recvBuf[i];
+    // }
+
+    // if (((uint8_t)checkSum != recvBuf[RECV_BUF_LEN - 1]) || (checkSum == 0))
+    // {
+    //     printf("Checksum err 0x%x 0x%x 0x%x 0x%x 0x%x\r\n", recvBuf[0],recvBuf[1],recvBuf[2],recvBuf[3],recvBuf[4]);
+    // }
+    // else
+    // {
+    //     uint8_t i;
+    //     if (recvBuf[4] == PACKF0_CMD) 
+    //     {
+
+    //         for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
+    //         {   //RT 0 - 165 ：82 leaf and carrier pos
+    //             rtBeamData.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
+    //         }
+    //         rtBeamData.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
+    //         rtBeamData.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
+
+    //         for (i = 0; i < 164; i += 2) 
+    //         {  //NRT 0 - 163 ：82 leaf second pos
+    //             secondPosFeedback.leafSecondPos[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];                            
+    //         }
+    //         interlockFeedback.boardLoss = (recvBuf[FPGA_NRT_UPLOAD_START + 166] & 0xc0) >> 6;//NRT 166 bit6-7
+    //         interlockFeedback.FPGAStatus = (recvBuf[FPGA_NRT_UPLOAD_START + 166] << 8) + recvBuf[FPGA_NRT_UPLOAD_START + 167]; //NRT 166-167
+                    
+    //     }
+    //     else if (recvBuf[4] == PACKF1_CMD) 
+    //     {
+
+    //         for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
+    //         {   //RT 0 - 165 ：82 leaf and carrier pos
+    //             rtBeamData.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
+    //         }
+    //         rtBeamData.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
+    //         rtBeamData.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
+
+    //         for (i = 0; i < (NRT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
+    //         {//NRT 0 - 165 ：82 leaf and carrier interlock
+    //            interlockFeedback.leafNcarInterlock[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];
+    //         }
+    //         interlockFeedback.versionFPGA = (recvBuf[FPGA_NRT_UPLOAD_START + 166] << 8) + recvBuf[FPGA_NRT_UPLOAD_START + 167];//NRT 166-167
+                    
+    //     }
+    // }
+
+    InfoIn1PTR[0] = rtBeamData.faultInfo1&0x000f;
+    memcpy(&InfoIn1PTR[1], &InfoOutPTR[1], sizeof(uint16_t) * 7);         //rt upload， echo
+
+    DataIn1PTR[0] = DataOut1PTR[0];
+    DataIn1PTR[1] = rtBeamData.faultInfo1&0x00f0;
+    if(interlockFeedback.boardLoss&0x0007)  DataIn1PTR[1] |= 0x0002;
+    DataIn1PTR[2] = rtBeamData.faultInfo2&0x00ff;
+
+    memcpy(DataIn2PTR, rtBeamData.rtPosUpload, sizeof(uint16_t) * (8 * 10 + 3));
+
+    rtBeamData.fsmState = InfoOutPTR[0];   //save rt cmd
+    rtBeamData.beamIndex = InfoOutPTR[1];
+    rtBeamData.radiationIndex = InfoOutPTR[3];
+    rtBeamData.planCmd = DataOut1PTR[0];
+
+    if(oldState != rtBeamData.fsmState){
+        printf("fsm state: %d -> %d\r\n",oldState,rtBeamData.fsmState);
+        uint8_t newState = rtBeamData.fsmState;
+        makeSingleSendAry(25, &newState, 1, 1,1);//0x50
+        // make_cmd_to_fpga(25, &newState, 1);
+        // FPGA_WriteByteArray(sndCtrl.cmdSendBuf, sndCtrl.singleSize[25]);
+        oldState = rtBeamData.fsmState;
+    }
+    if(oldPlanCmd != rtBeamData.planCmd){
+        printf("plan cmd: %d -> %d\r\n",oldPlanCmd,rtBeamData.planCmd);
+        if(rtBeamData.planCmd == SEND_PLAN){//Plan send start
+            oldBeamIndex = oldRadiationIndex = 0;
+        }
+        if((rtBeamData.planCmd == NO_USE)&&(oldPlanCmd == SEND_PLAN)){ //Plan send finish
+            secondPosFeedback.packIndexInOneBeam = 0;
+            secondPosFeedback.errorCode = 0;
+        }
+        oldPlanCmd = rtBeamData.planCmd;
+    }
+    if(((rtBeamData.fsmState == FSM_IDLE)||(rtBeamData.fsmState == FSM_SERVO))&&(rtBeamData.beamIndex > 0))
+    {
+        if(oldBeamIndex != rtBeamData.beamIndex){
+          //  printf("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
+            sendCPtoFPGA(rtBeamData.beamIndex, rtBeamData.radiationIndex);
+            oldRadiationIndex = rtBeamData.radiationIndex;
+            oldBeamIndex = rtBeamData.beamIndex;
+        }
+        else if(oldRadiationIndex != rtBeamData.radiationIndex){
+          //  printf("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
+            sendCPtoFPGA(rtBeamData.beamIndex, rtBeamData.radiationIndex);
+            oldRadiationIndex = rtBeamData.radiationIndex;
+            oldBeamIndex = rtBeamData.beamIndex;
+        }
+    }
+
+
+    return ethercat_send_data_update(send);
+}
+
+int8_t non_realtime_data_process_init(void)
+{
+    return ethercat_slave_appl_cb_register(non_realtime_ethercat_data_process);
+}

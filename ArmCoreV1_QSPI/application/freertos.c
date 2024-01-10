@@ -27,8 +27,6 @@
 /* USER CODE BEGIN Includes */
 #include "ecat_def.h"
 #include "applInterface.h"
-#include "el9800hw.h"
-#include "el9800appl.h"
 #include "queue.h"
 #include "tcp_config.h"
 /* USER CODE END Includes */
@@ -113,6 +111,14 @@ const osThreadAttr_t recv_data_process_thread_attributes = {
   .priority = (osPriority_t) osPriorityAboveNormal,
 };
 
+/* Definitions for lan9252_irq_thread */
+osThreadId_t lan9252_irq_threadHandle;
+const osThreadAttr_t lan9252_irq_thread_attributes = {
+  .name = "lan9252_irq_thread",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
+
 /* Definitions for CmdQueue */
 // osMessageQueueId_t CmdQueueHandle;
 // const osMessageQueueAttr_t CmdQueue_attributes = {
@@ -163,6 +169,7 @@ void StartConsoleTask(void *argument);
 void tcp_client_entry(void *argument);
 void fpga_communication_entry(void *argument);
 void data_process_entry(void *argument);
+void ethercat_slave_entry(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -228,6 +235,10 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of recv_data_process_thread */
   recv_data_process_threadHandle = osThreadNew(data_process_entry, NULL, &recv_data_process_thread_attributes);
+
+  /* creation of lan9252_irq_thread */
+  lan9252_irq_threadHandle = osThreadNew(ethercat_slave_entry, NULL, &lan9252_irq_thread_attributes);
+
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -309,16 +320,17 @@ void StartDefaultTask(void *argument)
 void Ethercatfunc(void *argument)
 {
   /* USER CODE BEGIN Ethercatfunc */
+    ethercat_slave_init();
 
-    MainInit();
+    ethercat_slave_stack_init();
+
     /* Infinite loop */
     for(;;)
     {
-//        printf("Ethercat Mainloop running1\r\n");
-        MainLoop();
-//        printf("Ethercat Mainloop running2\r\n");
-        osDelay(1);//todo : if sth happened,check this delay
 
+        ethercat_slave_main_loop();        
+
+        osDelay(1);
     }
   /* USER CODE END Ethercatfunc */
 }
@@ -349,7 +361,7 @@ void TCPClientTask(void *argument)
 
         while(tcp_link_detect() == false)
         {
-            printf("tcp link off\r\n");
+            // printf("tcp link off\r\n");
 
             tcp_link_state_recover();
 
@@ -493,6 +505,32 @@ void fpga_communication_entry(void *argument)
   /* USER CODE END fpga_communication_entry */
 }
 
+/* USER CODE BEGIN Header_ethercat_slave_entry */
+/**
+* @brief Function implementing the lan9252_irq_thread thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_ethercat_slave_entry */
+void ethercat_slave_entry(void *argument)
+{
+  /* USER CODE BEGIN ethercat_slave_entry */
+  /* Infinite loop */
+  int32_t ret = 0;
+  osDelay(100); /* wait ethercat init complete */
+
+  for(;;)
+  {
+    ret = ethercat_slave_wait_event();
+    if (ret < 0)
+    {
+        printf("ethercat wait err:%d\r\n", ret);
+    }
+    // osDelay(100);
+  }
+  /* USER CODE END ethercat_slave_entry */
+}
+
 /* USER CODE BEGIN Header_data_process_entry */
 /**
 * @brief Function implementing the recv_data_process_entry thread.
@@ -505,38 +543,29 @@ void data_process_entry(void *argument)
   /* USER CODE BEGIN data_process_entry */
   /* Infinite loop */
   osStatus_t stat = 0;
-  uint32_t event_flag = 0;
-  uint8_t pdo_output_data[MAX_PD_OUTPUT_SIZE] = {0};
+  uint32_t event_flag = 0;  
   uint8_t recv_from_fpga_buf[RECV_BUF_LEN];
   TCP_DATA_t tcp_info = {0};
+
+  non_realtime_data_process_init();
 
   for(;;)
   {
 
     event_flag = osEventFlagsWait(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT | DATA_PROCESS_LAN_EVENT | DATA_PROCESS_TCP_EVENT, osFlagsWaitAny, osWaitForever);
-    // if (event_flag & DATA_PROCESS_LAN_EVENT)
-    // {
-    //     // printf("recv DATA_PROCESS_LAN_EVENT\n");
+    if (event_flag & DATA_PROCESS_LAN_EVENT)
+    {
+        // printf("recv DATA_PROCESS_LAN_EVENT\n");
 
-    //     stat = osMessageQueueGet(lan9252_rx_queueHandle, pdo_output_data, 0, 0);
-    //     if (stat == osOK)
-    //     {
-    //         APPL_OutputMapping((uint16_t *) pdo_output_data); // 对数据大小端进行转换
-
-    //         // printf("%x %x %x %x\n", sDOOutputs.InfoOut[0], sDOOutputs.InfoOut[1], sDOOutputs.InfoOut[2], sDOOutputs.InfoOut[3]);
-    //     }
-    //     else
-    //     {
-    //         printf("no msg in lan9252 rx queue:%d\r\n", stat);
-    //     }
-    // }
+        ethercat_recv_data_update();
+    }
 
     if (event_flag & DATA_PROCESS_FPGA_EVENT)
     {
         stat = osMessageQueueGet(recv_from_fpga_queueHandle, recv_from_fpga_buf, 0, 0);
         if (stat == osOK)
         {
-            // APPL_Application_New(recv_from_fpga_buf);
+            non_realtime_fpga_data_process(recv_from_fpga_buf);
 
             printf("buf: %x %x %x %x\r\n", recv_from_fpga_buf[0], recv_from_fpga_buf[1], recv_from_fpga_buf[2], recv_from_fpga_buf[3]);
         }
