@@ -123,8 +123,10 @@ struct send_to_fpga_msg
     uint8_t len;
 };
 
-int8_t recv_from_fpga_init(osMessageQueueId_t queue);
-int8_t send_to_fpga_init(void);
-int8_t send_to_fpga_write(uint8_t *buf, uint16_t size, uint32_t timeout);
+
+int8_t fpga_thread_init(void);
+osStatus_t recv_from_fpga_data_get(uint8_t *buf);
+void make_cmd_to_fpga(uint8_t index, uint8_t *pData, uint8_t size);
+void make_para_for_fpga(uint8_t *pData);
 
 #endif //W5500H7_FPGA_RW_H

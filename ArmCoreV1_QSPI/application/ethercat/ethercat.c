@@ -21,7 +21,7 @@ int8_t ethercat_slave_appl_cb_register(void (*fun_cb)(void))
     return 0;
 }
 
-int8_t ethercat_slave_init(void)
+static int8_t ethercat_slave_init(void)
 {
     int8_t ret = 0;
 
@@ -43,17 +43,17 @@ int8_t ethercat_slave_init(void)
     return ret;
 }
 
-uint16_t ethercat_slave_stack_init(void)
+static uint16_t ethercat_slave_stack_init(void)
 {
     return MainInit();
 }
 
-void ethercat_slave_main_loop(void)
+static void ethercat_slave_main_loop(void)
 {
     MainLoop();
 }
 
-int32_t ethercat_slave_wait_event(void)
+static int32_t ethercat_slave_wait_event(void)
 {
     int32_t ret = device_lan9252_data_recv_with_block();
 
@@ -136,4 +136,75 @@ uint16_t *ethercat_send_data_get(uint16_t *buf)
     osMutexRelease(lan9252_app_ops_get()->pdo_input_update_mutex);
 
     return buf;
+}
+
+/*
+ * ethercat thread init
+*/
+static void Ethercatfunc(void *argument)
+{
+  /* USER CODE BEGIN Ethercatfunc */
+    ethercat_slave_init();
+
+    ethercat_slave_stack_init();
+
+    /* Infinite loop */
+    for(;;)
+    {
+
+        ethercat_slave_main_loop();        
+
+        osDelay(1);
+    }
+  /* USER CODE END Ethercatfunc */
+}
+
+static void ethercat_slave_entry(void *argument)
+{
+  /* USER CODE BEGIN ethercat_slave_entry */
+  /* Infinite loop */
+  int32_t ret = 0;
+  osDelay(100); /* wait ethercat init complete */
+
+  for(;;)
+  {
+    ret = ethercat_slave_wait_event();
+    if (ret < 0)
+    {
+        printf("ethercat wait err:%d\r\n", ret);
+    }
+    // osDelay(100);
+  }
+  /* USER CODE END ethercat_slave_entry */
+}
+
+int8_t ethercat_thread_init(void)
+{
+    osThreadAttr_t EthercatSlave_attributes = {
+    .name = "EthercatSlave",
+    .stack_size = 4096 * 4,
+    .priority = (osPriority_t) osPriorityNormal,
+    };
+
+    osThreadAttr_t lan9252_irq_thread_attributes = {
+    .name = "lan9252_irq_thread",
+    .stack_size = 512 * 4,
+    .priority = (osPriority_t) osPriorityHigh,
+    };
+
+    osThreadId_t EthercatSlaveHandle = osThreadNew(Ethercatfunc, NULL, &EthercatSlave_attributes);
+    if (EthercatSlaveHandle == NULL)
+    {
+        printf("thread ethercat slave create failed\r\n");
+        return -1;
+    }
+
+    osThreadId_t lan9252_irq_threadHandle = osThreadNew(ethercat_slave_entry, NULL, &lan9252_irq_thread_attributes);
+    if (lan9252_irq_threadHandle == NULL)
+    {
+        printf("thread lan9252 irq create failed\r\n");
+        return -1;
+    }
+
+    return 0;
 }

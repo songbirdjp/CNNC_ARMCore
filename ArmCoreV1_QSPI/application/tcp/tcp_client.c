@@ -40,12 +40,12 @@ static uint16_t *remote_port_get(void)
 static TCP_DATA_t recvInfo = {0};
 
 static volatile uint8_t tcp_link_state = false;
-uint8_t tcp_link_status(void)
+static uint8_t tcp_link_status_get(void)
 {
     return tcp_link_state;
 }
 
-int8_t do_tcp_client(uint8_t sn)
+static int8_t do_tcp_client(uint8_t sn)
 {
     int8_t ret = 0;
 
@@ -185,12 +185,12 @@ void do_tcp_server(void)
 }
 #endif
 
-uint8_t socket_num_get(void)
+static uint8_t socket_num_get(void)
 {
     return SOCK_TCPS;
 }
 
-int8_t tcp_init(osMessageQueueId_t queue)
+static int8_t tcp_init(osMessageQueueId_t queue)
 {
     int8_t ret = 0;
 
@@ -207,24 +207,181 @@ int8_t tcp_init(osMessageQueueId_t queue)
 
     device_w5500_rx_queue_init(queue);
 
-    TCPFeedbackInit();
+    TCPFeedbackInit();  /* TODO */
 
     return 0;
 }
 
-uint8_t tcp_link_detect(void)
+static uint8_t tcp_link_detect(void)
 {
     uint8_t ret = device_w5500_phy_link_status_get();
     tcp_link_state =  (ret == PHY_LINK_OFF) ? false : true;
     return tcp_link_state;
 }
 
-int8_t tcp_link_state_recover(void)
+static int8_t tcp_link_state_recover(void)
 {
     return device_w5500_link_state_recover(socket_num_get());
 }
 
-int32_t tcp_data_recv_with_block(void)
+static int32_t tcp_data_recv_with_block(void)
 {
     return device_w5500_data_recv_with_block();
+}
+
+/*
+ * tcp client init
+*/
+static osMutexAttr_t tcp_access_mutex_attributes = {
+.name = "tcp_access_mutex",
+.attr_bits = osMutexRecursive | osMutexPrioInherit
+};
+static osMessageQueueAttr_t tcp_rx_queue_attributes = {
+.name = "tcp_rx_queue"
+};
+static osThreadAttr_t tcp_irq_thread_attributes = {
+.name = "tcp_irq_thread",
+.stack_size = 512 * 4,
+.priority = (osPriority_t) osPriorityAboveNormal,
+};
+static osThreadAttr_t TCPClient_attributes = {
+.name = "TCPClient",
+.stack_size = 8192 * 4,
+.priority = (osPriority_t) osPriorityNormal,
+};
+
+static osMessageQueueId_t tcp_rx_queueHandle = NULL;
+static osMutexId_t tcp_access_mutexHandle = NULL;
+
+static void TCPClientTask(void *argument)
+{
+  /* USER CODE BEGIN TCPClientTask */
+
+    int8_t ret = 0;
+
+    ret = tcp_init(tcp_rx_queueHandle);
+    if (ret != 0)
+    {
+        printf("tcp init err\r\n");
+        return;
+    }
+    /* Infinite loop */
+    for(;;)
+    {
+        osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
+
+        while(tcp_link_detect() == false)
+        {
+            printf("tcp link off\r\n");
+
+            tcp_link_state_recover();
+
+            osDelay(100);
+        }
+
+        ret = do_tcp_client(socket_num_get());
+        if (ret != 0)
+        {
+            printf("do_tcp_client err:%d\r\n", ret);
+        }
+
+        osMutexRelease(tcp_access_mutexHandle);
+
+        osDelay(100);
+    }
+  /* USER CODE END TCPClientTask */
+}
+
+static void tcp_client_entry(void *argument)
+{
+  /* USER CODE BEGIN tcp_client_entry */
+  /* Infinite loop */
+  int32_t ret = 0;
+
+  for(;;)
+  {
+        while(tcp_link_status_get() == false)
+        {
+            osDelay(100);
+        }
+
+        ret = tcp_data_recv_with_block();
+        if (ret < 0)
+        {
+            printf("tcp recv data err:%d\r\n", ret);
+        }
+
+        osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
+
+        ret = device_w5500_irq_process();
+        if (ret < 0)
+        {
+            printf("irq process err:%d\r\n", ret);
+        }
+
+        osMutexRelease(tcp_access_mutexHandle);
+
+        if (ret > 0)
+        {
+            extern osEventFlagsId_t data_process_eventHandle;
+            #define DATA_PROCESS_TCP_EVENT    (1<<2)
+            osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_TCP_EVENT);
+        }
+
+  }
+  /* USER CODE END tcp_client_entry */
+}
+
+int8_t tcp_client_thread_init(void)
+{
+
+    tcp_access_mutexHandle = osMutexNew(&tcp_access_mutex_attributes);
+    if (tcp_access_mutexHandle == NULL)
+    {
+        printf("mutex tcp access create failed\r\n");
+        return -1;
+    }
+
+    tcp_rx_queueHandle = osMessageQueueNew (3, sizeof(TCP_DATA_t), &tcp_rx_queue_attributes);
+    if (tcp_rx_queueHandle == NULL)
+    {
+        printf("queue tcp rx create failed\r\n");
+        return -1;
+    }
+
+    osThreadId_t tcp_irq_threadHandle = osThreadNew(tcp_client_entry, NULL, &tcp_irq_thread_attributes);
+    if (tcp_irq_threadHandle == NULL)
+    {
+        printf("thread tcp irq create failed\r\n");
+        return -1;
+    }
+
+    osThreadId_t TCPClientHandle = osThreadNew(TCPClientTask, NULL, &TCPClient_attributes);
+    if (TCPClientHandle == NULL)
+    {
+        printf("thread tcp client create failed\r\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+osStatus_t tcp_client_data_recv_get(TCP_DATA_t *buf)
+{
+    return osMessageQueueGet(tcp_rx_queueHandle, buf, 0, 0);
+}
+
+int32_t tcp_client_data_send(uint8_t *buf, uint16_t len)
+{
+    osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
+
+    int32_t ret = send(socket_num_get(), buf, len);
+    if (ret <= SOCK_BUSY)
+    {
+        printf("tcp client send err:%d\r\n", ret);
+    }
+
+    osMutexRelease(tcp_access_mutexHandle);
+
+    return ret;
 }

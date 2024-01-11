@@ -1,0 +1,27 @@
+#ifndef __TCP_CLIENT_H__
+#define __TCP_CLIENT_H__
+
+#include "stdint.h"
+#include "cmsis_os2.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#define DATA_BUF_SIZE  2048
+
+typedef struct {
+    uint8_t gDATABUF[DATA_BUF_SIZE];
+    uint16_t Len;
+}TCP_DATA_t;
+
+int8_t tcp_client_thread_init(void);
+osStatus_t tcp_client_data_recv_get(TCP_DATA_t *buf);
+int32_t tcp_client_data_send(uint8_t *buf, uint16_t len);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

@@ -1,9 +1,9 @@
-#ifndef W5500H7_NONREALTIMEDATAPROCESS_H
-#define W5500H7_NONREALTIMEDATAPROCESS_H
+#ifndef _NONREALTIMEDATAPROCESS_H
+#define _NONREALTIMEDATAPROCESS_H
 
 #include "cmsis_os.h"
 #include "fpga_rw.h"
-#include "tcp_config.h"
+#include "tcp_client.h"
 
 #define MAX_BEAM_NUM    30
 
@@ -87,7 +87,6 @@ void sendCPtoFPGA(uint16_t beamIndex, uint16_t RIIndex);
 void sendFeedback(void);
 uint16_t beam_cmd_get(void);
 
-int8_t non_realtime_fpga_data_process(uint8_t *recvBuf);
-int8_t non_realtime_data_process_init(void);
+uint8_t non_realtime_process_thread_init(void);
 
 #endif //W5500H7_NONREALTIMEDATAPROCESS_H

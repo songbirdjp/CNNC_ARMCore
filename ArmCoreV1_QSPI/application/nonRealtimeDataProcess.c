@@ -1,6 +1,7 @@
 #include "main.h"
 #include"sdram_fmc_drv.h"
-#include "socket.h"
+#include "tcp_client.h"
+#include "fpga_rw.h"
 
 #define PARAM_SETTING_TAG 1
 #define PLAN_DATA_SETTING_TAG 2
@@ -124,11 +125,7 @@ void sendFeedback(void)
    // memset(pFDAry, 1, typeLen*2);
   //  printf("pack index %d\r\n", secondPosFeedback.packIndexInOneBeam);
 
-    int32_t ret = send(0, (uint8_t *)feedback, feedback16Len*2);    //返回给服务器
-    if (ret <= SOCK_BUSY)
-    {
-        printf("tcp client send err:%d\r\n", ret);
-    }
+    tcp_client_data_send((uint8_t *)feedback, feedback16Len*2);
 }
 
 void ntrRecvParamAndPlan(TCP_DATA_t* info)
@@ -300,11 +297,14 @@ void ntrRecvParamAndPlan(TCP_DATA_t* info)
             printf("recv error #4: crc error: %u %u!!! \r\n", crcInData, crcCal);
             return;
         }
-        makeParamSendAry(info->gDATABUF);
+        // makeParamSendAry(info->gDATABUF);
       //  for(uint16_t i=0; i < sndCtrl.totalSize; i++) printf("0x%x ", sndCtrl.paramSendBuf[i]);
-        sendParamtoFPGA();
+        // sendParamtoFPGA();
        // printf("size %d\r\n", sndCtrl.totalSize);
         printf("crc:%u\r\n", crcInData);
+        
+        make_para_for_fpga(info->gDATABUF);
+
     }
 
     memset(&info, 0, sizeof(info));
@@ -322,6 +322,7 @@ void sendParamtoFPGA(void)
 void sendCPtoFPGA(uint16_t beamIndex, uint16_t RIIndex)
 {
     uint8_t *pBeamData;
+    uint8_t send_buf[174] = {0};
 
     pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     pBeamData = pSDRAM;
@@ -366,14 +367,20 @@ void sendCPtoFPGA(uint16_t beamIndex, uint16_t RIIndex)
     printf("\r\n");*/
 #else
   //  makeSingleSendAry(24, pBeamData, RT_DOWNLOAD_PAYLOAD_LEN, 1);
-    makeSingleSendAry(24, pBeamData, 166, 1,1);
+    // makeSingleSendAry(24, pBeamData, 166, 1,1);
+    memcpy(send_buf, pBeamData, 166);
     pBeamData += 166;
     pBeamData += 4;//skip X/Y Jaw pos
-    makeSingleSendAry(24, pBeamData, 8, 0,1);//CP limit pos
+    // makeSingleSendAry(24, pBeamData, 8, 0,1);//CP limit pos
    // for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  printf("%x ",sndCtrl.cmdSendBuf[i]);
    // printf("\r\n");
 
-    FPGA_WriteByteArray(sndCtrl.cmdSendBuf, MAX_CMD_DATA_SIZE);
+    // FPGA_WriteByteArray(sndCtrl.cmdSendBuf, MAX_CMD_DATA_SIZE);
+
+    memcpy(&send_buf[166], pBeamData, 8);
+
+    make_cmd_to_fpga(24, send_buf, 174);
+
 #endif
 }
 
@@ -802,8 +809,6 @@ void nrtDataMainLoop(void)
             sndCtrl.paramSendBuf = 0;
         }*/
     }
-
-    osDelay(100);
 }
 
 
@@ -811,7 +816,7 @@ void nrtDataMainLoop(void)
 /********************************************************************************************/
 #include "ethercat.h"
 
-int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
+static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
 {
     uint32_t checkSum = 0;
 
@@ -963,8 +968,8 @@ static int8_t non_realtime_ethercat_data_process(void)
     if(oldState != rtBeamData.fsmState){
         printf("fsm state: %d -> %d\r\n",oldState,rtBeamData.fsmState);
         uint8_t newState = rtBeamData.fsmState;
-        makeSingleSendAry(25, &newState, 1, 1,1);//0x50
-        // make_cmd_to_fpga(25, &newState, 1);
+        // makeSingleSendAry(25, &newState, 1, 1,1);//0x50
+        make_cmd_to_fpga(25, &newState, 1);
         // FPGA_WriteByteArray(sndCtrl.cmdSendBuf, sndCtrl.singleSize[25]);
         oldState = rtBeamData.fsmState;
     }
@@ -999,7 +1004,126 @@ static int8_t non_realtime_ethercat_data_process(void)
     return ethercat_send_data_update(send);
 }
 
-int8_t non_realtime_data_process_init(void)
+static int8_t non_realtime_data_process_init(void)
 {
     return ethercat_slave_appl_cb_register(non_realtime_ethercat_data_process);
+}
+
+/*
+ * thread init
+*/
+#define DATA_PROCESS_FPGA_EVENT   (1<<0)
+#define DATA_PROCESS_LAN_EVENT    (1<<1)
+#define DATA_PROCESS_TCP_EVENT    (1<<2)
+
+osEventFlagsId_t data_process_eventHandle = NULL;
+
+static void DataProccessTask(void *argument)
+{
+  /* USER CODE BEGIN DataProccessTask */
+    nrtInit();
+    /* Infinite loop */
+   // osDelay(500);
+    for(;;)
+    {
+        nrtDataMainLoop();
+        osDelay(100);
+    }
+  /* USER CODE END DataProccessTask */
+}
+static void data_process_entry(void *argument)
+{
+  /* USER CODE BEGIN data_process_entry */
+  /* Infinite loop */
+  osStatus_t stat = 0;
+  uint32_t event_flag = 0;  
+  uint8_t recv_from_fpga_buf[RECV_BUF_LEN];
+  TCP_DATA_t tcp_info = {0};
+
+  non_realtime_data_process_init();
+
+  for(;;)
+  {
+
+    event_flag = osEventFlagsWait(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT | DATA_PROCESS_LAN_EVENT | DATA_PROCESS_TCP_EVENT, osFlagsWaitAny, osWaitForever);
+    if (event_flag & DATA_PROCESS_LAN_EVENT)
+    {
+        // printf("recv DATA_PROCESS_LAN_EVENT\n");
+
+        ethercat_recv_data_update();
+    }
+
+    if (event_flag & DATA_PROCESS_FPGA_EVENT)
+    {
+        stat = recv_from_fpga_data_get(recv_from_fpga_buf);
+        if (stat == osOK)
+        {
+            non_realtime_fpga_data_process(recv_from_fpga_buf);
+
+            printf("buf: %x %x %x %x\r\n", recv_from_fpga_buf[0], recv_from_fpga_buf[1], recv_from_fpga_buf[2], recv_from_fpga_buf[3]);
+        }
+        else
+        {
+            printf("no msg in spi2 rx queue:%d\r\n", stat);
+        }
+    }
+
+    if (event_flag & DATA_PROCESS_TCP_EVENT)
+    {
+        stat = tcp_client_data_recv_get(&tcp_info);
+        if (stat == osOK)
+        {
+            ntrRecvParamAndPlan(&tcp_info);
+
+            sendFeedback();
+
+            // printf("tcp_info len:%d\r\n", tcp_info.Len);
+            // printf("tcp_info %x %x %x %x\r\n", tcp_info.gDATABUF[0], tcp_info.gDATABUF[1], tcp_info.gDATABUF[2], tcp_info.gDATABUF[3]);
+        }
+        else
+        {
+            printf("no msg in tcp rx queue:%d\r\n", stat);
+        }
+    }
+    
+  }
+  /* USER CODE END data_process_entry */
+}
+
+uint8_t non_realtime_process_thread_init(void)
+{
+    osThreadAttr_t recv_data_process_thread_attributes = {
+    .name = "recv_data_process_thread",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t) osPriorityAboveNormal,
+    };
+
+    osThreadAttr_t DataProcess_attributes = {
+    .name = "DataProcess",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t) osPriorityNormal,
+    };
+
+    data_process_eventHandle = osEventFlagsNew(NULL);
+    if (data_process_eventHandle == NULL)
+    {
+        printf("event data process create failed\r\n");
+        return -1;
+    }
+
+    osThreadId_t DataProcessHandle = osThreadNew(DataProccessTask, NULL, &DataProcess_attributes);
+    if (DataProcessHandle == NULL)
+    {
+        printf("thread data process create failed\r\n");
+        return -1;
+    }
+
+    osThreadId_t recv_data_process_threadHandle = osThreadNew(data_process_entry, NULL, &recv_data_process_thread_attributes);
+    if (recv_data_process_threadHandle == NULL)
+    {
+        printf("thread recv data process create failed\r\n");
+        return -1;
+    }
+
+    return 0;
 }

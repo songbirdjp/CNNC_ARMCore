@@ -435,16 +435,10 @@ int32_t device_w5500_data_recv_with_block(void)
         return ret;
     }
 
-    extern osMutexId_t tcp_access_mutexHandle;
-    osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
-
-    ret = w5500_irq_process();
-    if (ret < 0)
-    {
-        printf("irq process err:%d\r\n", ret);
-    }
-
-    osMutexRelease(tcp_access_mutexHandle);
-
     return ret;    
+}
+
+int32_t device_w5500_irq_process(void)
+{
+    return w5500_irq_process();
 }
