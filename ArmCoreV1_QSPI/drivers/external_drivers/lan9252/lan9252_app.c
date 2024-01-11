@@ -295,11 +295,10 @@ void APPL_InputMapping(UINT16* pData)
 
 #if 0
     UINT8 *p = (UINT8 *) pData;
-    for (int i = 1; i <= nPdInputSize; i++)
+    for (int i = 0; i <= nPdInputSize; i++)
     {
-        *p++ = i;
+        *p++ = i << 8 | i;
     }
-
 #endif
 
 #endif

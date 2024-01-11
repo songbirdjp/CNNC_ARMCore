@@ -223,10 +223,10 @@ void SPIWriteRegUsingCSR( UINT8 *WriteBuffer, UINT16 Address, UINT8 Count)
     param32_1.v[2] = Count;
     param32_1.v[3] = ESC_WRITE_BYTE;
 
-    SPIWriteDWord (0x304, param32_1.Val);
+    SPIWriteDWord (ESC_CSR_CMD_REG, param32_1.Val);
     do
     {
-        param32_1.Val = SPIReadDWord (0x304);
+        param32_1.Val = SPIReadDWord (ESC_CSR_CMD_REG);
 
     }while(param32_1.v[3] & ESC_CSR_BUSY);
 
@@ -446,27 +446,29 @@ void PDIReadReg(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 {
     if (Address >= MIN_PD_READ_ADDRESS)
     {
+#ifdef USING_OSPI_DMA_MODE
         uint8_t num = 0;
         uint8_t i = 0;
 
         while (Count > 0)
         {
-            if (Count > 128)
+            if (Count > 64)
             {
-                num = 128;
+                num = 64;
             }
             else
             {
                 num = Count;
             }
 
-            SPIReadPDRamRegister(ReadBuffer + 128 * i, Address + 128 * i, num);
+            SPIReadPDRamRegister(ReadBuffer + 64 * i, Address + 64 * i, num);
 
             Count -= num;
             i++;
         }
-
-        //  SPIReadPDRamRegister(ReadBuffer, Address,Count);
+#else
+        SPIReadPDRamRegister(ReadBuffer, Address,Count);
+#endif
     }
     else
     {
@@ -486,34 +488,29 @@ void PDIWriteReg( UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
    
    if (Address >= MIN_PD_WRITE_ADDRESS)
    {
+#ifdef USING_OSPI_DMA_MODE
         uint8_t num = 0;
         uint8_t i = 0;
 
         while (Count > 0)
         {
-            if (Count > 128)
+            if (Count > 64) 
             {
-                num = 128;
+                num = 64;
             }
             else
             {
                 num = Count;
             }
 
-            SPIWritePDRamRegister(WriteBuffer + 128 * i, Address + 128 * i, num);
+            SPIWritePDRamRegister(WriteBuffer + 64 * i, Address + 64 * i, num);
 
             Count -= num;
             i++;
-        }    
-
-#if 0
-        for (uint8_t i = 0; i < 16; i++)
-        {
-            WriteBuffer[i] = i;
         }
+#else
+        SPIWritePDRamRegister(WriteBuffer, Address,Count);
 #endif
-		// SPIWritePDRamRegister(WriteBuffer, Address,Count);
-
    }
    else
    {

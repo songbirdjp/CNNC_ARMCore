@@ -7,6 +7,15 @@
 extern "C" {
 #endif
 
+struct system_time
+{
+    uint32_t systick;   /* systick timer count */
+    uint32_t ostick;    /* os count */
+};
+
+struct system_time *system_time_get(struct system_time *t);
+uint32_t time_diff_us(struct system_time *begin, struct system_time *end);
+
 
 int8_t split_string(uint8_t *str, char splitter, uint8_t **argv);
 

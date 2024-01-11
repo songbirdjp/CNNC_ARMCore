@@ -13,8 +13,8 @@ static void ErrorCallback(OSPI_HandleTypeDef *hospi)
 }
 static void CmdCpltCallback(OSPI_HandleTypeDef *hospi)
 {
-    // DEVICE_OSPI *ospi = (DEVICE_OSPI *)hospi;
-    // osEventFlagsSet(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT);
+    DEVICE_OSPI *ospi = (DEVICE_OSPI *)hospi;
+    osEventFlagsSet(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT);
 }
 static void TxCpltCallback(OSPI_HandleTypeDef *hospi)
 {
@@ -126,8 +126,19 @@ static int8_t spi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
             return -4;
         }
 
-        // ret = HAL_OSPI_Transmit_DMA((OSPI_HandleTypeDef *)ospi, data_buf);
+#ifdef USING_OSPI_DMA_MODE
+        if (cmd_buf->NbData != sizeof(uint32_t))
+        {
+            ret = HAL_OSPI_Transmit_DMA((OSPI_HandleTypeDef *)ospi, data_buf);
+        }
+        else
+        {
+            ret = HAL_OSPI_Transmit((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
+        }
+#else
         ret = HAL_OSPI_Transmit((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
+#endif
+
         if (ret != HAL_OK)
         {
             printf("device %s write data err:%d\r\n", ospi->name, ret);
@@ -159,12 +170,17 @@ static int8_t spi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
     }
 #endif
 
-    // ret = osEventFlagsWait(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-    // if (ret != OSPI_SEND_SUCCEED_EVENT)
-    // {
-    //     printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
-    //     return -7;
-    // }
+#ifdef USING_OSPI_DMA_MODE
+    if (cmd_buf->NbData != sizeof(uint32_t))
+    {
+        ret = osEventFlagsWait(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret != OSPI_SEND_SUCCEED_EVENT)
+        {
+            printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
+            return -7;
+        }
+    }
+#endif
 
     osMutexRelease(ospi->tx_mutex);
 
@@ -215,8 +231,19 @@ static int8_t spi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8
         return -4;
     }
 
-    // ret = HAL_OSPI_Receive_DMA((OSPI_HandleTypeDef *)ospi, data_buf);
+#ifdef USING_OSPI_DMA_MODE
+    if (cmd_buf->NbData != sizeof(uint32_t))
+    {
+        ret = HAL_OSPI_Receive_DMA(&ospi->hospi, data_buf);
+    }
+    else
+    {
+        ret = HAL_OSPI_Receive((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
+    }
+#else
     ret = HAL_OSPI_Receive((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
+#endif
+
     if (ret != HAL_OK)
     {
         printf("device %s receive dma err:%d\r\n", ospi->name, ret);
@@ -230,12 +257,17 @@ static int8_t spi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8
     }
 #endif
 
-    // ret = osEventFlagsWait(ospi->rx_event, OSPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-    // if (ret != OSPI_RECV_SUCCEED_EVENT)
-    // {
-    //     printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
-    //     return -7;
-    // }
+#ifdef USING_OSPI_DMA_MODE
+    if (cmd_buf->NbData != sizeof(uint32_t))
+    {
+        ret = osEventFlagsWait(ospi->rx_event, OSPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret != OSPI_RECV_SUCCEED_EVENT)
+        {
+            printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
+            return -7;
+        }
+    }
+#endif
 
     osMutexRelease(ospi->tx_mutex);
 

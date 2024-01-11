@@ -888,11 +888,11 @@ static int8_t non_realtime_ethercat_data_process(void)
     #define DATA_IN1_OFFSET    9
     #define DATA_IN2_OFFSET    17
 
-    uint16_t *InfoOutPTR = recv[INFO_OUT_OFFSET];
-    uint16_t *DataOut1PTR = recv[DATA_OUT1_OFFSET];
-    uint16_t *InfoIn1PTR = send[INFO_IN_OFFSET];    //echo
-    uint16_t *DataIn1PTR = send[DATA_IN1_OFFSET];   //fault info, use 2
-    uint16_t *DataIn2PTR = send[DATA_IN2_OFFSET];   //leaf pos 1-8
+    uint16_t *InfoOutPTR = &recv[INFO_OUT_OFFSET];
+    uint16_t *DataOut1PTR = &recv[DATA_OUT1_OFFSET];
+    uint16_t *InfoIn1PTR = &send[INFO_IN_OFFSET];    //echo
+    uint16_t *DataIn1PTR = &send[DATA_IN1_OFFSET];   //fault info, use 2
+    uint16_t *DataIn2PTR = &send[DATA_IN2_OFFSET];   //leaf pos 1-8
 
     // uint32_t checkSum = 0;
 

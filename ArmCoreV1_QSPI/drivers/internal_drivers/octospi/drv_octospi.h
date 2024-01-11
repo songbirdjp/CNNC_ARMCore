@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-
+// #define USING_OSPI_DMA_MODE
 #define DEVICE_NAME_LENGTH      16
 
 #define DEVICE_NAME_OSPI1       "octospi1"

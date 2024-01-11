@@ -1,5 +1,7 @@
+#include "utilities.h"
 #include "stdint.h"
 #include "stdio.h"
+#include "stm32h7xx_hal.h"
 
 int8_t split_string(uint8_t *str, char splitter, uint8_t **argv)
 {
@@ -38,4 +40,20 @@ int8_t split_string(uint8_t *str, char splitter, uint8_t **argv)
     }
 
     return argc;
+}
+
+struct system_time *system_time_get(struct system_time *t)
+{
+    t->systick = SysTick->VAL;
+    t->ostick = xTaskGetTickCount();
+
+    return t;
+}
+
+uint32_t time_diff_us(struct system_time *begin, struct system_time *end)
+{
+    uint64_t ostick_diff = ((uint64_t)end->ostick + UINT32_MAX - begin->ostick) % UINT32_MAX;
+    uint32_t diff_systick = (ostick_diff * (SysTick->LOAD + 1) + begin->systick - end->systick);
+
+    return diff_systick / (HAL_RCC_GetSysClockFreq() / 1000000);
 }
