@@ -64,9 +64,9 @@ void log_printf(ulog_level_t severity, char *msg)
 {
 #ifdef CFG_PLATFORM_SIMULATOR
     uint32_t tick_pre_second = osKernelGetTickFreq();
-    uint32_t systick = osKernelGetTickCount();
-    time_t time_s_cur =  systick / tick_pre_second;
-    uint32_t time_ms_left = systick % tick_pre_second;
+    uint32_t ostick = osKernelGetTickCount();
+    time_t time_s_cur =  ostick / tick_pre_second;
+    uint32_t time_ms_left = ostick % tick_pre_second;
 
     struct tm tm_temp, *tm;
     
@@ -182,3 +182,76 @@ void ulog_message(ulog_level_t severity, const char *fmt, ...) {
 // =============================================================================
 // private code
 
+// #define USING_ULOG_THREAD
+
+#ifdef USING_ULOG_THREAD
+
+static osMessageQueueId_t ulog_output_queueHandle = NULL;
+static void ulog_output(ulog_level_t severity, char *msg)
+{
+    uint32_t tick_pre_second = osKernelGetTickFreq();
+    uint32_t ostick = osKernelGetTickCount();
+    time_t time_s_cur =  ostick / tick_pre_second;
+    uint32_t time_ms_left = ostick % tick_pre_second;
+
+    uint8_t msg_buf[ULOG_MAX_MESSAGE_LENGTH] = {0};
+
+    struct tm tm_temp, *tm;
+    
+    tm = localtime_r(&time_s_cur, &tm_temp);
+
+    sprintf(msg_buf, "[%04u-%02u-%02u %02u:%02u:%02u.%03u] [%s]: %s",
+            tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, time_ms_left,
+            ulog_level_name(severity),
+            msg);
+
+    osStatus_t stat = osMessageQueuePut (ulog_output_queueHandle, msg_buf, 0, 1000);
+    if (stat != osOK)
+    {
+        printf("ulog output queue put err:%d\r\n", stat);
+    }
+}
+
+static void ulog_output_entry(void *argument)
+{
+    uint8_t log_buf[ULOG_MAX_MESSAGE_LENGTH] = {0};
+
+    while (1)
+    {
+        osMessageQueueGet (ulog_output_queueHandle, log_buf, 0, osWaitForever);
+
+        printf("%s", log_buf);
+
+        /* TODO: add dest device interface here */
+    }
+}
+
+int8_t ulog_thread_init(void)
+{
+    osThreadAttr_t ulog_output_thread_attributes = {
+    .name = "ulog_output_thread",
+    .stack_size = 512 * 4,
+    .priority = (osPriority_t) osPriorityLow,
+    };
+
+    osThreadId_t ulog_output_threadHandle = osThreadNew(ulog_output_entry, NULL, &ulog_output_thread_attributes);
+    if (ulog_output_threadHandle == NULL)
+    {
+        printf("thread ulog output create failed\r\n");
+        return -1;
+    }
+
+    ulog_output_queueHandle = osMessageQueueNew (16, ULOG_MAX_MESSAGE_LENGTH, NULL);
+    if (ulog_output_queueHandle == NULL)
+    {
+        printf("queue ulog output create failed\r\n");
+        return -1;
+    }
+
+    memset(s_subscribers, 0, sizeof(s_subscribers));
+    ulog_subscribe(ulog_output, ULOG_DEBUG_LEVEL);   /* register callback function */
+
+    return 0;
+}
+
+#endif

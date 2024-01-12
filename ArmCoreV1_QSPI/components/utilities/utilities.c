@@ -45,7 +45,7 @@ int8_t split_string(uint8_t *str, char splitter, uint8_t **argv)
 struct system_time *system_time_get(struct system_time *t)
 {
     t->systick = SysTick->VAL;
-    t->ostick = xTaskGetTickCount();
+    t->ostick = osKernelGetTickCount();
 
     return t;
 }

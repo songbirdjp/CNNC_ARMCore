@@ -107,8 +107,10 @@ typedef enum {
 
 // maximum length of formatted log message
 #ifndef ULOG_MAX_MESSAGE_LENGTH
-#define ULOG_MAX_MESSAGE_LENGTH 120
+#define ULOG_MAX_MESSAGE_LENGTH 128
 #endif
+
+#define USING_ULOG_THREAD    /* use thread output log */
 
 /**
  * @brief: prototype for uLog subscribers.

@@ -29,6 +29,7 @@
 #include "applInterface.h"
 #include "queue.h"
 #include "tcp_client.h"
+#include "ulog.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -253,6 +254,9 @@ void MX_FREERTOS_Init(void) {
 
   non_realtime_process_thread_init();
 
+#ifdef USING_ULOG_THREAD
+  ulog_thread_init();
+#endif
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
