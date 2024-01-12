@@ -112,6 +112,7 @@ int main(void)
 
   MX_FMC_Init();
 //   MX_SPI2_Init();
+  MX_TIM1_Init();
   MX_TIM2_Init();
 //   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */

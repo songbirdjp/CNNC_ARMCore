@@ -7,9 +7,14 @@ ArmCoreV1_QSPI
 ├─ .project
 ├─ 7312.xml
 ├─ application
-│  ├─ Console.c
-│  ├─ fpga_rw.c
-│  ├─ fpga_rw.h
+│  ├─ ethercat
+│  │  ├─ ethercat.c
+│  │  └─ ethercat.h
+│  ├─ fpga
+│  │  ├─ fpga_port.c
+│  │  ├─ fpga_port.h
+│  │  ├─ fpga_rw.c
+│  │  └─ fpga_rw.h
 │  ├─ freertos.c
 │  ├─ FreeRTOSConfig.h
 │  ├─ main.c
@@ -18,7 +23,12 @@ ArmCoreV1_QSPI
 │  ├─ nonRealtimeDataProcess.h
 │  ├─ syscall.h
 │  ├─ syscalls.c
-│  └─ sysmem.c
+│  ├─ sysmem.c
+│  └─ tcp
+│     ├─ httpserver.c
+│     ├─ httpserver.h
+│     ├─ tcp_client.c
+│     └─ tcp_client.h
 ├─ ArmCoreV1.pdf
 ├─ ArmCoreV1_QSPI 固件状态说明.md
 ├─ board
@@ -38,9 +48,43 @@ ArmCoreV1_QSPI
 ├─ CMakeLists.txt
 ├─ CMakeLists_template.txt
 ├─ components
+│  ├─ cm_backtrace
+│  │  ├─ cmb_cfg.h
+│  │  ├─ cmb_def.h
+│  │  ├─ cm_backtrace.c
+│  │  ├─ cm_backtrace.h
+│  │  ├─ fault_handler
+│  │  │  └─ gcc
+│  │  │     └─ cmb_fault.S
+│  │  └─ Languages
+│  │     ├─ en-US
+│  │     │  └─ cmb_en_US.h
+│  │     ├─ README.md
+│  │     └─ zh-CN
+│  │        ├─ cmb_zh_CN.h
+│  │        └─ cmb_zh_CN_UTF8.h
+│  ├─ finsh
+│  │  ├─ cmd.c
+│  │  ├─ finsh.h
+│  │  ├─ finsh_config.h
+│  │  ├─ msh.c
+│  │  ├─ msh.h
+│  │  ├─ msh_file.c
+│  │  ├─ msh_parse.c
+│  │  ├─ msh_parse.h
+│  │  ├─ shell.c
+│  │  └─ shell.h
+│  ├─ ulog
+│  │  ├─ ulog.c
+│  │  └─ ulog.h
+│  └─ utilities
+│     ├─ utilities.c
+│     └─ utilities.h
 ├─ drivers
 │  ├─ external_drivers
 │  │  ├─ lan9252
+│  │  │  ├─ 9252_HW.c
+│  │  │  ├─ 9252_HW.h
 │  │  │  ├─ applInterface.h
 │  │  │  ├─ coeappl.c
 │  │  │  ├─ coeappl.h
@@ -51,12 +95,12 @@ ArmCoreV1_QSPI
 │  │  │  ├─ ecatslv.c
 │  │  │  ├─ ecatslv.h
 │  │  │  ├─ ecat_def.h
-│  │  │  ├─ el9800appl.c
-│  │  │  ├─ el9800appl.h
-│  │  │  ├─ el9800hw.c
-│  │  │  ├─ el9800hw.h
 │  │  │  ├─ esc.h
-│  │  │  ├─ global.h
+│  │  │  ├─ lan9252_app.c
+│  │  │  ├─ lan9252_app.h
+│  │  │  ├─ lan9252_appObjects.h
+│  │  │  ├─ lan9252_port.c
+│  │  │  ├─ lan9252_port.h
 │  │  │  ├─ mailbox.c
 │  │  │  ├─ mailbox.h
 │  │  │  ├─ objdef.c
@@ -69,15 +113,18 @@ ArmCoreV1_QSPI
 │  │  │  ├─ sdram_fmc_drv.c
 │  │  │  └─ sdram_fmc_drv.h
 │  │  └─ w5500
-│  │     ├─ httpserver.c
-│  │     ├─ httpserver.h
 │  │     ├─ socket.c
 │  │     ├─ socket.h
 │  │     ├─ w5500.c
 │  │     ├─ w5500.h
+│  │     ├─ w5500_port.c
+│  │     ├─ w5500_port.h
 │  │     ├─ wizchip_conf.c
 │  │     └─ wizchip_conf.h
 │  └─ internal_drivers
+│     ├─ bdma
+│     │  ├─ bdma.c
+│     │  └─ bdma.h
 │     ├─ dma
 │     │  ├─ dma.c
 │     │  └─ dma.h
@@ -87,17 +134,27 @@ ArmCoreV1_QSPI
 │     ├─ gpio
 │     │  ├─ gpio.c
 │     │  └─ gpio.h
+│     ├─ mdma
+│     │  ├─ mdma.c
+│     │  └─ mdma.h
 │     ├─ octospi
+│     │  ├─ drv_octospi.c
+│     │  ├─ drv_octospi.h
 │     │  ├─ octospi.c
 │     │  └─ octospi.h
 │     ├─ spi
+│     │  ├─ drv_spi.c
+│     │  ├─ drv_spi.h
 │     │  ├─ spi.c
 │     │  └─ spi.h
 │     ├─ timer
-│     │  ├─ stm32h7xx_hal_timebase_tim.c
 │     │  ├─ tim.c
 │     │  └─ tim.h
 │     ├─ uart
+│     │  ├─ console.c
+│     │  ├─ console.h
+│     │  ├─ drv_uart.c
+│     │  ├─ drv_uart.h
 │     │  ├─ usart.c
 │     │  └─ usart.h
 │     └─ 放置cubemx生成的片上外设驱动文件，并可添加自己写的驱动.txt
@@ -214,7 +271,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_uart_ex.c
 │        └─ stm32h7xx_ll_fmc.c
 ├─ Microchip-Device-SPI.xml
-├─ rtos
+├─ Middlewares
 │  └─ Third_Party
 │     └─ FreeRTOS
 │        └─ Source

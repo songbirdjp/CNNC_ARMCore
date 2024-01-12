@@ -36,10 +36,12 @@ void sendParamtoFPGA(void);
 void calCarrierTrajectory(void);
 
 uint16_t *feedback, feedback16Len;
+
+uint16_t buf[186];
 void TCPFeedbackInit(void)
 {
     feedback16Len = (3+sizeof(interlockFeedback)/2) + (3+sizeof(secondPosFeedback)/2);
-    feedback = (uint16_t*)pvPortMalloc(feedback16Len);
+    feedback = (uint16_t*)buf;//pvPortMalloc(feedback16Len);
     memset(feedback, 0, feedback16Len*2);
 }
 

@@ -1,5 +1,7 @@
 #include "drv_uart.h"
 #include "shell.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #define CONSOLE_CMD_MAX_LENGTH      128
 struct CmdMessage
@@ -134,30 +136,61 @@ static void cmd_system_reset(uint8_t argc, uint8_t **argv)
 }
 MSH_CMD_EXPORT_ALIAS(cmd_system_reset, system_reset, reset system);
 
-// static void cmd_thread_info(uint8_t argc, uint8_t **argv)
-// {
-//     uint8_t buf[512];
+static void cmd_thread_info(uint8_t argc, uint8_t **argv)
+{
+    uint8_t thread_total_num = 20;
+    HeapStats_t *heap_stats = (HeapStats_t *)pvPortMalloc(sizeof( HeapStats_t ));
+    if (heap_stats == NULL)
+    {
+        printf("heap stats malloc failed\r\n");
+        return;
+    }
 
-//     taskENTER_CRITICAL();
-//     vTaskList(buf);
-//     taskEXIT_CRITICAL();
-            
-//     printf("\r\n***************************************************************\r\n");
-//     printf("task_name   task_status	task_priority	stack_left	task_num\r\n");
-//     printf("%s\n", buf);
+    vPortGetHeapStats(heap_stats);
 
-//     printf("---------------------------------------------------------------\r\n");
+    printf("\r\n***************************************************************\r\n");
 
-//     taskENTER_CRITICAL();
-//     vTaskGetRunTimeStats(buf);
-//     taskEXIT_CRITICAL();
+    printf("Heap Stats:\r\n");
+    printf("allocation_success: %d\r\n", heap_stats->xNumberOfSuccessfulAllocations);
+    printf("free_success: %d\r\n", heap_stats->xNumberOfSuccessfulFrees);
+    printf("free_blocks: %d\r\n", heap_stats->xNumberOfFreeBlocks);
+    printf("bytes_of_largest_block: %d\r\n", heap_stats->xSizeOfLargestFreeBlockInBytes);
+    printf("bytes_of_smallest_block: %d\r\n", heap_stats->xSizeOfSmallestFreeBlockInBytes);
+    printf("bytes_of_available: %d\r\n", heap_stats->xAvailableHeapSpaceInBytes);
+    printf("bytes_remaining_ever: %d\r\n", heap_stats->xMinimumEverFreeBytesRemaining);
 
-//     printf("task_name       run_time        cpu_usage\r\n");
-//     printf("%s\n", buf);
+    printf("---------------------------------------------------------------\r\n");
 
-//     printf("***************************************************************\r\n");
-// }
-// MSH_CMD_EXPORT_ALIAS(cmd_thread_info, thread_info, thread status);
+    uint8_t *buf = (uint8_t *)pvPortMalloc(thread_total_num * sizeof( TaskStatus_t ));
+    if (buf == NULL)
+    {
+        printf("buf malloc failed\r\n");
+        vPortFree(heap_stats);
+        return;
+    }
+
+    // taskENTER_CRITICAL();
+    vTaskList(buf);
+    // taskEXIT_CRITICAL();
+
+    printf("task_name   task_status	task_priority	stack_left	task_num\r\n");
+    printf("%s", buf);
+
+    printf("---------------------------------------------------------------\r\n");
+
+    // taskENTER_CRITICAL();
+    vTaskGetRunTimeStats(buf);
+    // taskEXIT_CRITICAL();
+
+    printf("task_name       run_time        cpu_usage\r\n");
+    printf("%s", buf);
+
+    printf("***************************************************************\r\n");
+
+    vPortFree(heap_stats);
+    vPortFree(buf);
+}
+MSH_CMD_EXPORT_ALIAS(cmd_thread_info, thread_info, thread status);
 
 static void cmd_mem_read(uint8_t argc, uint8_t **argv)
 {

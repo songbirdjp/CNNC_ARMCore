@@ -232,23 +232,6 @@ static int32_t tcp_data_recv_with_block(void)
 /*
  * tcp client init
 */
-static osMutexAttr_t tcp_access_mutex_attributes = {
-.name = "tcp_access_mutex",
-.attr_bits = osMutexRecursive | osMutexPrioInherit
-};
-static osMessageQueueAttr_t tcp_rx_queue_attributes = {
-.name = "tcp_rx_queue"
-};
-static osThreadAttr_t tcp_irq_thread_attributes = {
-.name = "tcp_irq_thread",
-.stack_size = 512 * 4,
-.priority = (osPriority_t) osPriorityAboveNormal,
-};
-static osThreadAttr_t TCPClient_attributes = {
-.name = "TCPClient",
-.stack_size = 8192 * 4,
-.priority = (osPriority_t) osPriorityNormal,
-};
 
 static osMessageQueueId_t tcp_rx_queueHandle = NULL;
 static osMutexId_t tcp_access_mutexHandle = NULL;
@@ -334,6 +317,24 @@ static void tcp_client_entry(void *argument)
 
 int8_t tcp_client_thread_init(void)
 {
+    osThreadAttr_t tcp_irq_thread_attributes = {
+    .name = "tcp_irq_thread",
+    .stack_size = 512 * 4,
+    .priority = (osPriority_t) osPriorityAboveNormal,
+    };
+    osThreadAttr_t TCPClient_attributes = {
+    .name = "TCPClient",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t) osPriorityNormal,
+    };
+
+    osMutexAttr_t tcp_access_mutex_attributes = {
+    .name = "tcp_access_mutex",
+    .attr_bits = osMutexRecursive | osMutexPrioInherit
+    };
+    osMessageQueueAttr_t tcp_rx_queue_attributes = {
+    .name = "tcp_rx_queue"
+    };
 
     tcp_access_mutexHandle = osMutexNew(&tcp_access_mutex_attributes);
     if (tcp_access_mutexHandle == NULL)

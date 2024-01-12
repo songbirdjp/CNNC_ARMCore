@@ -182,7 +182,7 @@ int8_t ethercat_thread_init(void)
 {
     osThreadAttr_t EthercatSlave_attributes = {
     .name = "EthercatSlave",
-    .stack_size = 4096 * 4,
+    .stack_size = 1024 * 4,
     .priority = (osPriority_t) osPriorityNormal,
     };
 

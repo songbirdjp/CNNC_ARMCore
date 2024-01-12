@@ -156,7 +156,22 @@ const osThreadAttr_t Console_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+#ifdef configGENERATE_RUN_TIME_STATS
+static uint32_t run_time_count = 0;
+void run_time_count_increase(void)
+{
+    run_time_count++;
+}
+uint32_t run_time_count_get(void)
+{
+    return run_time_count;
+}
 
+void run_time_count_set(uint32_t val)
+{
+    run_time_count = val;
+}
+#endif
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -170,6 +185,58 @@ void StartConsoleTask(void *argument);
 // void ethercat_slave_entry(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+
+/* Hook prototypes */
+void configureTimerForRunTimeStats(void);
+unsigned long getRunTimeCounterValue(void);
+void vApplicationIdleHook(void);
+void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName);
+
+/* USER CODE BEGIN 1 */
+/* Functions needed when configGENERATE_RUN_TIME_STATS is on */
+__weak void configureTimerForRunTimeStats(void)
+{
+    run_time_count_set(0);
+}
+
+__weak unsigned long getRunTimeCounterValue(void)
+{
+    return run_time_count_get();
+}
+/* USER CODE END 1 */
+
+/* USER CODE BEGIN 2 */
+void vApplicationIdleHook( void )
+{
+   /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
+   to 1 in FreeRTOSConfig.h. It will be called on each iteration of the idle
+   task. It is essential that code added to this hook function never attempts
+   to block in any way (for example, call xQueueReceive() with a block time
+   specified, or call vTaskDelay()). If the application makes use of the
+   vTaskDelete() API function (as this demo application does) then it is also
+   important that vApplicationIdleHook() is permitted to return to its calling
+   function, because it is the responsibility of the idle task to clean up
+   memory allocated by the kernel to any task that has since been deleted. */
+
+    /*****************************
+     * add watchdog feed function here
+    *****************************/
+
+
+
+}
+/* USER CODE END 2 */
+
+/* USER CODE BEGIN 4 */
+void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
+{
+   /* Run time stack overflow checking is performed if
+   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
+   called if a stack overflow is detected. */
+
+   printf("%s stack over flow\r\n", pcTaskName);
+}
+/* USER CODE END 4 */
 
 /**
   * @brief  FreeRTOS initialization
