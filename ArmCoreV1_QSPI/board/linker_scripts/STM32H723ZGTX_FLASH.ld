@@ -62,6 +62,12 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+  .system_info :
+  {
+    . = ALIGN(0x400);
+    KEEP(*(.system_info*))
+  } >FLASH
+  
   /* The program code and other data goes into FLASH */
   .text :
   {

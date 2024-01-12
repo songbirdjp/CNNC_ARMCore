@@ -37,6 +37,7 @@
 #include "ulog.h"
 #include "finsh.h"
 #include "console.h"
+#include "sys_cfg.h"
 //#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
@@ -70,7 +71,19 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void system_info_print(void)
+{
+    struct sys_info *sys_info = system_info_get();
+    
+    printf("\r\n************************************\r\n");
 
+    printf("fw version: %s\r\n", sys_info->fw_version);
+    printf("compile time: %s\r\n", sys_info->compile_time);
+    printf("mcu clock:%.2f M\r\n", HAL_RCC_GetSysClockFreq()/1000000.0);
+
+    printf("************************************\r\n");
+
+}
 /* USER CODE END 0 */
 
 /**
@@ -130,9 +143,11 @@ int main(void)
     device_console_init(CONSOLE_NAME_DEFAULT);
 
     /* CmBacktrace initialize */
-    cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", "0.0.1");
+    cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", FW_VERSION);
 
     ulog_init(ULOG_DEBUG_LEVEL);
+
+    system_info_print();
     
 
     // ethercat_slave_init();//EtherCAT Hardware Init
@@ -142,8 +157,6 @@ int main(void)
 #endif
 
     LOG_I("Init ok\r\n");
-
-    printf("HAL_RCC_GetSysClockFreq:%.2f M\r\n", HAL_RCC_GetSysClockFreq()/1000000.0);
     
   /* USER CODE END 2 */
 
