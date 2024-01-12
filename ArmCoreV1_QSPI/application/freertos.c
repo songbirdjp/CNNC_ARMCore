@@ -30,6 +30,7 @@
 #include "queue.h"
 #include "tcp_client.h"
 #include "ulog.h"
+#include "iwdg.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -222,6 +223,7 @@ void vApplicationIdleHook( void )
      * add watchdog feed function here
     *****************************/
 
+   HAL_IWDG_Refresh(&hiwdg1);
 
 
 }
