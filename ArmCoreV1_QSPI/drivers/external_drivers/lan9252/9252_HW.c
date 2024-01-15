@@ -168,7 +168,13 @@ UINT8 LAN9252_Init(void)
 
     UINT16 intMask;
     UINT32 data;
-    
+
+#ifdef USING_SQI_CMD
+    sqi_enable();
+#else
+    // sqi_disable();
+#endif
+
     //Read BYTE-ORDER register 0x64.
     do
     {

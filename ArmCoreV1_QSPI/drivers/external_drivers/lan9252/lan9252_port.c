@@ -300,3 +300,82 @@ int8_t device_lan9252_data_write(uint16_t address, uint8_t *buf, uint32_t num)
 
     return device_lan9252_get()->write(device_lan9252_get(), &sCommand, buf, 5000);
 }
+
+int8_t device_lan9252_sqi_mode_set(uint8_t cmd)
+{
+    OSPI_RegularCmdTypeDef sCommand = {0};
+
+    sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;
+    sCommand.Instruction = cmd;
+    sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;
+    sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;
+
+    sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;
+
+    sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;
+    sCommand.DataMode = HAL_OSPI_DATA_NONE;
+    sCommand.NbData = 0;
+
+    sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;
+
+    sCommand.DummyCycles = 0;
+    sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;
+    sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;
+    sCommand.InstructionDtrMode = HAL_OSPI_INSTRUCTION_DTR_DISABLE;
+
+    return device_lan9252_get()->write(device_lan9252_get(), &sCommand, NULL, 5000);
+}
+
+int8_t device_lan9252_sqi_data_read(uint16_t address, uint8_t *buf, uint32_t num)
+{
+    OSPI_RegularCmdTypeDef sCommand = {0};
+
+    sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;
+    sCommand.Instruction = 0X0B;
+    sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_4_LINES;
+    sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;
+
+    sCommand.AddressMode = HAL_OSPI_ADDRESS_4_LINES;
+    sCommand.AddressSize = HAL_OSPI_ADDRESS_16_BITS;
+    sCommand.Address = address;
+
+    sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;
+    sCommand.DataMode = HAL_OSPI_DATA_4_LINES;
+    sCommand.NbData = num;
+
+    sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;
+
+    sCommand.DummyCycles = 6;
+    sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;
+    sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;
+    sCommand.InstructionDtrMode = HAL_OSPI_INSTRUCTION_DTR_DISABLE;
+
+    return device_lan9252_get()->read(device_lan9252_get(), &sCommand, buf, 5000);
+}
+
+int8_t device_lan9252_sqi_data_write(uint16_t address, uint8_t *buf, uint32_t num)
+{
+    OSPI_RegularCmdTypeDef sCommand = {0};
+
+    sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;
+    sCommand.Instruction = 0X02;
+    sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_4_LINES;
+    sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;
+
+    sCommand.AddressMode = HAL_OSPI_ADDRESS_4_LINES;
+    sCommand.AddressSize = HAL_OSPI_ADDRESS_16_BITS;
+    sCommand.Address = address;
+
+    sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;
+    sCommand.DataMode = HAL_OSPI_DATA_4_LINES;
+    sCommand.NbData = num;
+
+    sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;
+
+    sCommand.DummyCycles = 0;
+    sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;
+    sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;
+    sCommand.InstructionDtrMode = HAL_OSPI_INSTRUCTION_DTR_DISABLE;
+
+    return device_lan9252_get()->write(device_lan9252_get(), &sCommand, buf, 5000);
+}

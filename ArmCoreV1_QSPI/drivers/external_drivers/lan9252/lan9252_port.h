@@ -22,6 +22,9 @@ int8_t device_lan9252_rx_queue_init(osMessageQueueId_t queue, int8_t (*cb)(void 
 
 int8_t device_lan9252_data_read(uint16_t address, uint8_t *buf, uint32_t num);
 int8_t device_lan9252_data_write(uint16_t address, uint8_t *buf, uint32_t num);
+int8_t device_lan9252_sqi_mode_set(uint8_t cmd);
+int8_t device_lan9252_sqi_data_read(uint16_t address, uint8_t *buf, uint32_t num);
+int8_t device_lan9252_sqi_data_write(uint16_t address, uint8_t *buf, uint32_t num);
 
 int32_t device_lan9252_data_recv_with_block(void);
 

@@ -187,4 +187,6 @@ PROTO UINT32 PDI_Disable_Global_Interrupt();
 
 #undef    PROTO
 
+#define USING_SQI_CMD   /* only 80MHz CLK support */
+
 #endif

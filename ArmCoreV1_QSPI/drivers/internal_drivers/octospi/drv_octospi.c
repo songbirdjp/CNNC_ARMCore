@@ -148,19 +148,22 @@ static int8_t spi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
     }
     else
     {
-        // ret = HAL_OSPI_Command_IT((OSPI_HandleTypeDef *)ospi, cmd_buf);
-        // if (ret != HAL_OK)
-        // {
-        //     printf("device %s write cmd err:%d\r\n", ospi->name, ret);
-        //     return -4;
-        // }
+        ret = HAL_OSPI_Command_IT((OSPI_HandleTypeDef *)ospi, cmd_buf);
+        if (ret != HAL_OK)
+        {
+            printf("device %s write cmd err:%d\r\n", ospi->name, ret);
+            return -4;
+        }
 
-        // ret = osEventFlagsWait(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-        // if (ret != OSPI_SEND_SUCCEED_EVENT)
-        // {
-        //     printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
-        //     return -5;
-        // }
+#ifndef USING_OSPI_DMA_MODE
+        ret = osEventFlagsWait(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret != OSPI_SEND_SUCCEED_EVENT)
+        {
+            printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
+            return -5;
+        }
+#endif
+
     }
 
 #ifdef USING_OSPI_OPTION_FUNCTION

@@ -57,8 +57,11 @@ UINT32 SPIReadDWord (UINT16 Address)
 {
     UINT32 value;
 
+#ifndef USING_SQI_CMD
     device_lan9252_data_read(Address, &value, sizeof(value));
-
+#else
+    device_lan9252_sqi_data_read(Address, &value, sizeof(value));
+#endif
     return value;
 }
 
@@ -158,7 +161,11 @@ void SPIWriteBytes(UINT16 Address, UINT8 *Val, UINT8 nLenght)
 *****************************************************************************/
 void SPIWriteDWord (UINT16 Address, UINT32 Val)
 {
+#ifndef USING_SQI_CMD
     device_lan9252_data_write(Address, &Val, sizeof(Val));
+#else
+    device_lan9252_sqi_data_write(Address, &Val, sizeof(Val));
+#endif
 }
 
 /*******************************************************************************
@@ -302,7 +309,11 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
         // uint8_t tempBuff[Count];
         // CSLOW();
         // qspi_readBurstMode(PRAM_READ_FIFO_REG,tempBuff,Count);
+#ifndef USING_SQI_CMD
         device_lan9252_data_read(PRAM_READ_FIFO_REG, ReadBuffer, Count);
+#else
+        device_lan9252_sqi_data_read(PRAM_READ_FIFO_REG, ReadBuffer, Count);
+#endif
         // uint8_t buf[10] = {0};
         // device_lan9252_read_write(PRAM_READ_FIFO_REG, ReadBuffer, Count);
         // memcpy(ReadBuffer ,tempBuff,Count);
@@ -430,8 +441,12 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 //    nWrtSpcAvlCount = nWrtSpcAvlCount - Count;
     // qspi_writeBurstMode(PRAM_WRITE_FIFO_REG,tempBuff,Count);
     // CSHIGH();
-
+    
+#ifndef USING_SQI_CMD
     device_lan9252_data_write(PRAM_WRITE_FIFO_REG, WriteBuffer, Count);
+#else
+    device_lan9252_sqi_data_write(PRAM_WRITE_FIFO_REG, WriteBuffer, Count);
+#endif
     return;
 }
 
@@ -556,3 +571,15 @@ void PDI_Init()
 {
     SPIOpen();  
 }
+
+#ifdef USING_SQI_CMD
+void sqi_enable(void)
+{
+    device_lan9252_sqi_mode_set(0x38);
+}
+
+void sqi_disable(void)
+{
+    device_lan9252_sqi_mode_set(0xFF);
+}
+#endif

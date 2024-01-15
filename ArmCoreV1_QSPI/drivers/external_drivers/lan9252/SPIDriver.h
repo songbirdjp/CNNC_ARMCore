@@ -142,6 +142,12 @@ typedef union
     void SPISendAddr (UINT16 Address);
     
     
+
+#ifdef USING_SQI_CMD
+void sqi_enable(void);
+void sqi_disable(void);
+#endif
+
 #ifdef	__cplusplus
 }
 #endif
