@@ -39,6 +39,7 @@
 #include "finsh.h"
 #include "console.h"
 #include "sys_cfg.h"
+#include "backup_sram.h"
 //#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
@@ -157,6 +158,10 @@ int main(void)
     
 #ifdef RT_USING_FINSH
     finsh_system_init();
+#endif
+
+#ifdef USING_BACKUP_SRAM
+    backup_ram_clk_enable();
 #endif
 
     LOG_I("Init ok\r\n");

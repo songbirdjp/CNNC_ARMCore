@@ -49,6 +49,7 @@ MEMORY
   RAM_D1  (xrw)    : ORIGIN = 0x24000000,   LENGTH = 320K
   RAM_D2  (xrw)    : ORIGIN = 0x30000000,   LENGTH = 32K
   RAM_D3  (xrw)    : ORIGIN = 0x38000000,   LENGTH = 16K
+  RAM_BKP  (rw)    : ORIGIN = 0x38800000,   LENGTH = 4K
 }
 
 /* Define output sections */
@@ -183,6 +184,14 @@ SECTIONS
     . = ALIGN(8);
   } >RAM_D1
 
+  .bkp :
+  {
+    . = ALIGN(4);
+    _bkp_start_ = .;
+
+    KEEP(*(.bkp))
+  } >RAM_BKP
+  
   /* Remove information from the standard libraries */
   /DISCARD/ :
   {
