@@ -91,10 +91,8 @@ void Error_Handler(void);
 #define WATCHDOG1_GPIO_Port GPIOG
 #define SPI1_NCS_Pin GPIO_PIN_10
 #define SPI1_NCS_GPIO_Port GPIOG
-#define KEY1_Pin GPIO_PIN_12
-#define KEY1_GPIO_Port GPIOG
-#define KEY2_Pin GPIO_PIN_13
-#define KEY2_GPIO_Port GPIOG
+#define FM25V02_CS_Pin GPIO_PIN_11
+#define FM25V02_CS_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
 void SystemClock_Config(void);

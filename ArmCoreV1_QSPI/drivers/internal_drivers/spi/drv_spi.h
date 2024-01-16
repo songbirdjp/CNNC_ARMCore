@@ -78,6 +78,7 @@ struct drv_spi
     int8_t (*close)(struct drv_spi *spi);
     int8_t (*write)(struct drv_spi *spi, uint8_t *buf, uint16_t size, uint32_t timeout);
     int8_t (*read)(struct drv_spi *spi, uint8_t *buf, uint16_t size, uint32_t timeout);
+    int8_t (*write_and_read)(struct drv_spi *spi, uint8_t *send_buf, uint8_t *recv_buf, uint16_t size, uint32_t timeout);
     int8_t (*ioctl)(struct drv_spi *spi, uint8_t cmd, void *arg);
     int8_t (*rx_queue_cb)(void *arg); /* for slave mode */
 

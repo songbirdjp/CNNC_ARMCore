@@ -38,6 +38,20 @@ static void RxCpltCallback(SPI_HandleTypeDef *hspi)
         }
     }
 }
+static void TxRxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    osStatus_t ret = osOK;
+    DEVICE_SPI *spi = (DEVICE_SPI *)hspi;
+
+    if (spi->master_or_slave == SPI_MASTER)
+    {
+        osEventFlagsSet(spi->rx_event, SPI_RECV_SUCCEED_EVENT);
+    }
+    else
+    {
+        /* do nothing */
+    }
+}
 
 static int8_t spi_open(DEVICE_SPI *spi)
 {
@@ -232,6 +246,62 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
     return 0;
 }
 
+static int8_t spi_write_and_read(DEVICE_SPI *spi, uint8_t *send_buf, uint8_t *recv_buf, uint16_t size, uint32_t timeout)
+{
+    osStatus_t ret = osOK;
+
+    if (!spi->open_state)
+    {
+        printf("device %s is closed\r\n", spi->name);
+        return -1;
+    }
+
+#ifdef USING_SPI_OPTION_FUNCTION
+    if (spi->opt.before_read != NULL)
+    {
+        spi->opt.before_read(spi);
+    }
+#endif
+
+    if (spi->master_or_slave == SPI_MASTER)
+    {
+        ret = HAL_SPI_TransmitReceive_DMA((SPI_HandleTypeDef *)spi, send_buf, recv_buf, size);
+        if (ret != HAL_OK)
+        {
+            printf("device %s receive dma err:%d\r\n", spi->name, ret);
+            return -2;
+        }
+
+#ifdef USING_SPI_OPTION_FUNCTION
+        if (spi->opt.after_read != NULL)
+        {
+            spi->opt.after_read(spi);
+        }
+#endif
+
+        ret = osEventFlagsWait(spi->rx_event, SPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret != SPI_RECV_SUCCEED_EVENT)
+        {
+            printf("device %s wait event flag err:%d\r\n", spi->name, ret);
+            return -4;
+        }
+    }
+    else
+    {
+        return -2;
+    }
+
+
+#ifdef USING_SPI_OPTION_FUNCTION
+    if (spi->opt.complete_read != NULL)
+    {
+        spi->opt.complete_read(spi);
+    }
+#endif
+
+    return 0;
+}
+
 /* default configure for spi is dma mode
 * 1) queue 、mutex and event init, queue and/or event for rx, mutex for tx
 * 2) add send function, and release mutex in complete callback function
@@ -309,6 +379,7 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     HAL_SPI_RegisterCallback((SPI_HandleTypeDef *)spi, HAL_SPI_ERROR_CB_ID, ErrorCallback);
     HAL_SPI_RegisterCallback((SPI_HandleTypeDef *)spi, HAL_SPI_TX_COMPLETE_CB_ID, TxCpltCallback);
     HAL_SPI_RegisterCallback((SPI_HandleTypeDef *)spi, HAL_SPI_RX_COMPLETE_CB_ID, RxCpltCallback);
+    HAL_SPI_RegisterCallback((SPI_HandleTypeDef *)spi, HAL_SPI_TX_RX_COMPLETE_CB_ID, TxRxCpltCallback);
     // HAL_spi_RegisterRxEventCallback((SPI_HandleTypeDef *)spi, RxEventCallback);
 
     /* 5. device rename */
@@ -322,6 +393,7 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     spi->close = spi_close;
     spi->write = spi_write;
     spi->read = spi_read;
+    spi->write_and_read = spi_write_and_read;
     spi->ioctl = NULL;
     spi->rx_queue_cb = NULL;
 

@@ -189,8 +189,14 @@ SECTIONS
     . = ALIGN(4);
     _bkp_start_ = .;
 
-    KEEP(*(.bkp))
+    KEEP(*(.bkp*))
   } >RAM_BKP
+
+  .ram_d3 :
+  {
+    . = ALIGN(4);
+    KEEP(*(.ram_d3))
+  } >RAM_D3
   
   /* Remove information from the standard libraries */
   /DISCARD/ :

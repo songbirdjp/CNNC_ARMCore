@@ -62,6 +62,7 @@ include_directories(
     drivers/external_drivers/sdram 
     drivers/external_drivers/w5500 
     drivers/external_drivers/backup_sram 
+    drivers/external_drivers/fram 
     drivers/internal_drivers/dma 
     drivers/internal_drivers/fmc 
     drivers/internal_drivers/gpio 

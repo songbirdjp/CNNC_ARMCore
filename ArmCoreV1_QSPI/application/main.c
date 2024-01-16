@@ -40,6 +40,7 @@
 #include "console.h"
 #include "sys_cfg.h"
 #include "backup_sram.h"
+#include "fram_port.h"
 //#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
@@ -162,6 +163,10 @@ int main(void)
 
 #ifdef USING_BACKUP_SRAM
     backup_ram_clk_enable();
+#endif
+
+#ifdef USING_FRAM
+    device_fram_init(DEVICE_FRAM_NAME_DEFAULT);
 #endif
 
     LOG_I("Init ok\r\n");
