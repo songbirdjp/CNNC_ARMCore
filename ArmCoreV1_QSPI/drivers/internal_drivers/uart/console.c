@@ -125,7 +125,7 @@ int8_t console_cmd_process(void)
 
     finsh_cmd_parse_entry(msg.buf, msg.len - 2);
 
-    // console.write(&console, "adfg", 5, 5000);
+    // console.write(&console, msg.buf, msg.len, 5000);
  
     return 0;
 }
