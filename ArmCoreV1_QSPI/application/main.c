@@ -29,7 +29,7 @@
 #include "usart.h"
 #include "gpio.h"
 #include "fmc.h"
-
+#include "rtc.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 //#include "retarget.h"
@@ -131,6 +131,7 @@ int main(void)
   MX_TIM2_Init();
   MX_CRC_Init();
   MX_IWDG1_Init();
+  MX_RTC_Init();
 //   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
     //RetargetInit(&hlpuart1);

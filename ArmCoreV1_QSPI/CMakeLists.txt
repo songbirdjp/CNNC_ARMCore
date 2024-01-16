@@ -72,6 +72,7 @@ include_directories(
     drivers/internal_drivers/mdma 
     drivers/internal_drivers/crc 
     drivers/internal_drivers/iwdg 
+    drivers/internal_drivers/rtc 
     components/cm_backtrace 
     components/finsh 
     components/ulog 
