@@ -42,6 +42,7 @@
 #include "backup_sram.h"
 #include "fram_port.h"
 #include "init_call.h"
+#include "config.h"
 //#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
@@ -83,12 +84,14 @@ static void system_info_print(void)
 
     printf("fw version: %s\r\n", sys_info->fw_version);
     printf("compile time: %s\r\n", sys_info->compile_time);
+    printf("git branch: %s\r\n", GIT_BRANCH);
+    printf("git hash: %s\r\n", GIT_HASH);
     printf("mcu clock:%.2f M\r\n", HAL_RCC_GetSysClockFreq()/1000000.0);
 
     printf("************************************\r\n");
 
 }
-MSH_CMD_EXPORT_ALIAS(system_info_print, system_info_print, system info);
+MSH_CMD_EXPORT_ALIAS(system_info_print, system_info, system info);
 
 extern uint32_t  __init_call_start;
 extern uint32_t  __init_call_end;
