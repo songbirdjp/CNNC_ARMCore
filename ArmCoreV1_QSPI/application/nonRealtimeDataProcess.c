@@ -2,6 +2,7 @@
 #include"sdram_fmc_drv.h"
 #include "tcp_client.h"
 #include "fpga_rw.h"
+#include "init_call.h"
 
 #define PARAM_SETTING_TAG 1
 #define PLAN_DATA_SETTING_TAG 2
@@ -1092,7 +1093,7 @@ static void data_process_entry(void *argument)
   /* USER CODE END data_process_entry */
 }
 
-uint8_t non_realtime_process_thread_init(void)
+static uint8_t non_realtime_process_thread_init(void)
 {
     osThreadAttr_t recv_data_process_thread_attributes = {
     .name = "recv_data_process_thread",
@@ -1129,3 +1130,4 @@ uint8_t non_realtime_process_thread_init(void)
 
     return 0;
 }
+INIT_APP_EXPORT(non_realtime_process_thread_init);

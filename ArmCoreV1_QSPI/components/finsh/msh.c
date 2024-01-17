@@ -43,7 +43,7 @@ int msh_help(int argc, char **argv)
                 FINSH_NEXT_SYSCALL(index))
         {
 #if defined(FINSH_USING_DESCRIPTION) && defined(FINSH_USING_SYMTAB)
-            printf("%-16s - %s\n", index->name, index->desc);
+            printf("%-32s - %s\n", index->name, index->desc);
 #else
             printf("%s ", index->name);
 #endif

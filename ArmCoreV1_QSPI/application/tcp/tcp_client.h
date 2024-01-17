@@ -16,7 +16,7 @@ typedef struct {
     uint16_t Len;
 }TCP_DATA_t;
 
-int8_t tcp_client_thread_init(void);
+
 osStatus_t tcp_client_data_recv_get(TCP_DATA_t *buf);
 int32_t tcp_client_data_send(uint8_t *buf, uint16_t len);
 

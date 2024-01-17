@@ -77,8 +77,6 @@ SECTIONS
 
     *(.text)           /* .text sections (code) */
     *(.text*)          /* .text* sections (code) */
-    *(.rodata)                      /* read-only data (constants) */
-    *(.rodata*)
     *(.glue_7)         /* glue arm to thumb code */
     *(.glue_7t)        /* glue thumb to arm code */
     *(.eh_frame)
@@ -92,12 +90,17 @@ SECTIONS
     KEEP(*(FSymTab))
     __fsymtab_end = .;
     . = ALIGN(4);
-    __vsymtab_start = .;
-    KEEP(*(VSymTab))
-    __vsymtab_end = .;
-
-    . = ALIGN(4);
+    
     _etext = .;        /* define a global symbols at end of code */
+  } >FLASH
+
+  .init_call :
+  {
+    . = ALIGN(4);
+    __init_call_start = .;
+    KEEP(*(SORT(.init_call_fn*)))
+    __init_call_end = .;
+
   } >FLASH
 
   /* Constant data goes into FLASH */

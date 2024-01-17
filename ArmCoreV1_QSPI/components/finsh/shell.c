@@ -27,6 +27,7 @@
 
 #include "shell.h"
 #include "msh.h"
+#include "init_call.h"
 
 #ifdef DFS_USING_POSIX
 #include <unistd.h>
@@ -824,7 +825,7 @@ int finsh_system_init(void)
     //     rt_thread_startup(tid);
     return 0;
 }
-// INIT_APP_EXPORT(finsh_system_init);
+INIT_APP_EXPORT(finsh_system_init);
 
 void finsh_cmd_parse_entry(rt_uint8_t *cmd_buf, rt_uint16_t len)
 {

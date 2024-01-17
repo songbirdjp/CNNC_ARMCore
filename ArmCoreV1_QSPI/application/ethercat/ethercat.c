@@ -3,6 +3,7 @@
 #include "lan9252_port.h"
 #include "lan9252_app.h"
 #include "cmsis_os2.h"
+#include "init_call.h"
 
 static void (*fun_ptr)(void);
 
@@ -178,7 +179,7 @@ static void ethercat_slave_entry(void *argument)
   /* USER CODE END ethercat_slave_entry */
 }
 
-int8_t ethercat_thread_init(void)
+static int8_t ethercat_thread_init(void)
 {
     osThreadAttr_t EthercatSlave_attributes = {
     .name = "EthercatSlave",
@@ -208,3 +209,4 @@ int8_t ethercat_thread_init(void)
 
     return 0;
 }
+INIT_APP_EXPORT(ethercat_thread_init);

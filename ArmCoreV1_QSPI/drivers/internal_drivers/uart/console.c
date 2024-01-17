@@ -3,6 +3,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "rtc.h"
+#include "init_call.h"
 
 #define CONSOLE_CMD_MAX_LENGTH      128
 struct CmdMessage
@@ -118,7 +119,7 @@ int8_t device_console_init(uint8_t *device_name)
     return console.open(&console);
 }
 
-int8_t console_cmd_process(void)
+static int8_t console_cmd_process(void)
 {
     struct CmdMessage msg = {0};
 
@@ -130,6 +131,35 @@ int8_t console_cmd_process(void)
  
     return 0;
 }
+
+static void StartConsoleTask(void *argument)
+{
+  /* USER CODE BEGIN StartConsoleTask */
+    /* Infinite loop */
+    for(;;)
+    {
+        console_cmd_process();
+    }
+  /* USER CODE END StartConsoleTask */
+}
+
+static int8_t console_thread_init(void)
+{
+    osThreadAttr_t Console_attributes = {
+    .name = "Console",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t) osPriorityNormal,
+    };
+
+    osThreadId_t ConsoleHandle = osThreadNew(StartConsoleTask, NULL, &Console_attributes);
+    if (ConsoleHandle == NULL)
+    {
+        return -1;
+    }
+
+    return 0;
+}
+INIT_APP_EXPORT(console_thread_init);
 
 static void cmd_system_reset(uint8_t argc, uint8_t **argv)
 {

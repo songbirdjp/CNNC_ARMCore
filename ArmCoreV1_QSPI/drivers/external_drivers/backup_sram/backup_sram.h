@@ -16,7 +16,6 @@ extern "C"{
 
 #define BYTE_LEN_PER_LINE       64  /* char num + '\0' must less than BYTE_LEN_PER_LINE */
 
-void backup_ram_clk_enable(void);
 struct backup_sram_log *backup_sram_log_info_get(void);
 int8_t backup_sram_log_info_set(uint16_t log_addr_start, uint8_t log_line_num_reset_flag);
 int8_t backup_sram_write(uint32_t addr_offset, uint8_t *buf, uint16_t len);

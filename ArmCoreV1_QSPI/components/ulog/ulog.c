@@ -36,6 +36,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
+#include "init_call.h"
 
 // =============================================================================
 // types and definitions
@@ -182,7 +183,13 @@ void ulog_message(ulog_level_t severity, const char *fmt, ...) {
 // =============================================================================
 // private code
 
-// #define USING_ULOG_THREAD
+static int8_t component_ulog_init(void)
+{
+    ulog_init(ULOG_DEBUG_LEVEL);
+    return 0;
+}
+INIT_COMPONENT_EXPORT(component_ulog_init);
+
 
 #ifdef USING_ULOG_THREAD
 
@@ -226,7 +233,7 @@ static void ulog_output_entry(void *argument)
     }
 }
 
-int8_t ulog_thread_init(void)
+static int8_t ulog_thread_init(void)
 {
     osThreadAttr_t ulog_output_thread_attributes = {
     .name = "ulog_output_thread",
@@ -253,5 +260,6 @@ int8_t ulog_thread_init(void)
 
     return 0;
 }
+INIT_APP_EXPORT(ulog_thread_init);
 
 #endif

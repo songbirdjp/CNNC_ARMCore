@@ -1,6 +1,7 @@
 #include "fpga_rw.h"
 #include "stm32h7xx_hal.h"
 #include "fpga_port.h"
+#include "init_call.h"
 
 bool DMATransmitting = 0;
 SEND_CONTROL sndCtrl;
@@ -292,7 +293,7 @@ static void fpga_communication_entry(void *argument)
   /* USER CODE END fpga_communication_entry */
 }
 
-int8_t fpga_thread_init(void)
+static int8_t fpga_thread_init(void)
 {
     osThreadAttr_t fpga_communication_thread_attributes = {
     .name = "fpga_communication_thread",
@@ -323,6 +324,7 @@ int8_t fpga_thread_init(void)
 
     return 0;
 }
+INIT_APP_EXPORT(fpga_thread_init);
 
 osStatus_t recv_from_fpga_data_get(uint8_t *buf)
 {

@@ -2,6 +2,9 @@
 #include "drv_spi.h"
 #include "shell.h"
 #include "stdarg.h"
+#include "init_call.h"
+
+#ifdef USING_FRAM
 
 /* opcode command */
 #define WREN    0x06    /* set write enable */
@@ -306,6 +309,12 @@ int8_t device_fram_init(uint8_t *device_name)
     return device_fram_get()->open(device_fram_get());
 }
 
+static int8_t fram_init(void)
+{
+    device_fram_init(DEVICE_FRAM_NAME_DEFAULT);
+}
+INIT_DEVICE_EXPORT(fram_init);
+
 static int8_t device_fram_test(void)
 {
     uint8_t data_buf[128] = {0};
@@ -553,3 +562,5 @@ void fram_log_test(void)
 
 }
 MSH_CMD_EXPORT_ALIAS(fram_log_test, fram_log_test, fram log record test);
+
+#endif

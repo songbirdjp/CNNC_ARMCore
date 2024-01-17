@@ -12,7 +12,6 @@ extern "C" {
 
 
 int8_t device_console_init(uint8_t *device_name);
-int8_t console_cmd_process(void);
 
 #ifdef __cplusplus
 }

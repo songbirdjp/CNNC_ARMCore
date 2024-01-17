@@ -79,6 +79,7 @@ include_directories(
     components/finsh 
     components/ulog 
     components/utilities 
+    components/common 
     board/board_config/inc
     application/ethercat 
     application/tcp 

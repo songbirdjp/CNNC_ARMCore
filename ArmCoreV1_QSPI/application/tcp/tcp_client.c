@@ -1,6 +1,7 @@
 #include "w5500_port.h"
 #include "socket.h"
 #include "nonRealtimeDataProcess.h"
+#include "init_call.h"
 
 #define SOCK_TCPS   0
 
@@ -315,7 +316,7 @@ static void tcp_client_entry(void *argument)
   /* USER CODE END tcp_client_entry */
 }
 
-int8_t tcp_client_thread_init(void)
+static int8_t tcp_client_thread_init(void)
 {
     osThreadAttr_t tcp_irq_thread_attributes = {
     .name = "tcp_irq_thread",
@@ -366,6 +367,7 @@ int8_t tcp_client_thread_init(void)
 
     return 0;
 }
+INIT_APP_EXPORT(tcp_client_thread_init);
 
 osStatus_t tcp_client_data_recv_get(TCP_DATA_t *buf)
 {

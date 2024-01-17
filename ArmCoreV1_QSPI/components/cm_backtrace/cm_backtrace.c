@@ -707,3 +707,12 @@ void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
 
     print_call_stack(stack_pointer);
 }
+
+#include "init_call.h"
+#include "sys_cfg.h"
+static int8_t component_cm_backtrace_init(void)
+{
+    cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", FW_VERSION);
+    return 0;
+}
+INIT_COMPONENT_EXPORT(component_cm_backtrace_init);

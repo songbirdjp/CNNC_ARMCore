@@ -2,12 +2,14 @@
 #include "stm32h7xx_hal.h"
 #include <stdarg.h>
 #include "shell.h"
+#include "init_call.h"
 
 #ifdef USING_BACKUP_SRAM
-void backup_ram_clk_enable(void)
+static void backup_ram_clk_enable(void)
 {
     __HAL_RCC_BKPRAM_CLK_ENABLE();
 }
+INIT_BOARD_EXPORT(backup_ram_clk_enable);
 #endif
 
 struct backup_sram_log

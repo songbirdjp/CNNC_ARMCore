@@ -80,12 +80,12 @@ const osThreadAttr_t defaultTask_attributes = {
 //   .priority = (osPriority_t) osPriorityNormal,
 // };
 /* Definitions for Console */
-osThreadId_t ConsoleHandle;
-const osThreadAttr_t Console_attributes = {
-  .name = "Console",
-  .stack_size = 1024 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
+// osThreadId_t ConsoleHandle;
+// const osThreadAttr_t Console_attributes = {
+//   .name = "Console",
+//   .stack_size = 1024 * 4,
+//   .priority = (osPriority_t) osPriorityNormal,
+// };
 /* Definitions for tcp_irq_thread */
 // osThreadId_t tcp_irq_threadHandle;
 // const osThreadAttr_t tcp_irq_thread_attributes = {
@@ -292,7 +292,7 @@ void MX_FREERTOS_Init(void) {
 //   DataProcessHandle = osThreadNew(DataProccessTask, NULL, &DataProcess_attributes);
 
   /* creation of Console */
-  ConsoleHandle = osThreadNew(StartConsoleTask, NULL, &Console_attributes);
+//   ConsoleHandle = osThreadNew(StartConsoleTask, NULL, &Console_attributes);
 
   /* creation of tcp_irq_thread */
 //   tcp_irq_threadHandle = osThreadNew(tcp_client_entry, NULL, &tcp_irq_thread_attributes);
@@ -315,17 +315,17 @@ void MX_FREERTOS_Init(void) {
 //   data_process_eventHandle = osEventFlagsNew(&data_process_event_attributes);
   /* USER CODE END RTOS_EVENTS */
 
-  ethercat_thread_init();
+//   ethercat_thread_init();
 
-  tcp_client_thread_init();
+//   tcp_client_thread_init();
 
-  fpga_thread_init();
+//   fpga_thread_init();
 
-  non_realtime_process_thread_init();
+//   non_realtime_process_thread_init();
 
-#ifdef USING_ULOG_THREAD
-  ulog_thread_init();
-#endif
+// #ifdef USING_ULOG_THREAD
+//   ulog_thread_init();
+// #endif
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -453,16 +453,16 @@ void StartDefaultTask(void *argument)
 * @retval None
 */
 /* USER CODE END Header_StartConsoleTask */
-void StartConsoleTask(void *argument)
-{
-  /* USER CODE BEGIN StartConsoleTask */
-    /* Infinite loop */
-    for(;;)
-    {
-        console_cmd_process();
-    }
-  /* USER CODE END StartConsoleTask */
-}
+// void StartConsoleTask(void *argument)
+// {
+//   /* USER CODE BEGIN StartConsoleTask */
+//     /* Infinite loop */
+//     for(;;)
+//     {
+//         console_cmd_process();
+//     }
+//   /* USER CODE END StartConsoleTask */
+// }
 
 /* USER CODE BEGIN Header_tcp_client_entry */
 /**

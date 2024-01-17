@@ -41,6 +41,7 @@
 #include "sys_cfg.h"
 #include "backup_sram.h"
 #include "fram_port.h"
+#include "init_call.h"
 //#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
@@ -74,7 +75,7 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void system_info_print(void)
+static void system_info_print(void)
 {
     struct sys_info *sys_info = system_info_get();
     
@@ -86,6 +87,27 @@ void system_info_print(void)
 
     printf("************************************\r\n");
 
+}
+MSH_CMD_EXPORT_ALIAS(system_info_print, system_info_print, system info);
+
+extern uint32_t  __init_call_start;
+extern uint32_t  __init_call_end;
+
+static void system_fun_init(void)
+{
+    const struct init_desc *desc;
+    int result = 0;
+    uint32_t fun_num = 1;
+
+    printf("\r\n########## function initialize begin ##########\r\n");
+
+    for (desc = &__init_call_start; desc < &__init_call_end; desc++, fun_num++)
+    {
+        result = desc->init_fn();
+        printf("done_%-2u [%-32s %-2d]\r\n", fun_num, desc->fn_name, result);
+    }
+
+    printf("########## function initialize end   ##########\r\n\r\n");
 }
 /* USER CODE END 0 */
 
@@ -148,26 +170,28 @@ int main(void)
     device_console_init(CONSOLE_NAME_DEFAULT);
 
     /* CmBacktrace initialize */
-    cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", FW_VERSION);
+    // cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", FW_VERSION);
 
-    ulog_init(ULOG_DEBUG_LEVEL);
+    // ulog_init(ULOG_DEBUG_LEVEL);
 
     system_info_print();
     
 
     // ethercat_slave_init();//EtherCAT Hardware Init
     
-#ifdef RT_USING_FINSH
-    finsh_system_init();
-#endif
+// #ifdef RT_USING_FINSH
+//     finsh_system_init();
+// #endif
 
-#ifdef USING_BACKUP_SRAM
-    backup_ram_clk_enable();
-#endif
+// #ifdef USING_BACKUP_SRAM
+//     backup_ram_clk_enable();
+// #endif
 
-#ifdef USING_FRAM
-    device_fram_init(DEVICE_FRAM_NAME_DEFAULT);
-#endif
+// #ifdef USING_FRAM
+//     device_fram_init(DEVICE_FRAM_NAME_DEFAULT);
+// #endif
+
+    system_fun_init();
 
     LOG_I("Init ok\r\n");
     
