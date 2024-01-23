@@ -17,33 +17,25 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 #include "cmsis_os.h"
 #include "crc.h"
 #include "dma.h"
 #include "iwdg.h"
 #include "mdma.h"
-#include "octospi.h"
-#include "spi.h"
+#include "bdma.h"
 #include "tim.h"
-#include "usart.h"
 #include "gpio.h"
 #include "fmc.h"
 #include "rtc.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-//#include "retarget.h"
-//#include "LAN9252.h"
-#include "cm_backtrace.h"
+/* note: component and configuration header file */
 #include "ulog.h"
-#include "finsh.h"
+#include "shell.h"
 #include "console.h"
 #include "sys_cfg.h"
-#include "backup_sram.h"
-#include "fram_port.h"
 #include "init_call.h"
 #include "config.h"
-//#include "EthercatSlaveCNNCPM.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -148,56 +140,53 @@ int main(void)
   MX_DMA_Init();
   MX_MDMA_Init();
   MX_BDMA_Init();
-//   MX_OCTOSPI1_Init();
-//   MX_SPI1_Init();
-//   MX_USART1_UART_Init();
-
   MX_FMC_Init();
-//   MX_SPI2_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_CRC_Init();
   MX_IWDG1_Init();
   MX_RTC_Init();
-//   MX_SPI3_Init();
+
   /* USER CODE BEGIN 2 */
-    //RetargetInit(&hlpuart1);
-    // start_uart_receive();
-    SDRAM_Init();
-   // fsmc_sdram_test();
+
+  SDRAM_Init();
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);//leaf servo drive signal
+  HAL_GPIO_WritePin(GPIOG, GPIO_PIN_3, GPIO_PIN_SET);//carrier servo drive signal
+
+  /* Console initialize */
+  device_console_init(CONSOLE_NAME_DEFAULT);
+  system_info_print();
+  system_fun_init(); 
+
+  LOG_I("Init ok\r\n");
+
+#if 0
+    uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+    uint32_t res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
+
+    hardware_crc_config(CRC8);
+    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc8 res = %#x\r\n", res);
+
+    hardware_crc_config(CRC16);
+    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc16 res = %#x\r\n", res);
+
+    hardware_crc_config(CRC32);
+    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
+
+    hardware_crc_config(CRC8);
+    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc8 res = %#x\r\n", res);
+
+    hardware_crc_config(CRC16);
+    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc16 res = %#x\r\n", res);
     
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);//leaf servo drive signal
-    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_3, GPIO_PIN_SET);//carrier servo drive signal
+#endif
 
-    /* Console initialize */
-    device_console_init(CONSOLE_NAME_DEFAULT);
-
-    /* CmBacktrace initialize */
-    // cm_backtrace_init("ETHERCAT_CNNCPM", "1.0.0", FW_VERSION);
-
-    // ulog_init(ULOG_DEBUG_LEVEL);
-
-    system_info_print();
-    
-
-    // ethercat_slave_init();//EtherCAT Hardware Init
-    
-// #ifdef RT_USING_FINSH
-//     finsh_system_init();
-// #endif
-
-// #ifdef USING_BACKUP_SRAM
-//     backup_ram_clk_enable();
-// #endif
-
-// #ifdef USING_FRAM
-//     device_fram_init(DEVICE_FRAM_NAME_DEFAULT);
-// #endif
-
-    system_fun_init();
-
-    LOG_I("Init ok\r\n");
-    
   /* USER CODE END 2 */
 
   /* Init scheduler */

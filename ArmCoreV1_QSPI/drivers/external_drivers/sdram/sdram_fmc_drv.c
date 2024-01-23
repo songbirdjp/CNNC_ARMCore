@@ -1,6 +1,5 @@
 #include "fmc.h"
 #include "sdram_fmc_drv.h"
-#include "core_cm7.h"
 
 uint8_t SDRAM_Send_Cmd(uint8_t bankx,uint8_t cmd,uint8_t refresh,uint16_t regval)
 {

@@ -1,6 +1,6 @@
 #ifndef ETHERCAT_CNNCPM_SDRAM_FMC_DRV_H
 #define ETHERCAT_CNNCPM_SDRAM_FMC_DRV_H
-#include "fmc.h"
+
 
 #define SDRAM_MODEREG_BURST_LENGTH_1             ((uint16_t)0x0000)
 #define SDRAM_MODEREG_BURST_LENGTH_2             ((uint16_t)0x0001)

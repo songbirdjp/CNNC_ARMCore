@@ -2,7 +2,6 @@
 #include "string.h"
 #include "stdio.h"
 #include "usart.h"
-#include "console.h"
 
 #define UART_SEND_SUCCEED_EVENT     (1<<0)
 

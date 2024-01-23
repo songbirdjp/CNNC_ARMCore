@@ -1,7 +1,9 @@
 #include "w5500_port.h"
 #include "socket.h"
-#include "nonRealtimeDataProcess.h"
+#include "tcp_client.h"
+#include "stdbool.h"
 #include "init_call.h"
+#include "main.h"
 
 #define SOCK_TCPS   0
 
@@ -46,6 +48,23 @@ static uint8_t tcp_link_status_get(void)
     return tcp_link_state;
 }
 
+static void (*fun_ptr)(void);
+
+static void tcp_establish_cb(void)
+{
+    if (fun_ptr != NULL)
+    {
+        fun_ptr();
+    }
+}
+
+int8_t tcp_establish_cb_register(void (*fun_cb)(void))
+{
+    fun_ptr = fun_cb;
+
+    return 0;
+}
+
 static int8_t do_tcp_client(uint8_t sn)
 {
     int8_t ret = 0;
@@ -59,6 +78,7 @@ static int8_t do_tcp_client(uint8_t sn)
                 printf("tcp socket err:%d\r\n", ret);
             }
             break;
+            
         case SOCK_INIT:                      /*socket处于初始化状态*/
             ret = connect(0, remote_ip, remote_port);/*socket连接服务器*/
             if (ret != SOCK_OK)
@@ -66,13 +86,11 @@ static int8_t do_tcp_client(uint8_t sn)
                 printf("tcp connect err:%d\r\n", ret);
             }
             break;
+
         case SOCK_ESTABLISHED:               /*socket处于连接建立状态*/
-            if(beam_cmd_get() == NO_USE)
-            {
-                sendFeedback();
-            }
-            
+            tcp_establish_cb();
             break;
+
         case SOCK_CLOSE_WAIT:        /*socket处于等待关闭状态*/
             close(0);
             printf("SOCK_CLOSE_WAIT\r\n");
@@ -207,8 +225,6 @@ static int8_t tcp_init(osMessageQueueId_t queue)
     device_w5500_rx_buffer_init(recvInfo.gDATABUF, sizeof(recvInfo.gDATABUF));
 
     device_w5500_rx_queue_init(queue);
-
-    TCPFeedbackInit();  /* TODO */
 
     return 0;
 }

@@ -31,14 +31,6 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-//#include "retarget.h"
-#include "octospi.h"
-#include "w5500.h"
-#include "spi.h"
-// #include "httpserver.h"
-#include "nonRealtimeDataProcess.h"
-#include "fpga_rw.h"
-#include "sdram_fmc_drv.h"
 
 /* USER CODE END Includes */
 
@@ -95,28 +87,6 @@ void Error_Handler(void);
 #define FM25V02_CS_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
-void SystemClock_Config(void);
-#define CMD_HELP_MODE                   1
-#define CMD_CLEAR_MODE                  2
-#define CMD_STATE_MACHINE_MODE          3
-#define CMD_SEND_DATA_MODE              4
-#define CMD_RECV_DATA_MODE              5
-#define CMD_POSITION_MODE               6
-#define CMD_HOME_MODE                   20
-#define CMD_AUTO_MODE                   21
-#define CMD_META_DATA_MODE                 99
-
-#define StateMachineIdle                1
-#define StateMachineInit                2
-#define StateMachinePrepare             3
-#define StateMachineReady               4
-#define StateMachineServo               5
-#define StateMachineFault               6
-#define StateMachineShutDown            7
-
-#define SendEtherNetData                1
-#define SendEtherCATData                2
-
 
 #define BANKA
 //#define TEST

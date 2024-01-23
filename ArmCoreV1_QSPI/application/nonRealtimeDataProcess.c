@@ -1,7 +1,8 @@
-#include "main.h"
+#include "nonRealtimeDataProcess.h"
 #include"sdram_fmc_drv.h"
-#include "tcp_client.h"
 #include "fpga_rw.h"
+#include "tcp_client.h"
+#include "main.h"
 #include "init_call.h"
 
 #define PARAM_SETTING_TAG 1
@@ -14,6 +15,75 @@
 #else
 #define BANK_NO 2 //A=1 B=2
 #endif
+
+typedef struct {
+    uint16_t frmTag;
+    uint16_t frmType;
+    uint16_t frmLength;
+    uint16_t totalPackInOneBeam;
+    uint16_t bankNo;
+    uint16_t packIndexInOneBeam;
+}FRAME_HEAD;
+
+typedef struct {
+    uint16_t CPLimitPos[4];
+    uint16_t crcHigh;
+    uint16_t crcLow;
+}FRAME_END;
+
+typedef struct {
+    uint16_t fsmState;
+    uint16_t planCmd;
+    uint8_t totalBeam; // < 30
+    uint16_t totalRIInBeam[MAX_BEAM_NUM];   // total RI in one beam, < 4096
+    uint32_t oneBeamSize[MAX_BEAM_NUM];
+    uint16_t beamIndex;
+    uint16_t radiationIndex;
+    uint16_t faultInfo1;
+    uint16_t faultInfo2;
+    uint16_t rtPosUpload[RT_ARM_UPLOAD_POS_LEN/2];
+}RT_BEAM_DATA;
+
+typedef struct {
+    uint16_t versionARM;
+    uint16_t versionFPGA;
+    uint16_t leafNcarInterlock[83];
+   // uint16_t carrierInterlock;
+    uint16_t jawInterlock[2];
+    uint16_t powerInterlock;
+    uint16_t fanInterlock;
+    uint16_t boardLoss;
+    uint16_t armStatus;
+    uint16_t FPGAStatus;
+}INTERLOCK_FEEDBACK;
+
+typedef struct {
+    uint16_t bankNo;
+    uint16_t packIndexInOneBeam;
+    uint16_t errorCode;
+    uint16_t leafSecondPos[82];
+    uint16_t carrierSecondPos;   // total RI in one beam, < 2048
+    uint16_t jawSecondPos[2];
+}SECOND_POS_FEEDBACK;
+
+typedef struct {
+    uint8_t carrierPosMaxL;//[MAX_CP_IN_BEAM];
+    uint8_t carrierPosMaxH;
+    uint8_t carrierPosMinL;//[MAX_CP_IN_BEAM];
+    uint8_t carrierPosMinH;
+    uint16_t carrierPos;//[MAX_CP_IN_BEAM];
+    uint16_t pausePos;
+}CARRIER_POS;
+
+typedef struct {
+    uint16_t ri;
+    float speed;
+    uint8_t retCode;
+}CARRIER_PERIOD_INFO;
+
+enum serverFsmStates {FSM_NOSTATE,FSM_INIT,FSM_IDLE,FSM_PREPARE,FSM_READY,FSM_SERVO,FSM_MANUAL,FSM_FAULT,FSM_SHUTDOWN};
+enum planCommand {NO_USE,SEND_PLAN,CLOSE_PLAN};
+enum carrierPosType {MAX,MIN};
 
 //#define ringb_is_empty(q) (q->head == q->tail)
 //#define ringb_is_full(q) (((q->tail+1)%q->size) == q->head )
@@ -1007,8 +1077,26 @@ static int8_t non_realtime_ethercat_data_process(void)
     return ethercat_send_data_update(send);
 }
 
+static int8_t non_realtime_tcp_callback(void)
+{
+    if(beam_cmd_get() == NO_USE)
+    {
+        sendFeedback();
+    }
+
+    return 0;
+}
+
 static int8_t non_realtime_data_process_init(void)
 {
+    int8_t ret = 0;
+    ret = tcp_establish_cb_register(non_realtime_tcp_callback);
+    if (ret != 0)
+    {
+        printf("tcp callback register err:%d\r\n", ret);
+        return ret;
+    }
+
     return ethercat_slave_appl_cb_register(non_realtime_ethercat_data_process);
 }
 
@@ -1043,6 +1131,7 @@ static void data_process_entry(void *argument)
   uint8_t recv_from_fpga_buf[RECV_BUF_LEN];
   TCP_DATA_t tcp_info = {0};
 
+  TCPFeedbackInit();
   non_realtime_data_process_init();
 
   for(;;)

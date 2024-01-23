@@ -658,17 +658,17 @@ void wiz_recv_ignore(uint8_t sn, uint16_t len);
 void W5500_RESET(void);
 void ChipParametersConfiguration(void);
 void NetworkParameterConfiguration(void);
-void W5500_ChipInit(void);
-void SPI_WriteByte(uint8_t TxData);
-uint8_t SPI_ReadByte(void);
-void SPI_CrisEnter(void);
-void SPI_CrisExit(void);
-void SPI_CS_Select(void);
-void SPI_CS_Deselect(void);
-void SPI1_CS_HIGH();
-void SPI1_CS_LOW();
-void W5500_RST_High();
-void W5500_RST_Low();
+// void W5500_ChipInit(void);
+// void SPI_WriteByte(uint8_t TxData);
+// uint8_t SPI_ReadByte(void);
+// void SPI_CrisEnter(void);
+// void SPI_CrisExit(void);
+// void SPI_CS_Select(void);
+// void SPI_CS_Deselect(void);
+// void SPI1_CS_HIGH();
+// void SPI1_CS_LOW();
+// void W5500_RST_High();
+// void W5500_RST_Low();
 
 #ifdef __cplusplus
 }

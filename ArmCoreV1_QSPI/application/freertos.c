@@ -20,16 +20,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "task.h"
-#include "main.h"
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ecat_def.h"
-#include "applInterface.h"
-#include "queue.h"
-#include "tcp_client.h"
-#include "ulog.h"
 #include "iwdg.h"
 /* USER CODE END Includes */
 

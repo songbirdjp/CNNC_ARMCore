@@ -2,6 +2,6 @@
 #define __CONFIG_H__
 
 #define GIT_BRANCH  "arm_core_master_restructure_temporary"
-#define GIT_HASH    "db318e43f6011c6cc2fd7667cb5f50cf023fc251"
+#define GIT_HASH    "bd02829adcdb207658874eedb4653ae8ad9ec56e"
 
 #endif

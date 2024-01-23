@@ -50,13 +50,10 @@
 //*****************************************************************************/
 //A20140501 : for use the type - ptrdiff_t
 #include <stddef.h>
-//
-#include "main.h"
 #include "wizchip_conf.h"
 #include "socket.h"
 #include "string.h"
 #include "stdbool.h"
-#include "spi.h"
 //M20150401 : Remove ; in the default callback function such as wizchip_cris_enter(), wizchip_cs_select() and etc.
 /////////////
 
@@ -981,6 +978,7 @@ void NetworkParameterConfiguration(void)  //Intialize the network information to
     printf("get --ip:%d.%d.%d.%d\r\n", tempINFO.ip[0], tempINFO.ip[1], tempINFO.ip[2], tempINFO.ip[3]);
 }
 
+#if 0
 //W5500初始化
 void W5500_ChipInit(void)
 {
@@ -994,6 +992,7 @@ void W5500_ChipInit(void)
 
     NetworkParameterConfiguration();//初始化网络参数配置 MAC IP等
 }
+
 
 void SPI_WriteByte(uint8_t TxData)
 {
@@ -1050,3 +1049,4 @@ void W5500_RST_Low()
 {
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_RESET);
 }
+#endif
