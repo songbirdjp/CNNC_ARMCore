@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -22,8 +22,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
-//#include "LAN9252.h"
-#include "ecatappl.h"
+
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
@@ -104,18 +103,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC6 PC7 PC9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PA8 PA11 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_11|GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pins : PDPin PDPin */
   GPIO_InitStruct.Pin = LAN9252SYNC1_Pin|W5500_INTn_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -136,12 +123,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(FM25V02_CS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PG14 */
-  GPIO_InitStruct.Pin = GPIO_PIN_14;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI2_IRQn, 7, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);
@@ -152,11 +133,6 @@ void MX_GPIO_Init(void)
   HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
-  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
 /* USER CODE BEGIN 2 */

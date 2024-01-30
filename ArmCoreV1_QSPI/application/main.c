@@ -18,15 +18,16 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "cmsis_os.h"
+#include "bdma.h"
 #include "crc.h"
 #include "dma.h"
 #include "iwdg.h"
 #include "mdma.h"
-#include "bdma.h"
+#include "rtc.h"
 #include "tim.h"
 #include "gpio.h"
 #include "fmc.h"
-#include "rtc.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* note: component and configuration header file */
@@ -45,6 +46,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -80,6 +82,9 @@ static void system_info_print(void)
     printf("git hash: %s\r\n", GIT_HASH);
     printf("mcu clock:%.2f M\r\n", HAL_RCC_GetSysClockFreq()/1000000.0);
 
+    printf("stm32 uid:%#.8x%.8x%.8x\r\n", *(uint32_t *)0x1FF1E80c, *(uint32_t *)0x1FF1E804, *(uint32_t *)0x1FF1E800);
+    printf("flash size:%uKB\r\n", *(uint32_t *)0x1FF1E880);
+
     printf("************************************\r\n");
 
 }
@@ -104,6 +109,26 @@ static void system_fun_init(void)
 
     printf("########## function initialize end   ##########\r\n\r\n");
 }
+
+static void cmd_rtc_test(uint8_t argc, uint8_t **argv)
+{
+    uint32_t bkp_data = 0;
+
+    bkp_data = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0);
+    printf("bkp_data:%x\r\n", bkp_data);
+
+    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, 0xA5A5A5A5);
+
+    bkp_data = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0);
+    printf("bkp_data:%x\r\n", bkp_data);
+
+    /* backup sram: 4KB */
+    printf("bkp sram:%x\r\n", *(__IO uint32_t *)D3_BKPSRAM_BASE);
+    *(__IO uint32_t *)D3_BKPSRAM_BASE = 0x88234567;
+    printf("bkp sram:%x\r\n", *(__IO uint32_t *)D3_BKPSRAM_BASE);
+
+}
+MSH_CMD_EXPORT_ALIAS(cmd_rtc_test, rtc_test, rtc tset);
 /* USER CODE END 0 */
 
 /**
@@ -115,6 +140,10 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
+/* Enable the CPU Cache */
+
+  /* Enable I-Cache---------------------------------------------------------*/
+  SCB_EnableICache();
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -201,14 +230,12 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    while (1)
-    {
+  while (1)
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-
-    }
+  }
   /* USER CODE END 3 */
 }
 
@@ -328,11 +355,11 @@ void PeriphCommonClock_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-    /* User can add his own implementation to report the HAL error return state */
-    __disable_irq();
-    while (1)
-    {
-    }
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
   /* USER CODE END Error_Handler_Debug */
 }
 

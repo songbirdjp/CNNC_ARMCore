@@ -76,7 +76,8 @@ void Error_Handler(void);
 #define W5500_RST_Pin GPIO_PIN_3
 #define W5500_RST_GPIO_Port GPIOD
 #define W5500_INTn_Pin GPIO_PIN_4
-#define W5500_INT_GPIO_Port GPIOD
+#define W5500_INTn_GPIO_Port GPIOD
+#define W5500_INTn_EXTI_IRQn EXTI4_IRQn
 #define WATCHDOG2_Pin GPIO_PIN_7
 #define WATCHDOG2_GPIO_Port GPIOD
 #define WATCHDOG1_Pin GPIO_PIN_9

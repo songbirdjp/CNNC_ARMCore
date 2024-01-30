@@ -268,23 +268,3 @@ static void cmd_mem_write(uint8_t argc, uint8_t **argv)
     }    
 }
 MSH_CMD_EXPORT_ALIAS(cmd_mem_write, mem_write, write memory);
-
-static void cmd_rtc_test(uint8_t argc, uint8_t **argv)
-{
-    uint32_t bkp_data = 0;
-
-    bkp_data = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0);
-    printf("bkp_data:%x\r\n", bkp_data);
-
-    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR0, 0xA5A5A5A5);
-
-    bkp_data = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR0);
-    printf("bkp_data:%x\r\n", bkp_data);
-
-    /* backup sram: 4KB */
-    printf("bkp sram:%x\r\n", *(__IO uint32_t *)D3_BKPSRAM_BASE);
-    *(__IO uint32_t *)D3_BKPSRAM_BASE = 0x88234567;
-    printf("bkp sram:%x\r\n", *(__IO uint32_t *)D3_BKPSRAM_BASE);
-
-}
-MSH_CMD_EXPORT_ALIAS(cmd_rtc_test, rtc_test, rtc tset);

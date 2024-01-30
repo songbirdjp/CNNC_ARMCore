@@ -45,9 +45,6 @@ void MX_TIM2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
-void TIM7_Start(void);
-void TIM7_Stop(void);
-
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
