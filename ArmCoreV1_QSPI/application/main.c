@@ -180,6 +180,7 @@ int main(void)
   MX_CRC_Init();
   MX_IWDG1_Init();
   MX_RTC_Init();
+  MX_TIM6_Init();
 
   /* USER CODE BEGIN 2 */
 
