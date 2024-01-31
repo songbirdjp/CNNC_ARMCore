@@ -83,15 +83,16 @@ SECTIONS
 
     KEEP (*(.init))
     KEEP (*(.fini))
-    
-    /* section information for finsh shell */
-    . = ALIGN(4);
-    __fsymtab_start = .;
-    KEEP(*(FSymTab))
-    __fsymtab_end = .;
-    . = ALIGN(4);
-    
+       
     _etext = .;        /* define a global symbols at end of code */
+  } >FLASH
+
+  .shell_cmd :
+  {
+    . = ALIGN(4);
+    __shell_cmd_start = .;
+    KEEP(*(SORT(.shell_cmd_fn*)))
+    __shell_cmd_end = .;
   } >FLASH
 
   .init_call :

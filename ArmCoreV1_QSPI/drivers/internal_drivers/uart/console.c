@@ -125,7 +125,7 @@ static int8_t console_cmd_process(void)
 
     console.read(&console, &msg, osWaitForever);
 
-    finsh_cmd_parse_entry(msg.buf, msg.len - 2);
+    shell_cmd_parse_entry(msg.buf, msg.len - 2);
 
     // console.write(&console, msg.buf, msg.len, 5000);
  
@@ -143,7 +143,7 @@ static void StartConsoleTask(void *argument)
   /* USER CODE END StartConsoleTask */
 }
 
-static int8_t console_thread_init(void)
+static int8_t console_thread_init(uint8_t argc, uint8_t **argv)
 {
     osThreadAttr_t Console_attributes = {
     .name = "Console",
@@ -160,6 +160,26 @@ static int8_t console_thread_init(void)
     return 0;
 }
 INIT_APP_EXPORT(console_thread_init);
+
+static int8_t cmd_help(uint8_t argc, uint8_t **argv)
+{
+    extern uint32_t  __shell_cmd_start;
+    extern uint32_t  __shell_cmd_end;
+
+    const struct shell_cmd_desc *desc;
+
+    printf("shell commands:\r\n");
+
+    for (desc = &__shell_cmd_start; desc < &__shell_cmd_end; desc++)
+    {
+        printf("%-32s - %s\r\n", desc->name, desc->desc);
+    }
+
+    printf("\r\n");
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(cmd_help, help, shell help);
 
 static void cmd_system_reset(uint8_t argc, uint8_t **argv)
 {

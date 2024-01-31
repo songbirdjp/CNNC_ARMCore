@@ -87,7 +87,6 @@ include_directories(
     drivers/internal_drivers/iwdg 
     drivers/internal_drivers/rtc 
     components/cm_backtrace 
-    components/finsh 
     components/ulog 
     components/utilities 
     components/common 
