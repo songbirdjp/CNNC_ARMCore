@@ -82,8 +82,13 @@ static void system_info_print(void)
     printf("git hash: %s\r\n", GIT_HASH);
     printf("mcu clock:%.2f M\r\n", HAL_RCC_GetSysClockFreq()/1000000.0);
 
-    printf("stm32 uid:%#.8x%.8x%.8x\r\n", *(uint32_t *)0x1FF1E80c, *(uint32_t *)0x1FF1E804, *(uint32_t *)0x1FF1E800);
-    printf("flash size:%uKB\r\n", *(uint32_t *)0x1FF1E880);
+    printf("stm32 uid:%#.8x%.8x%.8x\r\n", HAL_GetUIDw2(), HAL_GetUIDw1(), HAL_GetUIDw0());
+    printf("flash size:%uKB\r\n", FLASH_SIZE / 1024);
+
+    uint32_t hal_version = HAL_GetHalVersion();
+
+    printf("hal driver version:%.2u.%.2u.%.2u.%.2u\r\n", (hal_version >> 24) & 0xFF, 
+        (hal_version >> 16) & 0xFF, (hal_version >> 8) & 0xFF, hal_version & 0xFF);
 
     printf("************************************\r\n");
 
