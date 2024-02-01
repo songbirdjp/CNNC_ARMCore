@@ -90,6 +90,8 @@ include_directories(
     components/ulog 
     components/utilities 
     components/common 
+    components/shell 
+    components/gpio_imitate 
     board/board_config/inc
     application/ethercat 
     application/tcp 
