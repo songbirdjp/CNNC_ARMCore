@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -52,14 +52,30 @@ void MemManage_Handler(void);
 void BusFault_Handler(void);
 void UsageFault_Handler(void);
 void DebugMon_Handler(void);
+void SysTick_Handler(void);
+void EXTI4_IRQHandler(void);
 void DMA1_Stream0_IRQHandler(void);
 void DMA1_Stream1_IRQHandler(void);
+void DMA1_Stream2_IRQHandler(void);
+void DMA1_Stream3_IRQHandler(void);
+void DMA1_Stream4_IRQHandler(void);
+void DMA1_Stream5_IRQHandler(void);
+void DMA1_Stream6_IRQHandler(void);
 void TIM1_UP_IRQHandler(void);
+void TIM2_IRQHandler(void);
+void SPI1_IRQHandler(void);
 void SPI2_IRQHandler(void);
 void USART1_IRQHandler(void);
+void EXTI15_10_IRQHandler(void);
 void DMA1_Stream7_IRQHandler(void);
 void SPI3_IRQHandler(void);
+void TIM6_DAC_IRQHandler(void);
 void DMA2_Stream0_IRQHandler(void);
+void SPI6_IRQHandler(void);
+void OCTOSPI1_IRQHandler(void);
+void MDMA_IRQHandler(void);
+void BDMA_Channel0_IRQHandler(void);
+void BDMA_Channel1_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

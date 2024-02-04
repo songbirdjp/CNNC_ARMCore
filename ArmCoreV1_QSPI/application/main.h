@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
+  * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -60,8 +60,14 @@ void Error_Handler(void);
 #define LAN9252_IRQ_Pin GPIO_PIN_3
 #define LAN9252_IRQ_GPIO_Port GPIOE
 #define LAN9252_IRQ_EXTI_IRQn EXTI3_IRQn
+#define LAN9252_SYNC0_Pin GPIO_PIN_13
+#define LAN9252_SYNC0_GPIO_Port GPIOC
+#define LAN9252_SYNC0_EXTI_IRQn EXTI15_10_IRQn
 #define CHIP_RUN_LED_Pin GPIO_PIN_1
 #define CHIP_RUN_LED_GPIO_Port GPIOC
+#define LAN9252_SYNC1_Pin GPIO_PIN_2
+#define LAN9252_SYNC1_GPIO_Port GPIOB
+#define LAN9252_SYNC1_EXTI_IRQn EXTI2_IRQn
 #define OSPI5_ncs_Pin GPIO_PIN_11
 #define OSPI5_ncs_GPIO_Port GPIOE
 #define SPI3_NCS_Pin GPIO_PIN_12
@@ -70,9 +76,6 @@ void Error_Handler(void);
 #define DriveBoardCtrl_GPIO_Port GPIOD
 #define CarrierServoSignal_Pin GPIO_PIN_3
 #define CarrierServoSignal_GPIO_Port GPIOG
-#define LAN9252SYNC1_Pin GPIO_PIN_2
-#define LAN9252SYNC1_GPIO_Port GPIOD
-#define LAN9252SYNC1_EXTI_IRQn EXTI2_IRQn
 #define W5500_RST_Pin GPIO_PIN_3
 #define W5500_RST_GPIO_Port GPIOD
 #define W5500_INTn_Pin GPIO_PIN_4
