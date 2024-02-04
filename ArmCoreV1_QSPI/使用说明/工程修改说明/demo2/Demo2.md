@@ -4,7 +4,7 @@
   - 使用TIM7，定时周期为1us，每次定时溢出触发一次DMA数据搬运（memory->peripheral）
   - TIM+DMA组合方式，可以控制GPIO以任意频率/波特率输出数据(本demo定时周期为1us，故波特率为1Mbps)，从而实现使用GPIO模拟UART、I2C、SPI等串行总线通信
   - 基础分支hash: 1b43d79b5e6d06a3eaa587a3097d763b7057e294
-  - demo分支hash: 
+  - demo分支hash: 9d09b3435ad3ef6e45b67527b28c197344b30750
   
 ## 2. 修改方式
 - 使用STM32CubeMX工具配置TIM7、DMA、GPIOD_5
