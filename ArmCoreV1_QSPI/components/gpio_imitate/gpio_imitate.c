@@ -2,24 +2,47 @@
 #include "utilities.h"
 #include "init_call.h"
 #include "shell.h"
+#include "cmsis_os2.h"
 
 static uint32_t *io_buf = NULL; /* io buffer for dma transfer */
+static osMutexId_t io_mutex = NULL;
+static osEventFlagsId_t io_event = NULL;
+
+#define GPIO_IMITATE_SEND_SUCCEED_EVENT     (1<<0)
 
 static void GpioImitateCpltCallback(DMA_HandleTypeDef *hdma)
 {
-    if(io_buf != NULL)    
-    {
-        vPortFree(io_buf);
-        io_buf = NULL;
-    }
+    osEventFlagsSet(io_event, GPIO_IMITATE_SEND_SUCCEED_EVENT);
 }
 
-static void gpio_imitate_init(void)
+static int8_t gpio_imitate_init(void)
 {
     MX_TIM7_Init();
     HAL_DMA_RegisterCallback(&hdma_tim7_up, HAL_DMA_XFER_CPLT_CB_ID, GpioImitateCpltCallback);
+
+    /* os mutex and event flag init */
+    osMutexAttr_t mutex_attributes = {
+    .name = "gpio_send_mutex",
+    .attr_bits = osMutexRecursive | osMutexPrioInherit
+    };
+    io_mutex = osMutexNew(&mutex_attributes);
+    if (io_mutex == NULL)
+    {
+        return -1;
+    }
+
+    osEventFlagsAttr_t gpio_send_event_attributes = {
+    .name = "gpio_send_event"
+    };
+    io_event = osEventFlagsNew(&gpio_send_event_attributes);
+    if (io_event == NULL)
+    {
+        return -2;
+    }
+
+    return 0;
 }
-INIT_BOARD_EXPORT(gpio_imitate_init);
+INIT_APP_EXPORT(gpio_imitate_init);
 
 static int8_t gpio_array_generate(uint8_t *buf, uint16_t len, uint32_t pin, uint32_t *gen_buf)
 {
@@ -67,6 +90,8 @@ int8_t gpio_imitate_start(uint8_t *gpio_pin, uint8_t *buf, uint16_t len)
     int8_t ret = 0;
     uint32_t data_len = len * 8;
 
+    osMutexAcquire(io_mutex, osWaitForever);
+
     /* 1. parse gpio_pin info */
     struct gpio_pin_info gpio = {0};
     ret = gpio_pin_parse(gpio_pin, &gpio);
@@ -91,7 +116,16 @@ int8_t gpio_imitate_start(uint8_t *gpio_pin, uint8_t *buf, uint16_t len)
         goto err;
     }
 
+#if 0
+    for(uint16_t i = 0; i < data_len; i++)
+    {
+        printf("io_buf[%d]:%#.8x\r\n", i, io_buf[i]);
+    }
+    printf("\r\n");
+#endif
+
     /* 3. start dma transfer with tim7 period */
+    /* TODO: must wait for dma transfer complete, but not implement here, add mutex if necessary */
     hal_status = HAL_TIM_Base_Stop(&htim7);
     if (hal_status != HAL_OK)
     {
@@ -114,6 +148,9 @@ int8_t gpio_imitate_start(uint8_t *gpio_pin, uint8_t *buf, uint16_t len)
         goto err;
     }
 
+    osEventFlagsWait(io_event, GPIO_IMITATE_SEND_SUCCEED_EVENT, osFlagsWaitAny, osWaitForever);
+    osMutexRelease(io_mutex);
+
 err:
     if (io_buf != NULL)
     {
@@ -135,7 +172,7 @@ static int8_t gpio_imitate_test(uint8_t argc, uint8_t *argv[])
 
     uint8_t buf = 0xAA;
 
-    gpio_imitate_start("GPIOD_5", &buf, 1);
+    gpio_imitate_start("GPIOD_7", &buf, 1);
 }
 MSH_CMD_EXPORT_ALIAS(gpio_imitate_test, gpio_imitate, test gpio imitate);
 #endif

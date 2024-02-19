@@ -5,9 +5,11 @@
 #include "init_call.h"
 
 #ifdef USING_BACKUP_SRAM
-static void backup_ram_clk_enable(void)
+static int8_t backup_ram_clk_enable(void)
 {
     __HAL_RCC_BKPRAM_CLK_ENABLE();
+
+    return 0;
 }
 INIT_BOARD_EXPORT(backup_ram_clk_enable);
 #endif

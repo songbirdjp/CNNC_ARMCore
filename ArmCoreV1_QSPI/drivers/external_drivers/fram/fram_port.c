@@ -311,7 +311,7 @@ int8_t device_fram_init(uint8_t *device_name)
 
 static int8_t fram_init(void)
 {
-    device_fram_init(DEVICE_FRAM_NAME_DEFAULT);
+    return device_fram_init(DEVICE_FRAM_NAME_DEFAULT);
 }
 INIT_DEVICE_EXPORT(fram_init);
 
