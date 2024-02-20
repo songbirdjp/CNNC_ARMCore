@@ -189,7 +189,7 @@ MSH_CMD_EXPORT_ALIAS(cmd_system_reset, system_reset, reset system);
 
 static void cmd_thread_info(uint8_t argc, uint8_t **argv)
 {
-    uint8_t thread_total_num = 20;
+    uint8_t thread_total_num = uxTaskGetNumberOfTasks();
     HeapStats_t *heap_stats = (HeapStats_t *)pvPortMalloc(sizeof( HeapStats_t ));
     if (heap_stats == NULL)
     {
@@ -212,7 +212,7 @@ static void cmd_thread_info(uint8_t argc, uint8_t **argv)
 
     printf("---------------------------------------------------------------\r\n");
 
-    uint8_t *buf = (uint8_t *)pvPortMalloc(thread_total_num * sizeof( TaskStatus_t ));
+    uint8_t *buf = (uint8_t *)pvPortMalloc(thread_total_num * (configMAX_TASK_NAME_LEN + 15));
     if (buf == NULL)
     {
         printf("buf malloc failed\r\n");

@@ -1188,7 +1188,7 @@ static void data_process_entry(void *argument)
   /* USER CODE END data_process_entry */
 }
 
-static uint8_t non_realtime_process_thread_init(void)
+static int8_t non_realtime_process_thread_init(void)
 {
     osThreadAttr_t recv_data_process_thread_attributes = {
     .name = "recv_data_process_thread",
