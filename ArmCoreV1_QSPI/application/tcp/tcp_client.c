@@ -72,15 +72,15 @@ static int8_t do_tcp_client(uint8_t sn)
     switch (getSn_SR(sn))                  /*获取socket的状态*/
     {
         case SOCK_CLOSED:/*socket处于关闭状态*/
-            ret = socket(0, Sn_MR_TCP, 8123, Sn_MR_ND);
-            if (ret != 0)
+            ret = socket(sn, Sn_MR_TCP, 8123, Sn_MR_ND);
+            if (ret < 0)
             {
                 printf("tcp socket err:%d\r\n", ret);
             }
             break;
             
         case SOCK_INIT:                      /*socket处于初始化状态*/
-            ret = connect(0, remote_ip, remote_port);/*socket连接服务器*/
+            ret = connect(sn, remote_ip, remote_port);/*socket连接服务器*/
             if (ret != SOCK_OK)
             {
                 printf("tcp connect err:%d\r\n", ret);
@@ -92,7 +92,7 @@ static int8_t do_tcp_client(uint8_t sn)
             break;
 
         case SOCK_CLOSE_WAIT:        /*socket处于等待关闭状态*/
-            close(0);
+            close(sn);
             printf("SOCK_CLOSE_WAIT\r\n");
             break;
     }

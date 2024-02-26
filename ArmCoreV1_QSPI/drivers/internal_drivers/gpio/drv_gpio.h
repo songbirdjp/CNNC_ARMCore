@@ -29,6 +29,8 @@ struct drv_gpio
 };
 
 int8_t gpio_common_init(struct drv_gpio *gpio_config);
+int8_t gpio_pin_irq_callback_register(uint8_t *gpio_pin, void (*callback)(void));
+int8_t gpio_pin_irq_callback_unregister(uint8_t *gpio_pin);
 
 #ifdef __cplusplus
 }

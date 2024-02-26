@@ -59,7 +59,7 @@ set(GIT_HASH "")
 get_git_hash(GIT_HASH)
 message("git hash: ${GIT_HASH}")
 
-configure_file(config.h.in "../application/config.h")
+configure_file(config.h.in "../application/user_app/config.h")
 
 include_directories(
     libraries/STM32H7xx_HAL_Driver/Inc 
@@ -96,11 +96,22 @@ include_directories(
     application/ethercat 
     application/tcp 
     application/fpga 
-    application)
+    application/system_common 
+    application/user_app)
 
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32H723xx)
 
-file(GLOB_RECURSE SOURCES "libraries/*.*" "Middlewares/*.*" "drivers/*.*" "components/*.*" "board/*.*" "application/*.*")
+file(GLOB_RECURSE SOURCES 
+    "libraries/*.*" 
+    "Middlewares/*.*" 
+    "drivers/*.*" 
+    "components/*.*" 
+    "board/*.*" 
+    "application/ethercat/*.*" 
+    "application/tcp/*.*" 
+    "application/fpga/*.*" 
+    "application/system_common/*.*" 
+    "application/user_app/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/board/linker_scripts/STM32H723ZGTX_FLASH.ld)
 

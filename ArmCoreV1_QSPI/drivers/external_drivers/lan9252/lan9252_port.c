@@ -20,37 +20,22 @@ void OCTOSPI1_IRQHandler(void)
 }
 
 #ifdef USING_OSPI_SLAVE_TO_MASTER_INTERRUPT
-void EXTI3_IRQHandler(void) /* EscIsr */
+static void EscIsr_callback(void)
 {
-  /* USER CODE BEGIN EXTI3_IRQn 0 */
-  IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), "irq_line_3")->node_data;
-  /* USER CODE END EXTI3_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(node->irq_pin);
-  /* USER CODE BEGIN EXTI3_IRQn 1 */
-  osEventFlagsSet(node->irq_event, node->irq_event_flag);
-  /* USER CODE END EXTI3_IRQn 1 */
+    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), "irq_line_3")->node_data;
+    osEventFlagsSet(node->irq_event, node->irq_event_flag);
 }
 
-void EXTI15_10_IRQHandler(void) /* Sync0Isr */
+static void Sync0Isr_callback(void)
 {
-  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
-  IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), "irq_line_13")->node_data;
-  /* USER CODE END EXTI15_10_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(node->irq_pin);
-  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
-  osEventFlagsSet(node->irq_event, node->irq_event_flag);
-  /* USER CODE END EXTI15_10_IRQn 1 */
+    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), "irq_line_13")->node_data;
+    osEventFlagsSet(node->irq_event, node->irq_event_flag);
 }
 
-void EXTI2_IRQHandler(void) /* Sync1Isr */
+static void Sync1Isr_callback(void)
 {
-  /* USER CODE BEGIN EXTI2_IRQn 0 */
-  IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), "irq_line_2")->node_data;
-  /* USER CODE END EXTI2_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(node->irq_pin);
-  /* USER CODE BEGIN EXTI2_IRQn 1 */
-  osEventFlagsSet(node->irq_event, node->irq_event_flag);
-  /* USER CODE END EXTI2_IRQn 1 */
+    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), "irq_line_2")->node_data;
+    osEventFlagsSet(node->irq_event, node->irq_event_flag);    
 }
 #endif
 
@@ -213,6 +198,10 @@ int8_t device_lan9252_init(uint8_t *device_name)
 
 #ifdef USING_OSPI_SLAVE_TO_MASTER_INTERRUPT
     device_lan9252_irq_init(device_lan9252_get(), "irq_line_3"); /* separate with space for node_name*/
+
+    gpio_pin_irq_callback_register("GPIOE_3", EscIsr_callback);
+    gpio_pin_irq_callback_register("GPIOC_13", Sync0Isr_callback);
+    gpio_pin_irq_callback_register("GPIOB_2", Sync1Isr_callback);
 #endif
 
     ret = ospi_init(device_lan9252_get(), device_name);

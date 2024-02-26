@@ -23,7 +23,8 @@ struct gpio_pin_info
 {
     GPIO_TypeDef *port;
     int32_t pin;
-    IRQn_Type irq_line
+    IRQn_Type irq_line;
+    void (*callback)(void)
 };
 
 int8_t gpio_pin_parse(uint8_t *gpio_pin, struct gpio_pin_info *info);

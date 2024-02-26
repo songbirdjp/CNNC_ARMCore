@@ -149,6 +149,7 @@ static void ISR_GetInterruptRegister(void)
     
   *****************************************************************************/
 #define LAN9252_BYTE_ORDER_REG          0x64
+#define LAN9252_HW_CFG                  0x74
 #define LAN9252_CSR_INT_CONF            0x54
 #define LAN9252_CSR_INT_EN              0x5C
 #define LAN9252_CSR_INT_STS             0x58
@@ -169,8 +170,26 @@ UINT8 LAN9252_Init(void)
     UINT16 intMask;
     UINT32 data;
 
+    /* 1. connect to lan9252 */
+    // do
+    // {
+    //     data = PDIReadLAN9252DirectReg( LAN9252_BYTE_ORDER_REG);
+    //     printf("read test byte reg (0x64), readData is: 0x%x\r\n", data);
+    //     HAL_Delay(1);
+    // }while(0x87654321 != data);
+
+    /* 2. reset lan9252 */
+    // intMask = 0x52;
+    // HW_EscWriteByte(intMask, 0x0041);
+
+    // intMask = 0x45;
+    // HW_EscWriteByte(intMask, 0x0041);
+
+    // intMask = 0x53;
+    // HW_EscWriteByte(intMask, 0x0041);
+
 #ifdef USING_SQI_CMD
-    sqi_enable();
+    sqi_enable();   /* TODO: sqi read fail when first reset */
 #else
     // sqi_disable();
 #endif
@@ -182,6 +201,14 @@ UINT8 LAN9252_Init(void)
         printf("read test byte reg (0x64), readData is: 0x%x\r\n", data);
         HAL_Delay(1);
     }while(0x87654321 != data);
+
+    //Read HW_CFG register 0x74.
+    do
+    {
+        data = PDIReadLAN9252DirectReg( LAN9252_HW_CFG);
+        printf("read hw cfg ready reg (0x74), readData is: 0x%x\r\n", data);
+        HAL_Delay(1);
+    }while(!(data & (1 << 27)));
 
     do
     {

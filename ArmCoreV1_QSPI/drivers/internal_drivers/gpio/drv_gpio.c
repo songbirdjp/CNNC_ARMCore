@@ -1,7 +1,9 @@
 #include "drv_gpio.h"
 #include "utilities.h"
 
-__weak void EXTI0_IRQHandler(void)
+static struct gpio_pin_info gpio_info_irq[16] = {0};
+
+void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
 
@@ -11,7 +13,7 @@ __weak void EXTI0_IRQHandler(void)
 
   /* USER CODE END EXTI0_IRQn 1 */
 }
-__weak void EXTI1_IRQHandler(void)
+void EXTI1_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI1_IRQn 0 */
 
@@ -21,7 +23,7 @@ __weak void EXTI1_IRQHandler(void)
 
   /* USER CODE END EXTI1_IRQn 1 */
 }
-__weak void EXTI2_IRQHandler(void)
+void EXTI2_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI2_IRQn 0 */
 
@@ -31,7 +33,7 @@ __weak void EXTI2_IRQHandler(void)
 
   /* USER CODE END EXTI2_IRQn 1 */
 }
-__weak void EXTI3_IRQHandler(void)
+void EXTI3_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI3_IRQn 0 */
 
@@ -41,7 +43,7 @@ __weak void EXTI3_IRQHandler(void)
 
   /* USER CODE END EXTI3_IRQn 1 */
 }
-__weak void EXTI4_IRQHandler(void)
+void EXTI4_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_IRQn 0 */
 
@@ -51,7 +53,7 @@ __weak void EXTI4_IRQHandler(void)
 
   /* USER CODE END EXTI4_IRQn 1 */
 }
-__weak void EXTI9_5_IRQHandler(void)
+void EXTI9_5_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
@@ -59,7 +61,7 @@ __weak void EXTI9_5_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
 }
-__weak void EXTI15_10_IRQHandler(void)
+void EXTI15_10_IRQHandler(void)
 {
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
@@ -67,6 +69,22 @@ __weak void EXTI15_10_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_14);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+    uint8_t pin_index = POSITION_VAL(GPIO_Pin);
+
+    if (pin_index >= 16)
+    {
+        printf("gpio exti err:%d\r\n", pin_index);
+        return;
+    }
+
+    if (gpio_info_irq[pin_index].callback != NULL)
+    {
+        gpio_info_irq[pin_index].callback();
+    }
 }
 
 static int8_t gpio_ioctl(uint8_t *gpio_pin, enum ioctl_cmd cmd, uint32_t arg)
@@ -180,5 +198,73 @@ int8_t gpio_common_init(struct drv_gpio *gpio_config)
     gpio_config->read = gpio_read;
     gpio_config->ioctl = gpio_ioctl;
     
+    return 0;
+}
+
+int8_t gpio_pin_irq_callback_register(uint8_t *gpio_pin, void (*callback)(void))
+{
+    if (gpio_pin == NULL || callback == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    int8_t ret = 0;
+    struct gpio_pin_info gpio_info = {0};
+
+    ret = gpio_pin_parse(gpio_pin, &gpio_info);
+    if (ret < 0)
+    {
+        printf("gpio pin parse err:%d\r\n", ret);
+        return -2;
+    }
+
+    uint8_t pin_index = POSITION_VAL(gpio_info.pin);
+
+    if (pin_index >= 16)
+    {
+        printf("gpio pin index err\r\n");
+        return -3;
+    }
+
+    gpio_info_irq[pin_index].port = gpio_info.port;
+    gpio_info_irq[pin_index].pin = gpio_info.pin;
+    gpio_info_irq[pin_index].irq_line = gpio_info.irq_line;
+    gpio_info_irq[pin_index].callback = callback;
+
+    return 0;
+}
+
+int8_t gpio_pin_irq_callback_unregister(uint8_t *gpio_pin)
+{
+    if (gpio_pin == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    int8_t ret = 0;
+    struct gpio_pin_info gpio_info = {0};
+
+    ret = gpio_pin_parse(gpio_pin, &gpio_info);
+    if (ret < 0)
+    {
+        printf("gpio pin parse err:%d\r\n", ret);
+        return -2;
+    }
+
+    uint8_t pin_index = POSITION_VAL(gpio_info.pin);
+
+    if (pin_index >= 16)
+    {
+        printf("gpio pin index err\r\n");
+        return -3;
+    }
+
+    gpio_info_irq[pin_index].port = gpio_info.port;
+    gpio_info_irq[pin_index].pin = gpio_info.pin;
+    gpio_info_irq[pin_index].irq_line = gpio_info.irq_line;
+    gpio_info_irq[pin_index].callback = NULL;
+
     return 0;
 }

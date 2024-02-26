@@ -20,15 +20,10 @@ void SPI1_IRQHandler(void)
   /* USER CODE END SPI1_IRQn 1 */
 }
 
-void EXTI4_IRQHandler(void)
+static void w5500_irq_callback(void)
 {
-  /* USER CODE BEGIN EXTI4_IRQn 0 */
-  IRQ_INFO_NODE *node = device_irq_node_find(device_w5500_get(), "irq_line_4")->node_data;
-  /* USER CODE END EXTI4_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(node->irq_pin);
-  /* USER CODE BEGIN EXTI4_IRQn 1 */
-  osEventFlagsSet(node->irq_event, node->irq_event_flag);
-  /* USER CODE END EXTI4_IRQn 1 */
+    IRQ_INFO_NODE *node = device_irq_node_find(device_w5500_get(), "irq_line_4")->node_data;
+    osEventFlagsSet(node->irq_event, node->irq_event_flag);
 }
 
 
@@ -359,6 +354,7 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
 
 #ifdef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
     device_w5500_irq_init(&device_w5500, "irq_line_4");
+    gpio_pin_irq_callback_register("GPIOD_4", w5500_irq_callback);
 #endif
 
     ret = spi_init(&device_w5500, device_name, SPI_MASTER);
