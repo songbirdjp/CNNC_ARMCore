@@ -39,6 +39,7 @@ PUTCHAR_PROTOTYPE
     return ch;
 }
 
+#undef USING_UART_OPTION_FUNCTION
 #ifdef USING_UART_OPTION_FUNCTION
 static DEVICE_UART_OPT console_opt = {0};
 static int8_t console_opt_before_write(DEVICE_UART *uart)
@@ -119,6 +120,11 @@ int8_t device_console_init(uint8_t *device_name)
     return console.open(&console);
 }
 
+int8_t device_console_write(uint8_t *buf, uint16_t len)
+{
+    return console.write(&console, buf, len, 1000);
+}
+
 static int8_t console_cmd_process(void)
 {
     struct CmdMessage msg = {0};
@@ -148,7 +154,7 @@ static int8_t console_thread_init(uint8_t argc, uint8_t **argv)
     osThreadAttr_t Console_attributes = {
     .name = "Console",
     .stack_size = 1024 * 4,
-    .priority = (osPriority_t) osPriorityNormal,
+    .priority = (osPriority_t) osPriorityLow,
     };
 
     osThreadId_t ConsoleHandle = osThreadNew(StartConsoleTask, NULL, &Console_attributes);

@@ -183,16 +183,14 @@ void ulog_message(ulog_level_t severity, const char *fmt, ...) {
 // =============================================================================
 // private code
 
+#ifndef USING_ULOG_THREAD
 static int8_t component_ulog_init(void)
 {
     ulog_init(ULOG_DEBUG_LEVEL);
     return 0;
 }
 INIT_COMPONENT_EXPORT(component_ulog_init);
-
-
-#ifdef USING_ULOG_THREAD
-
+#else
 static osMessageQueueId_t ulog_output_queueHandle = NULL;
 static void ulog_output(ulog_level_t severity, char *msg)
 {
@@ -203,6 +201,7 @@ static void ulog_output(ulog_level_t severity, char *msg)
 
     uint8_t msg_buf[ULOG_MAX_MESSAGE_LENGTH] = {0};
 
+#ifdef USING_ULOG_TIMESTAMP
     struct tm tm_temp, *tm;
     
     tm = localtime_r(&time_s_cur, &tm_temp);
@@ -211,7 +210,9 @@ static void ulog_output(ulog_level_t severity, char *msg)
             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, time_ms_left,
             ulog_level_name(severity),
             msg);
-
+#else
+    sprintf(msg_buf, "[%s]: %s", ulog_level_name(severity), msg);
+#endif
     osStatus_t stat = osMessageQueuePut (ulog_output_queueHandle, msg_buf, 0, 1000);
     if (stat != osOK)
     {
@@ -227,8 +228,10 @@ static void ulog_output_entry(void *argument)
     {
         osMessageQueueGet (ulog_output_queueHandle, log_buf, 0, osWaitForever);
 
-        printf("%s", log_buf);
-
+#ifdef USING_ULOG_CONSOLE
+        #include "console.h"
+        device_console_write(log_buf, strlen(log_buf));
+#endif
         /* TODO: add dest device interface here */
     }
 }
@@ -238,7 +241,7 @@ static int8_t ulog_thread_init(void)
     osThreadAttr_t ulog_output_thread_attributes = {
     .name = "ulog_output_thread",
     .stack_size = 512 * 4,
-    .priority = (osPriority_t) osPriorityLow,
+    .priority = (osPriority_t) osPriorityBelowNormal,
     };
 
     osThreadId_t ulog_output_threadHandle = osThreadNew(ulog_output_entry, NULL, &ulog_output_thread_attributes);

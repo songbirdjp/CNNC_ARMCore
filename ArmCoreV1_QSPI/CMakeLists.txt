@@ -62,41 +62,43 @@ message("git hash: ${GIT_HASH}")
 configure_file(config.h.in "../application/user_app/common/config.h")
 
 include_directories(
-    libraries/STM32H7xx_HAL_Driver/Inc 
-    libraries/STM32H7xx_HAL_Driver/Inc/Legacy 
     libraries/CMSIS/Device/ST/STM32H7xx/Include 
     libraries/CMSIS/Include 
-    Middlewares/Third_Party/FreeRTOS/Source/include 
+    libraries/STM32H7xx_HAL_Driver/Inc 
+    libraries/STM32H7xx_HAL_Driver/Inc/Legacy 
     Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 
+    Middlewares/Third_Party/FreeRTOS/Source/include 
     Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F 
+    drivers/external_drivers/backup_sram 
+    drivers/external_drivers/fram 
     drivers/external_drivers/lan9252 
     drivers/external_drivers/sdram 
     drivers/external_drivers/w5500 
-    drivers/external_drivers/backup_sram 
-    drivers/external_drivers/fram 
+    drivers/internal_drivers/bdma 
+    drivers/internal_drivers/crc 
     drivers/internal_drivers/dma 
     drivers/internal_drivers/fmc 
     drivers/internal_drivers/gpio 
+    drivers/internal_drivers/iwdg 
+    drivers/internal_drivers/mdma 
     drivers/internal_drivers/octospi 
+    drivers/internal_drivers/rtc 
     drivers/internal_drivers/spi 
     drivers/internal_drivers/timer 
     drivers/internal_drivers/uart 
-    drivers/internal_drivers/bdma 
-    drivers/internal_drivers/mdma 
-    drivers/internal_drivers/crc 
-    drivers/internal_drivers/iwdg 
-    drivers/internal_drivers/rtc 
     components/cm_backtrace 
+    components/common 
+    components/console 
+    components/gpio 
+    components/gpio_imitate 
+    components/shell 
     components/ulog 
     components/utilities 
-    components/common 
-    components/shell 
-    components/gpio_imitate 
-    board/board_config/inc
+    board/board_config/inc 
     application/ethercat 
-    application/tcp 
     application/fpga 
     application/system_common 
+    application/tcp 
     application/user_app/common 
     application/user_app/mlc)
 

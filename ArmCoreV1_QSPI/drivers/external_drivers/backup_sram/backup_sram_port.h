@@ -1,5 +1,5 @@
-#ifndef __BACKUP_SRAM_H__
-#define __BACKUP_SRAM_H__
+#ifndef __BACKUP_SRAM_PORT_H__
+#define __BACKUP_SRAM_PORT_H__
 
 #include "stdint.h"
 

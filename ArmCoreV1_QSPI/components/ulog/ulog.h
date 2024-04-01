@@ -110,7 +110,9 @@ typedef enum {
 #define ULOG_MAX_MESSAGE_LENGTH 128
 #endif
 
-#define USING_ULOG_THREAD    /* use thread output log */
+#define USING_ULOG_THREAD       /* use thread output log */
+#define USING_ULOG_TIMESTAMP    /* use timestamp log */
+#define USING_ULOG_CONSOLE      /* use console log */
 
 /**
  * @brief: prototype for uLog subscribers.

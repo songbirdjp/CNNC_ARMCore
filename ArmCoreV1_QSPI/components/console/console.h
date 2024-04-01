@@ -12,6 +12,7 @@ extern "C" {
 
 
 int8_t device_console_init(uint8_t *device_name);
+int8_t device_console_write(uint8_t *buf, uint16_t len);
 
 #ifdef __cplusplus
 }
