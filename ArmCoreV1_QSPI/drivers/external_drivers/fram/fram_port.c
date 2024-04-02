@@ -4,8 +4,6 @@
 #include "stdarg.h"
 #include "init_call.h"
 
-#ifdef USING_FRAM
-
 /* opcode command */
 #define WREN    0x06    /* set write enable */
 #define WRDI    0x04    /* reset write enable */
@@ -280,7 +278,7 @@ int8_t device_fram_fast_read(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t
     return 0;
 }
 
-int8_t device_fram_init(uint8_t *device_name)
+static int8_t device_fram_init(uint8_t *device_name)
 {
     int8_t ret = 0;
 
@@ -315,6 +313,7 @@ static int8_t fram_init(void)
 }
 INIT_DEVICE_EXPORT(fram_init);
 
+#ifdef DEVICE_FRAM_TEST
 static int8_t device_fram_test(void)
 {
     uint8_t data_buf[128] = {0};
@@ -402,12 +401,13 @@ static int8_t device_fram_test(void)
     printf("\r\n");
 }
 MSH_CMD_EXPORT_ALIAS(device_fram_test, fram_test,  fram function test);
-
+#endif
 struct fram_log
 {
     uint16_t log_addr_start;    /* start addr for log record */
     uint16_t log_line_num;      /* valid log num */
     uint16_t log_addr_offset;   /* address to write log, internal use */
+    uint16_t reserved
 };
 
 static struct fram_log fram_log_info __attribute__((section(".ram_d3"))) = {0};  /* at start address, to record log info */
@@ -443,7 +443,33 @@ int8_t fram_log_info_set(uint16_t log_addr_start, uint8_t log_line_num_reset_fla
         // memset((uint8_t *)fram_log_info->log_addr_start, '\0', FRAM_SIZE - fram_log_info->log_addr_start + 1);
     }
 
-    return 0;
+    return device_fram_write(0x0000, fram_log_info_get(), sizeof(struct fram_log), 1000);    /* write log info to addr 0 */
+}
+
+int8_t fram_log_info_self_detect(void)
+{
+    struct fram_log data = {0};
+    int8_t ret = device_fram_read(0, &data, sizeof(struct fram_log), 1000); /* read log info from addr 0 */
+    if (ret != 0)
+    {
+        printf("device_fram_read err:%d\r\n", ret);
+        return ret;
+    }
+
+    if (data.log_addr_start != sizeof(struct fram_log)) /* TODO: here need to check the log_addr_start is valid or not */
+    {
+        ret = fram_log_info_set(sizeof(struct fram_log), 1);
+        if (ret != 0)
+        {
+            printf("fram_log_info_set err:%d\r\n", ret);
+        }
+    }
+    else
+    {
+        memcpy(fram_log_info_get(), &data, sizeof(struct fram_log));
+    }    
+
+    return ret;
 }
 
 static void fram_addr_offset_update(uint8_t *buf, uint16_t len)
@@ -456,6 +482,16 @@ static void fram_addr_offset_update(uint8_t *buf, uint16_t len)
     {
         fram_log_info->log_line_num++;
     }
+
+    if ((fram_log_info->log_addr_offset - fram_log_info->log_addr_start) % LOG_INFO_UPDATE_LINES == 0)
+    {
+        int8_t ret = device_fram_write(0x0000, fram_log_info_get(), sizeof(struct fram_log), 1000);    /* update log info to addr 0 */
+        if (ret != 0)
+        {
+            printf("device_fram_write err:%d\r\n", ret);
+        }
+    }
+
 }
 
 int8_t fram_log_write(uint8_t *buf, uint16_t len)
@@ -535,6 +571,7 @@ void fram_log_printf(const char *fmt, ...)
     }
 }
 
+#ifdef DEVICE_FRAM_LOG_TEST
 void fram_log_test(void)
 {
     int8_t ret = 0;
@@ -563,4 +600,25 @@ void fram_log_test(void)
 }
 MSH_CMD_EXPORT_ALIAS(fram_log_test, fram_log_test, fram log record test);
 
+void fram_log_test_2(uint8_t argc, char **argv)
+{
+    if (argc != 2)
+    {
+        printf("usage: fram_log_test_2 log_addr_start\r\n");
+        return;
+    }
+
+    switch (atoi(argv[1]))
+    {
+    case 1:
+        fram_log_console_output();
+        break;
+    case 2:
+        fram_log_info_set(8, 1);
+        break;
+    default:
+        break;
+    }
+}
+MSH_CMD_EXPORT_ALIAS(fram_log_test_2, fram_log_test_2, fram log record test2);
 #endif

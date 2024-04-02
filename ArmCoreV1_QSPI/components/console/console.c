@@ -165,7 +165,7 @@ static int8_t console_thread_init(uint8_t argc, uint8_t **argv)
 
     return 0;
 }
-INIT_APP_EXPORT(console_thread_init);
+INIT_COMPONENT_EXPORT(console_thread_init);
 
 static int8_t cmd_help(uint8_t argc, uint8_t **argv)
 {

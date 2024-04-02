@@ -37,6 +37,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stdarg.h>
 #include <time.h>
 #include "init_call.h"
+#ifdef USING_ULOG_CONSOLE
+#include "console.h"
+#endif
+#ifdef USING_ULOG_FRAM
+#include "fram_port.h"
+#endif
 
 // =============================================================================
 // types and definitions
@@ -224,13 +230,20 @@ static void ulog_output_entry(void *argument)
 {
     uint8_t log_buf[ULOG_MAX_MESSAGE_LENGTH] = {0};
 
+#ifdef USING_ULOG_FRAM
+    fram_log_info_self_detect();
+#endif
+
     while (1)
     {
         osMessageQueueGet (ulog_output_queueHandle, log_buf, 0, osWaitForever);
 
 #ifdef USING_ULOG_CONSOLE
-        #include "console.h"
         device_console_write(log_buf, strlen(log_buf));
+#endif
+
+#ifdef USING_ULOG_FRAM
+        fram_log_write(log_buf, strlen(log_buf) + 1);   /* add '\0' at the end */
 #endif
         /* TODO: add dest device interface here */
     }
@@ -265,4 +278,13 @@ static int8_t ulog_thread_init(void)
 }
 INIT_APP_EXPORT(ulog_thread_init);
 
+#ifdef ULOG_TEST
+#include "shell.h"
+void ulog_test(uint8_t argc, char **argv)
+{
+    LOG_I("ulog test:%d\r\n", atoi(argv[1]));
+}
+MSH_CMD_EXPORT_ALIAS(ulog_test, ulog_test, ulog test);
+
+#endif
 #endif

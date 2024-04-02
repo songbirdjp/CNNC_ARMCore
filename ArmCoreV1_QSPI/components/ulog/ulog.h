@@ -113,6 +113,7 @@ typedef enum {
 #define USING_ULOG_THREAD       /* use thread output log */
 #define USING_ULOG_TIMESTAMP    /* use timestamp log */
 #define USING_ULOG_CONSOLE      /* use console log */
+#define USING_ULOG_FRAM         /* use fram log */
 
 /**
  * @brief: prototype for uLog subscribers.
