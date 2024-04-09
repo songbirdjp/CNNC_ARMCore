@@ -90,6 +90,8 @@ static void system_info_print(void)
     printf("hal driver version:%.2u.%.2u.%.2u.%.2u\r\n", (hal_version >> 24) & 0xFF, 
         (hal_version >> 16) & 0xFF, (hal_version >> 8) & 0xFF, hal_version & 0xFF);
 
+    printf("cmsis device version:%.2u.%.2u.%.2u.%.2u\r\n", __STM32H7xx_CMSIS_DEVICE_VERSION_MAIN, __STM32H7xx_CMSIS_DEVICE_VERSION_SUB1, __STM32H7xx_CMSIS_DEVICE_VERSION_SUB2, __STM32H7xx_CMSIS_DEVICE_VERSION_RC);
+
     printf("************************************\r\n");
 
 }
