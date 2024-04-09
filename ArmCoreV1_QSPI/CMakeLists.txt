@@ -77,6 +77,7 @@ include_directories(
     drivers/internal_drivers/bdma 
     drivers/internal_drivers/crc 
     drivers/internal_drivers/dma 
+    drivers/internal_drivers/flash  
     drivers/internal_drivers/fmc 
     drivers/internal_drivers/gpio 
     drivers/internal_drivers/iwdg 
