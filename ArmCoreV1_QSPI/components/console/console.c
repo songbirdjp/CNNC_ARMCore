@@ -4,6 +4,7 @@
 #include "task.h"
 #include "rtc.h"
 #include "init_call.h"
+#include "ulog.h"
 
 #define CONSOLE_CMD_MAX_LENGTH      128
 struct CmdMessage
@@ -120,10 +121,30 @@ int8_t device_console_init(uint8_t *device_name)
     return console.open(&console);
 }
 
-int8_t device_console_write(uint8_t *buf, uint16_t len)
+static int8_t device_console_write(uint8_t *buf, uint16_t len)
 {
     return console.write(&console, buf, len, 1000);
 }
+
+static int8_t console_log_init(void)
+{
+#ifdef USING_ULOG_CONSOLE
+    struct ulog_write_func_info info = {
+    .func_init = NULL,
+    .func_callback = device_console_write,
+    .index = 0};
+
+    int8_t ret = ulog_write_func_register(&info);
+    if (ret != 0)
+    {
+        printf("console log register err:%d\r\n", ret);
+        return ret;
+    }
+#endif
+
+    return 0;
+}
+INIT_COMPONENT_EXPORT(console_log_init);
 
 static int8_t console_cmd_process(void)
 {

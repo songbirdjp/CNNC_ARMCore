@@ -195,7 +195,7 @@ int main(void)
   system_info_print();
   system_fun_init(); 
 
-  LOG_I("Init ok\r\n");
+  printf("Init ok\r\n");
 
 #if 0
     uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};

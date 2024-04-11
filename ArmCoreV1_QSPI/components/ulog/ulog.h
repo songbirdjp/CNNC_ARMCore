@@ -63,6 +63,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef ULOG_H_
 #define ULOG_H_
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -112,8 +114,16 @@ typedef enum {
 
 #define USING_ULOG_THREAD       /* use thread output log */
 #define USING_ULOG_TIMESTAMP    /* use timestamp log */
+#define USING_ULOG_LEVEL_TAG    /* use level tag log */
 #define USING_ULOG_CONSOLE      /* use console log */
-#define USING_ULOG_FRAM         /* use fram log */
+#define USING_ULOG_FLASH        /* use flash log */
+
+struct ulog_write_func_info
+{
+    int8_t (*func_init)(void);
+    int8_t (*func_callback)(const uint8_t *buf, uint32_t len);
+    uint8_t index
+};
 
 /**
  * @brief: prototype for uLog subscribers.
@@ -127,6 +137,8 @@ const char *ulog_level_name(ulog_level_t level);
 void ulog_message(ulog_level_t severity, const char *fmt, ...);
 ulog_err_t ulog_level_set(ulog_level_t threshold);
 ulog_level_t ulog_level_get(ulog_function_t fn);
+
+int8_t ulog_write_func_register(struct ulog_write_func_info *func);
 
 #ifdef __cplusplus
 }

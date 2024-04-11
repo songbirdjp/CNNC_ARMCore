@@ -37,12 +37,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stdarg.h>
 #include <time.h>
 #include "init_call.h"
-#ifdef USING_ULOG_CONSOLE
-#include "console.h"
-#endif
-#ifdef USING_ULOG_FRAM
-#include "fram_port.h"
-#endif
 
 // =============================================================================
 // types and definitions
@@ -186,18 +180,30 @@ void ulog_message(ulog_level_t severity, const char *fmt, ...) {
 
 }
 
-// =============================================================================
-// private code
+/***************************************** private code below ******************************************************/
+static struct ulog_write_func_info func_info[ULOG_MAX_SUBSCRIBERS] = {NULL};
 
-#ifndef USING_ULOG_THREAD
-static int8_t component_ulog_init(void)
+int8_t ulog_write_func_register(struct ulog_write_func_info *func)
 {
-    ulog_init(ULOG_DEBUG_LEVEL);
+    if (func == NULL)
+    {
+        return -1;
+    }
+
+    if (func->index >= ULOG_MAX_SUBSCRIBERS)
+    {
+        return -2;
+    }
+
+    memcpy(&func_info[func->index], func, sizeof(struct ulog_write_func_info));
+
     return 0;
 }
-INIT_COMPONENT_EXPORT(component_ulog_init);
-#else
+
+#ifdef USING_ULOG_THREAD
 static osMessageQueueId_t ulog_output_queueHandle = NULL;
+#endif
+
 static void ulog_output(ulog_level_t severity, char *msg)
 {
     uint32_t tick_pre_second = osKernelGetTickFreq();
@@ -212,40 +218,104 @@ static void ulog_output(ulog_level_t severity, char *msg)
     
     tm = localtime_r(&time_s_cur, &tm_temp);
 
-    sprintf(msg_buf, "[%04u-%02u-%02u %02u:%02u:%02u.%03u] [%s]: %s",
-            tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, time_ms_left,
-            ulog_level_name(severity),
-            msg);
-#else
-    sprintf(msg_buf, "[%s]: %s", ulog_level_name(severity), msg);
+    sprintf(msg_buf, "[%04u-%02u-%02u %02u:%02u:%02u.%03u] ",
+            tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, time_ms_left);
 #endif
+
+#ifdef USING_ULOG_LEVEL_TAG
+    sprintf(msg_buf + strlen(msg_buf), "[%s] %s", ulog_level_name(severity), msg);
+#else
+    sprintf(msg_buf + strlen(msg_buf), "%s", msg);
+#endif
+
+#ifdef USING_ULOG_THREAD
     osStatus_t stat = osMessageQueuePut (ulog_output_queueHandle, msg_buf, 0, 1000);
     if (stat != osOK)
     {
         printf("ulog output queue put err:%d\r\n", stat);
     }
+#else
+    /* 2. callback function process */
+    for (uint8_t i = 0; i < sizeof(func_info)/sizeof(func_info[0]); i++)
+    {
+        if (func_info[i].func_callback == NULL)
+        {
+            continue;
+        }
+
+        switch (func_info[i].index)
+        {
+        case 0: /* Console */
+            func_info[i].func_callback(msg_buf, strlen(msg_buf));
+            break;
+        
+        default:
+            func_info[i].func_callback(msg_buf, strlen(msg_buf) + 1);  /* add '\0' at the end, to separate with other log */
+            break;
+        }
+    }
+#endif
 }
 
+#ifndef USING_ULOG_THREAD
+static int8_t ulog_component_init(void)
+{
+    // ulog_init(ULOG_DEBUG_LEVEL);
+
+    /* TODO: here need read flash, which indicate log info, but depend on os event, so modify logic if needed */
+
+    memset(s_subscribers, 0, sizeof(s_subscribers));
+    ulog_subscribe(ulog_output, ULOG_DEBUG_LEVEL);   /* register callback function */
+    
+    /* 1. callback function init */
+    for (uint8_t i = 0; i < sizeof(func_info)/sizeof(func_info[0]); i++)
+    {
+        if (func_info[i].func_init != NULL)
+        {
+            func_info[i].func_init();
+        }
+    }
+
+    return 0;
+}
+INIT_COMPONENT_EXPORT(ulog_component_init);
+#else
 static void ulog_output_entry(void *argument)
 {
     uint8_t log_buf[ULOG_MAX_MESSAGE_LENGTH] = {0};
 
-#ifdef USING_ULOG_FRAM
-    fram_log_info_self_detect();
-#endif
+    /* 1. callback function init */
+    for (uint8_t i = 0; i < sizeof(func_info)/sizeof(func_info[0]); i++)
+    {
+        if (func_info[i].func_init != NULL)
+        {
+            func_info[i].func_init();
+        }
+    }
 
     while (1)
     {
         osMessageQueueGet (ulog_output_queueHandle, log_buf, 0, osWaitForever);
 
-#ifdef USING_ULOG_CONSOLE
-        device_console_write(log_buf, strlen(log_buf));
-#endif
+        /* 2. callback function process */
+        for (uint8_t i = 0; i < sizeof(func_info)/sizeof(func_info[0]); i++)
+        {
+            if (func_info[i].func_callback == NULL)
+            {
+                continue;
+            }
 
-#ifdef USING_ULOG_FRAM
-        fram_log_write(log_buf, strlen(log_buf) + 1);   /* add '\0' at the end */
-#endif
-        /* TODO: add dest device interface here */
+            switch (func_info[i].index)
+            {
+            case 0: /* Console */
+                func_info[i].func_callback(log_buf, strlen(log_buf));
+                break;
+            
+            default:
+                func_info[i].func_callback(log_buf, strlen(log_buf) + 1);  /* add '\0' at the end, to separate with other log */
+                break;
+            }
+        }
     }
 }
 
@@ -282,7 +352,10 @@ INIT_APP_EXPORT(ulog_thread_init);
 #include "shell.h"
 void ulog_test(uint8_t argc, char **argv)
 {
-    LOG_I("ulog test:%d\r\n", atoi(argv[1]));
+    for(uint16_t i = 0; i < 500; i++)
+    {
+        LOG_I("ulog test:%d\r\n", atoi(argv[1]) + i);
+    }
 }
 MSH_CMD_EXPORT_ALIAS(ulog_test, ulog_test, ulog test);
 

@@ -3,6 +3,7 @@
 #include "shell.h"
 #include "stdarg.h"
 #include "init_call.h"
+#include "ulog.h"
 
 /* opcode command */
 #define WREN    0x06    /* set write enable */
@@ -17,8 +18,8 @@
 
 /* if use dma mode, must define data buffer in sram d3  */
 // static uint8_t opcode_and_addr[4] __attribute__((section(".RAM_D3"))) = {0};
-static uint8_t opcode_and_addr_buf[4 + 128] __attribute__((section(".ram_d3"))) = {0};
-static uint8_t data_buf[128] __attribute__((section(".ram_d3"))) = {0};
+static uint8_t opcode_and_addr_buf[4 + BYTE_LEN_PER_LINE] __attribute__((section(".ram_d3"))) = {0};
+static uint8_t data_buf[4 + BYTE_LEN_PER_LINE] __attribute__((section(".ram_d3"))) = {0};
 
 static uint8_t *fram_opcode_and_addr_buf_get(void)
 {
@@ -32,7 +33,7 @@ static uint8_t *fram_data_buf_get(void)
 
 #undef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
 static DEVICE_SPI device_fram = {0};
-DEVICE_SPI *device_fram_get(void)
+static DEVICE_SPI *device_fram_get(void)
 {
     return &device_fram;
 }
@@ -245,7 +246,7 @@ int8_t device_fram_read(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t time
 }
 
 /* fast read mode；SI line is ignored */
-int8_t device_fram_fast_read(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t timeout)
+static int8_t device_fram_fast_read(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t timeout)
 {
     if (addr + len >= FRAM_ADDR_END)
     {
@@ -412,12 +413,12 @@ struct fram_log
 
 static struct fram_log fram_log_info __attribute__((section(".ram_d3"))) = {0};  /* at start address, to record log info */
 
-struct fram_log *fram_log_info_get(void)
+static struct fram_log *fram_log_info_get(void)
 {
     return &fram_log_info;
 }
 
-int8_t fram_log_info_set(uint16_t log_addr_start, uint8_t log_line_num_reset_flag)
+static int8_t fram_log_info_set(uint16_t log_addr_start, uint8_t log_line_num_reset_flag)
 {
     struct fram_log *fram_log_info = fram_log_info_get();
 
@@ -446,7 +447,7 @@ int8_t fram_log_info_set(uint16_t log_addr_start, uint8_t log_line_num_reset_fla
     return device_fram_write(0x0000, fram_log_info_get(), sizeof(struct fram_log), 1000);    /* write log info to addr 0 */
 }
 
-int8_t fram_log_info_self_detect(void)
+static int8_t fram_log_info_self_detect(void)
 {
     struct fram_log data = {0};
     int8_t ret = device_fram_read(0, &data, sizeof(struct fram_log), 1000); /* read log info from addr 0 */
@@ -526,7 +527,7 @@ int8_t fram_log_write(uint8_t *buf, uint16_t len)
     return ret;
 }
 
-int8_t fram_log_console_output(void)
+static int8_t fram_log_console_output(void)
 {
     struct fram_log *fram_log_info = fram_log_info_get();
     uint8_t log_buf[BYTE_LEN_PER_LINE] = {0};
@@ -546,7 +547,7 @@ int8_t fram_log_console_output(void)
     return 0;
 }
 
-void fram_log_printf(const char *fmt, ...)
+static void fram_log_printf(const char *fmt, ...)
 {
     static char log_msg[BYTE_LEN_PER_LINE];
     int ret = 0;
@@ -622,3 +623,24 @@ void fram_log_test_2(uint8_t argc, char **argv)
 }
 MSH_CMD_EXPORT_ALIAS(fram_log_test_2, fram_log_test_2, fram log record test2);
 #endif
+
+
+static int8_t fram_log_init(void)
+{
+#ifdef USING_ULOG_FLASH
+    struct ulog_write_func_info info = {
+        .func_init = fram_log_info_self_detect,
+        .func_callback = fram_log_write,
+        .index = 1};
+    
+    int8_t ret = ulog_write_func_register(&info);
+    if (ret != 0)
+    {
+        printf("fram log register err:%d\r\n", ret);
+        return ret;
+    }
+#endif
+
+    return 0;
+}
+INIT_COMPONENT_EXPORT(fram_log_init);

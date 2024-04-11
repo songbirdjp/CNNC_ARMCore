@@ -13,7 +13,7 @@ struct init_desc
 
 #define INIT_EXPORT(fn, level)                                                                          \
     const char __init_call_name_##fn[] = #fn;                                                         \
-    const struct init_desc __init_call_desc_##fn __attribute__((section(".init_call_fn." #level))) =    \
+    const struct init_desc __init_call_desc_##fn __attribute__((section(".init_call_fn." #level #fn))) =    \
     { __init_call_name_##fn, fn};
 
 
