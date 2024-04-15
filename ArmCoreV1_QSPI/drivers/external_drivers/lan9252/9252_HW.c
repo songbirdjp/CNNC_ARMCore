@@ -188,10 +188,10 @@ UINT8 LAN9252_Init(void)
     // intMask = 0x53;
     // HW_EscWriteByte(intMask, 0x0041);
 
-#ifdef USING_SQI_CMD
-    sqi_enable();   /* TODO: sqi read fail when first reset */
-#else
-    // sqi_disable();
+    sqi_disable();  /* reset sqi mode */
+
+#ifdef USING_SQI_CMD    
+    sqi_enable();
 #endif
 
     //Read BYTE-ORDER register 0x64.
