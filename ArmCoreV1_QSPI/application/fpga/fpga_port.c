@@ -134,9 +134,14 @@ int8_t device_recv_from_fpga_buffer_init(uint8_t *buf, uint16_t len)
     return spi_dma_rx_buf_init(device_recv_from_fpga_get(), buf, len);
 }
 
-int8_t device_recv_from_fpga_queue_init(osMessageQueueId_t queue, int8_t (*cb)(void *arg))
+int8_t device_recv_from_fpga_queue_init(osMessageQueueId_t queue)
 {
-    return spi_rx_queue_init(device_recv_from_fpga_get(), queue, cb);
+    return spi_rx_queue_init(device_recv_from_fpga_get(), queue);
+}
+
+int8_t device_recv_from_fpga_callback_register(int8_t (*cb)(void *arg))
+{
+    return spi_rx_callback_register(device_recv_from_fpga_get(), cb);
 }
 
 int8_t device_recv_from_fpga_open(void)

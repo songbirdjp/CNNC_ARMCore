@@ -186,12 +186,6 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 /************************************************************************************************************/
 static uint8_t recv_buf[RECV_BUF_LEN];
 
-static int8_t fun_cb(void *arg)
-{
-    extern osEventFlagsId_t data_process_eventHandle;
-    osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT);
-}
-
 static int8_t recv_from_fpga_init(osMessageQueueId_t queue)
 {
     int8_t ret = 0;
@@ -217,7 +211,7 @@ static int8_t recv_from_fpga_init(osMessageQueueId_t queue)
         return -3;
     }
 
-    ret = device_recv_from_fpga_queue_init(queue, fun_cb);
+    ret = device_recv_from_fpga_queue_init(queue);
     if (ret != 0)
     {
         printf("device %s queue init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
@@ -416,4 +410,16 @@ void make_para_for_fpga(uint8_t *pData)
     // initPos[1] = initPos[3] = 5687;
 
     make_cmd_to_fpga(24, (uint8_t*)initPos, 174);//0x40
+}
+
+int8_t recv_from_fpga_callback_register(int8_t (*cb)(void *arg))
+{
+    int8_t ret = device_recv_from_fpga_callback_register(cb);
+    if (ret != 0)
+    {
+        printf("device %s callback register err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        return -1;
+    }
+
+    return 0;
 }

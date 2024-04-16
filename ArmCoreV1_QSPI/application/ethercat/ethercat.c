@@ -5,19 +5,20 @@
 #include "cmsis_os2.h"
 #include "init_call.h"
 
-static void (*fun_ptr)(void);
 
-static void appl_cb(void)
+int8_t ethercat_slave_appl_cb_register(osEventFlagsId_t output_event, uint32_t event_flag, void (*fun_cb)(void))
 {
-    if (fun_ptr != NULL)
+    if (output_event == NULL || fun_cb == NULL)
     {
-        fun_ptr();
+        return -1;
     }
-}
 
-int8_t ethercat_slave_appl_cb_register(void (*fun_cb)(void))
-{
-    fun_ptr = fun_cb;
+    int8_t ret = lan9252_app_ops_register(output_event, event_flag, fun_cb);
+    if (ret != 0)
+    {
+        printf("lan9252 appl ops register err:%d\r\n", ret);
+        return ret;
+    }
 
     return 0;
 }
@@ -32,8 +33,7 @@ static int8_t ethercat_slave_init(void)
         printf("device lan9252 init err:%d\r\n", ret);
     }
 
-    extern osEventFlagsId_t data_process_eventHandle;
-    ret = lan9252_app_ops_init(data_process_eventHandle, DATA_PROCESS_LAN_EVENT, appl_cb);
+    ret = lan9252_app_ops_init();
     if (ret != 0)
     {
         printf("lan9252 appl ops init err:%d\r\n", ret);
@@ -76,13 +76,13 @@ static int32_t ethercat_slave_wait_event(void)
     return ret;
 }
 
-int8_t ethercat_recv_data_update(void)
+int8_t ethercat_recv_data_update_with_block(uint32_t timeout)
 {
     osStatus_t stat = osOK;
 
     uint8_t pdo_output_data[MAX_PD_OUTPUT_SIZE] = {0};
 
-    stat = osMessageQueueGet(lan9252_app_ops_get()->pdo_output_queue, pdo_output_data, 0, 0);
+    stat = osMessageQueueGet(lan9252_app_ops_get()->pdo_output_queue, pdo_output_data, 0, timeout);
     if (stat == osOK)
     {
         lan9252_app_ops_get()->appl_output_update((uint16_t *)&pdo_output_data);

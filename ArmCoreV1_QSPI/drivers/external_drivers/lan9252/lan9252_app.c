@@ -326,7 +326,10 @@ void APPL_OutputMapping(UINT16* pData)
         printf("lan9252 queue put err:%d\r\n", stat);
     }
 
-    osEventFlagsSet(lan9252_app_ops_get()->pdo_output_event, lan9252_app_ops_get()->event_flag);
+    if (lan9252_app_ops_get()->pdo_output_event != NULL)
+    {
+        osEventFlagsSet(lan9252_app_ops_get()->pdo_output_event, lan9252_app_ops_get()->event_flag);
+    }
 
     // UINT16 j = 0;
     // UINT16 *pTmpData = (UINT16 *) pData;
@@ -470,21 +473,8 @@ static void appl_output_update(UINT16 *pData)
     osMutexRelease(lan9252_app_ops_get()->pdo_output_update_mutex);
 }
 
-int8_t lan9252_app_ops_init(osEventFlagsId_t output_event, uint32_t event_flag, void (*appl_cb)(void))
+int8_t lan9252_app_ops_init(void)
 {
-    if (appl_cb != NULL && output_event != NULL)
-    {
-        // memcpy(&lan9252_app_ops, ops, sizeof(LAN9252_APPL_OPS));
-        lan9252_app_ops.appl_cb = appl_cb;
-        lan9252_app_ops.pdo_output_event = output_event;
-        lan9252_app_ops.event_flag = event_flag;
-    }
-    else
-    {
-        return -1;
-    }
-
-
     osMutexAttr_t mutex_attributes = {
     .name = "pdo_output_mutex",
     .attr_bits = osMutexRecursive | osMutexPrioInherit
@@ -512,3 +502,18 @@ LAN9252_APPL_OPS *lan9252_app_ops_get(void)
     return &lan9252_app_ops;
 }
 
+int8_t lan9252_app_ops_register(osEventFlagsId_t output_event, uint32_t event_flag, void (*appl_cb)(void))
+{
+    if (output_event == NULL || appl_cb == NULL)
+    {
+        return -1;
+    }
+
+    LAN9252_APPL_OPS *ops = lan9252_app_ops_get();
+
+    ops->appl_cb = appl_cb;
+    ops->pdo_output_event = output_event;
+    ops->event_flag = event_flag;
+
+    return 0;
+}

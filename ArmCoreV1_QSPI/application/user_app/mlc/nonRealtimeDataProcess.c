@@ -895,6 +895,11 @@ void nrtDataMainLoop(void)
 /********************************************************************************************/
 #include "ethercat.h"
 
+#define DATA_PROCESS_FPGA_EVENT   (1<<0)
+#define DATA_PROCESS_LAN_EVENT    (1<<1)
+#define DATA_PROCESS_TCP_EVENT    (1<<2)
+static osEventFlagsId_t data_process_eventHandle = NULL;
+
 static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
 {
     uint32_t checkSum = 0;
@@ -952,7 +957,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
     return 0;
 }
 
-static int8_t non_realtime_ethercat_data_process(void)
+static int8_t realtime_ethercat_data_process(void)
 {
     static uint16_t oldState = 0, oldPlanCmd = 0, oldRadiationIndex = 0, oldBeamIndex = 0;
 
@@ -1093,7 +1098,19 @@ static int8_t non_realtime_tcp_callback(void)
     return 0;
 }
 
-static int8_t non_realtime_data_process_init(void)
+static int8_t non_realtime_tcp_recv_data_callback(void)
+{
+    osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_TCP_EVENT);
+    return 0;
+}
+
+static int8_t non_realtime_fpga_recv_data_callback(void)
+{
+    osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT);
+    return 0;
+}
+
+static int8_t data_process_init(void)
 {
     int8_t ret = 0;
     ret = tcp_establish_cb_register(non_realtime_tcp_callback);
@@ -1103,17 +1120,29 @@ static int8_t non_realtime_data_process_init(void)
         return ret;
     }
 
-    return ethercat_slave_appl_cb_register(non_realtime_ethercat_data_process);
+    ret = tcp_recv_data_callback_register(non_realtime_tcp_recv_data_callback);
+    if (ret != 0)
+    {
+        printf("tcp recv data callback register err:%d\r\n", ret);
+        return ret;
+    }
+
+    ret = ethercat_slave_appl_cb_register(data_process_eventHandle, DATA_PROCESS_LAN_EVENT, realtime_ethercat_data_process);
+    if (ret != 0)
+    {
+        printf("ethercat callback register err:%d\r\n", ret);
+        return ret;
+    }
+
+    ret = recv_from_fpga_callback_register(non_realtime_fpga_recv_data_callback);
+    if (ret != 0)
+    {
+        printf("recv fpga callback register err:%d\r\n", ret);
+        return ret;
+    }
+
+    return 0;
 }
-
-/*
- * thread init
-*/
-#define DATA_PROCESS_FPGA_EVENT   (1<<0)
-#define DATA_PROCESS_LAN_EVENT    (1<<1)
-#define DATA_PROCESS_TCP_EVENT    (1<<2)
-
-osEventFlagsId_t data_process_eventHandle = NULL;
 
 static void DataProccessTask(void *argument)
 {
@@ -1137,8 +1166,11 @@ static void data_process_entry(void *argument)
   uint8_t recv_from_fpga_buf[RECV_BUF_LEN];
   TCP_DATA_t tcp_info = {0};
 
+  osDelay(1000);
+
   TCPFeedbackInit();
-  non_realtime_data_process_init();
+  data_process_init();  /* register callback functions for tcp 、ethercat、fpga */
+
 
   for(;;)
   {
@@ -1146,9 +1178,7 @@ static void data_process_entry(void *argument)
     event_flag = osEventFlagsWait(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT | DATA_PROCESS_LAN_EVENT | DATA_PROCESS_TCP_EVENT, osFlagsWaitAny, osWaitForever);
     if (event_flag & DATA_PROCESS_LAN_EVENT)
     {
-        // printf("recv DATA_PROCESS_LAN_EVENT\n");
-
-        ethercat_recv_data_update();
+        ethercat_recv_data_update_with_block(0);
     }
 
     if (event_flag & DATA_PROCESS_FPGA_EVENT)
@@ -1188,7 +1218,7 @@ static void data_process_entry(void *argument)
   /* USER CODE END data_process_entry */
 }
 
-static int8_t non_realtime_process_thread_init(void)
+static int8_t top_data_process_thread_init(void)
 {
     osThreadAttr_t recv_data_process_thread_attributes = {
     .name = "recv_data_process_thread",
@@ -1225,4 +1255,4 @@ static int8_t non_realtime_process_thread_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(non_realtime_process_thread_init);
+INIT_APP_EXPORT(top_data_process_thread_init);

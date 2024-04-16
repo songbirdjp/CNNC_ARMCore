@@ -65,6 +65,11 @@ int8_t tcp_establish_cb_register(void (*fun_cb)(void))
     return 0;
 }
 
+int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg))
+{
+    return device_w5500_rx_callback_register(fun_cb);
+}
+
 static int8_t do_tcp_client(uint8_t sn)
 {
     int8_t ret = 0;
@@ -320,13 +325,6 @@ static void tcp_client_entry(void *argument)
         }
 
         osMutexRelease(tcp_access_mutexHandle);
-
-        if (ret > 0)
-        {
-            extern osEventFlagsId_t data_process_eventHandle;
-            #define DATA_PROCESS_TCP_EVENT    (1<<2)
-            osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_TCP_EVENT);
-        }
 
   }
   /* USER CODE END tcp_client_entry */

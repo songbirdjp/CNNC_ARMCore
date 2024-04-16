@@ -71,7 +71,7 @@ struct drv_ospi
     int8_t (*write)(struct drv_ospi *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8_t *data_buf, uint32_t timeout);
     int8_t (*read)(struct drv_ospi *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8_t *data_buf, uint32_t timeout);
     int8_t (*ioctl)(struct drv_ospi *ospi, uint8_t cmd, void *arg);
-    int8_t (*rx_queue_cb)(void *arg); /* for slave mode */
+    int8_t (*rx_cb)(void *arg); /* for slave mode */
 
 #ifdef USING_OSPI_OPTION_FUNCTION
     struct drv_opt opt;
@@ -83,7 +83,8 @@ typedef struct drv_ospi DEVICE_OSPI;
 
 
 int8_t ospi_init(DEVICE_OSPI *ospi, uint8_t *device_name);
-int8_t ospi_rx_queue_init(DEVICE_OSPI *ospi, osMessageQueueId_t queue, int8_t (*rx_queue_cb)(void *arg));
+int8_t ospi_rx_queue_init(DEVICE_OSPI *ospi, osMessageQueueId_t queue);
+int8_t ospi_rx_callback_register(DEVICE_OSPI *ospi, int8_t (*cb)(void *arg));
 int8_t ospi_dma_rx_buf_init(DEVICE_OSPI *ospi, uint8_t *buf, uint16_t len);
 
 #ifdef USING_OSPI_OPTION_FUNCTION

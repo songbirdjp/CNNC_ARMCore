@@ -245,6 +245,11 @@ static int32_t w5500_irq_process(void)
                     printf("w5500 queue put err:%d\r\n", recv_ret);
                     return recv_ret;
                 }
+                
+                if (dev->rx_cb != NULL)
+                {
+                    dev->rx_cb(dev);
+                }
             }
             break;
 
@@ -381,7 +386,12 @@ int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len)
 
 int8_t device_w5500_rx_queue_init(osMessageQueueId_t queue)
 {
-    return spi_rx_queue_init(device_w5500_get(), queue, NULL);
+    return spi_rx_queue_init(device_w5500_get(), queue);
+}
+
+int8_t device_w5500_rx_callback_register(void (*callback)(void *arg))
+{
+    return spi_rx_callback_register(device_w5500_get(), callback);
 }
 
 int8_t device_w5500_interrupt_init(uint8_t sn)

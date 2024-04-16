@@ -32,9 +32,9 @@ static void RxCpltCallback(SPI_HandleTypeDef *hspi)
             printf("%s queue put err:%d\r\n", spi->name, ret);
         }
 
-        if (spi->rx_queue_cb != NULL)
+        if (spi->rx_cb != NULL)
         {
-            spi->rx_queue_cb((void *)spi);
+            spi->rx_cb((void *)spi);
         }
     }
 }
@@ -395,14 +395,14 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     spi->read = spi_read;
     spi->write_and_read = spi_write_and_read;
     spi->ioctl = NULL;
-    spi->rx_queue_cb = NULL;
+    spi->rx_cb = NULL;
 
     /* 8. open device */
     return 0;//spi->open(spi);
 }
 
 
-int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue, int8_t (*rx_queue_cb)(void *arg))
+int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue)
 {
     if (spi == NULL)
     {
@@ -411,7 +411,19 @@ int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue, int8_t (*rx_
     }
 
     spi->rx_queue = queue;
-    spi->rx_queue_cb = rx_queue_cb;
+
+    return 0;
+}
+
+int8_t spi_rx_callback_register(DEVICE_SPI *spi, int8_t (*cb)(void *arg))
+{
+    if (spi == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    spi->rx_cb = cb;
 
     return 0;
 }

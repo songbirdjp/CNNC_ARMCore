@@ -81,9 +81,9 @@ typedef struct
     void (*appl_cb)(void);
 }LAN9252_APPL_OPS;
 
-int8_t lan9252_app_ops_init(osEventFlagsId_t output_event, uint32_t event_flag, void (*appl_cb)(void));
-
 LAN9252_APPL_OPS *lan9252_app_ops_get(void);
+int8_t lan9252_app_ops_init(void);
+int8_t lan9252_app_ops_register(osEventFlagsId_t output_event, uint32_t event_flag, void (*appl_cb)(void));
 
 
 #undef PROTO

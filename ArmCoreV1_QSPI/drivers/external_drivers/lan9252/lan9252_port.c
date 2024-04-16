@@ -22,19 +22,19 @@ void OCTOSPI1_IRQHandler(void)
 #ifdef USING_OSPI_SLAVE_TO_MASTER_INTERRUPT
 static void EscIsr_callback(void)
 {
-    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), "irq_line_3")->node_data;
+    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), LAN9252_INTN_LINE_NAME)->node_data;
     osEventFlagsSet(node->irq_event, node->irq_event_flag);
 }
 
 static void Sync0Isr_callback(void)
 {
-    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), "irq_line_13")->node_data;
+    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), LAN9252_SYNC0_IRQ_LINE_NAME)->node_data;
     osEventFlagsSet(node->irq_event, node->irq_event_flag);
 }
 
 static void Sync1Isr_callback(void)
 {
-    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), "irq_line_2")->node_data;
+    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), LAN9252_SYNC1_IRQ_LINE_NAME)->node_data;
     osEventFlagsSet(node->irq_event, node->irq_event_flag);    
 }
 #endif
@@ -95,89 +95,79 @@ static int8_t device_lan9252_opt_init(DEVICE_OSPI *ospi, DEVICE_OSPI_OPT *ospi_o
 #endif
 
 #ifdef USING_OSPI_SLAVE_TO_MASTER_INTERRUPT
-
-#define LAN9252_INTn_Pin            GPIO_PIN_3
-#define LAN9252_SYN0_INTn_Pin       GPIO_PIN_13
-#define LAN9252_SYN1_INTn_Pin       GPIO_PIN_2
-
-
-
-static int8_t device_lan9252_node_name_get(uint8_t *name, uint8_t **argv)
+static int8_t device_lan9252_irq_init(DEVICE_OSPI *ospi, uint8_t *node_name, char splitter)
 {
-    uint8_t *ptr = name;
-
-    if (name == NULL)
+    if (ospi == NULL || node_name == NULL)
     {
         return -1;
     }
 
-    uint8_t len = strlen(name);
-    uint8_t idx = 0, arg_idx = 0;
+    uint8_t name_buf[50] = {0};
+    uint8_t *argv[5] = {NULL};
+    memcpy(name_buf, node_name, strlen(node_name));
+    uint8_t name_num = split_string(name_buf, splitter, argv);
 
-    while (idx < len)
+#if 0
+    for (uint8_t i = 0; i < name_num; i++)
     {
-        while (ptr[idx] != ' ' && idx < len)
-        {
-            idx++;            
-        }
-
-        if (idx >= len)
-        {
-            break;
-        }
-
-        argv[arg_idx++] = ptr;
+        printf("node_name:%s\r\n", argv[i]);
     }
+#endif
 
-
-    return 0;
-}
-
-static int8_t device_lan9252_irq_init(DEVICE_OSPI *ospi, uint8_t *node_name)
-{
     osEventFlagsAttr_t lan9252_irq_event_attributes = {
     .name = "lan9252_irq_event"
     };
 
-    osEventFlagsId_t irq_event = NULL;
-
-    IRQ_INFO_NODE *node = (IRQ_INFO_NODE *)pvPortMalloc(sizeof(IRQ_INFO_NODE));
-    if (node == NULL)
+    osEventFlagsId_t irq_event = osEventFlagsNew(&lan9252_irq_event_attributes);
+    if (irq_event == NULL)
     {
-        printf("device irq node %s malloc err\r\n", node_name);
-        return -1;
-    }
-    memcpy(node->node_name, node_name, NODE_NAME_LENGTH);
-    node->irq_pin = LAN9252_INTn_Pin;
-    irq_event = osEventFlagsNew(&lan9252_irq_event_attributes);
-    node->irq_event = irq_event;
-    node->irq_event_flag = LAN9252_IRQ_EVENT;
-    device_ospi_irq_node_add(&device_lan9252, node);
-
-    node = (IRQ_INFO_NODE *)pvPortMalloc(sizeof(IRQ_INFO_NODE));
-    if (node == NULL)
-    {
-        printf("device irq node %s malloc err\r\n", node_name);
+        printf("device irq event malloc err\r\n");
         return -2;
-    }    
-    memcpy(node->node_name, "irq_line_13", NODE_NAME_LENGTH);
-    node->irq_pin = LAN9252_SYN0_INTn_Pin;
-    node->irq_event = irq_event;
-    node->irq_event_flag = LAN9252_SYNC0_IRQ_EVENT;
-    device_ospi_irq_node_add(&device_lan9252, node);
+    }
 
-    node = (IRQ_INFO_NODE *)pvPortMalloc(sizeof(IRQ_INFO_NODE));
-    if (node == NULL)
+    IRQ_INFO_NODE *node = NULL;
+    int8_t ret = 0;
+    for (uint8_t i = 0; i < name_num; i++)
     {
-        printf("device irq node %s malloc err\r\n", node_name);
-        return -3;
-    }    
-    memcpy(node->node_name, "irq_line_2", NODE_NAME_LENGTH);
-    node->irq_pin = LAN9252_SYN1_INTn_Pin;
-    node->irq_event = irq_event;
-    node->irq_event_flag = LAN9252_SYNC1_IRQ_EVENT;
+        node = (IRQ_INFO_NODE *)pvPortMalloc(sizeof(IRQ_INFO_NODE));
+        if (node == NULL)
+        {
+            printf("device irq node %s malloc err\r\n", argv[i]);
+            return -3;
+        }
+
+        memcpy(node->node_name, argv[i], NODE_NAME_LENGTH);
+        
+        node->irq_event = irq_event;
+
+        switch (i)
+        {
+            case 0:
+                node->irq_pin = LAN9252_INTn_Pin;
+                node->irq_event_flag = LAN9252_IRQ_EVENT;
+                break;
+            case 1:
+                node->irq_pin = LAN9252_SYN0_INTn_Pin;
+                node->irq_event_flag = LAN9252_SYNC0_IRQ_EVENT;
+                break;
+            case 2:
+                node->irq_pin = LAN9252_SYN1_INTn_Pin;
+                node->irq_event_flag = LAN9252_SYNC1_IRQ_EVENT;
+                break;
+            default:
+                printf("device irq node %s err\r\n", argv[i]);
+                return -4;
+        }
+
+        ret = device_ospi_irq_node_add(&device_lan9252, node);
+        if (ret != 0)
+        {
+            printf("device irq node %s add err\r\n", argv[i]);
+            return -5;
+        }
+    }
     
-    return device_ospi_irq_node_add(&device_lan9252, node);
+    return 0;
 }
 #endif
 
@@ -193,15 +183,30 @@ int8_t device_lan9252_init(uint8_t *device_name)
     int8_t ret = 0;
 
 #ifdef USING_OSPI_OPTION_FUNCTION
-    device_lan9252_opt_init(device_lan9252_get(), &device_lan9252_opt);
+    ret = device_lan9252_opt_init(device_lan9252_get(), &device_lan9252_opt);
+    if (ret != 0)
+    {
+        printf("device %s opt init err:%d\r\n", device_name, ret);
+        return ret;
+    }
 #endif
 
 #ifdef USING_OSPI_SLAVE_TO_MASTER_INTERRUPT
-    device_lan9252_irq_init(device_lan9252_get(), "irq_line_3"); /* separate with space for node_name*/
+    ret = device_lan9252_irq_init(device_lan9252_get(), LAN9252_IRQ_LINE_NAME, ' '); /* separate with space for node_name */
+    if (ret != 0)
+    {
+        printf("device %s irq init err:%d\r\n", device_name, ret);
+        return ret;
+    }
 
-    gpio_pin_irq_callback_register("GPIOE_3", EscIsr_callback);
-    gpio_pin_irq_callback_register("GPIOC_13", Sync0Isr_callback);
-    gpio_pin_irq_callback_register("GPIOB_2", Sync1Isr_callback);
+    ret = gpio_pin_irq_callback_register(LAN9252_INTN_NAME, EscIsr_callback);
+    ret |= gpio_pin_irq_callback_register(LAN9252_SYNC0_IRQ_NAME, Sync0Isr_callback);
+    ret |= gpio_pin_irq_callback_register(LAN9252_SYNC1_IRQ_NAME, Sync1Isr_callback);
+    if (ret != 0)
+    {
+        printf("device %s irq callback register err:%d\r\n", device_name, ret);
+        return ret;
+    }
 #endif
 
     ret = ospi_init(device_lan9252_get(), device_name);
@@ -226,9 +231,9 @@ int8_t device_lan9252_rx_buffer_init(uint8_t *buf, uint16_t len)
     return ospi_dma_rx_buf_init(device_lan9252_get(), buf, len);
 }
 
-int8_t device_lan9252_rx_queue_init(osMessageQueueId_t queue, int8_t (*cb)(void *arg))
+int8_t device_lan9252_rx_queue_init(osMessageQueueId_t queue)
 {
-    return ospi_rx_queue_init(device_lan9252_get(), queue, cb);
+    return ospi_rx_queue_init(device_lan9252_get(), queue);
 }
 
 int32_t device_lan9252_data_recv_with_block(void)

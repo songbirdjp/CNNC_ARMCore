@@ -10,15 +10,24 @@ extern "C" {
 
 #define DEVICE_NAME_OSPI1_DEFAULT       "octospi1"
 
+#define LAN9252_INTn_Pin                GPIO_PIN_3
+#define LAN9252_SYN0_INTn_Pin           GPIO_PIN_13
+#define LAN9252_SYN1_INTn_Pin           GPIO_PIN_2
+#define LAN9252_INTN_NAME               "GPIOE_3"
+#define LAN9252_SYNC0_IRQ_NAME          "GPIOC_13"
+#define LAN9252_SYNC1_IRQ_NAME          "GPIOB_2"
+#define LAN9252_INTN_LINE_NAME          "irq_line_3"
+#define LAN9252_SYNC0_IRQ_LINE_NAME     "irq_line_13"
+#define LAN9252_SYNC1_IRQ_LINE_NAME     "irq_line_2"
+#define LAN9252_IRQ_LINE_NAME           LAN9252_INTN_LINE_NAME" "LAN9252_SYNC0_IRQ_LINE_NAME" "LAN9252_SYNC1_IRQ_LINE_NAME
+
 #define LAN9252_IRQ_EVENT               (1<<0)
 #define LAN9252_SYNC0_IRQ_EVENT         (1<<1)
 #define LAN9252_SYNC1_IRQ_EVENT         (1<<2)
 
-
-
 int8_t device_lan9252_init(uint8_t *device_name);
 int8_t device_lan9252_rx_buffer_init(uint8_t *buf, uint16_t len);
-int8_t device_lan9252_rx_queue_init(osMessageQueueId_t queue, int8_t (*cb)(void *arg));
+int8_t device_lan9252_rx_queue_init(osMessageQueueId_t queue);
 
 int8_t device_lan9252_data_read(uint16_t address, uint8_t *buf, uint32_t num);
 int8_t device_lan9252_data_write(uint16_t address, uint8_t *buf, uint32_t num);

@@ -80,7 +80,7 @@ struct drv_spi
     int8_t (*read)(struct drv_spi *spi, uint8_t *buf, uint16_t size, uint32_t timeout);
     int8_t (*write_and_read)(struct drv_spi *spi, uint8_t *send_buf, uint8_t *recv_buf, uint16_t size, uint32_t timeout);
     int8_t (*ioctl)(struct drv_spi *spi, uint8_t cmd, void *arg);
-    int8_t (*rx_queue_cb)(void *arg); /* for slave mode */
+    int8_t (*rx_cb)(void *arg); /* for slave mode */
 
 #ifdef USING_SPI_OPTION_FUNCTION
     struct drv_opt opt;
@@ -92,7 +92,8 @@ typedef struct drv_spi DEVICE_SPI;
 
 
 int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode);
-int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue, int8_t (*rx_queue_cb)(void *arg));
+int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue);
+int8_t spi_rx_callback_register(DEVICE_SPI *spi, int8_t (*cb)(void *arg));
 int8_t spi_dma_rx_buf_init(DEVICE_SPI *spi, uint8_t *buf, uint16_t len);
 
 #ifdef USING_SPI_OPTION_FUNCTION

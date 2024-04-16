@@ -364,13 +364,13 @@ int8_t ospi_init(DEVICE_OSPI *ospi, uint8_t *device_name)
     ospi->write = spi_write;
     ospi->read = spi_read;
     ospi->ioctl = NULL;
-    ospi->rx_queue_cb = NULL;
+    ospi->rx_cb = NULL;
 
     /* 8. open device */
     return 0;//ospi->open(spi);
 }
 
-int8_t ospi_rx_queue_init(DEVICE_OSPI *ospi, osMessageQueueId_t queue, int8_t (*rx_queue_cb)(void *arg))
+int8_t ospi_rx_queue_init(DEVICE_OSPI *ospi, osMessageQueueId_t queue)
 {
     if (ospi == NULL)
     {
@@ -379,7 +379,19 @@ int8_t ospi_rx_queue_init(DEVICE_OSPI *ospi, osMessageQueueId_t queue, int8_t (*
     }
 
     ospi->rx_queue = queue;
-    ospi->rx_queue_cb = rx_queue_cb;
+
+    return 0;
+}
+
+int8_t ospi_rx_callback_register(DEVICE_OSPI *ospi, int8_t (*cb)(void *arg))
+{
+    if (ospi == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    ospi->rx_cb = cb;
 
     return 0;
 }
