@@ -4,7 +4,7 @@
   - 将`ethercat`周期性`ECAT_CheckTimer()`功能的时基由`TIM2`变更为`TIM5`
   - 将`TIM2`配置为编码器模式，对外部编码器脉冲进行计数
   - 基础分支：a13a11836aeb6d78a91e6443d3cc124d17173a15
-  - demo分支：
+  - demo分支：5768bb37671aadfa51188df45e0a8719115772ad
   
 ## 2. 修改方式
 - 配置`TIM5`，参数与`TIM2`保持一致
