@@ -101,19 +101,19 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
         return -1;
     }
 
-#ifdef USING_UART_OPTION_FUNCTION
-    if (uart->opt.before_write != NULL)
-    {
-        uart->opt.before_write(uart);
-    }
-#endif
-    
 #ifndef ULOG_USING_ISR
     ret = osMutexAcquire(uart->tx_mutex, timeout);
     if (ret != osOK)
     {
         printf("device %s acquire mutex err:%d\r\n", uart->name, ret);
         return -2;
+    }
+#endif
+
+#ifdef USING_UART_OPTION_FUNCTION
+    if (uart->opt.before_write != NULL)
+    {
+        uart->opt.before_write(uart);
     }
 #endif
 
@@ -138,14 +138,22 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
         printf("device %s  wait event flag err:%d\r\n", uart->name, ret);
         return -4;
     }
-    osMutexRelease(uart->tx_mutex);
-#endif
 
 #ifdef USING_UART_OPTION_FUNCTION
     if (uart->opt.complete_write != NULL)
     {
         uart->opt.complete_write(uart);
     }
+#endif
+
+    osMutexRelease(uart->tx_mutex);
+#else
+#ifdef USING_UART_OPTION_FUNCTION
+    if (uart->opt.complete_write != NULL)
+    {
+        uart->opt.complete_write(uart);
+    }
+#endif
 #endif
 
     return 0;

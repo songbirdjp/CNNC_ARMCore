@@ -132,19 +132,19 @@ static int8_t spi_write(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t t
         return -1;
     }
 
-#ifdef USING_SPI_OPTION_FUNCTION
-    if (spi->opt.before_write != NULL)
-    {
-        spi->opt.before_write(spi);
-    }
-#endif
-    
     ret = osMutexAcquire(spi->tx_mutex, timeout);
     if (ret != osOK)
     {
         printf("device %s acquire mutex err:%d\r\n", spi->name, ret);
         return -2;
     }
+
+#ifdef USING_SPI_OPTION_FUNCTION
+    if (spi->opt.before_write != NULL)
+    {
+        spi->opt.before_write(spi);
+    }
+#endif
 
     ret = HAL_SPI_Transmit_DMA((SPI_HandleTypeDef *)spi, buf, size);
     if (ret != HAL_OK)
@@ -166,7 +166,6 @@ static int8_t spi_write(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t t
         printf("device %s wait event flag err:%d\r\n", spi->name, ret);
         return -4;
     }
-    osMutexRelease(spi->tx_mutex);
 
 #ifdef USING_SPI_OPTION_FUNCTION
     if (spi->opt.complete_write != NULL)
@@ -174,6 +173,8 @@ static int8_t spi_write(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t t
         spi->opt.complete_write(spi);
     }
 #endif
+
+    osMutexRelease(spi->tx_mutex);
 
     return 0;
 }
@@ -215,7 +216,7 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
         if (ret != SPI_RECV_SUCCEED_EVENT)
         {
             printf("device %s wait event flag err:%d\r\n", spi->name, ret);
-            return -4;
+            return -3;
         }
     }
     else
@@ -283,7 +284,7 @@ static int8_t spi_write_and_read(DEVICE_SPI *spi, uint8_t *send_buf, uint8_t *re
         if (ret != SPI_RECV_SUCCEED_EVENT)
         {
             printf("device %s wait event flag err:%d\r\n", spi->name, ret);
-            return -4;
+            return -3;
         }
     }
     else

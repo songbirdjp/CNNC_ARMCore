@@ -102,13 +102,6 @@ static int8_t spi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
         printf("cmd or data ptr is null\r\n");
         return -2;
     }
-
-#ifdef USING_OSPI_OPTION_FUNCTION
-    if (ospi->opt.before_write != NULL)
-    {
-        ospi->opt.before_write(ospi);
-    }
-#endif
     
     ret = osMutexAcquire(ospi->tx_mutex, timeout);
     if (ret != osOK)
@@ -116,6 +109,13 @@ static int8_t spi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
         printf("device %s acquire mutex err:%d\r\n", ospi->name, ret);
         return -3;
     }
+
+#ifdef USING_OSPI_OPTION_FUNCTION
+    if (ospi->opt.before_write != NULL)
+    {
+        ospi->opt.before_write(ospi);
+    }
+#endif
 
     if (data_buf != NULL)
     {
@@ -142,7 +142,7 @@ static int8_t spi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
         if (ret != HAL_OK)
         {
             printf("device %s write data err:%d\r\n", ospi->name, ret);
-            return -6;
+            return -5;
         }
 
     }
@@ -180,12 +180,10 @@ static int8_t spi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
         if (ret != OSPI_SEND_SUCCEED_EVENT)
         {
             printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
-            return -7;
+            return -6;
         }
     }
 #endif
-
-    osMutexRelease(ospi->tx_mutex);
 
 #ifdef USING_OSPI_OPTION_FUNCTION
     if (ospi->opt.complete_write != NULL)
@@ -193,6 +191,8 @@ static int8_t spi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
         ospi->opt.complete_write(ospi);
     }
 #endif
+
+    osMutexRelease(ospi->tx_mutex);
 
     return 0;
 }
@@ -213,19 +213,19 @@ static int8_t spi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8
         return -2;
     }
 
-#ifdef USING_OSPI_OPTION_FUNCTION
-    if (ospi->opt.before_read != NULL)
-    {
-        ospi->opt.before_read(ospi);
-    }
-#endif
-
     ret = osMutexAcquire(ospi->tx_mutex, timeout);
     if (ret != osOK)
     {
         printf("device %s acquire mutex err:%d\r\n", ospi->name, ret);
         return -3;
     }
+
+#ifdef USING_OSPI_OPTION_FUNCTION
+    if (ospi->opt.before_read != NULL)
+    {
+        ospi->opt.before_read(ospi);
+    }
+#endif
 
     ret = HAL_OSPI_Command((OSPI_HandleTypeDef *)ospi, cmd_buf, timeout);
     if (ret != HAL_OK)
@@ -250,7 +250,7 @@ static int8_t spi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8
     if (ret != HAL_OK)
     {
         printf("device %s receive dma err:%d\r\n", ospi->name, ret);
-        return -6;
+        return -5;
     }
 
 #ifdef USING_OSPI_OPTION_FUNCTION
@@ -267,12 +267,10 @@ static int8_t spi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8
         if (ret != OSPI_RECV_SUCCEED_EVENT)
         {
             printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
-            return -7;
+            return -6;
         }
     }
 #endif
-
-    osMutexRelease(ospi->tx_mutex);
 
 #ifdef USING_OSPI_OPTION_FUNCTION
     if (ospi->opt.complete_read != NULL)
@@ -280,6 +278,8 @@ static int8_t spi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8
         ospi->opt.complete_read(ospi);
     }
 #endif
+
+    osMutexRelease(ospi->tx_mutex);
 
     return 0;
 }
