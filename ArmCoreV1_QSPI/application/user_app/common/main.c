@@ -185,7 +185,7 @@ int main(void)
   MX_IWDG1_Init();
   MX_RTC_Init();
   MX_TIM6_Init();
-  MX_TIM5_Init();
+
   /* USER CODE BEGIN 2 */
 
   SDRAM_Init();
