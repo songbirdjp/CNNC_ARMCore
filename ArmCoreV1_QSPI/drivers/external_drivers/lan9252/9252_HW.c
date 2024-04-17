@@ -696,7 +696,7 @@ TSYNCMAN ESCMEM * HW_GetSyncMan(UINT8 channel)
 */
 void PDI_Timer_Interrupt(void)
 {
-    HAL_TIM_Base_Start_IT(&htim2);
+    HAL_TIM_Base_Start_IT(&htim5);
 }
 
 void PDI_Restore_Global_Interrupt(UINT32 int_sts)
@@ -718,20 +718,20 @@ void HW_SetLed(UINT8 RunLed,UINT8 ErrLed)
 
 UINT16 PDI_GetTimer(void)
 {
-    __HAL_TIM_GET_COUNTER(&htim2);
+    __HAL_TIM_GET_COUNTER(&htim5);
 }
 
 void PDI_ClearTimer(void)
 {
-    __HAL_TIM_SET_COUNTER(&htim2, 0);
+    __HAL_TIM_SET_COUNTER(&htim5, 0);
 }
 
-void TIM2_IRQHandler(void)
+void TIM5_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
   static uint16_t count = 0;
   /* USER CODE END TIM2_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim2);
+  HAL_TIM_IRQHandler(&htim5);
   /* USER CODE BEGIN TIM2_IRQn 1 */
   ECAT_CheckTimer();
 
