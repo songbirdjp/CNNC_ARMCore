@@ -70,6 +70,13 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void vector_table_init(void)
+{
+    extern uint32_t __isr_vector_start;
+
+    SCB->VTOR = (uint32_t)&__isr_vector_start;
+}
+
 static void system_info_print(void)
 {
     struct sys_info *sys_info = system_info_get();
@@ -99,14 +106,14 @@ static void system_info_print(void)
 }
 MSH_CMD_EXPORT_ALIAS(system_info_print, system_info, system info);
 
-extern uint32_t  __init_call_start;
-extern uint32_t  __init_call_end;
-
 static void system_fun_init(void)
 {
     const struct init_desc *desc;
     int result = 0;
     uint32_t fun_num = 1;
+
+    extern uint32_t __init_call_start;
+    extern uint32_t __init_call_end;
 
     printf("\r\n########## function initialize begin ##########\r\n");
 
@@ -147,7 +154,7 @@ MSH_CMD_EXPORT_ALIAS(cmd_rtc_test, rtc_test, rtc tset);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  vector_table_init();
   /* USER CODE END 1 */
 /* Enable the CPU Cache */
 
@@ -189,8 +196,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   SDRAM_Init();
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, GPIO_PIN_SET);//leaf servo drive signal
-  HAL_GPIO_WritePin(GPIOG, GPIO_PIN_3, GPIO_PIN_SET);//carrier servo drive signal
 
   /* Console initialize */
   device_console_init(CONSOLE_NAME_DEFAULT);

@@ -61,16 +61,16 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(OSPI5_ncs_GPIO_Port, OSPI5_ncs_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, SPI3_NCS_Pin|DriveBoardCtrl_Pin|W5500_RST_Pin|WATCHDOG2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, SPI3_NCS_Pin|W5500_RST_Pin|WATCHDOG2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, CarrierServoSignal_Pin|WATCHDOG1_Pin|SPI1_NCS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, DriveBoardCtrl_Pin|GPIO_PIN_5, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOG, CarrierServoSignal_Pin|FM25V02_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(FM25V02_CS_GPIO_Port, FM25V02_CS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOG, WATCHDOG1_Pin|SPI1_NCS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = LAN9252_IRQ_Pin;
