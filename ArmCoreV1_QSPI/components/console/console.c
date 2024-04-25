@@ -152,6 +152,8 @@ static int8_t console_cmd_process(void)
 
     console.read(&console, &msg, osWaitForever);
 
+    msg.buf[msg.len - 2] = 0;
+
     shell_cmd_parse_entry(msg.buf, msg.len - 2);
 
     // console.write(&console, msg.buf, msg.len, 5000);

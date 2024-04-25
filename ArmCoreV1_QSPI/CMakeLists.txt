@@ -92,6 +92,7 @@ include_directories(
     components/console 
     components/gpio 
     components/gpio_imitate 
+    components/semaphore 
     components/shell 
     components/ulog 
     components/utilities 

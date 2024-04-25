@@ -1218,7 +1218,7 @@ static void data_process_entry(void *argument)
   /* USER CODE END data_process_entry */
 }
 
-static int8_t top_data_process_thread_init(void)
+static int8_t main_app_thread_init(void)
 {
     osThreadAttr_t recv_data_process_thread_attributes = {
     .name = "recv_data_process_thread",
@@ -1255,4 +1255,4 @@ static int8_t top_data_process_thread_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(top_data_process_thread_init);
+INIT_APP_EXPORT(main_app_thread_init);
