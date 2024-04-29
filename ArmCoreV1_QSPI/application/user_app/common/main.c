@@ -195,7 +195,7 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
 
-  SDRAM_Init();
+  bank1_sdram_init();
 
   /* Console initialize */
   device_console_init(CONSOLE_NAME_DEFAULT);

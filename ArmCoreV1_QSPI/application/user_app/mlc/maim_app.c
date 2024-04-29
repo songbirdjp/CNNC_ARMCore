@@ -1,5 +1,5 @@
-#include "nonRealtimeDataProcess.h"
-#include"sdram_fmc_drv.h"
+#include "main_app.h"
+#include "fmc_sdram_port.h"
 #include "fpga_rw.h"
 #include "tcp_client.h"
 #include "main.h"

@@ -1,8 +1,0 @@
-#ifndef _NONREALTIMEDATAPROCESS_H
-#define _NONREALTIMEDATAPROCESS_H
-
-#define MAX_BEAM_NUM    30
-
-
-
-#endif
