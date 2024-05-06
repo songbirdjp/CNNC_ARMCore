@@ -430,7 +430,7 @@ int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t address_base, u
 }
 
 
-#ifdef FLASH_TEST
+#ifndef FLASH_TEST
 #include "shell.h"
 
 static DEVICE_FLASH flash_bank1 = {0};
@@ -439,12 +439,44 @@ static DEVICE_FLASH *device_flash_get(void)
     return &flash_bank1;
 }
 
+#define POLY 0x4c11db7
+/* SW_crc32_Calcul function refer to AN5507 */
+uint32_t SW_crc32_Calcul(const uint32_t *buf, size_t len, uint32_t BurstSize)
+{
+    int k;
+    /* Define the initial CRC value */
+    uint32_t crc = 0;
+    /* Define the length of data on which CRC has to be computed depending on CRC burst size
+    */
+    if ( len > BurstSize)
+    {
+        if ( (len % BurstSize) != 0)
+        {
+            len = BurstSize * ( ( len / BurstSize) + 1 );
+        }
+    }
+    else
+    {
+        len = BurstSize;
+    }
+    /* Calculate CRC value */
+    while (len--) {
+        crc ^= *buf++;
+        for (k = 0; k < 32; k++)
+            crc = crc & 0x80000000 ? (crc << 1) ^ POLY : crc << 1;
+        crc ^= 0x55555555;
+    }
+    /* Return CRC value */
+    return crc;
+}
+
 int8_t flash_test(uint8_t argc, char *argv[])
 {
     int8_t ret = 0;
     DEVICE_FLASH *flash = device_flash_get();
-
-    uint8_t data[256] = {0};
+    FLASH_CRCInitTypeDef CRCInitTypeDef = {0};
+    uint32_t CRC_Result = 0;
+    uint8_t data[1024] = {0};
     uint32_t address[2] = {FLASH_ADDRESS_BASE, FLASH_ADDRESS_END};
 
     switch (atoi(argv[1]))
@@ -505,6 +537,32 @@ int8_t flash_test(uint8_t argc, char *argv[])
             printf("flash erase err:%d\r\n", ret);
             return -5;
         }
+        break;
+
+    case 4:
+        HAL_FLASH_Unlock();
+        CRCInitTypeDef.TypeCRC = FLASH_CRC_ADDR;
+        CRCInitTypeDef.BurstSize = FLASH_CRC_BURST_SIZE_4;
+        CRCInitTypeDef.Bank = FLASH_BANK_1;
+        // CRCInitTypeDef.Sector = FLASH_SECTOR_0;
+        // CRCInitTypeDef.NbSectors = 1;
+        CRCInitTypeDef.CRCStartAddr = FLASH_ADDRESS_BASE;
+        CRCInitTypeDef.CRCEndAddr = FLASH_ADDRESS_BASE + 1024 - 1;  /* 共1024个字节进行计算，硬件按512字节对齐计算，而非128字节 */
+        HAL_StatusTypeDef status = HAL_FLASHEx_ComputeCRC(&CRCInitTypeDef, &CRC_Result);
+        if (status != HAL_OK)
+        {
+            printf("HAL_FLASHEx_ComputeCRC error\r\n");
+        }
+
+        HAL_FLASH_Lock();
+
+        printf("CRC_Result:%08x\r\n", CRC_Result);
+        break;
+
+    case 5:
+         CRC_Result = SW_crc32_Calcul((const uint32_t *)FLASH_ADDRESS_BASE, 256, 4);    /* 读取1024字节进行计算 */
+         printf("crc result:%08x\r\n", CRC_Result);
+
         break;
     
     default:
