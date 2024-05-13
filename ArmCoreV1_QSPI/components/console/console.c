@@ -290,7 +290,7 @@ static void cmd_mem_read(uint8_t argc, uint8_t **argv)
 
     for (uint8_t i = 0; i < read_num; i++)
     {
-        printf("%x  ", *(uint32_t *)(opt_addr + i * 4));
+        printf("%.8x  ", *(uint32_t *)(opt_addr + i * 4));
     }
     printf("\r\n");
 

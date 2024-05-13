@@ -190,7 +190,7 @@ SECTIONS
     . = ALIGN(8);
   } >RAM_D1
 
-  .bkp :
+  .bkp (NOLOAD) :
   {
     . = ALIGN(4);
     _bkp_start_ = .;
@@ -198,7 +198,7 @@ SECTIONS
     KEEP(*(.bkp*))
   } >RAM_BKP
 
-  .ram_d3 :
+  .ram_d3 (NOLOAD) :
   {
     . = ALIGN(4);
     KEEP(*(.ram_d3))

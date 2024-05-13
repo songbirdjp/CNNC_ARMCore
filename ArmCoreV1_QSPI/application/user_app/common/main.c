@@ -145,6 +145,64 @@ static void cmd_rtc_test(uint8_t argc, uint8_t **argv)
 
 }
 MSH_CMD_EXPORT_ALIAS(cmd_rtc_test, rtc_test, rtc tset);
+
+static void rdp_test(uint8_t argc, uint8_t **argv)
+{
+    if (argc != 2)
+    {
+        printf("param error\r\n");
+        return;
+    }
+
+    FLASH_OBProgramInitTypeDef OBInit = {0};
+    HAL_FLASHEx_OBGetConfig(&OBInit);
+
+    printf("RDPLevel:%#x\r\n", OBInit.RDPLevel);
+
+    OBInit.OptionType = OPTIONBYTE_RDP;
+
+    switch (atoi(argv[1]))
+    {
+    case 0:
+        OBInit.RDPLevel = OB_RDP_LEVEL_0;
+        break;
+    case 1:
+        OBInit.RDPLevel = OB_RDP_LEVEL_1;
+        break;
+    case 2:
+
+        return;
+    default:
+        break;
+    }
+
+    HAL_StatusTypeDef status;
+
+    status = HAL_FLASH_OB_Unlock();
+    if (status != HAL_OK)
+    {
+        printf("OBUnlock error:%#x\r\n", status);
+    }
+
+    status = HAL_FLASHEx_OBProgram(&OBInit);
+    if (status != HAL_OK)
+    {
+        printf("OBProgram error:%#x\r\n", status);
+    }
+
+    status = HAL_FLASH_OB_Launch();
+    if (status != HAL_OK)
+    {
+        printf("OBLaunch error:%#x\r\n", status);
+    }
+
+    status = HAL_FLASH_OB_Lock();
+    if (status != HAL_OK)
+    {
+        printf("OBLock error:%#x\r\n", status);
+    }
+}
+MSH_CMD_EXPORT_ALIAS(rdp_test, rdp_test, rtc rdp);
 /* USER CODE END 0 */
 
 /**
