@@ -68,6 +68,7 @@ include_directories(
     Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 
     Middlewares/Third_Party/FreeRTOS/Source/include 
     Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F 
+    Middlewares/ST/STM32_Cryptographic/include 
     drivers/external_drivers/backup_sram 
     drivers/external_drivers/fram 
     drivers/external_drivers/lan9252 
@@ -125,6 +126,8 @@ add_link_options(-mcpu=${mcpu} -mthumb -mthumb-interwork)
 add_link_options(-T $${LINKER_SCRIPT})
 
 add_executable($${PROJECT_NAME}.elf $${SOURCES} $${LINKER_SCRIPT})
+
+target_link_libraries(${PROJECT_NAME}.elf ${CMAKE_SOURCE_DIR}/Middlewares/ST/STM32_Cryptographic/lib/libSTM32Cryptographic_CM7.a)
 
 set(HEX_FILE $${PROJECT_BINARY_DIR}/$${PROJECT_NAME}.hex)
 set(BIN_FILE $${PROJECT_BINARY_DIR}/$${PROJECT_NAME}.bin)
