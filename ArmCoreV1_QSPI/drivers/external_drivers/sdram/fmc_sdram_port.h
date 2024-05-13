@@ -30,8 +30,8 @@ struct dev_sdram
 #endif
     int8_t (*open)(struct dev_sdram *sdram);
     int8_t (*close)(struct dev_sdram *sdram);
-    int8_t (*read)(struct dev_sdram *sdram, uint32_t addr, uint8_t *data, uint16_t len);
-    int8_t (*write)(struct dev_sdram *sdram, uint32_t addr, uint8_t *data, uint16_t len);
+    int8_t (*read)(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, uint16_t len);
+    int8_t (*write)(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, uint16_t len);
     int8_t (*ioctl)(struct dev_sdram *sdram, uint8_t cmd, void *arg);
 };
 

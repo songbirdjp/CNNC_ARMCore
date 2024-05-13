@@ -277,7 +277,7 @@ static void TCPClientTask(void *argument)
 
         while(tcp_link_detect() == false)
         {
-            printf("tcp link off\r\n");
+            // printf("tcp link off\r\n");
 
             tcp_link_state_recover();
 

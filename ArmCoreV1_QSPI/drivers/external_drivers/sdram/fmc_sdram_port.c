@@ -109,23 +109,28 @@ static int8_t dev_close(struct dev_sdram *sdram)
     return 0;
 }
 
-static int8_t dev_read(struct dev_sdram *sdram, uint32_t addr, uint8_t *data, uint16_t len)
+static int8_t dev_read(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, uint16_t len)
 {
     if (sdram == NULL)
     {
         return -1;
     }
 
+    if (offset + len > SDRAM_BANK1_SIZE)
+    {
+        return -2;
+    }
+
     osMutexAcquire(sdram->mutex, osWaitForever);
 
 #ifdef USING_MDMA_FOR_FMC
 
-    HAL_StatusTypeDef status = HAL_MDMA_Start_IT(&hmdma_mdma_channel3_sw_0, addr, data, len, 1);
+    HAL_StatusTypeDef status = HAL_MDMA_Start_IT(&hmdma_mdma_channel3_sw_0, SDRAM_BANK1_ADDR + offset, data, len, 1);
     if (status!= HAL_OK)
     {
         printf("HAL_MDMA_Start_IT error:%d\r\n", status);
         osMutexRelease(sdram->mutex);
-        return -2;
+        return -3;
     }
 
     osEventFlagsWait(sdram->event, 1, osFlagsWaitAny, osWaitForever);
@@ -138,22 +143,27 @@ static int8_t dev_read(struct dev_sdram *sdram, uint32_t addr, uint8_t *data, ui
     return 0;
 }
 
-static int8_t dev_write(struct dev_sdram *sdram, uint32_t addr, uint8_t *data, uint16_t len)
+static int8_t dev_write(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, uint16_t len)
 {
     if (sdram == NULL)
     {
         return -1;
     }
 
+    if (offset + len > SDRAM_BANK1_SIZE)
+    {
+        return -2;
+    }
+
     osMutexAcquire(sdram->mutex, osWaitForever);
 
 #ifdef USING_MDMA_FOR_FMC
-    HAL_StatusTypeDef status = HAL_MDMA_Start_IT(&hmdma_mdma_channel3_sw_0, data, addr, len, 1);
+    HAL_StatusTypeDef status = HAL_MDMA_Start_IT(&hmdma_mdma_channel3_sw_0, data, SDRAM_BANK1_ADDR + offset, len, 1);
     if (status!= HAL_OK)
     {
         printf("HAL_MDMA_Start_IT error:%d\r\n", status);
         osMutexRelease(sdram->mutex);
-        return -2;
+        return -3;
     }
 
     osEventFlagsWait(sdram->event, 1, osFlagsWaitAny, osWaitForever);
@@ -235,7 +245,7 @@ int8_t bank1_sdram_init(void)
 }
 
 
-#ifdef SDRAM_TEST
+#ifndef SDRAM_TEST
 #include "shell.h"
 #include "utilities.h"
 static int8_t sdram_write_read_test(uint8_t argc, uint8_t *argv[])
@@ -320,7 +330,7 @@ static int8_t sdram_read_test(uint8_t argc, uint8_t *argv[])
 
     printf("-------------------------------------------\r\n");
     
-    dev->read(dev, SDRAM_BANK1_ADDR, buf, 128);
+    dev->read(dev, 0, buf, 128);
     for (uint32_t i = 0; i < sizeof(buf)/sizeof(buf[0]); i++)
     {
         printf("buf[%d] = %d\r\n", i, buf[i]);
@@ -340,7 +350,7 @@ static int8_t sdram_write_test(uint8_t argc, uint8_t *argv[])
         buf[i] = i*2;
     }
 
-    dev->write(dev, SDRAM_BANK1_ADDR, buf, 128);
+    dev->write(dev, 0, buf, 128);
 
     sdram_read_test(0, NULL);
 
