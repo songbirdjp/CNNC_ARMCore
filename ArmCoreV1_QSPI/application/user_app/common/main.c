@@ -262,6 +262,11 @@ int main(void)
 
   printf("Init ok\r\n");
 
+  if (system_encrypt_init() != 0)
+  {
+    goto err;
+  }
+
 #if 0
     uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
     uint32_t res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
@@ -303,11 +308,15 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+err:
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_7, GPIO_PIN_SET);
   }
   /* USER CODE END 3 */
 }

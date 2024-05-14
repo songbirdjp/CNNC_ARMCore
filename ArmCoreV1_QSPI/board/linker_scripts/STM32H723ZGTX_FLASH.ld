@@ -66,8 +66,10 @@ SECTIONS
 
   .system_info :
   {
-    . = ALIGN(0x400);
+    . = ORIGIN(FLASH) + 0x400;
+    __system_info_start = .;
     KEEP(*(.system_info*))
+    __system_info_end = .;
   } >FLASH
   
   /* The program code and other data goes into FLASH */

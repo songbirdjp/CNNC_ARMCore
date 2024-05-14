@@ -11,13 +11,16 @@ extern "C" {
 
 struct sys_info
 {
-    uint8_t fw_version[20];
-    uint8_t compile_time[30];
+    uint8_t fw_version[32];
+    uint8_t compile_time[32];
+    uint8_t uid_cryptogram[64];
+    uint32_t uid_cryptogram_valid;
+    uint32_t reserved[7]    /* flash word == 32bytes */
 };
 
 struct sys_info *system_info_get(void);
 
-
+int8_t system_encrypt_init(void);
 
 #ifdef __cplusplus
 }
