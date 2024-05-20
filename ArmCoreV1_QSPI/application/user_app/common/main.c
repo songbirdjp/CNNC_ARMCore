@@ -260,6 +260,8 @@ int main(void)
   system_info_print();
   system_fun_init(); 
 
+  printf("----this is bootloader----\r\n");
+
   printf("Init ok\r\n");
 
   if (system_encrypt_init() != 0)
@@ -267,8 +269,17 @@ int main(void)
     goto err;
   }
 
+  printf("portCPUID:%#.8x\r\n", * ( ( volatile uint32_t * ) 0xE000ed00 ));
+
+#if 1
+  portENABLE_INTERRUPTS();
+  extern int8_t app_valid_check_and_jump(void);
+  app_valid_check_and_jump();
+#endif
+
 #if 0
     uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+    hardware_crc_config(CRC32);
     uint32_t res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
     printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
 
@@ -309,14 +320,19 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 err:
+  portENABLE_INTERRUPTS();
+
   while (1)
   {
+    HAL_IWDG_Refresh(&hiwdg1);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_7, GPIO_PIN_SET);
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_2);
+    HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_7);
+
+    HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }

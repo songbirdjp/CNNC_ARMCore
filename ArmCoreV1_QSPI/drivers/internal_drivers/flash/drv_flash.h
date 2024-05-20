@@ -25,8 +25,8 @@ enum
 struct drv_flash
 {
     uint8_t name[DEVICE_NAME_LENGTH];
-    uint32_t address_base;
-    uint32_t address_end;
+    uint32_t addr_base;
+    uint32_t size;
     uint8_t open_state;
 
 #ifdef OS_FREERTOS
@@ -36,8 +36,8 @@ struct drv_flash
 
     int8_t (*open)(struct drv_flash *flash);
     int8_t (*close)(struct drv_flash *flash);
-    int8_t (*write)(struct drv_flash *flash, uint32_t address, uint8_t *buf, uint32_t size, uint32_t timeout);
-    int8_t (*read)(struct drv_flash *flash, uint32_t address, uint8_t *buf, uint32_t size, uint32_t timeout);
+    int8_t (*write)(struct drv_flash *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout);
+    int8_t (*read)(struct drv_flash *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout);
     int8_t (*ioctl)(struct drv_flash *flash, uint8_t cmd, void *arg);
 };
 
@@ -66,8 +66,8 @@ typedef struct drv_flash DEVICE_FLASH;
 * sector 7: 0x081E0000 - 0x081FFFFF (128k)  -> reserved
 */
 
-#define FLASH_ADDRESS_BASE (FLASH_BASE + FLASH_SECTOR_SIZE * 6)
-#define FLASH_ADDRESS_END  FLASH_END
+#define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)
+#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2)
 
 
 #ifdef __cplusplus

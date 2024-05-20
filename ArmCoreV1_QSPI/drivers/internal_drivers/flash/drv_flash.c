@@ -51,14 +51,14 @@ static uint32_t flash_sector_get(uint32_t address)
     return (address - FLASH_BASE) / FLASH_SECTOR_SIZE;
 }
 
-static int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, uint32_t address_end, uint32_t timeout)
+static int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, uint32_t address_end, uint32_t timeout)   /* 不包含address_end地址所在的扇区 */
 {
     if (flash == NULL)
     {
         return -1;
     }
 
-    if (address_start > address_end || address_start < flash->address_base || address_start > flash->address_end) 
+    if (address_start > address_end || address_start < flash->addr_base || address_start + flash->size - 1 > address_end)
     {
         return -2;
     }
@@ -186,7 +186,7 @@ static int8_t flash_close(DEVICE_FLASH *flash)
     return 0;
 }
 
-static int8_t flash_write(DEVICE_FLASH *flash, uint32_t address, uint8_t *buf, uint32_t size, uint32_t timeout)
+static int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
 {
     if (flash == NULL || buf == NULL || size == 0)
     {
@@ -194,7 +194,7 @@ static int8_t flash_write(DEVICE_FLASH *flash, uint32_t address, uint8_t *buf, u
         return -1;
     }
 
-    if (address < flash->address_base || address > flash->address_end || address + size > flash->address_end || address % 32 != 0)
+    if (offset + size > flash->size || offset % 32 != 0)
     {
         return -2;
     }
@@ -232,7 +232,7 @@ static int8_t flash_write(DEVICE_FLASH *flash, uint32_t address, uint8_t *buf, u
     for (uint32_t i = 0; i < size; i += 32)
     {
 #ifdef OS_FREERTOS
-        status = HAL_FLASH_Program_IT(FLASH_TYPEPROGRAM_FLASHWORD, address + i, buf + i); /* flash word == 256bit == 32bytes */
+        status = HAL_FLASH_Program_IT(FLASH_TYPEPROGRAM_FLASHWORD, flash->addr_base + offset + i, buf + i); /* flash word == 256bit == 32bytes */
         if (status != HAL_OK) 
         {
             printf("flash write err:%d\r\n", status);
@@ -247,7 +247,7 @@ static int8_t flash_write(DEVICE_FLASH *flash, uint32_t address, uint8_t *buf, u
             goto out;
         }
 #else
-        status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, address + i, buf + i); /* flash word == 256bit == 32bytes */
+        status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, flash->addr_base + offset + i, buf + i); /* flash word == 256bit == 32bytes */
         if (status != HAL_OK) 
         {
             printf("flash write err:%d\r\n", status);
@@ -277,15 +277,15 @@ err:
     return ret;
 }
 
-static int8_t flash_read(DEVICE_FLASH *flash, uint32_t address, uint8_t *buf, uint32_t size, uint32_t timeout)
+static int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
 {
-    if (flash == NULL || buf == NULL || size == 0)
+    if (flash == NULL || buf == NULL || size == 0 || offset & 0x3 != 0)
     {
         printf("ptr is null or size is 0\r\n");
         return -1;
     }
 
-    if (address < flash->address_base || address > flash->address_end || address + size > flash->address_end)
+    if (offset + size > flash->size)
     {
         return -2;
     }
@@ -308,7 +308,7 @@ static int8_t flash_read(DEVICE_FLASH *flash, uint32_t address, uint8_t *buf, ui
 
     for (uint32_t i = 0; i < size; i += 4)
     {
-        *(uint32_t *)(buf + i) = *(uint32_t *)(address + i);
+        *(uint32_t *)(buf + i) = *(uint32_t *)(flash->addr_base + offset + i);
     }
 
 #ifdef OS_FREERTOS
@@ -340,7 +340,7 @@ static int8_t flash_ioctl(DEVICE_FLASH *flash, uint8_t cmd, void *arg)
     switch (cmd)
     {
     case FLASH_CMD_ERASE_SECTOR:
-        flash_erase_sector(flash, *(uint32_t *)arg, *(uint32_t *)(arg + 4), 5000);
+        flash_erase_sector(flash, *(uint32_t *)arg, *(uint32_t *)arg + *(uint32_t *)(arg + 4) - 1, 5000);
         break;
 
     default:
@@ -410,7 +410,7 @@ int8_t flash_init(DEVICE_FLASH *flash, uint8_t *device_name)
     return flash->open(flash);
 }
 
-int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t address_base, uint32_t address_end)
+int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t addr_base, uint32_t size)
 {
     if (flash == NULL)
     {
@@ -418,13 +418,8 @@ int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t address_base, u
         return -1;
     }
 
-    if (address_base < FLASH_BASE ||address_end > FLASH_END || address_base > address_end)
-    {
-        return -2;
-    }
-
-    flash->address_base = address_base;
-    flash->address_end = address_end;
+    flash->addr_base = addr_base;
+    flash->size = size;
 
     return 0;
 }
@@ -477,19 +472,19 @@ int8_t flash_test(uint8_t argc, char *argv[])
     FLASH_CRCInitTypeDef CRCInitTypeDef = {0};
     uint32_t CRC_Result = 0;
     uint8_t data[1024] = {0};
-    uint32_t address[2] = {FLASH_ADDRESS_BASE, FLASH_ADDRESS_END};
+    uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
 
     switch (atoi(argv[1]))
     {
     case 0:
-        ret = flash_init(&flash_bank1, "DEVICE_NAME_FLASH_BANK1");
+        ret = flash_init(device_flash_get(), "DEVICE_NAME_FLASH_BANK1");
         if (ret != 0)
         {
             printf("flash init err:%d\r\n", ret);
             return -1;
         }
 
-        ret = flash_operation_address_set(&flash_bank1, FLASH_ADDRESS_BASE, FLASH_ADDRESS_END);
+        ret = flash_operation_address_set(device_flash_get(), flash_cfg[0], flash_cfg[1]);
         if (ret != 0)
         {
             printf("flash operation address set err:%d\r\n", ret);
@@ -498,7 +493,7 @@ int8_t flash_test(uint8_t argc, char *argv[])
         break;
 
     case 1:
-        ret = flash->read(flash, flash->address_base, data, sizeof(data), 1000);
+        ret = flash->read(flash, 0, data, sizeof(data), 1000);
         if (ret != 0)
         {
             printf("flash read err:%d\r\n", ret);
@@ -522,7 +517,7 @@ int8_t flash_test(uint8_t argc, char *argv[])
             data[i] = i;
         }
 
-        ret = flash->write(flash, FLASH_ADDRESS_BASE, data, sizeof(data), 1000);
+        ret = flash->write(flash, 0, data, sizeof(data), 1000);
         if (ret != 0)
         {
             printf("flash write err:%d\r\n", ret);
@@ -531,7 +526,7 @@ int8_t flash_test(uint8_t argc, char *argv[])
         break;
 
     case 3:
-        ret = flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)address);
+        ret = flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
         if (ret != 0)
         {
             printf("flash erase err:%d\r\n", ret);
