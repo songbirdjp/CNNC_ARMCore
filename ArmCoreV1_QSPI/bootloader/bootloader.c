@@ -1,7 +1,7 @@
 #include "bootloader.h"
 #include "stm32h7xx_hal.h"
 
-/* 
+/*
  *  1. Set the vector table offset to the specified value.
  *  2. modify the xxx_FLASH.ld file -> MEMORY item -> flash origin and length. origin addr must multiple of 0x400
  */
@@ -24,12 +24,12 @@ uint32_t vector_table_offset_get(void)
 }
 
 
-/* 
+/*
  * note: normal power on reset
- * 1. bootloader must encryption 
+ * 1. bootloader must encryption
  * 2. check code info crc & code crc
  * 3. jump to application
- * 
+ *
  * note: upgrade reset
  * 1. first: write data to flash
  * 2. second: calculate & write uid cryptogram to flash
@@ -80,7 +80,7 @@ struct code_info
     uint8_t  code_name[16];         /* code名称 */
     uint32_t code_type;             /* code类型：0：全包  1：差分包 */
     uint32_t code_offset;           /* code起始地址，相对于info的偏移 */
-    uint32_t boot_offset;           /* 引导程序起始地址，相对于code的偏移 */    
+    uint32_t boot_offset;           /* 引导程序起始地址，相对于code的偏移 */
     uint32_t code_size;             /* code大小 */
     uint32_t code_crc;              /* code crc */
     uint32_t info_crc;              /* info crc */
@@ -214,7 +214,7 @@ static int8_t flash_crc_calculate(uint32_t offset, uint32_t size, uint32_t *crc)
         printf("HAL_FLASHEx_ComputeCRC error\r\n");
         return -3;
     }
-    
+
     status = HAL_FLASH_Lock();
     if (status != HAL_OK)
     {
@@ -321,6 +321,49 @@ static int8_t fw_info_check(struct code_info *info)
     return 0;
 }
 
+static int8_t patch_execute(struct code_info *info)
+{
+    if (info == NULL)
+    {
+        return -1;
+    }
+
+    uint32_t flag = info->patch_flag;
+    uint32_t crc = 0;
+    HAL_StatusTypeDef status = HAL_OK;
+
+    if (flag & 0x0F)
+    {
+        for (uint8_t i = 0; i < 4; i++)
+        {
+            if (flag & (1 << i))
+            {
+                status = hardware_crc_config(CRC32);
+                if (status != HAL_OK)
+                {
+                    printf("hardware_crc_config error:%d\r\n", status);
+                    return -2;
+                }
+
+                crc = hardware_crc_calculate(info->patch[i].patch_addr, info->patch[i].patch_len);
+                crc ^= 0xFFFFFFFF;
+
+                if (crc != info->patch[i].patch_crc)
+                {
+                    printf("info crc check err, crc = %#.8x, patch[%d] crc = %#.8x\r\n", crc, i, info->patch[i].patch_crc);
+                    return -3;
+                }
+                else
+                {
+                    ((void (*)(void))info->patch[i].patch_addr)();
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 static int8_t jump_to_addr(uint32_t addr)
 {
     if (addr < FW_BIN_INFO_ADDR_BASE || addr >= (FLASH_BASE + FLASH_SIZE - 4) || (addr & 0x3) != 0)
@@ -370,35 +413,35 @@ enum bkp_reg
 /*RTC_BKP_DR0  (0x00u)  -> used for reboot time count */    REG_REBOOT_TIMES = 0,
 /*RTC_BKP_DR1  (0x01u)  -> used for upgrade flag */         REG_UPGRADE_FLAG,
 /*RTC_BKP_DR2  (0x02u)  -> */                               REG_VALID_MAX
-/*RTC_BKP_DR3  (0x03u)  -> */  
-/*RTC_BKP_DR4  (0x04u)  -> */  
-/*RTC_BKP_DR5  (0x05u)  -> */  
-/*RTC_BKP_DR6  (0x06u)  -> */  
-/*RTC_BKP_DR7  (0x07u)  -> */  
-/*RTC_BKP_DR8  (0x08u)  -> */  
-/*RTC_BKP_DR9  (0x09u)  -> */  
-/*RTC_BKP_DR10 (0x0Au)  -> */  
-/*RTC_BKP_DR11 (0x0Bu)  -> */  
-/*RTC_BKP_DR12 (0x0Cu)  -> */  
-/*RTC_BKP_DR13 (0x0Du)  -> */  
-/*RTC_BKP_DR14 (0x0Eu)  -> */  
-/*RTC_BKP_DR15 (0x0Fu)  -> */  
-/*RTC_BKP_DR16 (0x10u)  -> */  
-/*RTC_BKP_DR17 (0x11u)  -> */  
-/*RTC_BKP_DR18 (0x12u)  -> */  
-/*RTC_BKP_DR19 (0x13u)  -> */  
-/*RTC_BKP_DR20 (0x14u)  -> */  
-/*RTC_BKP_DR21 (0x15u)  -> */  
-/*RTC_BKP_DR22 (0x16u)  -> */  
-/*RTC_BKP_DR23 (0x17u)  -> */  
-/*RTC_BKP_DR24 (0x18u)  -> */  
-/*RTC_BKP_DR25 (0x19u)  -> */  
-/*RTC_BKP_DR26 (0x1Au)  -> */  
-/*RTC_BKP_DR27 (0x1Bu)  -> */  
-/*RTC_BKP_DR28 (0x1Cu)  -> */  
-/*RTC_BKP_DR29 (0x1Du)  -> */  
-/*RTC_BKP_DR30 (0x1Eu)  -> */  
-/*RTC_BKP_DR31 (0x1Fu)  -> */  
+/*RTC_BKP_DR3  (0x03u)  -> */
+/*RTC_BKP_DR4  (0x04u)  -> */
+/*RTC_BKP_DR5  (0x05u)  -> */
+/*RTC_BKP_DR6  (0x06u)  -> */
+/*RTC_BKP_DR7  (0x07u)  -> */
+/*RTC_BKP_DR8  (0x08u)  -> */
+/*RTC_BKP_DR9  (0x09u)  -> */
+/*RTC_BKP_DR10 (0x0Au)  -> */
+/*RTC_BKP_DR11 (0x0Bu)  -> */
+/*RTC_BKP_DR12 (0x0Cu)  -> */
+/*RTC_BKP_DR13 (0x0Du)  -> */
+/*RTC_BKP_DR14 (0x0Eu)  -> */
+/*RTC_BKP_DR15 (0x0Fu)  -> */
+/*RTC_BKP_DR16 (0x10u)  -> */
+/*RTC_BKP_DR17 (0x11u)  -> */
+/*RTC_BKP_DR18 (0x12u)  -> */
+/*RTC_BKP_DR19 (0x13u)  -> */
+/*RTC_BKP_DR20 (0x14u)  -> */
+/*RTC_BKP_DR21 (0x15u)  -> */
+/*RTC_BKP_DR22 (0x16u)  -> */
+/*RTC_BKP_DR23 (0x17u)  -> */
+/*RTC_BKP_DR24 (0x18u)  -> */
+/*RTC_BKP_DR25 (0x19u)  -> */
+/*RTC_BKP_DR26 (0x1Au)  -> */
+/*RTC_BKP_DR27 (0x1Bu)  -> */
+/*RTC_BKP_DR28 (0x1Cu)  -> */
+/*RTC_BKP_DR29 (0x1Du)  -> */
+/*RTC_BKP_DR30 (0x1Eu)  -> */
+/*RTC_BKP_DR31 (0x1Fu)  -> */
 };
 
 #include "rtc.h"
@@ -447,6 +490,7 @@ int8_t app_valid_check_and_jump(void)
 {
     int8_t ret = 0;
     uint32_t reboot_count = 0;
+    uint32_t upgrade_flag = 0;
 
     ret = reboot_times_check(&reboot_count);
     if (ret != 0)
@@ -458,6 +502,17 @@ int8_t app_valid_check_and_jump(void)
     if (ret != 0)
     {
         return ret;
+    }
+
+    ret = bkp_reg_read(REG_UPGRADE_FLAG, &upgrade_flag);
+    if (ret != 0)
+    {
+        return ret;
+    }
+
+    if (upgrade_flag == 0xAA5555AA)
+    {
+        return 0;
     }
 
     struct code_info info = {0};
@@ -502,6 +557,13 @@ int8_t app_valid_check_and_jump(void)
     }
     else
     {
+        ret = patch_execute(&info);
+        if (ret != 0)
+        {
+            printf("patch execute err\r\n");
+            return ret;
+        }
+
         ret = jump_to_addr(FW_BIN_INFO_ADDR_BASE + info.code_offset + info.boot_offset);
         if (ret != 0)
         {
@@ -583,45 +645,57 @@ static int8_t upgrade_info_check(struct code_info *info)
 }
 
 #include "sys_cfg.h"
-static int8_t upgrade_code_cryptogram_update(void)
+#include "drv_flash.h"
+static int8_t upgrade_code_cryptogram_update(struct code_info *info)
 {
-    struct sys_info *info = system_info_get();
+    struct sys_info *cfg = system_info_get();   /* boot cfg */
     struct sys_info info_buf = {0};
+    DEVICE_FLASH *flash = device_flash_get();
 
-    memcpy(&info_buf.reserved, &info->reserved, sizeof(info_buf.reserved));
-    info_buf.uid_cryptogram_valid = 0x01;
+    uint32_t app_cfg_offset = FW_BIN_INFO_OFFSET + info->code_offset + 0x0400; /* note: here 0x0400 is the offset relative to code */
 
+    /* 1. read system info from flash */
+    int8_t ret =flash->read(flash, app_cfg_offset, &info_buf, sizeof(struct sys_info), 1000);
+    if (ret != 0)
+    {
+        printf("read system info err:%d\r\n", ret);
+        return -1;
+    }
+
+    /* 2. update code cryptogram */
+    memcpy(&info_buf.uid_cryptogram, &cfg->uid_cryptogram, sizeof(info_buf.uid_cryptogram) + sizeof(info_buf.uid_cryptogram_valid));
+
+    /* 3. write system info to flash */
     HAL_StatusTypeDef status = HAL_OK;
     status = HAL_FLASH_Unlock();
     if (status != HAL_OK)
     {
         printf("flash unlock err:%d\r\n", status);
-        return -1;
+        return -2;
     }
 
-    uint32_t offset = sizeof(info->fw_version) + sizeof(info->compile_time);
+    uint32_t offset = sizeof(info_buf.fw_version) + sizeof(info_buf.compile_time);
 
-    for (uint32_t i = 0; i < sizeof(info->uid_cryptogram) + sizeof(info->uid_cryptogram_valid); i += 32)
+    for (uint32_t i = 0; i < sizeof(info_buf.uid_cryptogram) + sizeof(info_buf.uid_cryptogram_valid); i += 32)
     {
-        status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, (uint32_t)info + offset + i, info_buf.uid_cryptogram + i); /* flash word == 256bit == 32bytes */
-        if (status != HAL_OK) 
+        status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_BASE + app_cfg_offset + offset + i, info_buf.uid_cryptogram + i); /* flash word == 256bit == 32bytes */
+        if (status != HAL_OK)
         {
             printf("flash write err:%d\r\n", status);
-            return -2;
+            return -3;
         }
     }
 
     status = HAL_FLASH_Lock();
-    if (status != HAL_OK) 
+    if (status != HAL_OK)
     {
         printf("flash lock err:%d\r\n", status);
-        return -3;
+        return -4;
     }
 
     return 0;
 }
 
-#include "drv_flash.h"
 static int8_t upgrade_info_crc_update(struct code_info *info)
 {
     if (info == NULL)
@@ -630,7 +704,7 @@ static int8_t upgrade_info_crc_update(struct code_info *info)
     }
 
     /* 1. update code cryptogram */
-    int8_t ret = upgrade_code_cryptogram_update();
+    int8_t ret = upgrade_code_cryptogram_update(info);
     if (ret != 0)
     {
         printf("upgrade code cryptogram update err\r\n");
@@ -654,8 +728,8 @@ static int8_t upgrade_info_crc_update(struct code_info *info)
     }
 
     uint32_t res = hardware_crc_calculate(info, info->info_len - sizeof (info->info_crc));
-    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
-    info->info_crc = res;
+    info->info_crc = res^0xFFFFFFFF;
+    printf("crc32 res = %#x\r\n", info->info_crc);
 
     /* 4. write info to flash */
     DEVICE_FLASH *flash = device_flash_get();

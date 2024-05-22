@@ -71,6 +71,22 @@ SECTIONS
     KEEP(*(.system_info*))
     __system_info_end = .;
   } >FLASH
+
+  .patch :
+  {
+    /* patch for bootloader, which will be executed before jump judgement */
+    . = ORIGIN(FLASH) + 0x800;
+    . = ALIGN(4);
+    __patch_table_start = .;
+    KEEP(*(.patch_functions_1))
+    . = ALIGN(0x400);
+    KEEP(*(.patch_functions_2))
+    . = ALIGN(0x400);
+    KEEP(*(.patch_functions_3))
+    . = ALIGN(0x400);
+    KEEP(*(.patch_functions_4))
+    __patch_table_end = .;
+  } >FLASH
   
   /* The program code and other data goes into FLASH */
   .text :
