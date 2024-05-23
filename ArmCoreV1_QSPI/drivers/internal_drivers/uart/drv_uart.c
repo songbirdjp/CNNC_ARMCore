@@ -186,7 +186,7 @@ static int8_t uart_read(DEVICE_UART *uart, uint8_t *buf, uint32_t timeout)
     ret = osMessageQueueGet(uart->rx_queue, buf, 0, timeout);
     if (ret != osOK)
     {
-        printf("device %s read data err:%d\r\n", uart->name, ret);
+        // printf("device %s read data err:%d\r\n", uart->name, ret);
         return -2;
     }
 

@@ -99,6 +99,7 @@ include_directories(
     components/utilities 
     board/board_config/inc 
     application/ethercat 
+    application/flash 
     application/fpga 
     application/system_common 
     application/tcp 
@@ -115,6 +116,7 @@ file(GLOB_RECURSE SOURCES
     "components/*.*" 
     "board/*.*" 
     "application/ethercat/*.*" 
+    "application/flash/*.*" 
     "application/tcp/*.*" 
     "application/fpga/*.*" 
     "application/system_common/*.*" 

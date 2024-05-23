@@ -5,8 +5,13 @@
 #include "rtc.h"
 #include "init_call.h"
 #include "ulog.h"
+#include "console.h"
 
+#ifndef USING_COM1_FOR_YMODEM
 #define CONSOLE_CMD_MAX_LENGTH      128
+#else
+#define CONSOLE_CMD_MAX_LENGTH      1029
+#endif
 struct CmdMessage
 {
     uint8_t buf[CONSOLE_CMD_MAX_LENGTH];
@@ -101,7 +106,7 @@ int8_t device_console_init(uint8_t *device_name)
     osMessageQueueAttr_t CmdQueue_attributes = {
     .name = "uart_rx_queue"
     };
-    osMessageQueueId_t CmdQueueHandle = osMessageQueueNew (16, sizeof(struct CmdMessage), &CmdQueue_attributes);
+    osMessageQueueId_t CmdQueueHandle = osMessageQueueNew (5, sizeof(struct CmdMessage), &CmdQueue_attributes);
     uart_rx_queue_init(&console, CmdQueueHandle);
 
     uint8_t *rx_buf = (uint8_t *)pvPortMalloc(sizeof(struct CmdMessage));  /* here should check when use dma mode */
@@ -161,13 +166,73 @@ static int8_t console_cmd_process(void)
     return 0;
 }
 
+#ifdef USING_COM1_FOR_YMODEM
+static enum com1_mode com_mode = CONSOLE_MODE;
+enum com1_mode *com_mode_get(void)
+{
+    return &com_mode;
+}
+
+int8_t ymodem_data_read(uint8_t *buf, uint16_t *len, uint32_t timeout)
+{
+    if (buf == NULL || len == NULL)
+    {
+        return -1;
+    }
+
+    struct CmdMessage msg = {0};
+
+    int8_t ret = console.read(&console, &msg, timeout);
+    if (ret != 0)
+    {
+        return ret;
+    }
+
+    *len = msg.len;
+    memcpy(buf, msg.buf, msg.len);
+
+    return 0;
+}
+
+int8_t ymodem_data_write(uint8_t *buf, uint16_t len, uint32_t timeout)
+{
+    if (buf == NULL || len == NULL)
+    {
+        return -1;
+    }
+
+    int8_t ret = console.write(&console, buf, len, timeout);
+    if (ret != 0)
+    {
+        return ret;
+    }
+
+    return 0;
+}
+#endif
+
 static void StartConsoleTask(void *argument)
 {
   /* USER CODE BEGIN StartConsoleTask */
     /* Infinite loop */
+#ifdef USING_COM1_FOR_YMODEM
+    enum com1_mode mode = CONSOLE_MODE;
+#endif
+
     for(;;)
     {
-        console_cmd_process();
+        
+#ifdef USING_COM1_FOR_YMODEM
+        mode = *com_mode_get();
+        if (mode == YMODEM_MODE)
+        {
+            osDelay(1000);
+        }
+        else if (mode == CONSOLE_MODE)
+#endif
+        {
+            console_cmd_process();
+        }
     }
   /* USER CODE END StartConsoleTask */
 }

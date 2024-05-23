@@ -428,6 +428,9 @@ int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t addr_base, uint
 #ifndef FLASH_TEST
 #include "shell.h"
 
+#define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)
+#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2)
+
 static DEVICE_FLASH flash_bank1 = {0};
 static DEVICE_FLASH *device_flash_get(void)
 {
