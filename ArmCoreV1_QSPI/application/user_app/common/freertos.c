@@ -355,11 +355,18 @@ void StartDefaultTask(void *argument)
     HAL_GPIO_WritePin(GPIOG, GPIO_PIN_9, GPIO_PIN_SET);//watchdog signal 2
     /* Infinite loop */
     // struct send_to_fpga_msg recv_buf = {0,1,2,3,4,5,6};
+    uint8_t count = 0;
     for(;;)
     {
         HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_7);//watchdog signal 1
 
         osDelay(100);
+
+        if (count++ % 5 == 0)
+        {
+            HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
+        }
+
 
         // recv_buf.len = 6;
         // osMessageQueuePut(send_to_fpga_queueHandle, &recv_buf, 0, 0);

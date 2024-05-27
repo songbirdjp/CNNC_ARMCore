@@ -383,9 +383,9 @@ static int8_t tcp_client_thread_init(void)
 }
 INIT_APP_EXPORT(tcp_client_thread_init);
 
-osStatus_t tcp_client_data_recv_get(TCP_DATA_t *buf)
+osStatus_t tcp_client_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
 {
-    return osMessageQueueGet(tcp_rx_queueHandle, buf, 0, 0);
+    return osMessageQueueGet(tcp_rx_queueHandle, buf, 0, timeout);
 }
 
 int32_t tcp_client_data_send(uint8_t *buf, uint16_t len)

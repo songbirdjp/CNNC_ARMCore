@@ -726,19 +726,3 @@ void PDI_ClearTimer(void)
     __HAL_TIM_SET_COUNTER(&htim2, 0);
 }
 
-void TIM2_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM2_IRQn 0 */
-  static uint16_t count = 0;
-  /* USER CODE END TIM2_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim2);
-  /* USER CODE BEGIN TIM2_IRQn 1 */
-  ECAT_CheckTimer();
-
-  if (++count >= 500)
-  {
-    count = 0;
-    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
-  }
-  /* USER CODE END TIM2_IRQn 1 */
-}

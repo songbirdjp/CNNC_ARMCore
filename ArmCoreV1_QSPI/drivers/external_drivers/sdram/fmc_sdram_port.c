@@ -116,9 +116,14 @@ static int8_t dev_read(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, 
         return -1;
     }
 
-    if (offset + len > SDRAM_BANK1_SIZE)
+    if (sdram->open_state == 0)
     {
         return -2;
+    }
+
+    if (offset + len > SDRAM_BANK1_SIZE)
+    {
+        return -3;
     }
 
     osMutexAcquire(sdram->mutex, osWaitForever);
@@ -130,7 +135,7 @@ static int8_t dev_read(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, 
     {
         printf("HAL_MDMA_Start_IT error:%d\r\n", status);
         osMutexRelease(sdram->mutex);
-        return -3;
+        return -4;
     }
 
     osEventFlagsWait(sdram->event, 1, osFlagsWaitAny, osWaitForever);
@@ -150,9 +155,14 @@ static int8_t dev_write(struct dev_sdram *sdram, uint32_t offset, uint8_t *data,
         return -1;
     }
 
-    if (offset + len > SDRAM_BANK1_SIZE)
+    if (sdram->open_state == 0)
     {
         return -2;
+    }
+
+    if (offset + len > SDRAM_BANK1_SIZE)
+    {
+        return -3;
     }
 
     osMutexAcquire(sdram->mutex, osWaitForever);
@@ -163,7 +173,7 @@ static int8_t dev_write(struct dev_sdram *sdram, uint32_t offset, uint8_t *data,
     {
         printf("HAL_MDMA_Start_IT error:%d\r\n", status);
         osMutexRelease(sdram->mutex);
-        return -3;
+        return -4;
     }
 
     osEventFlagsWait(sdram->event, 1, osFlagsWaitAny, osWaitForever);

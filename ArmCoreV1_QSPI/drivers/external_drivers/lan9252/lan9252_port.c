@@ -1,11 +1,24 @@
 #include "drv_octospi.h"
 #include "lan9252_port.h"
+#include "tim.h"
+#include "applInterface.h"
 
 static DEVICE_OSPI device_lan9252 = {0};
 
 DEVICE_OSPI *device_lan9252_get(void)
 {
     return &device_lan9252;
+}
+
+void TIM2_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM2_IRQn 0 */
+
+  /* USER CODE END TIM2_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim2);
+  /* USER CODE BEGIN TIM2_IRQn 1 */
+
+  /* USER CODE END TIM2_IRQn 1 */
 }
 
 void OCTOSPI1_IRQHandler(void)
@@ -221,6 +234,13 @@ int8_t device_lan9252_init(uint8_t *device_name)
     {
         printf("device %s open err:%d\r\n", device_name, ret);
         return ret;
+    }
+
+    HAL_StatusTypeDef status = HAL_TIM_RegisterCallback(&htim2, HAL_TIM_PERIOD_ELAPSED_CB_ID, ECAT_CheckTimer);
+    if (status != HAL_OK)
+    {
+        printf("device %s tim callback register err:%d\r\n", device_name, status);
+        return -2;
     }
 
     return ret;

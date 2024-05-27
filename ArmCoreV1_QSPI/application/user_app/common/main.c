@@ -260,7 +260,7 @@ int main(void)
   system_info_print();
   system_fun_init(); 
 
-  printf("----this is bootloader----\r\n");
+//   printf("----this is bootloader----\r\n");
 
   printf("Init ok\r\n");
 

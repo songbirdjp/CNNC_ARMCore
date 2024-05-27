@@ -1198,7 +1198,7 @@ static void data_process_entry(void *argument)
 
     if (event_flag & DATA_PROCESS_TCP_EVENT)
     {
-        stat = tcp_client_data_recv_get(&tcp_info);
+        stat = tcp_client_data_recv_get_with_block(&tcp_info, 0);
         if (stat == osOK)
         {
             ntrRecvParamAndPlan(&tcp_info);
