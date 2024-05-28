@@ -80,7 +80,7 @@
 /* #define HAL_USART_MODULE_ENABLED   */
 /* #define HAL_IRDA_MODULE_ENABLED   */
 /* #define HAL_SMARTCARD_MODULE_ENABLED   */
-/* #define HAL_WWDG_MODULE_ENABLED   */
+#define HAL_WWDG_MODULE_ENABLED
 /* #define HAL_PCD_MODULE_ENABLED   */
 /* #define HAL_HCD_MODULE_ENABLED   */
 /* #define HAL_DFSDM_MODULE_ENABLED   */
@@ -218,7 +218,7 @@
 #define  USE_HAL_TIM_REGISTER_CALLBACKS     1U /* TIM register callback enabled     */
 #define  USE_HAL_UART_REGISTER_CALLBACKS    1U /* UART register callback enabled    */
 #define  USE_HAL_USART_REGISTER_CALLBACKS   0U /* USART register callback disabled   */
-#define  USE_HAL_WWDG_REGISTER_CALLBACKS    0U /* WWDG register callback disabled    */
+#define  USE_HAL_WWDG_REGISTER_CALLBACKS    1U /* WWDG register callback enabled    */
 
 /* ########################### Ethernet Configuration ######################### */
 #define ETH_TX_DESC_CNT         4U  /* number of Ethernet Tx DMA descriptors */

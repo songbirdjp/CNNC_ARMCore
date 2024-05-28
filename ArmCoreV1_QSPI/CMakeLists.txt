@@ -88,6 +88,7 @@ include_directories(
     drivers/internal_drivers/spi 
     drivers/internal_drivers/timer 
     drivers/internal_drivers/uart 
+    drivers/internal_drivers/wwdg 
     components/cm_backtrace 
     components/common 
     components/console 

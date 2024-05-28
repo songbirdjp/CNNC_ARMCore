@@ -250,6 +250,7 @@ int main(void)
   MX_IWDG1_Init();
   MX_RTC_Init();
   MX_TIM6_Init();
+  MX_WWDG1_Init();
 
   /* USER CODE BEGIN 2 */
 

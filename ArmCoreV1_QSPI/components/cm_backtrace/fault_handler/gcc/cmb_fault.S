@@ -41,3 +41,21 @@ HardFault_Handler:
 
 Fault_Loop:
     BL      Fault_Loop              /* while(1) */
+
+
+@ .global WWDG_IRQHandler
+@ .type WWDG_IRQHandler, %function
+@ WWDG_IRQHandler:
+@     @ MOV     r0, lr                  /* get lr */
+@     @ MOV     r1, sp                  /* get stack pointer (current is MSP) */
+@     @ BL      wwdg_reset_fault
+@     @ BX      LR                      /* return */
+
+@     PUSH    {lr}
+@     MOV     r0, lr                  /* get lr */
+@     MOV     r1, sp                  /* get stack pointer (current is MSP) */
+@     BL      wwdg_reset_fault
+@     POP     {lr}
+
+@     ORR     lr, lr, #0x04
+@     BX      lr
