@@ -3,73 +3,73 @@
 
 static struct gpio_pin_info gpio_info_irq[16] = {0};
 
-void EXTI0_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
+// void EXTI0_IRQHandler(void)
+// {
+//   /* USER CODE BEGIN EXTI0_IRQn 0 */
 
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
+//   /* USER CODE END EXTI0_IRQn 0 */
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+//   /* USER CODE BEGIN EXTI0_IRQn 1 */
 
-  /* USER CODE END EXTI0_IRQn 1 */
-}
-void EXTI1_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI1_IRQn 0 */
+//   /* USER CODE END EXTI0_IRQn 1 */
+// }
+// void EXTI1_IRQHandler(void)
+// {
+//   /* USER CODE BEGIN EXTI1_IRQn 0 */
 
-  /* USER CODE END EXTI1_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
-  /* USER CODE BEGIN EXTI1_IRQn 1 */
+//   /* USER CODE END EXTI1_IRQn 0 */
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
+//   /* USER CODE BEGIN EXTI1_IRQn 1 */
 
-  /* USER CODE END EXTI1_IRQn 1 */
-}
-void EXTI2_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI2_IRQn 0 */
+//   /* USER CODE END EXTI1_IRQn 1 */
+// }
+// void EXTI2_IRQHandler(void)
+// {
+//   /* USER CODE BEGIN EXTI2_IRQn 0 */
 
-  /* USER CODE END EXTI2_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
-  /* USER CODE BEGIN EXTI2_IRQn 1 */
+//   /* USER CODE END EXTI2_IRQn 0 */
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
+//   /* USER CODE BEGIN EXTI2_IRQn 1 */
 
-  /* USER CODE END EXTI2_IRQn 1 */
-}
-void EXTI3_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI3_IRQn 0 */
+//   /* USER CODE END EXTI2_IRQn 1 */
+// }
+// void EXTI3_IRQHandler(void)
+// {
+//   /* USER CODE BEGIN EXTI3_IRQn 0 */
 
-  /* USER CODE END EXTI3_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
-  /* USER CODE BEGIN EXTI3_IRQn 1 */
+//   /* USER CODE END EXTI3_IRQn 0 */
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
+//   /* USER CODE BEGIN EXTI3_IRQn 1 */
 
-  /* USER CODE END EXTI3_IRQn 1 */
-}
-void EXTI4_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI4_IRQn 0 */
+//   /* USER CODE END EXTI3_IRQn 1 */
+// }
+// void EXTI4_IRQHandler(void)
+// {
+//   /* USER CODE BEGIN EXTI4_IRQn 0 */
 
-  /* USER CODE END EXTI4_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
-  /* USER CODE BEGIN EXTI4_IRQn 1 */
+//   /* USER CODE END EXTI4_IRQn 0 */
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
+//   /* USER CODE BEGIN EXTI4_IRQn 1 */
 
-  /* USER CODE END EXTI4_IRQn 1 */
-}
-void EXTI9_5_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
-}
-void EXTI15_10_IRQHandler(void)
-{
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_14);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
-}
+//   /* USER CODE END EXTI4_IRQn 1 */
+// }
+// void EXTI9_5_IRQHandler(void)
+// {
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
+// }
+// void EXTI15_10_IRQHandler(void)
+// {
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_10);
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_12);
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_14);
+//   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
+// }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {

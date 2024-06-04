@@ -713,7 +713,7 @@ UINT32 PDI_Disable_Global_Interrupt()
 
 void HW_SetLed(UINT8 RunLed,UINT8 ErrLed)
 {
-    HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+    // HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 }
 
 UINT16 PDI_GetTimer(void)

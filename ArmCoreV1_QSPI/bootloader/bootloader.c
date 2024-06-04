@@ -1,5 +1,5 @@
 #include "bootloader.h"
-#include "stm32h7xx_hal.h"
+#include "hw_crc.h"
 
 /*
  *  1. Set the vector table offset to the specified value.

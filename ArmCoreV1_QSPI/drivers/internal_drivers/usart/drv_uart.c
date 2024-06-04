@@ -186,7 +186,7 @@ static int8_t uart_read(DEVICE_UART *uart, uint8_t *buf, uint32_t timeout)
     ret = osMessageQueueGet(uart->rx_queue, buf, 0, timeout);
     if (ret != osOK)
     {
-        // printf("device %s read data err:%d\r\n", uart->name, ret);
+        printf("device %s read data err:%d\r\n", uart->name, ret);
         return -2;
     }
 
@@ -223,7 +223,8 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     /* 1. init hardware */
     if (!memcmp(device_name, DEVICE_NAME_UART1, sizeof(DEVICE_NAME_UART1)))
     {
-        MX_USART1_UART_Init((UART_HandleTypeDef *)uart);
+        MX_USART1_UART_Init();
+        memcpy(uart, &huart1, sizeof(UART_HandleTypeDef));
     }
     else
     {

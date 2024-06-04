@@ -1,5 +1,5 @@
-#ifndef __SEMAPHORE_H__
-#define __SEMAPHORE_H__
+#ifndef __HW_SEMAPHORE_H__
+#define __HW_SEMAPHORE_H__
 
 
 #ifdef __cplusplus

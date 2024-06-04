@@ -307,7 +307,8 @@ int8_t ospi_init(DEVICE_OSPI *ospi, uint8_t *device_name)
     /* 1. init hardware */
     if (!memcmp(device_name, DEVICE_NAME_OSPI1, sizeof(DEVICE_NAME_OSPI1)))
     {
-        MX_OCTOSPI1_Init((OSPI_HandleTypeDef *)ospi);
+        MX_OCTOSPI1_Init();
+        memcpy(ospi, &hospi1, sizeof(OSPI_HandleTypeDef));
     }
     else
     {

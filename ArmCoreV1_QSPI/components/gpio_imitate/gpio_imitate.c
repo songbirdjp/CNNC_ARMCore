@@ -4,6 +4,8 @@
 #include "shell.h"
 #include "cmsis_os2.h"
 
+extern DMA_HandleTypeDef hdma_tim7_up;
+
 static uint32_t *io_buf = NULL; /* io buffer for dma transfer */
 static osMutexId_t io_mutex = NULL;
 static osEventFlagsId_t io_event = NULL;

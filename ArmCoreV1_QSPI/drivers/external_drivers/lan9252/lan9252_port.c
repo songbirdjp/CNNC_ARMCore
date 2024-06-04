@@ -10,16 +10,16 @@ DEVICE_OSPI *device_lan9252_get(void)
     return &device_lan9252;
 }
 
-void TIM2_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM2_IRQn 0 */
+// void TIM2_IRQHandler(void)
+// {
+//   /* USER CODE BEGIN TIM2_IRQn 0 */
 
-  /* USER CODE END TIM2_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim2);
-  /* USER CODE BEGIN TIM2_IRQn 1 */
+//   /* USER CODE END TIM2_IRQn 0 */
+//   HAL_TIM_IRQHandler(&htim2);
+//   /* USER CODE BEGIN TIM2_IRQn 1 */
 
-  /* USER CODE END TIM2_IRQn 1 */
-}
+//   /* USER CODE END TIM2_IRQn 1 */
+// }
 
 void OCTOSPI1_IRQHandler(void)
 {

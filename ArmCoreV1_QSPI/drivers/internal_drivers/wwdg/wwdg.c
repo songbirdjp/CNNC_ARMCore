@@ -21,9 +21,7 @@
 #include "wwdg.h"
 
 /* USER CODE BEGIN 0 */
-#if (USE_HAL_WWDG_REGISTER_CALLBACKS == 1)
-void wwdg_refresh(void);
-#endif
+
 /* USER CODE END 0 */
 
 WWDG_HandleTypeDef hwwdg1;
@@ -49,9 +47,7 @@ void MX_WWDG1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN WWDG1_Init 2 */
-#if (USE_HAL_WWDG_REGISTER_CALLBACKS == 1)
-  HAL_WWDG_RegisterCallback(&hwwdg1, HAL_WWDG_EWI_CB_ID, wwdg_refresh);
-#endif
+
   /* USER CODE END WWDG1_Init 2 */
 
 }
@@ -78,25 +74,5 @@ void HAL_WWDG_MspInit(WWDG_HandleTypeDef* wwdgHandle)
 }
 
 /* USER CODE BEGIN 1 */
-#if (USE_HAL_WWDG_REGISTER_CALLBACKS == 1)
-void wwdg_refresh(void)
-{
-    // HAL_WWDG_RegisterCallback
 
-    WWDG_HandleTypeDef hwwdg1;
-
-    hwwdg1.Instance = WWDG1;
-    hwwdg1.Init.Prescaler = WWDG_PRESCALER_128;
-    hwwdg1.Init.Window = 0x7F;
-    hwwdg1.Init.Counter = 0x7F;
-    hwwdg1.Init.EWIMode = WWDG_EWI_ENABLE;
-
-    HAL_StatusTypeDef state = HAL_WWDG_Refresh(&hwwdg1);
-    if (state != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-}
-#endif
 /* USER CODE END 1 */

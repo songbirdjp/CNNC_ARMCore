@@ -244,15 +244,14 @@ int main(void)
   MX_MDMA_Init();
   MX_BDMA_Init();
   MX_FMC_Init();
-  MX_TIM1_Init();
   MX_TIM2_Init();
   MX_CRC_Init();
   MX_IWDG1_Init();
   MX_RTC_Init();
-  MX_TIM6_Init();
-  MX_WWDG1_Init();
+  MX_TIM6_Init();  
 
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start_IT(&htim6);
 
   bank1_sdram_init();
 

@@ -1,4 +1,4 @@
-#include "semaphore.h"
+#include "hw_semaphore.h"
 #include "init_call.h"
 #include "stm32h7xx_hal.h"
 

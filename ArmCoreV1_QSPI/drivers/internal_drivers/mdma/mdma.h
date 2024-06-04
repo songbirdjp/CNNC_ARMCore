@@ -30,7 +30,6 @@
 #include "main.h"
 
 /* MDMA transfer handles -----------------------------------------------------*/
-extern MDMA_HandleTypeDef hmdma_octospi1_fifo_th;
 extern MDMA_HandleTypeDef hmdma_mdma_channel1_dma1_stream2_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel2_dma1_stream5_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel3_sw_0;

@@ -7,6 +7,22 @@ ArmCoreV1_QSPI
 ├─ .project
 ├─ 7312.xml
 ├─ application
+│  ├─ app
+│  │  ├─ bootloader_patch
+│  │  │  ├─ bootloader_patch.c
+│  │  │  └─ bootloader_patch.h
+│  │  ├─ freertos
+│  │  │  ├─ freertos.c
+│  │  │  └─ FreeRTOSConfig.h
+│  │  ├─ main
+│  │  │  ├─ main.c
+│  │  │  ├─ main.h
+│  │  │  ├─ main_app.c
+│  │  │  └─ main_app.h
+│  │  └─ sys_cfg
+│  │     ├─ config.h
+│  │     ├─ sys_cfg.c
+│  │     └─ sys_cfg.h
 │  ├─ ethercat
 │  │  ├─ ethercat.c
 │  │  └─ ethercat.h
@@ -22,29 +38,11 @@ ArmCoreV1_QSPI
 │  │  ├─ syscall.h
 │  │  ├─ syscalls.c
 │  │  └─ sysmem.c
-│  ├─ tcp
-│  │  ├─ httpserver.c
-│  │  ├─ httpserver.h
-│  │  ├─ tcp_client.c
-│  │  └─ tcp_client.h
-│  └─ user_app
-│     ├─ common
-│     │  ├─ bootloader_patch.c
-│     │  ├─ bootloader_patch.h
-│     │  ├─ config.h
-│     │  ├─ crypto_sha256.c
-│     │  ├─ crypto_sha256.h
-│     │  ├─ freertos.c
-│     │  ├─ FreeRTOSConfig.h
-│     │  ├─ main.c
-│     │  ├─ main.h
-│     │  ├─ sys_cfg.c
-│     │  ├─ sys_cfg.h
-│     │  ├─ ymodem.c
-│     │  └─ ymodem.h
-│     └─ mlc
-│        ├─ maim_app.c
-│        └─ main_app.h
+│  └─ tcp
+│     ├─ httpserver.c
+│     ├─ httpserver.h
+│     ├─ tcp_client.c
+│     └─ tcp_client.h
 ├─ ARM_core.pdf
 ├─ board
 │  ├─ board_config
@@ -86,24 +84,36 @@ ArmCoreV1_QSPI
 │  ├─ console
 │  │  ├─ console.c
 │  │  └─ console.h
+│  ├─ crypto
+│  │  ├─ crypto_sha256.c
+│  │  └─ crypto_sha256.h
 │  ├─ gpio
 │  │  ├─ gpio_port.c
 │  │  └─ gpio_port.h
 │  ├─ gpio_imitate
 │  │  ├─ gpio_imitate.c
 │  │  └─ gpio_imitate.h
-│  ├─ semaphore
-│  │  ├─ semaphore.c
-│  │  └─ semaphore.h
+│  ├─ hw_crc
+│  │  ├─ hw_crc.c
+│  │  └─ hw_crc.h
+│  ├─ hw_semaphore
+│  │  ├─ hw_semaphore.c
+│  │  └─ hw_semaphore.h
+│  ├─ hw_wwdg
+│  │  ├─ hw_wwdg.c
+│  │  └─ hw_wwdg.h
 │  ├─ shell
 │  │  ├─ shell.c
 │  │  └─ shell.h
 │  ├─ ulog
 │  │  ├─ ulog.c
 │  │  └─ ulog.h
-│  └─ utilities
-│     ├─ utilities.c
-│     └─ utilities.h
+│  ├─ utilities
+│  │  ├─ utilities.c
+│  │  └─ utilities.h
+│  └─ ymodem
+│     ├─ ymodem.c
+│     └─ ymodem.h
 ├─ config.cmake
 ├─ config.h.in
 ├─ drivers
@@ -193,15 +203,17 @@ ArmCoreV1_QSPI
 │     │  ├─ drv_spi.h
 │     │  ├─ spi.c
 │     │  └─ spi.h
-│     ├─ timer
+│     ├─ tim
 │     │  ├─ tim.c
 │     │  └─ tim.h
-│     ├─ uart
+│     ├─ usart
 │     │  ├─ drv_uart.c
 │     │  ├─ drv_uart.h
 │     │  ├─ usart.c
 │     │  └─ usart.h
-│     └─ 放置cubemx生成的片上外设驱动文件，并可添加自己写的驱动.txt
+│     └─ wwdg
+│        ├─ wwdg.c
+│        └─ wwdg.h
 ├─ ETHERCAT_CNNCPM.ioc
 ├─ info_generation.exe
 ├─ libraries
@@ -277,6 +289,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_tim_ex.h
 │     │  ├─ stm32h7xx_hal_uart.h
 │     │  ├─ stm32h7xx_hal_uart_ex.h
+│     │  ├─ stm32h7xx_hal_wwdg.h
 │     │  ├─ stm32h7xx_ll_bus.h
 │     │  ├─ stm32h7xx_ll_cortex.h
 │     │  ├─ stm32h7xx_ll_crc.h
@@ -296,7 +309,8 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_ll_system.h
 │     │  ├─ stm32h7xx_ll_tim.h
 │     │  ├─ stm32h7xx_ll_usart.h
-│     │  └─ stm32h7xx_ll_utils.h
+│     │  ├─ stm32h7xx_ll_utils.h
+│     │  └─ stm32h7xx_ll_wwdg.h
 │     ├─ LICENSE.txt
 │     └─ Src
 │        ├─ stm32h7xx_hal.c
@@ -328,7 +342,9 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_tim_ex.c
 │        ├─ stm32h7xx_hal_uart.c
 │        ├─ stm32h7xx_hal_uart_ex.c
+│        ├─ stm32h7xx_hal_wwdg.c
 │        └─ stm32h7xx_ll_fmc.c
+├─ makefile_update.exe
 ├─ Middlewares
 │  ├─ ST
 │  │  └─ STM32_Cryptographic
@@ -460,6 +476,7 @@ ArmCoreV1_QSPI
 │           ├─ stream_buffer.c
 │           ├─ tasks.c
 │           └─ timers.c
+├─ move_files.exe
 ├─ st_link.cfg
 └─ 使用说明
    └─ 工程修改说明

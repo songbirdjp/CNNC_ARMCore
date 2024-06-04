@@ -1,5 +1,6 @@
 #include "drv_spi.h"
 #include "utilities.h"
+#include "spi.h"
 
 #define SPI_SEND_SUCCEED_EVENT      (1<<0)
 #define SPI_RECV_SUCCEED_EVENT      (1<<1)
@@ -326,19 +327,23 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     /* 1. init hardware */
     if (!memcmp(device_name, DEVICE_NAME_SPI1, sizeof(DEVICE_NAME_SPI1)))
     {
-        MX_SPI1_Init((SPI_HandleTypeDef *)spi);
+        MX_SPI1_Init();
+        memcpy(spi, &hspi1, sizeof(SPI_HandleTypeDef));
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI2, sizeof(DEVICE_NAME_SPI2)))
     {
-        MX_SPI2_Init((SPI_HandleTypeDef *)spi);
+        MX_SPI2_Init();
+        memcpy(spi, &hspi2, sizeof(SPI_HandleTypeDef));
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI3, sizeof(DEVICE_NAME_SPI3)))
     {
-        MX_SPI3_Init((SPI_HandleTypeDef *)spi);
+        MX_SPI3_Init();
+        memcpy(spi, &hspi3, sizeof(SPI_HandleTypeDef));
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI6, sizeof(DEVICE_NAME_SPI6)))
     {
-        MX_SPI6_Init((SPI_HandleTypeDef *)spi);
+        MX_SPI6_Init();
+        memcpy(spi, &hspi6, sizeof(SPI_HandleTypeDef));
     }
     else
     {

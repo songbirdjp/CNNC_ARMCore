@@ -29,7 +29,7 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-#define USING_HARDWARE_CRC_CALCULATE
+
 /* USER CODE END Includes */
 
 extern CRC_HandleTypeDef hcrc;
@@ -41,15 +41,7 @@ extern CRC_HandleTypeDef hcrc;
 void MX_CRC_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-enum hardware_crc_default
-{
-    CRC8 = 0,
-    CRC16,
-    CRC32
-};
-HAL_StatusTypeDef hardware_crc_config(enum hardware_crc_default index);
-uint32_t hardware_crc_calculate(uint8_t pBuffer[], uint32_t size);
-uint32_t hardware_crc_calculate_continue(uint8_t pBuffer[], uint32_t size);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

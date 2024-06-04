@@ -24,10 +24,10 @@
 
 /* USER CODE END 0 */
 
-// SPI_HandleTypeDef hspi1;
-// SPI_HandleTypeDef hspi2;
-// SPI_HandleTypeDef hspi3;
-// SPI_HandleTypeDef hspi6;
+SPI_HandleTypeDef hspi1;
+SPI_HandleTypeDef hspi2;
+SPI_HandleTypeDef hspi3;
+SPI_HandleTypeDef hspi6;
 DMA_HandleTypeDef hdma_spi1_rx;
 DMA_HandleTypeDef hdma_spi1_tx;
 DMA_HandleTypeDef hdma_spi2_rx;
@@ -38,7 +38,7 @@ DMA_HandleTypeDef hdma_spi6_rx;
 DMA_HandleTypeDef hdma_spi6_tx;
 
 /* SPI1 init function */
-void MX_SPI1_Init(SPI_HandleTypeDef *hspi1)
+void MX_SPI1_Init(void)
 {
 
   /* USER CODE BEGIN SPI1_Init 0 */
@@ -48,29 +48,29 @@ void MX_SPI1_Init(SPI_HandleTypeDef *hspi1)
   /* USER CODE BEGIN SPI1_Init 1 */
 
   /* USER CODE END SPI1_Init 1 */
-  hspi1->Instance = SPI1;
-  hspi1->Init.Mode = SPI_MODE_MASTER;
-  hspi1->Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1->Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1->Init.CLKPolarity = SPI_POLARITY_HIGH;
-  hspi1->Init.CLKPhase = SPI_PHASE_2EDGE;
-  hspi1->Init.NSS = SPI_NSS_SOFT;
-  hspi1->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
-  hspi1->Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi1->Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi1->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi1->Init.CRCPolynomial = 0x0;
-  hspi1->Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  hspi1->Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
-  hspi1->Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
-  hspi1->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi1->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi1->Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
-  hspi1->Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
-  hspi1->Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-  hspi1->Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
-  hspi1->Init.IOSwap = SPI_IO_SWAP_DISABLE;
-  if (HAL_SPI_Init(hspi1) != HAL_OK)
+  hspi1.Instance = SPI1;
+  hspi1.Init.Mode = SPI_MODE_MASTER;
+  hspi1.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi1.Init.CLKPolarity = SPI_POLARITY_HIGH;
+  hspi1.Init.CLKPhase = SPI_PHASE_2EDGE;
+  hspi1.Init.NSS = SPI_NSS_SOFT;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi1.Init.CRCPolynomial = 0x0;
+  hspi1.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  hspi1.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
+  hspi1.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
+  hspi1.Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi1.Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi1.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
+  hspi1.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
+  hspi1.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
+  hspi1.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+  hspi1.Init.IOSwap = SPI_IO_SWAP_DISABLE;
+  if (HAL_SPI_Init(&hspi1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -80,7 +80,7 @@ void MX_SPI1_Init(SPI_HandleTypeDef *hspi1)
 
 }
 /* SPI2 init function */
-void MX_SPI2_Init(SPI_HandleTypeDef *hspi2)
+void MX_SPI2_Init(void)
 {
 
   /* USER CODE BEGIN SPI2_Init 0 */
@@ -90,28 +90,28 @@ void MX_SPI2_Init(SPI_HandleTypeDef *hspi2)
   /* USER CODE BEGIN SPI2_Init 1 */
 
   /* USER CODE END SPI2_Init 1 */
-  hspi2->Instance = SPI2;
-  hspi2->Init.Mode = SPI_MODE_SLAVE;
-  hspi2->Init.Direction = SPI_DIRECTION_2LINES;
-  hspi2->Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi2->Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi2->Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi2->Init.NSS = SPI_NSS_HARD_INPUT;
-  hspi2->Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi2->Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi2->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi2->Init.CRCPolynomial = 0x0;
-  hspi2->Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
-  hspi2->Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
-  hspi2->Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
-  hspi2->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi2->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi2->Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
-  hspi2->Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
-  hspi2->Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-  hspi2->Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
-  hspi2->Init.IOSwap = SPI_IO_SWAP_DISABLE;
-  if (HAL_SPI_Init(hspi2) != HAL_OK)
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_SLAVE;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_HARD_INPUT;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 0x0;
+  hspi2.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+  hspi2.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
+  hspi2.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
+  hspi2.Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi2.Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi2.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
+  hspi2.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
+  hspi2.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
+  hspi2.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+  hspi2.Init.IOSwap = SPI_IO_SWAP_DISABLE;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -121,7 +121,7 @@ void MX_SPI2_Init(SPI_HandleTypeDef *hspi2)
 
 }
 /* SPI3 init function */
-void MX_SPI3_Init(SPI_HandleTypeDef *hspi3)
+void MX_SPI3_Init(void)
 {
 
   /* USER CODE BEGIN SPI3_Init 0 */
@@ -131,29 +131,29 @@ void MX_SPI3_Init(SPI_HandleTypeDef *hspi3)
   /* USER CODE BEGIN SPI3_Init 1 */
 
   /* USER CODE END SPI3_Init 1 */
-  hspi3->Instance = SPI3;
-  hspi3->Init.Mode = SPI_MODE_MASTER;
-  hspi3->Init.Direction = SPI_DIRECTION_2LINES;
-  hspi3->Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi3->Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi3->Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi3->Init.NSS = SPI_NSS_SOFT;
-  hspi3->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
-  hspi3->Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi3->Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi3->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi3->Init.CRCPolynomial = 0x0;
-  hspi3->Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  hspi3->Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
-  hspi3->Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
-  hspi3->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi3->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi3->Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
-  hspi3->Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
-  hspi3->Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-  hspi3->Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
-  hspi3->Init.IOSwap = SPI_IO_SWAP_DISABLE;
-  if (HAL_SPI_Init(hspi3) != HAL_OK)
+  hspi3.Instance = SPI3;
+  hspi3.Init.Mode = SPI_MODE_MASTER;
+  hspi3.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi3.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi3.Init.NSS = SPI_NSS_SOFT;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi3.Init.CRCPolynomial = 0x0;
+  hspi3.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  hspi3.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
+  hspi3.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
+  hspi3.Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi3.Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi3.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
+  hspi3.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
+  hspi3.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
+  hspi3.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+  hspi3.Init.IOSwap = SPI_IO_SWAP_DISABLE;
+  if (HAL_SPI_Init(&hspi3) != HAL_OK)
   {
     Error_Handler();
   }
@@ -163,7 +163,7 @@ void MX_SPI3_Init(SPI_HandleTypeDef *hspi3)
 
 }
 /* SPI6 init function */
-void MX_SPI6_Init(SPI_HandleTypeDef *hspi6)
+void MX_SPI6_Init(void)
 {
 
   /* USER CODE BEGIN SPI6_Init 0 */
@@ -173,29 +173,29 @@ void MX_SPI6_Init(SPI_HandleTypeDef *hspi6)
   /* USER CODE BEGIN SPI6_Init 1 */
 
   /* USER CODE END SPI6_Init 1 */
-  hspi6->Instance = SPI6;
-  hspi6->Init.Mode = SPI_MODE_MASTER;
-  hspi6->Init.Direction = SPI_DIRECTION_2LINES;
-  hspi6->Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi6->Init.CLKPolarity = SPI_POLARITY_LOW;
-  hspi6->Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi6->Init.NSS = SPI_NSS_SOFT;
-  hspi6->Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
-  hspi6->Init.FirstBit = SPI_FIRSTBIT_MSB;
-  hspi6->Init.TIMode = SPI_TIMODE_DISABLE;
-  hspi6->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  hspi6->Init.CRCPolynomial = 0x0;
-  hspi6->Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
-  hspi6->Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
-  hspi6->Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
-  hspi6->Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi6->Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
-  hspi6->Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
-  hspi6->Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
-  hspi6->Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
-  hspi6->Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
-  hspi6->Init.IOSwap = SPI_IO_SWAP_DISABLE;
-  if (HAL_SPI_Init(hspi6) != HAL_OK)
+  hspi6.Instance = SPI6;
+  hspi6.Init.Mode = SPI_MODE_MASTER;
+  hspi6.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi6.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi6.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi6.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi6.Init.NSS = SPI_NSS_SOFT;
+  hspi6.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi6.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi6.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi6.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi6.Init.CRCPolynomial = 0x0;
+  hspi6.Init.NSSPMode = SPI_NSS_PULSE_ENABLE;
+  hspi6.Init.NSSPolarity = SPI_NSS_POLARITY_LOW;
+  hspi6.Init.FifoThreshold = SPI_FIFO_THRESHOLD_01DATA;
+  hspi6.Init.TxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi6.Init.RxCRCInitializationPattern = SPI_CRC_INITIALIZATION_ALL_ZERO_PATTERN;
+  hspi6.Init.MasterSSIdleness = SPI_MASTER_SS_IDLENESS_00CYCLE;
+  hspi6.Init.MasterInterDataIdleness = SPI_MASTER_INTERDATA_IDLENESS_00CYCLE;
+  hspi6.Init.MasterReceiverAutoSusp = SPI_MASTER_RX_AUTOSUSP_DISABLE;
+  hspi6.Init.MasterKeepIOState = SPI_MASTER_KEEP_IO_STATE_DISABLE;
+  hspi6.Init.IOSwap = SPI_IO_SWAP_DISABLE;
+  if (HAL_SPI_Init(&hspi6) != HAL_OK)
   {
     Error_Handler();
   }
@@ -594,115 +594,5 @@ void HAL_SPI_MspDeInit(SPI_HandleTypeDef* spiHandle)
 }
 
 /* USER CODE BEGIN 1 */
-/**
-  * @brief This function handles DMA1 stream0 global interrupt.
-  */
-void DMA1_Stream0_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
 
-  /* USER CODE END DMA1_Stream0_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi2_tx);
-  /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream0_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA1 stream1 global interrupt.
-  */
-void DMA1_Stream1_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
-
-  /* USER CODE END DMA1_Stream1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi2_rx);
-  /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream1_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA1 stream3 global interrupt.
-  */
-void DMA1_Stream3_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream3_IRQn 0 */
-
-  /* USER CODE END DMA1_Stream3_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi1_rx);
-  /* USER CODE BEGIN DMA1_Stream3_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream3_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA1 stream4 global interrupt.
-  */
-void DMA1_Stream4_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream4_IRQn 0 */
-
-  /* USER CODE END DMA1_Stream4_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi1_tx);
-  /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream4_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA1 stream7 global interrupt.
-  */
-void DMA1_Stream7_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream7_IRQn 0 */
-
-  /* USER CODE END DMA1_Stream7_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi3_rx);
-  /* USER CODE BEGIN DMA1_Stream7_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream7_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA2 stream0 global interrupt.
-  */
-void DMA2_Stream0_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
-
-  /* USER CODE END DMA2_Stream0_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi3_tx);
-  /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
-
-  /* USER CODE END DMA2_Stream0_IRQn 1 */
-}
-
-/**
-  * @brief This function handles BDMA channel0 global interrupt.
-  */
-void BDMA_Channel0_IRQHandler(void)
-{
-  /* USER CODE BEGIN BDMA_Channel0_IRQn 0 */
-
-  /* USER CODE END BDMA_Channel0_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi6_rx);
-  /* USER CODE BEGIN BDMA_Channel0_IRQn 1 */
-
-  /* USER CODE END BDMA_Channel0_IRQn 1 */
-}
-
-/**
-  * @brief This function handles BDMA channel1 global interrupt.
-  */
-void BDMA_Channel1_IRQHandler(void)
-{
-  /* USER CODE BEGIN BDMA_Channel1_IRQn 0 */
-
-  /* USER CODE END BDMA_Channel1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_spi6_tx);
-  /* USER CODE BEGIN BDMA_Channel1_IRQn 1 */
-
-  /* USER CODE END BDMA_Channel1_IRQn 1 */
-}
 /* USER CODE END 1 */

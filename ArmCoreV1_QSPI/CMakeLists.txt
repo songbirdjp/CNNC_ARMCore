@@ -59,7 +59,7 @@ set(GIT_HASH "")
 get_git_hash(GIT_HASH)
 message("git hash: ${GIT_HASH}")
 
-configure_file(config.h.in "../application/user_app/common/config.h")
+configure_file(config.h.in "../application/app/sys_cfg/config.h")
 
 include_directories(
     libraries/CMSIS/Device/ST/STM32H7xx/Include 
@@ -78,7 +78,7 @@ include_directories(
     drivers/internal_drivers/bdma 
     drivers/internal_drivers/crc 
     drivers/internal_drivers/dma 
-    drivers/internal_drivers/flash  
+    drivers/internal_drivers/flash 
     drivers/internal_drivers/fmc 
     drivers/internal_drivers/gpio 
     drivers/internal_drivers/iwdg 
@@ -86,26 +86,32 @@ include_directories(
     drivers/internal_drivers/octospi 
     drivers/internal_drivers/rtc 
     drivers/internal_drivers/spi 
-    drivers/internal_drivers/timer 
-    drivers/internal_drivers/uart 
+    drivers/internal_drivers/tim 
+    drivers/internal_drivers/usart 
     drivers/internal_drivers/wwdg 
     components/cm_backtrace 
     components/common 
     components/console 
+    components/crypto 
     components/gpio 
     components/gpio_imitate 
-    components/semaphore 
+    components/hw_crc 
+    components/hw_semaphore 
+    components/hw_wwdg  
     components/shell 
     components/ulog 
     components/utilities 
+    components/ymodem 
     board/board_config/inc 
     application/ethercat 
     application/flash 
     application/fpga 
     application/system_common 
     application/tcp 
-    application/user_app/common 
-    application/user_app/mlc 
+    application/app/bootloader_patch 
+    application/app/freertos 
+    application/app/main 
+    application/app/sys_cfg 
     bootloader)
 
 add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32H723xx)
@@ -115,14 +121,18 @@ file(GLOB_RECURSE SOURCES
     "Middlewares/*.*" 
     "drivers/*.*" 
     "components/*.*" 
-    "board/*.*" 
+    "board/board_config/*.*" 
+    "board/linker_scripts/*.*" 
+    "board/startup/*.*" 
     "application/ethercat/*.*" 
     "application/flash/*.*" 
-    "application/tcp/*.*" 
     "application/fpga/*.*" 
     "application/system_common/*.*" 
-    "application/user_app/common/*.*" 
-    "application/user_app/mlc/*.*" 
+    "application/tcp/*.*" 
+    "application/app/bootloader_patch/*.*" 
+    "application/app/freertos/*.*" 
+    "application/app/main/*.*" 
+    "application/app/sys_cfg/*.*" 
     "bootloader/*.*")
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/board/linker_scripts/STM32H723ZGTX_FLASH.ld)
@@ -138,8 +148,14 @@ target_link_libraries(${PROJECT_NAME}.elf ${CMAKE_SOURCE_DIR}/Middlewares/ST/STM
 set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
 set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
 set(INFO_BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_INFO.bin)
+set(MAKE_FILE ${PROJECT_BINARY_DIR}/Makefile)
 
 set(CMAKE_USER ${CMAKE_SOURCE_DIR}/info_generation)
+set(CMAKE_USER_MAKEFILE ${CMAKE_SOURCE_DIR}/makefile_update)
+
+add_custom_command(TARGET ${PROJECT_NAME}.elf PRE_BUILD
+        COMMAND ${CMAKE_USER_MAKEFILE} -input_file_path ${MAKE_FILE} -output_file_path ${MAKE_FILE} -name ${PROJECT_NAME}
+        COMMENT "Updating ${MAKE_FILE}")
 
 add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:${PROJECT_NAME}.elf> ${HEX_FILE}
