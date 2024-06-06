@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "iwdg.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,6 +64,7 @@ void run_time_count_increase(void)
 {
     run_time_count++;
 }
+
 uint32_t run_time_count_get(void)
 {
     return run_time_count;
@@ -73,6 +75,7 @@ void run_time_count_set(uint32_t val)
     run_time_count = val;
 }
 #endif
+
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -97,6 +100,7 @@ __weak unsigned long getRunTimeCounterValue(void)
 {
     return run_time_count_get();
 }
+
 /* USER CODE END 1 */
 
 /* USER CODE BEGIN 2 */
@@ -117,7 +121,6 @@ void vApplicationIdleHook( void )
     *****************************/
 
    HAL_IWDG_Refresh(&hiwdg1);
-
 
 }
 /* USER CODE END 2 */

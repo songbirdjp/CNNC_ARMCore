@@ -20,11 +20,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32h7xx_it.h"
-#include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "FreeRTOSConfig.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -333,6 +333,7 @@ void DMA1_Stream6_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
   __HAL_TIM_DISABLE(&htim7);
+
   /* USER CODE END DMA1_Stream6_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_tim7_up);
   /* USER CODE BEGIN DMA1_Stream6_IRQn 1 */
@@ -409,6 +410,7 @@ void TIM6_DAC_IRQHandler(void)
 #ifdef configGENERATE_RUN_TIME_STATS
   run_time_count_increase();
 #endif
+
   /* USER CODE END TIM6_DAC_IRQn 1 */
 }
 

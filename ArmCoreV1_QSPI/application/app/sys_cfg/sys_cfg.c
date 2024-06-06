@@ -1,6 +1,9 @@
 #include "sys_cfg.h"
 #include "stm32h7xx_hal.h"
 #include "crypto_sha256.h"
+#include "cmsis_os.h"
+#include "shell.h"
+#include "config.h"
 
 extern uint32_t __system_info_start;
 
@@ -17,6 +20,35 @@ struct sys_info *system_info_get(void)
 {
     return &system_info;
 }
+
+void system_info_print(void)
+{
+    struct sys_info *sys_info = system_info_get();
+    
+    printf("\r\n************************************\r\n");
+
+    printf("fw version: %s\r\n", sys_info->fw_version);
+    printf("compile time: %s\r\n", sys_info->compile_time);
+    printf("git branch: %s\r\n", GIT_BRANCH);
+    printf("git hash: %s\r\n", GIT_HASH);
+    printf("mcu clock:%.2f M\r\n", HAL_RCC_GetSysClockFreq()/1000000.0);
+
+    printf("stm32 uid:%#.8x%.8x%.8x\r\n", HAL_GetUIDw2(), HAL_GetUIDw1(), HAL_GetUIDw0());
+    printf("flash size:%uKB\r\n", FLASH_SIZE / 1024);
+
+    uint32_t hal_version = HAL_GetHalVersion();
+
+    printf("hal driver version:%.2u.%.2u.%.2u.%.2u\r\n", (hal_version >> 24) & 0xFF, 
+        (hal_version >> 16) & 0xFF, (hal_version >> 8) & 0xFF, hal_version & 0xFF);
+
+    printf("free rtos version:%s\r\n", tskKERNEL_VERSION_NUMBER);
+
+    printf("cmsis device version:%.2u.%.2u.%.2u.%.2u\r\n", __STM32H7xx_CMSIS_DEVICE_VERSION_MAIN, __STM32H7xx_CMSIS_DEVICE_VERSION_SUB1, __STM32H7xx_CMSIS_DEVICE_VERSION_SUB2, __STM32H7xx_CMSIS_DEVICE_VERSION_RC);
+
+    printf("************************************\r\n");
+
+}
+MSH_CMD_EXPORT_ALIAS(system_info_print, system_info, system info);
 
 static int8_t system_encrypt_check(void)
 {

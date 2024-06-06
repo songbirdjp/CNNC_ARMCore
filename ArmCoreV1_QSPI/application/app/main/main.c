@@ -31,12 +31,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* note: component and configuration header file */
-#include "ulog.h"
 #include "shell.h"
 #include "console.h"
 #include "sys_cfg.h"
 #include "init_call.h"
-#include "config.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,55 +73,6 @@ static void vector_table_init(void)
     extern uint32_t __isr_vector_start;
 
     SCB->VTOR = (uint32_t)&__isr_vector_start;
-}
-
-static void system_info_print(void)
-{
-    struct sys_info *sys_info = system_info_get();
-    
-    printf("\r\n************************************\r\n");
-
-    printf("fw version: %s\r\n", sys_info->fw_version);
-    printf("compile time: %s\r\n", sys_info->compile_time);
-    printf("git branch: %s\r\n", GIT_BRANCH);
-    printf("git hash: %s\r\n", GIT_HASH);
-    printf("mcu clock:%.2f M\r\n", HAL_RCC_GetSysClockFreq()/1000000.0);
-
-    printf("stm32 uid:%#.8x%.8x%.8x\r\n", HAL_GetUIDw2(), HAL_GetUIDw1(), HAL_GetUIDw0());
-    printf("flash size:%uKB\r\n", FLASH_SIZE / 1024);
-
-    uint32_t hal_version = HAL_GetHalVersion();
-
-    printf("hal driver version:%.2u.%.2u.%.2u.%.2u\r\n", (hal_version >> 24) & 0xFF, 
-        (hal_version >> 16) & 0xFF, (hal_version >> 8) & 0xFF, hal_version & 0xFF);
-
-    printf("free rtos version:%s\r\n", tskKERNEL_VERSION_NUMBER);
-
-    printf("cmsis device version:%.2u.%.2u.%.2u.%.2u\r\n", __STM32H7xx_CMSIS_DEVICE_VERSION_MAIN, __STM32H7xx_CMSIS_DEVICE_VERSION_SUB1, __STM32H7xx_CMSIS_DEVICE_VERSION_SUB2, __STM32H7xx_CMSIS_DEVICE_VERSION_RC);
-
-    printf("************************************\r\n");
-
-}
-MSH_CMD_EXPORT_ALIAS(system_info_print, system_info, system info);
-
-static void system_fun_init(void)
-{
-    const struct init_desc *desc;
-    int result = 0;
-    uint32_t fun_num = 1;
-
-    extern uint32_t __init_call_start;
-    extern uint32_t __init_call_end;
-
-    printf("\r\n########## function initialize begin ##########\r\n");
-
-    for (desc = &__init_call_start; desc < &__init_call_end; desc++, fun_num++)
-    {
-        result = desc->init_fn();
-        printf("done_%-2u [%-32s %-2d]\r\n", fun_num, desc->fn_name, result);
-    }
-
-    printf("########## function initialize end   ##########\r\n\r\n");
 }
 
 static void cmd_rtc_test(uint8_t argc, uint8_t **argv)
@@ -251,7 +200,9 @@ int main(void)
   MX_TIM6_Init();  
 
   /* USER CODE BEGIN 2 */
+#ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);
+#endif
 
   bank1_sdram_init();
 

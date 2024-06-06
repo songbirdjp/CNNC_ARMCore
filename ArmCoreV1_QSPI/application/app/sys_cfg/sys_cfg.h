@@ -19,7 +19,7 @@ struct sys_info
 };
 
 struct sys_info *system_info_get(void);
-
+void system_info_print(void);
 int8_t system_encrypt_init(void);
 
 #ifdef __cplusplus

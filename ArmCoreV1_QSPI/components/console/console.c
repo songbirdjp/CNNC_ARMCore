@@ -34,9 +34,9 @@ void USART1_IRQHandler(void)
 
 
 #ifdef __GNUC__
-#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#define PUTCHAR_PROTOTYPE __attribute__((weak)) int __io_putchar(int ch) 
 #else
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#define PUTCHAR_PROTOTYPE __attribute__((weak)) int fputc(int ch, FILE *f)
 #endif
 
 PUTCHAR_PROTOTYPE
