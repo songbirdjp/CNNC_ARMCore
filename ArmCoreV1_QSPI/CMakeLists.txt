@@ -105,12 +105,13 @@ include_directories(
     board/board_config/inc 
     application/ethercat 
     application/flash 
-    application/fpga 
+    # application/fpga 
     application/system_common 
     application/tcp 
     application/app/bootloader_patch 
     application/app/freertos 
     application/app/main 
+    # application/app/main_app 
     application/app/sys_cfg 
     bootloader)
 
@@ -120,18 +121,31 @@ file(GLOB_RECURSE SOURCES
     "libraries/*.*" 
     "Middlewares/*.*" 
     "drivers/*.*" 
-    "components/*.*" 
+    "components/cm_backtrace/*.*" 
+    "components/common/*.*" 
+    "components/console/*.*" 
+    "components/crypto/*.*" 
+    "components/gpio/*.*" 
+    "components/gpio_imitate/*.*" 
+    "components/hw_crc/*.*" 
+    "components/hw_semaphore/*.*" 
+    "components/hw_wwdg/*.*" 
+    "components/shell/*.*" 
+    "components/ulog/*.*" 
+    "components/utilities/*.*" 
+    "components/ymodem/*.*" 
     "board/board_config/*.*" 
     "board/linker_scripts/*.*" 
     "board/startup/*.*" 
     "application/ethercat/*.*" 
     "application/flash/*.*" 
-    "application/fpga/*.*" 
+    # "application/fpga/*.*" 
     "application/system_common/*.*" 
     "application/tcp/*.*" 
     "application/app/bootloader_patch/*.*" 
     "application/app/freertos/*.*" 
     "application/app/main/*.*" 
+    # "application/app/main_app/*.*" 
     "application/app/sys_cfg/*.*" 
     "bootloader/*.*")
 
