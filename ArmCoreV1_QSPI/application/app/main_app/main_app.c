@@ -961,9 +961,11 @@ static int8_t realtime_ethercat_data_process(void)
 {
     static uint16_t oldState = 0, oldPlanCmd = 0, oldRadiationIndex = 0, oldBeamIndex = 0;
 
-    uint8_t recv_buf[255] = {0}, send_buf[255] = {0};
-    uint16_t *recv = ethercat_recv_data_get((uint16_t *)recv_buf);
-    uint16_t *send = ethercat_send_data_get((uint16_t *)send_buf);
+    struct ethercat_data_recv recv_data = {0};
+    struct ethercat_data_send send_data = {0};
+
+    uint16_t *recv = ethercat_recv_data_get((uint16_t *)&recv_data);
+    uint16_t *send = ethercat_send_data_get((uint16_t *)&send_data);
     if (recv == NULL || send == NULL)
     {
         printf("ethercat data get failed\r\n");

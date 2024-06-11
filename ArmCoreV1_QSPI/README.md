@@ -16,7 +16,8 @@ ArmCoreV1_QSPI
 │  │  │  └─ FreeRTOSConfig.h
 │  │  ├─ main
 │  │  │  ├─ main.c
-│  │  │  ├─ main.h
+│  │  │  └─ main.h
+│  │  ├─ main_app
 │  │  │  ├─ main_app.c
 │  │  │  └─ main_app.h
 │  │  └─ sys_cfg
@@ -80,6 +81,7 @@ ArmCoreV1_QSPI
 │  │        ├─ cmb_zh_CN.h
 │  │        └─ cmb_zh_CN_UTF8.h
 │  ├─ common
+│  │  ├─ init_call.c
 │  │  └─ init_call.h
 │  ├─ console
 │  │  ├─ console.c
@@ -215,6 +217,7 @@ ArmCoreV1_QSPI
 │        ├─ wwdg.c
 │        └─ wwdg.h
 ├─ ETHERCAT_CNNCPM.ioc
+├─ file_reorganize.exe
 ├─ info_generation.exe
 ├─ libraries
 │  ├─ CMSIS
@@ -476,9 +479,9 @@ ArmCoreV1_QSPI
 │           ├─ stream_buffer.c
 │           ├─ tasks.c
 │           └─ timers.c
-├─ move_files.exe
 ├─ st_link.cfg
 └─ 使用说明
+   ├─ ARM CORE固件模块复用使用指南V1.1.pdf
    └─ 工程修改说明
       ├─ demo1
       │  ├─ Demo1.md

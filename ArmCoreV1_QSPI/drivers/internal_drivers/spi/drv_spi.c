@@ -332,13 +332,13 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI2, sizeof(DEVICE_NAME_SPI2)))
     {
-        MX_SPI2_Init();
-        memcpy(spi, &hspi2, sizeof(SPI_HandleTypeDef));
+        // MX_SPI2_Init();
+        // memcpy(spi, &hspi2, sizeof(SPI_HandleTypeDef));
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI3, sizeof(DEVICE_NAME_SPI3)))
     {
-        MX_SPI3_Init();
-        memcpy(spi, &hspi3, sizeof(SPI_HandleTypeDef));
+        // MX_SPI3_Init();
+        // memcpy(spi, &hspi3, sizeof(SPI_HandleTypeDef));
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI6, sizeof(DEVICE_NAME_SPI6)))
     {
