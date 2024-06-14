@@ -161,7 +161,7 @@ static int8_t gpio_write(uint8_t *gpio_pin, uint8_t value)
     }
 
     HAL_GPIO_WritePin(gpio_info.port, gpio_info.pin, value);
-    return ret;
+    return 0;
 }
 
 static GPIO_PinState gpio_read(uint8_t *gpio_pin)

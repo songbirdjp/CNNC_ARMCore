@@ -97,7 +97,7 @@ int8_t ethercat_recv_data_update_with_block(uint32_t timeout)
     return 0;
 }
 
-int8_t ethercat_send_data_update(uint16_t *buf) /* slave to master */
+int8_t ethercat_send_data_update(uint16_t *buf, uint16_t len) /* slave to master */
 {
     if (buf == NULL)
     {
@@ -105,13 +105,13 @@ int8_t ethercat_send_data_update(uint16_t *buf) /* slave to master */
     }
 
     osMutexAcquire(lan9252_app_ops_get()->pdo_input_update_mutex, osWaitForever);
-    memcpy(&sDIInputs, buf, sizeof(sDIInputs));
+    memcpy(&sDIInputs, buf, len);
     osMutexRelease(lan9252_app_ops_get()->pdo_input_update_mutex);
 
     return 0;
 }
 
-uint16_t *ethercat_recv_data_get(uint16_t *buf) /* master to slave */
+uint16_t *ethercat_recv_data_get(uint16_t *buf, uint16_t len) /* master to slave */
 {
     if (buf == NULL)
     {
@@ -119,13 +119,13 @@ uint16_t *ethercat_recv_data_get(uint16_t *buf) /* master to slave */
     }
 
     osMutexAcquire(lan9252_app_ops_get()->pdo_output_update_mutex, osWaitForever);
-    memcpy(buf, &sDOOutputs, sizeof(sDOOutputs));
+    memcpy(buf, &sDOOutputs, len);
     osMutexRelease(lan9252_app_ops_get()->pdo_output_update_mutex);
 
     return buf;
 }
 
-uint16_t *ethercat_send_data_get(uint16_t *buf)
+uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len)
 {
     if (buf == NULL)
     {
@@ -133,7 +133,7 @@ uint16_t *ethercat_send_data_get(uint16_t *buf)
     }
 
     osMutexAcquire(lan9252_app_ops_get()->pdo_input_update_mutex, osWaitForever);
-    memcpy(buf, &sDIInputs, sizeof(sDIInputs));
+    memcpy(buf, &sDIInputs, len);
     osMutexRelease(lan9252_app_ops_get()->pdo_input_update_mutex);
 
     return buf;

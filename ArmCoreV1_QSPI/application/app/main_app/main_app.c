@@ -957,15 +957,16 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
     return 0;
 }
 
+#include "lan9252_app.h"
 static int8_t realtime_ethercat_data_process(void)
 {
     static uint16_t oldState = 0, oldPlanCmd = 0, oldRadiationIndex = 0, oldBeamIndex = 0;
 
-    struct ethercat_data_recv recv_data = {0};
-    struct ethercat_data_send send_data = {0};
+    TOBJ7010 recv_data = {0};
+    TOBJ6000 send_data = {0};
 
-    uint16_t *recv = ethercat_recv_data_get((uint16_t *)&recv_data);
-    uint16_t *send = ethercat_send_data_get((uint16_t *)&send_data);
+    TOBJ7010 *recv = (TOBJ7010 *)ethercat_recv_data_get((uint16_t *)&recv_data, sizeof(recv_data));
+    TOBJ6000 *send = (TOBJ6000 *)ethercat_send_data_get((uint16_t *)&send_data, sizeof(send_data));
     if (recv == NULL || send == NULL)
     {
         printf("ethercat data get failed\r\n");
@@ -1087,7 +1088,7 @@ static int8_t realtime_ethercat_data_process(void)
     }
 
 
-    return ethercat_send_data_update(send);
+    return ethercat_send_data_update(send, sizeof(send_data));
 }
 
 static int8_t non_realtime_tcp_callback(void)
