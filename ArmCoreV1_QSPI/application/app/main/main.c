@@ -152,6 +152,44 @@ static void rdp_test(uint8_t argc, uint8_t **argv)
     }
 }
 MSH_CMD_EXPORT_ALIAS(rdp_test, rdp_test, rtc rdp);
+
+int8_t fpu_test(uint8_t argc, uint8_t **argv)
+{
+
+    if (argc != 2)
+    {
+        printf("param error\r\n");
+    }
+
+    uint32_t loop = atoi(argv[1]);
+
+    uint32_t start, end;
+
+    __disable_irq();
+
+    start = __HAL_TIM_GET_COUNTER(&htim2);
+
+    float f = 1;
+    for (int i = 0; i < loop; i++)
+    {
+        f = f * 1.1;
+    }
+
+    end = __HAL_TIM_GET_COUNTER(&htim2);
+
+    __enable_irq();
+
+    if (end < start)
+    {
+        end += __HAL_TIM_GET_AUTORELOAD(&htim2);
+    }
+    printf("time:%u\r\n", end - start);
+    
+    printf("%f\r\n", f);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(fpu_test, fpu_test, test fpu);
 /* USER CODE END 0 */
 
 /**
