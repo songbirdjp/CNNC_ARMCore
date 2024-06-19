@@ -1174,6 +1174,8 @@ static void data_process_entry(void *argument)
   TCPFeedbackInit();
   data_process_init();  /* register callback functions for tcp 、ethercat、fpga */
 
+  /* here need add start functions for data receive */
+  recv_from_fpga_data_start();
 
   for(;;)
   {

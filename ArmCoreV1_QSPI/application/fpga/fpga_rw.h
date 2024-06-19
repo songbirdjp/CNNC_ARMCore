@@ -121,6 +121,7 @@ struct send_to_fpga_msg
 };
 
 int8_t recv_from_fpga_callback_register(int8_t (*cb)(void *arg));
+int8_t recv_from_fpga_data_start(void);
 osStatus_t recv_from_fpga_data_get(uint8_t *buf);
 void make_cmd_to_fpga(uint8_t index, uint8_t *pData, uint8_t size);
 void make_para_for_fpga(uint8_t *pData);

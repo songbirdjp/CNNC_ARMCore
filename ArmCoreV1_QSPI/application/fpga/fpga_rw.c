@@ -218,12 +218,12 @@ static int8_t recv_from_fpga_init(osMessageQueueId_t queue)
         return -4;
     }
 
-    ret = device_recv_from_fpga_open();
-    if (ret != 0)
-    {
-        printf("device %s open err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
-        return -5;
-    }
+    // ret = device_recv_from_fpga_open();
+    // if (ret != 0)
+    // {
+    //     printf("device %s open err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+    //     return -5;
+    // }
 
     return ret;
 
@@ -319,6 +319,11 @@ static int8_t fpga_thread_init(void)
     return 0;
 }
 INIT_APP_EXPORT(fpga_thread_init);
+
+int8_t recv_from_fpga_data_start(void)
+{
+    return device_recv_from_fpga_open();
+}
 
 osStatus_t recv_from_fpga_data_get(uint8_t *buf)
 {
