@@ -35,20 +35,44 @@ void OCTOSPI1_IRQHandler(void)
 #ifdef USING_OSPI_SLAVE_TO_MASTER_INTERRUPT
 static void EscIsr_callback(void)
 {
-    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), LAN9252_INTN_LINE_NAME)->node_data;
-    osEventFlagsSet(node->irq_event, node->irq_event_flag);
+    struct node_info
+    {
+        uint8_t *name;
+        DEVICE_IRQ_LIST *node
+    }info = {LAN9252_INTN_LINE_NAME, NULL};
+
+    if (device_lan9252_get()->ioctl(device_lan9252_get(), OSPI_CMD_IRQ_NODE_FIND, &info) == 0)
+    {
+        osEventFlagsSet(info.node->node_data->irq_event, info.node->node_data->irq_event_flag);
+    }
 }
 
 static void Sync0Isr_callback(void)
 {
-    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), LAN9252_SYNC0_IRQ_LINE_NAME)->node_data;
-    osEventFlagsSet(node->irq_event, node->irq_event_flag);
+    struct node_info
+    {
+        uint8_t *name;
+        DEVICE_IRQ_LIST *node
+    }info = {LAN9252_SYNC0_IRQ_LINE_NAME, NULL};
+
+    if (device_lan9252_get()->ioctl(device_lan9252_get(), OSPI_CMD_IRQ_NODE_FIND, &info) == 0)
+    {
+        osEventFlagsSet(info.node->node_data->irq_event, info.node->node_data->irq_event_flag);
+    }
 }
 
 static void Sync1Isr_callback(void)
 {
-    IRQ_INFO_NODE *node = device_ospi_irq_node_find(device_lan9252_get(), LAN9252_SYNC1_IRQ_LINE_NAME)->node_data;
-    osEventFlagsSet(node->irq_event, node->irq_event_flag);    
+    struct node_info
+    {
+        uint8_t *name;
+        DEVICE_IRQ_LIST *node
+    }info = {LAN9252_SYNC1_IRQ_LINE_NAME, NULL};
+
+    if (device_lan9252_get()->ioctl(device_lan9252_get(), OSPI_CMD_IRQ_NODE_FIND, &info) == 0)
+    {
+        osEventFlagsSet(info.node->node_data->irq_event, info.node->node_data->irq_event_flag);
+    }
 }
 #endif
 
@@ -103,7 +127,7 @@ static int8_t device_lan9252_opt_init(DEVICE_OSPI *ospi, DEVICE_OSPI_OPT *ospi_o
     ospi_opt->after_read = lan9252_opt_after_read;
     ospi_opt->complete_read = lan9252_opt_complete_read;
 
-    return ospi_opt_init(ospi, ospi_opt);
+    return ospi->ioctl(ospi, OSPI_CMD_SET_OPT_FUNC, ospi_opt);
 }
 #endif
 
@@ -172,7 +196,7 @@ static int8_t device_lan9252_irq_init(DEVICE_OSPI *ospi, uint8_t *node_name, cha
                 return -4;
         }
 
-        ret = device_ospi_irq_node_add(&device_lan9252, node);
+        ret = ospi->ioctl(ospi, OSPI_CMD_IRQ_NODE_ADD, node);
         if (ret != 0)
         {
             printf("device irq node %s add err\r\n", argv[i]);
@@ -194,6 +218,13 @@ int8_t device_lan9252_init(uint8_t *device_name)
     }
 
     int8_t ret = 0;
+
+    ret = ospi_init(device_lan9252_get(), device_name);
+    if (ret != 0)
+    {
+        printf("device %s init err:%d\r\n", device_name, ret);
+        return ret;
+    }
 
 #ifdef USING_OSPI_OPTION_FUNCTION
     ret = device_lan9252_opt_init(device_lan9252_get(), &device_lan9252_opt);
@@ -222,13 +253,6 @@ int8_t device_lan9252_init(uint8_t *device_name)
     }
 #endif
 
-    ret = ospi_init(device_lan9252_get(), device_name);
-    if (ret != 0)
-    {
-        printf("device %s init err:%d\r\n", device_name, ret);
-        return ret;
-    }
-
     ret = device_lan9252_get()->open(device_lan9252_get());
     if (ret != 0)
     {
@@ -248,17 +272,32 @@ int8_t device_lan9252_init(uint8_t *device_name)
 
 int8_t device_lan9252_rx_buffer_init(uint8_t *buf, uint16_t len)
 {
-    return ospi_dma_rx_buf_init(device_lan9252_get(), buf, len);
+    struct dma_rx_buf_info
+    {
+        uint8_t *buf;
+        uint16_t len;
+    }info = {buf, len};
+
+    printf("buf:%p, len:%d\r\n", buf, len);
+
+    return device_lan9252_get()->ioctl(device_lan9252_get(), OSPI_CMD_SET_DMA_RX_BUF, (void *)&info);
 }
 
 int8_t device_lan9252_rx_queue_init(osMessageQueueId_t queue)
 {
-    return ospi_rx_queue_init(device_lan9252_get(), queue);
+    return device_lan9252_get()->ioctl(device_lan9252_get(), OSPI_CMD_SET_DMA_RX_QUEUE, queue);
 }
 
 int32_t device_lan9252_data_recv_with_block(void)
 {
-    return device_ospi_irq_wait_with_block(device_lan9252_get(), "irq_line_3 irq_line_13 irq_line_2", ' ', osWaitForever);
+    struct wait_info
+    {
+        uint8_t *name;
+        char splitter;
+        uint32_t timeout
+    }info = {"irq_line_3 irq_line_13 irq_line_2", ' ', osWaitForever};
+
+    return device_lan9252_get()->ioctl(device_lan9252_get(), OSPI_CMD_IRQ_WAIT_WITH_BLOCK, (void *)&info);
 }
 
 int8_t device_lan9252_data_read(uint16_t address, uint8_t *buf, uint32_t num)

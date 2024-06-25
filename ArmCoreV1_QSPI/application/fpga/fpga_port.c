@@ -81,7 +81,7 @@ static int8_t device_send_to_fpga_opt_init(DEVICE_SPI *spi, DEVICE_SPI_OPT *spi_
     spi_opt->after_read = fpga_opt_after_read;
     spi_opt->complete_read = fpga_opt_complete_read;
 
-    return spi_opt_init(spi, spi_opt);
+    return spi->ioctl(spi, SPI_CMD_SET_OPT_FUNC, spi_opt);
 }
 #endif
 
@@ -93,8 +93,13 @@ int8_t device_send_to_fpga_init(uint8_t *device_name)
         return -1;
     }
 
+    int8_t ret = spi_init(device_send_to_fpga_get(), device_name, SPI_MASTER);
+    if (ret != 0)
+    {
+        printf("device send to fpga init err:%d\r\n", ret);
+    }
+
 #ifdef USING_SPI_OPTION_FUNCTION
-    int8_t ret = 0;
     ret = device_send_to_fpga_opt_init(device_send_to_fpga_get(), &device_send_to_fpga_opt);
     if (ret != 0)
     {
@@ -103,7 +108,7 @@ int8_t device_send_to_fpga_init(uint8_t *device_name)
     }
 #endif
 
-    return spi_init(device_send_to_fpga_get(), device_name, SPI_MASTER);
+    return ret;
 }
 
 int8_t device_send_to_fpga_open(void)
@@ -131,17 +136,23 @@ int8_t device_recv_from_fpga_init(uint8_t *device_name)
 
 int8_t device_recv_from_fpga_buffer_init(uint8_t *buf, uint16_t len)
 {
-    return spi_dma_rx_buf_init(device_recv_from_fpga_get(), buf, len);
+    struct dma_rx_buf_info
+    {
+        uint8_t *buf;
+        uint16_t len;
+    } info = {buf, len};
+
+    return device_recv_from_fpga_get()->ioctl(device_recv_from_fpga_get(), SPI_CMD_SET_DMA_RX_BUF, (void *)&info);
 }
 
 int8_t device_recv_from_fpga_queue_init(osMessageQueueId_t queue)
 {
-    return spi_rx_queue_init(device_recv_from_fpga_get(), queue);
+    return device_recv_from_fpga_get()->ioctl(device_recv_from_fpga_get(), SPI_CMD_SET_DMA_RX_QUEUE, (void *)queue);
 }
 
 int8_t device_recv_from_fpga_callback_register(int8_t (*cb)(void *arg))
 {
-    return spi_rx_callback_register(device_recv_from_fpga_get(), cb);
+    return device_recv_from_fpga_get()->ioctl(device_recv_from_fpga_get(), SPI_CMD_SET_RX_CALLBACK, (void *)cb);
 }
 
 int8_t device_recv_from_fpga_open(void)

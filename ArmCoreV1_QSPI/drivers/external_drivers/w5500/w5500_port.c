@@ -22,8 +22,17 @@ void SPI1_IRQHandler(void)
 
 static void w5500_irq_callback(void)
 {
-    IRQ_INFO_NODE *node = device_irq_node_find(device_w5500_get(), "irq_line_4")->node_data;
-    osEventFlagsSet(node->irq_event, node->irq_event_flag);
+    struct node_info
+    {
+        uint8_t *name;
+        DEVICE_IRQ_LIST *node
+    }info = {"irq_line_4", NULL};
+
+    if (device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_IRQ_NODE_FIND, (void *)&info) == 0)
+    {
+        osEventFlagsSet(info.node->node_data->irq_event, info.node->node_data->irq_event_flag);
+    }
+    
 }
 
 
@@ -314,7 +323,7 @@ static int8_t device_w5500_opt_init(DEVICE_SPI *spi, DEVICE_SPI_OPT *spi_opt)
     spi_opt->after_read = w5500_opt_after_read;
     spi_opt->complete_read = w5500_opt_complete_read;
 
-    return spi_opt_init(spi, spi_opt);
+    return spi->ioctl(spi, SPI_CMD_SET_OPT_FUNC, (void *)spi_opt);
 }
 #endif
 
@@ -338,8 +347,8 @@ static int8_t device_w5500_irq_init(DEVICE_SPI *spi, uint8_t *node_name)
     node->irq_pin = W5500_INTn_Pin;
     node->irq_event = osEventFlagsNew(&w5500_irq_event_attributes);
     node->irq_event_flag = W5500_IRQ_EVENT;
-    
-    return device_irq_node_add(&device_w5500, node);
+
+    return spi->ioctl(spi, SPI_CMD_IRQ_NODE_ADD, (void *)node);
 }
 #endif
 
@@ -353,6 +362,13 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
 
     int8_t ret = 0;
 
+    ret = spi_init(&device_w5500, device_name, SPI_MASTER);
+    if (ret != 0)
+    {
+        printf("device %s init err:%d\r\n", device_name, ret);
+        return ret;
+    }
+
 #ifdef USING_SPI_OPTION_FUNCTION
     device_w5500_opt_init(&device_w5500, &device_w5500_opt);
 #endif
@@ -361,13 +377,6 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
     device_w5500_irq_init(&device_w5500, "irq_line_4");
     gpio_pin_irq_callback_register("GPIOD_4", w5500_irq_callback);
 #endif
-
-    ret = spi_init(&device_w5500, device_name, SPI_MASTER);
-    if (ret != 0)
-    {
-        printf("device %s init err:%d\r\n", device_name, ret);
-        return ret;
-    }
 
     ret = device_w5500_get()->open(device_w5500_get());
     if (ret != 0)
@@ -381,17 +390,23 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
 
 int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len)
 {
-    return spi_dma_rx_buf_init(device_w5500_get(), buf, len);
+    struct dma_rx_buf_info
+    {
+        uint8_t *buf;
+        uint16_t len;
+    }info = {buf, len};
+
+    return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_SET_DMA_RX_BUF, (void *)&info);
 }
 
 int8_t device_w5500_rx_queue_init(osMessageQueueId_t queue)
 {
-    return spi_rx_queue_init(device_w5500_get(), queue);
+    return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_SET_DMA_RX_QUEUE, (void *)queue);
 }
 
 int8_t device_w5500_rx_callback_register(void (*callback)(void *arg))
 {
-    return spi_rx_callback_register(device_w5500_get(), callback);
+    return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_SET_RX_CALLBACK, (void *)callback);
 }
 
 int8_t device_w5500_interrupt_init(uint8_t sn)
@@ -430,18 +445,16 @@ int8_t device_w5500_link_state_recover(uint8_t sn)
 
     return 0;
 }
-int32_t device_w5500_data_recv_with_block(void)
+int8_t device_w5500_data_recv_with_block(void)
 {
-    int32_t ret = 0;
-
-    ret = device_irq_wait_with_block(device_w5500_get(), "irq_line_4", ' ', osWaitForever);
-    if (ret != W5500_IRQ_EVENT)
+    struct wait_info
     {
-        printf("irq wait err:%d\r\n", ret);
-        return ret;
-    }
+        uint8_t *name;
+        char splitter;
+        uint32_t timeout
+    }info = {"irq_line_4", ' ', osWaitForever};
 
-    return ret;    
+    return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_IRQ_WAIT_WITH_BLOCK, (void *)&info);
 }
 
 int32_t device_w5500_irq_process(void)

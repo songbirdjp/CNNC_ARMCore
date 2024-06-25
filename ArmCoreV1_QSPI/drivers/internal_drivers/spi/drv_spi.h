@@ -90,24 +90,29 @@ struct drv_spi
 
 typedef struct drv_spi DEVICE_SPI;
 
-
-int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode);
-int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue);
-int8_t spi_rx_callback_register(DEVICE_SPI *spi, int8_t (*cb)(void *arg));
-int8_t spi_dma_rx_buf_init(DEVICE_SPI *spi, uint8_t *buf, uint16_t len);
-
+enum spi_cmd
+{
 #ifdef USING_SPI_OPTION_FUNCTION
-int8_t spi_opt_init(DEVICE_SPI *spi, DEVICE_SPI_OPT *opt_func);
+    SPI_CMD_SET_OPT_FUNC,
 #endif
+
+    SPI_CMD_SET_DMA_RX_QUEUE,
+    SPI_CMD_SET_DMA_RX_BUF,
+    SPI_CMD_SET_RX_CALLBACK,    /* rx callback function */
 
 #ifdef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
-int8_t device_irq_node_add(DEVICE_SPI *spi, IRQ_INFO_NODE *node);
-DEVICE_IRQ_LIST *device_irq_node_find(DEVICE_SPI *spi, uint8_t *node_name);
-int8_t device_irq_node_delete(DEVICE_SPI *spi, uint8_t *node_name);
-int8_t device_irq_list_clear(DEVICE_SPI *spi);
-int8_t device_irq_list_list(DEVICE_SPI *spi);
-int32_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, char splitter, uint32_t timeout);
+    SPI_CMD_IRQ_NODE_ADD,
+    SPI_CMD_IRQ_NODE_DEL,
+    SPI_CMD_IRQ_NODE_FIND,
+    SPI_CMD_IRQ_LIST_LIST,
+    SPI_CMD_IRQ_LIST_CLEAR,
+    SPI_CMD_IRQ_WAIT_WITH_BLOCK
 #endif
+};
+
+
+int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode);
+
 
 #ifdef __cplusplus
 }

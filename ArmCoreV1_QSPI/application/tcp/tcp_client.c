@@ -246,7 +246,7 @@ static int8_t tcp_link_state_recover(void)
     return device_w5500_link_state_recover(socket_num_get());
 }
 
-static int32_t tcp_data_recv_with_block(void)
+static int8_t tcp_data_recv_with_block(void)
 {
     return device_w5500_data_recv_with_block();
 }

@@ -7,6 +7,9 @@
 extern "C" {
 #endif
 
+#define ALIGN(size, align)          (((size) + (align) - 1) & ~((align) - 1))
+
+
 struct system_time
 {
     uint32_t systick;   /* systick timer count */

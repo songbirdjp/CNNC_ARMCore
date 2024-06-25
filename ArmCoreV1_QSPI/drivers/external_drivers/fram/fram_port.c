@@ -96,7 +96,7 @@ static int8_t device_fram_opt_init(DEVICE_SPI *spi, DEVICE_SPI_OPT *spi_opt)
     spi_opt->after_read = fram_opt_after_read;
     spi_opt->complete_read = fram_opt_complete_read;
 
-    return spi_opt_init(spi, spi_opt);
+    return spi->ioctl(spi, SPI_CMD_SET_OPT_FUNC, (void *)spi_opt);
 }
 #endif
 
@@ -288,6 +288,13 @@ static int8_t device_fram_init(uint8_t *device_name)
         printf("ptr is null\r\n");
         return -1;
     }
+   
+    ret = spi_init(device_fram_get(), device_name, SPI_MASTER);
+    if (ret != 0)
+    {
+        printf("device fram init err:%d\r\n", ret);
+        return ret;        
+    }
 
 #ifdef USING_SPI_OPTION_FUNCTION
     ret = device_fram_opt_init(device_fram_get(), &device_fram_opt);
@@ -297,13 +304,6 @@ static int8_t device_fram_init(uint8_t *device_name)
         return ret;
     }
 #endif
-    
-    ret = spi_init(device_fram_get(), device_name, SPI_MASTER);
-    if (ret != 0)
-    {
-        printf("device fram init err:%d\r\n", ret);
-        return ret;        
-    }
 
     return device_fram_get()->open(device_fram_get());
 }
