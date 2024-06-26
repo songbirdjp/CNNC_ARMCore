@@ -81,28 +81,29 @@ struct drv_ospi
 
 typedef struct drv_ospi DEVICE_OSPI;
 
-
-int8_t ospi_init(DEVICE_OSPI *ospi, uint8_t *device_name);
-int8_t ospi_rx_queue_init(DEVICE_OSPI *ospi, osMessageQueueId_t queue);
-int8_t ospi_rx_callback_register(DEVICE_OSPI *ospi, int8_t (*cb)(void *arg));
-int8_t ospi_dma_rx_buf_init(DEVICE_OSPI *ospi, uint8_t *buf, uint16_t len);
-
+enum ospi_cmd
+{
 #ifdef USING_OSPI_OPTION_FUNCTION
-int8_t ospi_opt_init(DEVICE_OSPI *ospi, DEVICE_OSPI_OPT *opt_func);
+    OSPI_CMD_SET_OPT_FUNC,
 #endif
+
+    OSPI_CMD_SET_DMA_RX_QUEUE,
+    OSPI_CMD_SET_DMA_RX_BUF,
+    OSPI_CMD_SET_RX_CALLBACK,
 
 #ifdef USING_OSPI_SLAVE_TO_MASTER_INTERRUPT
-int8_t device_ospi_irq_node_add(DEVICE_OSPI *ospi, IRQ_INFO_NODE *node);
-DEVICE_IRQ_LIST *device_ospi_irq_node_find(DEVICE_OSPI *ospi, uint8_t *node_name);
-int8_t device_ospi_irq_node_delete(DEVICE_OSPI *ospi, uint8_t *node_name);
-int8_t device_ospi_irq_list_clear(DEVICE_OSPI *ospi);
-int8_t device_ospi_irq_list_list(DEVICE_OSPI *ospi);
-int8_t device_ospi_irq_wait_with_block(DEVICE_OSPI *ospi, uint8_t *node_name, char splitter, uint32_t timeout);
+    OSPI_CMD_IRQ_NODE_ADD,
+    OSPI_CMD_IRQ_NODE_DEL,
+    OSPI_CMD_IRQ_NODE_FIND,
+    OSPI_CMD_IRQ_LIST_LIST,
+    OSPI_CMD_IRQ_LIST_CLEAR,
+    OSPI_CMD_IRQ_WAIT_WITH_BLOCK    
 #endif
+};
 
 
 
-
+int8_t ospi_init(DEVICE_OSPI *ospi, uint8_t *device_name);
 
 
 

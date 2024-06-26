@@ -304,6 +304,411 @@ static int8_t spi_write_and_read(DEVICE_SPI *spi, uint8_t *send_buf, uint8_t *re
     return 0;
 }
 
+#ifdef USING_SPI_OPTION_FUNCTION
+static int8_t spi_opt_init(DEVICE_SPI *spi, DEVICE_SPI_OPT *opt_func)
+{
+    if (spi == NULL || opt_func == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    memcpy(&spi->opt, opt_func, sizeof(DEVICE_SPI_OPT));
+
+    return 0;
+}
+#endif
+
+static int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue)
+{
+    if (spi == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    spi->rx_queue = queue;
+
+    return 0;
+}
+
+static int8_t spi_dma_rx_buf_init(DEVICE_SPI *spi, uint8_t *buf, uint16_t len)
+{
+    if (spi == NULL || buf == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+    
+    if (len == 0)
+    {
+        printf("len is zero\r\n");
+        return -2;
+    }
+    
+    spi->rx_buf = buf;
+    spi->rx_buf_len = len;
+
+    return 0;
+}
+
+static int8_t spi_rx_callback_register(DEVICE_SPI *spi, int8_t (*cb)(void *arg))
+{
+    if (spi == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    spi->rx_cb = cb;
+
+    return 0;
+}
+
+#ifdef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
+static int8_t device_irq_node_add(DEVICE_SPI *spi, IRQ_INFO_NODE *node)
+{
+    if (spi == NULL || node == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    if (spi->irq_list == NULL)
+    {
+        spi->irq_list = (DEVICE_IRQ_LIST *)pvPortMalloc(sizeof(DEVICE_IRQ_LIST));
+        if (spi->irq_list == NULL)
+        {
+            printf("device irq %s malloc err\r\n", node->node_name);
+            return -2;
+        }
+        
+        spi->irq_list->next = NULL;
+        spi->irq_list->node_data = node;
+
+        return 0;
+    }
+
+    DEVICE_IRQ_LIST *ptr_pre = spi->irq_list;
+    DEVICE_IRQ_LIST *ptr = ptr_pre;
+
+    while (ptr != NULL)
+    {
+        ptr_pre = ptr;
+        ptr = ptr->next;
+    }
+
+    if (ptr == NULL)
+    {
+        ptr = (DEVICE_IRQ_LIST *)pvPortMalloc(sizeof(DEVICE_IRQ_LIST));
+        if (ptr == NULL)
+        {
+            printf("device irq %s malloc err\r\n", node->node_name);
+            return -3;
+        }
+    }
+
+    ptr->node_data = node;
+    ptr->next = NULL;
+
+    ptr_pre->next = ptr;
+
+    return 0;
+}
+
+static int8_t device_irq_node_find(DEVICE_SPI *spi, uint8_t *node_name, DEVICE_IRQ_LIST **ptr)
+{
+    if (spi == NULL || node_name == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    DEVICE_IRQ_LIST *header = spi->irq_list;
+    *ptr = header;
+
+    while (*ptr != NULL && strcmp((*ptr)->node_data->node_name, node_name) != 0)
+    {
+        *ptr = (*ptr)->next;
+    }
+
+    if (*ptr == NULL)
+    {
+        printf("can't find target node\r\n");
+    }
+
+    return 0;
+}
+
+static int8_t device_irq_node_delete(DEVICE_SPI *spi, uint8_t *node_name)
+{
+    if (spi == NULL || node_name == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    DEVICE_IRQ_LIST *ptr = spi->irq_list;
+    DEVICE_IRQ_LIST *ptr_pre = NULL;
+    
+    while (ptr != NULL && strcmp(ptr->node_data->node_name, node_name) != 0)
+    {
+        ptr_pre = ptr;
+        ptr = ptr->next;
+    }
+
+    if (ptr == NULL)
+    {
+        printf("can't find target node\r\n");
+        return -2;
+    }
+
+    if (ptr_pre == NULL)    /* first node */
+    {
+        spi->irq_list = ptr->next;
+    }
+    else
+    {
+        ptr_pre->next = ptr->next;
+    }
+
+    vPortFree(ptr);
+
+    return 0;
+}
+
+static int8_t device_irq_list_clear(DEVICE_SPI *spi)
+{
+    if (spi == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    DEVICE_IRQ_LIST *header = spi->irq_list;
+    DEVICE_IRQ_LIST *ptr = header;
+
+    while (ptr != NULL && ptr->node_data == NULL)
+    {
+        ptr = ptr->next;
+    }
+
+    if (ptr != NULL)
+    {
+        printf("irq node is valid, so must free it first\r\n");
+        return -2;
+    }
+
+    ptr = header;
+    while (ptr != NULL)
+    {
+        header = header->next;
+
+        ptr->node_data = NULL;
+        ptr->next = NULL;
+        vPortFree(ptr);
+        ptr = header;
+    }
+
+    spi->irq_list = NULL;
+
+    return 0;
+}
+
+static int8_t device_irq_list_list(DEVICE_SPI *spi)
+{
+    if (spi == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    DEVICE_IRQ_LIST *header = spi->irq_list;
+    DEVICE_IRQ_LIST *ptr = header;
+
+    while (ptr != NULL)
+    {
+        printf("ptr addr:%p  node_name:%s node_data addr %p\r\n", ptr, ptr->node_data->node_name, ptr->node_data);
+        ptr = ptr->next;
+    }
+
+    return 0;
+}
+
+static int8_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, char splitter, uint32_t timeout)
+{
+    if (spi == NULL || node_name == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    int8_t ret = 0;   
+
+    uint8_t name_buf[50] = {0};
+    uint8_t *argv[5] = {NULL};
+    memcpy(name_buf, node_name, strlen(node_name));
+
+    uint8_t name_num = split_string(name_buf, splitter, argv);
+
+    DEVICE_IRQ_LIST *node_res = NULL;
+    osEventFlagsId_t event = NULL;
+    uint32_t flag = 0;
+
+    for (uint8_t i = 0; i < name_num; i++)
+    {
+        ret = device_irq_node_find(spi, argv[i], &node_res);
+        if (ret == 0 && node_res != NULL) 
+        {
+            flag |= node_res->node_data->irq_event_flag;
+            event = node_res->node_data->irq_event;
+        }
+        else
+        {
+            printf("device %s irq node find err\r\n", argv[i]);
+            return -2;
+        }
+
+        // printf("[%d]: %s\r\n", i, argv[i]);
+    }
+ 
+    uint32_t ret_val = osEventFlagsWait(event, flag, osFlagsWaitAny, timeout);
+    if ((ret_val & flag) != ret_val)
+    {
+        printf("device %s wait irq err:%u\r\n", spi->name, ret_val);
+        return -3;
+    }
+
+    return ret_val;
+}
+
+#endif
+
+static int8_t spi_ioctl(DEVICE_SPI *spi, uint8_t cmd, void *arg)
+{
+    if (spi == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    int8_t ret = 0;
+    uint32_t offset = 0;
+
+    switch (cmd)
+    {
+#ifdef USING_SPI_OPTION_FUNCTION
+    case SPI_CMD_SET_OPT_FUNC:
+        ret = spi_opt_init(spi, (DEVICE_SPI_OPT *)arg);
+        if (ret != 0)
+        {
+            printf("device %s set opt func err:%d\r\n", spi->name, ret);
+        }
+        break;
+#endif
+
+    case SPI_CMD_SET_DMA_RX_QUEUE:
+        ret = spi_rx_queue_init(spi, (osMessageQueueId_t)arg);
+        if (ret != 0)
+        {
+            printf("device %s set rx queue err:%d\r\n", spi->name, ret);
+        }
+        break;
+
+    case SPI_CMD_SET_DMA_RX_BUF:
+    {
+        uint32_t buf = *(uint32_t *)((uint8_t *)arg + offset);
+
+        offset += ALIGN(sizeof(buf), 4);
+        uint16_t len = *(uint16_t *)((uint8_t *)arg + offset);
+
+        ret = spi_dma_rx_buf_init(spi, buf, len);
+        if (ret != 0)
+        {
+            printf("device %s set rx buf err:%d\r\n", spi->name, ret);
+        }
+        break;
+    }
+    case SPI_CMD_SET_RX_CALLBACK:
+        ret = spi_rx_callback_register(spi, (int8_t (*)(void *arg))arg);
+        if (ret != 0)
+        {
+            printf("device %s set rx callback err:%d\r\n", spi->name, ret);
+        }
+        break;
+
+#ifdef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
+    case SPI_CMD_IRQ_NODE_ADD:
+        ret = device_irq_node_add(spi, (IRQ_INFO_NODE *)arg);
+        if (ret != 0)
+        {
+            printf("device %s irq node add err:%d\r\n", spi->name, ret);
+        }
+        break;
+    
+    case SPI_CMD_IRQ_NODE_DEL:
+        ret = device_irq_node_delete(spi, (uint8_t *)arg);
+        if (ret != 0)
+        {
+            printf("device %s irq node del err:%d\r\n", spi->name, ret);
+        }
+        break;
+
+    case SPI_CMD_IRQ_NODE_FIND:
+    {
+        uint32_t name = *(uint32_t *)((uint8_t *)arg + offset);
+        offset += ALIGN(sizeof(name), 4);
+
+        ret = device_irq_node_find(spi, name, (DEVICE_IRQ_LIST **)((uint8_t *)arg + offset));
+        if (ret != 0)
+        {
+            printf("device %s irq node find err\r\n", spi->name);
+            ret = -1;
+        }
+        break;
+    }
+    case SPI_CMD_IRQ_LIST_LIST:
+        ret = device_irq_list_list(spi);
+        if (ret != 0)
+        {
+            printf("device %s irq list list err:%d\r\n", spi->name, ret);
+        }
+        break;
+
+    case SPI_CMD_IRQ_LIST_CLEAR:
+        ret = device_irq_list_clear(spi);
+        if (ret != 0)
+        {
+            printf("device %s irq list clear err:%d\r\n", spi->name, ret);
+        }
+        break;
+
+    case SPI_CMD_IRQ_WAIT_WITH_BLOCK:
+    {
+        uint32_t name = *(uint32_t *)((uint8_t *)arg + offset);
+        offset += ALIGN(sizeof(name), 4);
+
+        char splitter = *(char *)((uint8_t *)arg + offset);
+        offset += ALIGN(sizeof(splitter), 4);
+
+        uint32_t timeout = *(uint32_t *)((uint8_t *)arg + offset);
+
+        ret = device_irq_wait_with_block(spi, (uint8_t *)name, splitter, timeout);
+        if (ret < 0)
+        {
+            printf("device %s irq wait with block err:%d\r\n", spi->name, ret);
+        }
+        break;
+    }
+#endif
+    default:
+        break;
+    }
+
+
+    return ret;
+}
+
 /* default configure for spi is dma mode
 * 1) queue 、mutex and event init, queue and/or event for rx, mutex for tx
 * 2) add send function, and release mutex in complete callback function
@@ -400,287 +805,10 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     spi->write = spi_write;
     spi->read = spi_read;
     spi->write_and_read = spi_write_and_read;
-    spi->ioctl = NULL;
+    spi->ioctl = spi_ioctl;
     spi->rx_cb = NULL;
 
     /* 8. open device */
     return 0;//spi->open(spi);
 }
 
-
-int8_t spi_rx_queue_init(DEVICE_SPI *spi, osMessageQueueId_t queue)
-{
-    if (spi == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    spi->rx_queue = queue;
-
-    return 0;
-}
-
-int8_t spi_rx_callback_register(DEVICE_SPI *spi, int8_t (*cb)(void *arg))
-{
-    if (spi == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    spi->rx_cb = cb;
-
-    return 0;
-}
-
-int8_t spi_dma_rx_buf_init(DEVICE_SPI *spi, uint8_t *buf, uint16_t len)
-{
-    if (spi == NULL || buf == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-    
-    if (len == 0)
-    {
-        printf("len is zero\r\n");
-        return -2;
-    }
-    
-    spi->rx_buf = buf;
-    spi->rx_buf_len = len;
-
-    return 0;
-}
-
-#ifdef USING_SPI_OPTION_FUNCTION
-int8_t spi_opt_init(DEVICE_SPI *spi, DEVICE_SPI_OPT *opt_func)
-{
-    if (spi == NULL || opt_func == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    memcpy(&spi->opt, opt_func, sizeof(DEVICE_SPI_OPT));
-
-    return 0;
-}
-#endif
-
-#ifdef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
-int8_t device_irq_node_add(DEVICE_SPI *spi, IRQ_INFO_NODE *node)
-{
-    if (spi == NULL || node == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    if (spi->irq_list == NULL)
-    {
-        spi->irq_list = (DEVICE_IRQ_LIST *)pvPortMalloc(sizeof(DEVICE_IRQ_LIST));
-        if (spi->irq_list == NULL)
-        {
-            printf("device irq %s malloc err\r\n", node->node_name);
-            return -2;
-        }
-        
-        spi->irq_list->next = NULL;
-        spi->irq_list->node_data = node;
-
-        return 0;
-    }
-
-    DEVICE_IRQ_LIST *ptr_pre = spi->irq_list;
-    DEVICE_IRQ_LIST *ptr = ptr_pre;
-
-    while (ptr != NULL)
-    {
-        ptr_pre = ptr;
-        ptr = ptr->next;
-    }
-
-    if (ptr == NULL)
-    {
-        ptr = (DEVICE_IRQ_LIST *)pvPortMalloc(sizeof(DEVICE_IRQ_LIST));
-        if (ptr == NULL)
-        {
-            printf("device irq %s malloc err\r\n", node->node_name);
-            return -3;
-        }
-    }
-
-    ptr->node_data = node;
-    ptr->next = NULL;
-
-    ptr_pre->next = ptr;
-
-    return 0;
-}
-
-DEVICE_IRQ_LIST *device_irq_node_find(DEVICE_SPI *spi, uint8_t *node_name)
-{
-    if (spi == NULL || node_name == NULL)
-    {
-        printf("ptr is null\r\n");
-        return NULL;
-    }
-
-    DEVICE_IRQ_LIST *header = spi->irq_list;
-    DEVICE_IRQ_LIST *ptr = header;
-
-    while (ptr != NULL && strcmp(ptr->node_data->node_name, node_name) != 0)
-    {
-        ptr = ptr->next;
-    }
-
-    if (ptr == NULL)
-    {
-        printf("can't find target node\r\n");
-    }
-
-    return ptr;
-}
-
-int8_t device_irq_node_delete(DEVICE_SPI *spi, uint8_t *node_name)
-{
-    if (spi == NULL || node_name == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    DEVICE_IRQ_LIST *ptr = spi->irq_list;
-    DEVICE_IRQ_LIST *ptr_pre = NULL;
-    
-    while (ptr != NULL && strcmp(ptr->node_data->node_name, node_name) != 0)
-    {
-        ptr_pre = ptr;
-        ptr = ptr->next;
-    }
-
-    if (ptr == NULL)
-    {
-        printf("can't find target node\r\n");
-        return -2;
-    }
-
-    if (ptr_pre == NULL)    /* first node */
-    {
-        spi->irq_list = ptr->next;
-    }
-    else
-    {
-        ptr_pre->next = ptr->next;
-    }
-
-    vPortFree(ptr);
-
-    return 0;
-}
-
-int8_t device_irq_list_clear(DEVICE_SPI *spi)
-{
-    if (spi == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    DEVICE_IRQ_LIST *header = spi->irq_list;
-    DEVICE_IRQ_LIST *ptr = header;
-
-    while (ptr != NULL && ptr->node_data == NULL)
-    {
-        ptr = ptr->next;
-    }
-
-    if (ptr != NULL)
-    {
-        printf("irq node is valid, so must free it first\r\n");
-        return -2;
-    }
-
-    ptr = header;
-    while (ptr != NULL)
-    {
-        header = header->next;
-
-        ptr->node_data = NULL;
-        ptr->next = NULL;
-        vPortFree(ptr);
-        ptr = header;
-    }
-
-    spi->irq_list = NULL;
-
-    return 0;
-}
-
-int8_t device_irq_list_list(DEVICE_SPI *spi)
-{
-    if (spi == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    DEVICE_IRQ_LIST *header = spi->irq_list;
-    DEVICE_IRQ_LIST *ptr = header;
-
-    while (ptr != NULL)
-    {
-        printf("ptr addr:%p  node_name:%s node_data addr %p\r\n", ptr, ptr->node_data->node_name, ptr->node_data);
-        ptr = ptr->next;
-    }
-
-    return 0;
-}
-
-int32_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, char splitter, uint32_t timeout)
-{
-    if (spi == NULL || node_name == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    uint32_t ret = 0;   
-
-    uint8_t name_buf[50] = {0};
-    uint8_t *argv[5] = {NULL};
-    memcpy(name_buf, node_name, strlen(node_name));
-
-    uint8_t name_num = split_string(name_buf, splitter, argv);
-
-    DEVICE_IRQ_LIST *node_res = NULL;
-    osEventFlagsId_t event = NULL;
-    uint32_t flag = 0;
-
-    for (uint8_t i = 0; i < name_num; i++)
-    {
-        node_res = device_irq_node_find(spi, argv[i]);
-        if (node_res == NULL)
-        {
-            printf("%s node not find\r\n", argv[i]);
-        }
-        else
-        {
-            flag |= node_res->node_data->irq_event_flag;
-            event = node_res->node_data->irq_event;
-        }
-        // printf("[%d]: %s\r\n", i, argv[i]);
-    }
- 
-    ret = osEventFlagsWait(event, flag, osFlagsWaitAny, timeout);
-    if ((ret & flag) != ret)
-    {
-        printf("device %s wait irq err:%u\r\n", spi->name, ret);
-    }
-
-    return ret;
-}
-
-#endif

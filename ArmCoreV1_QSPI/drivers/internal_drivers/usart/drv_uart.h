@@ -55,14 +55,16 @@ struct drv_uart
 
 typedef struct drv_uart DEVICE_UART;
 
+enum uart_cmd
+{
+#ifdef USING_UART_OPTION_FUNCTION
+    UART_CMD_SET_OPT_FUNC,
+#endif
+    UART_CMD_SET_DMA_RX_QUEUE,
+    UART_CMD_SET_DMA_RX_BUF
+};
 
 int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name);
-int8_t uart_rx_queue_init(DEVICE_UART *uart, osMessageQueueId_t queue);
-int8_t uart_dma_rx_buf_init(DEVICE_UART *uart, uint8_t *buf, uint16_t len);
-
-#ifdef USING_UART_OPTION_FUNCTION
-int8_t uart_opt_init(DEVICE_UART *uart, DEVICE_UART_OPT *opt_func);
-#endif
 
 
 #ifdef __cplusplus

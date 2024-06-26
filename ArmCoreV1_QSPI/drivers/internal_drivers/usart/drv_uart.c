@@ -200,6 +200,90 @@ static int8_t uart_read(DEVICE_UART *uart, uint8_t *buf, uint32_t timeout)
     return 0;
 }
 
+
+#ifdef USING_UART_OPTION_FUNCTION
+static int8_t uart_opt_init(DEVICE_UART *uart, DEVICE_UART_OPT *opt_func)
+{
+    if (uart == NULL || opt_func == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    memcpy(&uart->opt, opt_func, sizeof(DEVICE_UART_OPT));
+
+    return 0;
+}
+#endif
+
+static int8_t uart_rx_queue_init(DEVICE_UART *uart, osMessageQueueId_t queue)
+{
+    if (uart == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    uart->rx_queue = queue;
+
+    return 0;
+}
+
+static int8_t uart_dma_rx_buf_init(DEVICE_UART *uart, uint8_t *buf, uint16_t len)
+{
+    if (uart == NULL || buf == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+    
+    if (len == 0)
+    {
+        printf("len is zero\r\n");
+        return -2;
+    }
+    
+    uart->rx_buf = buf;
+    uart->rx_buf_len = len;
+
+    return 0;
+}
+
+static int8_t uart_ioctl(DEVICE_UART *uart, uint8_t cmd, void *arg)
+{
+    int8_t ret = 0;
+
+    if (uart == NULL)
+    {
+        printf("ptr is null\r\n");
+        return -1;
+    }
+
+    switch (cmd)
+    {
+#ifdef USING_UART_OPTION_FUNCTION
+    case UART_CMD_SET_OPT_FUNC:
+        ret = uart_opt_init(uart, (DEVICE_UART_OPT *)arg);
+        break;
+#endif
+    case UART_CMD_SET_DMA_RX_QUEUE:
+        ret = uart_rx_queue_init(uart, (osMessageQueueId_t)arg);
+        break;
+    case UART_CMD_SET_DMA_RX_BUF:
+    {
+        uint32_t buf = *(uint32_t *)arg;
+        uint16_t len = *(uint16_t *)((uint8_t *)arg + sizeof(buf));
+        ret = uart_dma_rx_buf_init(uart, buf, len);
+        break;
+    }
+    default:
+        printf("uart ioctl cmd %d is not supported\r\n", cmd);
+        return -2;
+    }
+
+    return ret;
+}
+
 /* default configure for uart is dma mode
 * 1) queue 、mutex and event init, queue and/or event for rx, mutex for tx
 * 2) add send function, and release mutex in complete callback function
@@ -272,57 +356,8 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     uart->close = uart_close;
     uart->write = uart_write;
     uart->read = uart_read;
-    uart->ioctl = NULL;
+    uart->ioctl = uart_ioctl;
 
     /* 7. open device */
     return 0;//uart->open(uart);
 }
-
-int8_t uart_rx_queue_init(DEVICE_UART *uart, osMessageQueueId_t queue)
-{
-    if (uart == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    uart->rx_queue = queue;
-
-    return 0;
-}
-
-int8_t uart_dma_rx_buf_init(DEVICE_UART *uart, uint8_t *buf, uint16_t len)
-{
-    if (uart == NULL || buf == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-    
-    if (len == 0)
-    {
-        printf("len is zero\r\n");
-        return -2;
-    }
-    
-    uart->rx_buf = buf;
-    uart->rx_buf_len = len;
-
-    return 0;
-}
-
-
-#ifdef USING_UART_OPTION_FUNCTION
-int8_t uart_opt_init(DEVICE_UART *uart, DEVICE_UART_OPT *opt_func)
-{
-    if (uart == NULL || opt_func == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
-
-    memcpy(&uart->opt, opt_func, sizeof(DEVICE_UART_OPT));
-
-    return 0;
-}
-#endif

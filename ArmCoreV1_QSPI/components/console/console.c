@@ -93,12 +93,21 @@ static int8_t device_console_opt_init(DEVICE_UART *console, DEVICE_UART_OPT *con
     console_opt->after_read = console_opt_after_read;
     console_opt->complete_read = console_opt_complete_read;
 
-    return uart_opt_init(console, console_opt);
+    return console->ioctl(console, UART_CMD_SET_OPT_FUNC, (void *)console_opt);
 }
 #endif
 
 int8_t device_console_init(uint8_t *device_name)
 {
+    int8_t ret = 0;
+
+
+    ret = uart_init(&console, device_name);
+    if (ret != 0)
+    {
+        return ret;
+    }
+
 #ifdef USING_UART_OPTION_FUNCTION
     device_console_opt_init(&console, &console_opt);
 #endif
@@ -107,17 +116,31 @@ int8_t device_console_init(uint8_t *device_name)
     .name = "uart_rx_queue"
     };
     osMessageQueueId_t CmdQueueHandle = osMessageQueueNew (5, sizeof(struct CmdMessage), &CmdQueue_attributes);
-    uart_rx_queue_init(&console, CmdQueueHandle);
+    if (CmdQueueHandle == NULL)
+    {
+        return -1;
+    }
+
+    ret = console.ioctl(&console, UART_CMD_SET_DMA_RX_QUEUE, (void *)CmdQueueHandle);
+    if (ret != 0)
+    {
+        return ret;
+    }
 
     uint8_t *rx_buf = (uint8_t *)pvPortMalloc(sizeof(struct CmdMessage));  /* here should check when use dma mode */
     if (rx_buf == NULL)
     {
-        return -1;
+        return -2;
     }
     uint16_t rx_buf_len = sizeof(struct CmdMessage) - sizeof(uint16_t); /* indicate rx buf max len */
-    uart_dma_rx_buf_init(&console, rx_buf, rx_buf_len);
 
-    int8_t ret = uart_init(&console, device_name);
+    struct dma_rx_buf_info
+    {
+        uint8_t *buf;
+        uint16_t buf_len;
+    }info = {rx_buf, rx_buf_len};
+
+    ret = console.ioctl(&console, UART_CMD_SET_DMA_RX_BUF, &info);
     if (ret != 0)
     {
         return ret;
