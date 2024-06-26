@@ -166,10 +166,13 @@ set(MAKE_FILE ${PROJECT_BINARY_DIR}/Makefile)
 
 set(CMAKE_USER ${CMAKE_SOURCE_DIR}/info_generation)
 set(CMAKE_USER_MAKEFILE ${CMAKE_SOURCE_DIR}/makefile_update)
+set(CMAKE_USER_EC ${CMAKE_SOURCE_DIR}/EcScript)
 
 add_custom_command(TARGET ${PROJECT_NAME}.elf PRE_BUILD
+        COMMAND ${CMAKE_USER_EC}
         COMMAND ${CMAKE_USER_MAKEFILE} -input_file_path ${MAKE_FILE} -output_file_path ${MAKE_FILE} -name ${PROJECT_NAME}
         COMMENT "Updating ${MAKE_FILE}")
+
 
 add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:${PROJECT_NAME}.elf> ${HEX_FILE}

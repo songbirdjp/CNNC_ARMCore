@@ -237,7 +237,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
         }
     }
     InputSize = (InputSize + 7) >> 3;
-
+   
 #else
 #if _WIN32
    #pragma message ("Warning: Define 'InputSize' and 'OutputSize'.")
@@ -266,7 +266,7 @@ void APPL_InputMapping(UINT16* pData)
     // #warning "Implement input (Slave -> Master) mapping"
 
     UINT16 j = 0;
-    UINT16 *pTmpData = (UINT16 *) pData;
+    UINT16 *pTmpData = pData;
 
     osMutexAcquire(lan9252_app_ops_get()->pdo_input_update_mutex, osWaitForever);
 
@@ -277,17 +277,18 @@ void APPL_InputMapping(UINT16* pData)
         {
             /* TxPDO 1 */
             case 0x1A00:
-                for (int i = 1; i <= (nPdInputSize / 2); i++)
+  /*              for (int i = 1; i <= (nPdInputSize / 2); i++)
                 {
-                    *pTmpData++ = SWAPWORD(((UINT16 * ) & sDIInputs)[i]);
-                }
+                    *pTmpData++ = SWAPWORD(((UINT16 * ) & InputData0x6000)[i]);
+                }*/
+                 memcpy(pTmpData, (UINT16 *)&InputData0x6000+1 , sizeof(InputData0x6000)-2);
                 break;
             /* TxPDO 3 */
-            case 0x1A02:
+          //  case 0x1A02:
             //    *pTmpData++ = SWAPWORD(((UINT16 * ) & sAIInputs)[1]);
             //    *pTmpData++ = SWAPWORD(((UINT16 * ) & sAIInputs)[2]);
 
-                break;
+             //   break;
         }
     }
 
@@ -462,10 +463,14 @@ static void appl_output_update(UINT16 *pData)
         {
             /* RxPDO 2 */
             case 0x1601:
-                for (int i = 1; i <= (nPdOutputSize / 2); i++)
+            /*    for (int i = 1; i <= (nPdOutputSize / 2); i++)
                 {
-                    ((UINT16 *) &sDOOutputs)[i] = SWAPWORD(*pTmpData++);
-                }
+                    ((UINT16 *) &OutputData0x7010)[i] = SWAPWORD(*pTmpData++);
+                    
+                    // printf("i = %d, value:%.4x\r\n", i, SWAPWORD(*pTmpData++));
+                    // printf("i = %d, value:%.4x\r\n", i, OutputData0x7010.DataOut1[(i-1)%8]);
+                }*/
+                memcpy( (UINT16 *)&OutputData0x7010+1 , pTmpData, sizeof(OutputData0x7010)-2);
                 break;
         }
     }

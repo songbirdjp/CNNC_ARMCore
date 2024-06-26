@@ -46,6 +46,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "SPIDriver.h"
 #include "lan9252_port.h"
 
+#define ALIGN(size, align)          (((size) + (align) - 1) & ~((align) - 1))
 /*******************************************************************************
   Function:
 	UINT32 SPIReadDWord (UINT16 Address)
@@ -383,7 +384,7 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
     (PRAM_WRITE_BUSY) bit set*/
 	param32_1.w[0] = Address;
     param32_1.w[1] = Count;
-
+    
     SPIWriteDWord(PRAM_WRITE_ADDR_LEN_REG, param32_1.Val);
 
     /*write to the EtherCAT Process RAM Write Command Register (ECAT_PRAM_WR_CMD) with the  PRAM Write Busy
@@ -401,7 +402,7 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
     }while(!(param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK));
 
     /*Check write data available count*/
-    nWrtSpcAvlCount = param32_1.v[1] & PRAM_SPACE_AVBL_COUNT_MASK;
+   // nWrtSpcAvlCount = param32_1.v[1] & PRAM_SPACE_AVBL_COUNT_MASK;
 
     /*Write data to Write FIFO) */ 
     /*get the byte lenth for first read*/
@@ -445,7 +446,7 @@ void SPIWritePDRamRegister(UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
 #ifndef USING_SQI_CMD
     device_lan9252_data_write(PRAM_WRITE_FIFO_REG, WriteBuffer, Count);
 #else
-    device_lan9252_sqi_data_write(PRAM_WRITE_FIFO_REG, WriteBuffer, Count);
+    device_lan9252_sqi_data_write(PRAM_WRITE_FIFO_REG, WriteBuffer,  ALIGN(Count, 4));
 #endif
     return;
 }
@@ -524,6 +525,7 @@ void PDIWriteReg( UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
             i++;
         }
 #else
+    
         SPIWritePDRamRegister(WriteBuffer, Address,Count);
 #endif
    }

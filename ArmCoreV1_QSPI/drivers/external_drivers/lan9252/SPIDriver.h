@@ -102,6 +102,23 @@ extern "C" {
 /*TODO**********************************************************************************/	
 typedef union
 {
+	uint64_t Val;
+	uint8_t v[8];
+	uint16_t w[4];
+	struct
+	{
+		uint8_t LB1;
+		uint8_t HB1;	
+		uint8_t UB1;
+		uint8_t MB1;
+		uint8_t LB2;
+		uint8_t HB2;	
+		uint8_t UB2;
+		uint8_t MB2;
+	}byte;
+}UINT64_VAL;
+typedef union
+{
 	uint32_t Val;
 	uint8_t v[4];
 	uint16_t w[2];
