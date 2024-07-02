@@ -291,7 +291,7 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
 
     }while(!(param32_1.v[0] & IS_PRAM_SPACE_AVBL_MASK));
 
-    nReadSpaceAvblCount = param32_1.v[1] & PRAM_SPACE_AVBL_COUNT_MASK;
+ //   nReadSpaceAvblCount = param32_1.v[1] & PRAM_SPACE_AVBL_COUNT_MASK;
 
     /*Fifo registers are aliased address. In indexed it will read indexed data reg 0x04, but it will point to reg 0
      In other modes read 0x04 FIFO register since all registers are aliased*/
@@ -318,7 +318,7 @@ void SPIReadPDRamRegister(UINT8 *ReadBuffer, UINT16 Address, UINT16 Count)
         // uint8_t buf[10] = {0};
         // device_lan9252_read_write(PRAM_READ_FIFO_REG, ReadBuffer, Count);
         // memcpy(ReadBuffer ,tempBuff,Count);
-        nReadSpaceAvblCount = nReadSpaceAvblCount - Count / 4;//不一定用�?
+       // nReadSpaceAvblCount = nReadSpaceAvblCount - Count / 4;//不一定用�?
         // CSHIGH();
         return;
     }
