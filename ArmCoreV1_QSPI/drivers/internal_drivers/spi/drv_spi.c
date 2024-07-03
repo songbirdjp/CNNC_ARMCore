@@ -126,6 +126,7 @@ static int8_t spi_close(DEVICE_SPI *spi)
 static int8_t spi_write(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t timeout)
 {
     osStatus_t ret = osOK;
+    HAL_StatusTypeDef status = HAL_OK;
 
     if (!spi->open_state)
     {
@@ -147,11 +148,12 @@ static int8_t spi_write(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t t
     }
 #endif
 
-    ret = HAL_SPI_Transmit_DMA((SPI_HandleTypeDef *)spi, buf, size);
-    if (ret != HAL_OK)
+    status = HAL_SPI_Transmit_DMA((SPI_HandleTypeDef *)spi, buf, size);
+    if (status != HAL_OK)
     {
-        printf("device %s write data err:%d\r\n", spi->name, ret);
-        return -3;
+        printf("device %s write data err:%d\r\n", spi->name, status);
+        ret = -3;
+        goto err;
     }
 
 #ifdef USING_SPI_OPTION_FUNCTION
@@ -161,13 +163,15 @@ static int8_t spi_write(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t t
     }
 #endif
 
-    ret = osEventFlagsWait(spi->tx_event, SPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-    if (ret != SPI_SEND_SUCCEED_EVENT)
+    uint32_t ret_val = osEventFlagsWait(spi->tx_event, SPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+    if (ret_val != SPI_SEND_SUCCEED_EVENT)
     {
-        printf("device %s wait event flag err:%d\r\n", spi->name, ret);
-        return -4;
+        printf("device %s wait event flag err: %#.8x\r\n", spi->name, ret_val);
+        ret = -4;
+        goto err;
     }
 
+err:
 #ifdef USING_SPI_OPTION_FUNCTION
     if (spi->opt.complete_write != NULL)
     {
@@ -177,7 +181,7 @@ static int8_t spi_write(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t t
 
     osMutexRelease(spi->tx_mutex);
 
-    return 0;
+    return ret;
 }
 
 static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t timeout)
@@ -203,7 +207,8 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
         if (ret != HAL_OK)
         {
             printf("device %s receive dma err:%d\r\n", spi->name, ret);
-            return -2;
+            ret = -2;
+            goto err;
         }
 
 #ifdef USING_SPI_OPTION_FUNCTION
@@ -213,11 +218,12 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
         }
 #endif
 
-        ret = osEventFlagsWait(spi->rx_event, SPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-        if (ret != SPI_RECV_SUCCEED_EVENT)
+        uint32_t ret_val = osEventFlagsWait(spi->rx_event, SPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret_val != SPI_RECV_SUCCEED_EVENT)
         {
-            printf("device %s wait event flag err:%d\r\n", spi->name, ret);
-            return -3;
+            printf("device %s wait event flag err: %#.8x\r\n", spi->name, ret_val);
+            ret = -3;
+            goto err;
         }
     }
     else
@@ -233,11 +239,11 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
         if (ret != osOK)
         {
             printf("device %s read data err:%d\r\n", spi->name, ret);
-            return -2;
+            goto err;
         }
     }
 
-
+err:
 #ifdef USING_SPI_OPTION_FUNCTION
     if (spi->opt.complete_read != NULL)
     {
@@ -245,7 +251,7 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
     }
 #endif
 
-    return 0;
+    return ret;
 }
 
 static int8_t spi_write_and_read(DEVICE_SPI *spi, uint8_t *send_buf, uint8_t *recv_buf, uint16_t size, uint32_t timeout)
@@ -271,7 +277,8 @@ static int8_t spi_write_and_read(DEVICE_SPI *spi, uint8_t *send_buf, uint8_t *re
         if (ret != HAL_OK)
         {
             printf("device %s receive dma err:%d\r\n", spi->name, ret);
-            return -2;
+            ret = -2;
+            goto err;
         }
 
 #ifdef USING_SPI_OPTION_FUNCTION
@@ -281,19 +288,21 @@ static int8_t spi_write_and_read(DEVICE_SPI *spi, uint8_t *send_buf, uint8_t *re
         }
 #endif
 
-        ret = osEventFlagsWait(spi->rx_event, SPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-        if (ret != SPI_RECV_SUCCEED_EVENT)
+        uint32_t ret_val = osEventFlagsWait(spi->rx_event, SPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret_val != SPI_RECV_SUCCEED_EVENT)
         {
-            printf("device %s wait event flag err:%d\r\n", spi->name, ret);
-            return -3;
+            printf("device %s wait event flag err: %#.8x\r\n", spi->name, ret_val);
+            ret = -3;
+            goto err;
         }
     }
     else
     {
-        return -2;
+        ret = -2;
+        goto err;
     }
 
-
+err:
 #ifdef USING_SPI_OPTION_FUNCTION
     if (spi->opt.complete_read != NULL)
     {
@@ -301,7 +310,7 @@ static int8_t spi_write_and_read(DEVICE_SPI *spi, uint8_t *send_buf, uint8_t *re
     }
 #endif
 
-    return 0;
+    return ret;
 }
 
 #ifdef USING_SPI_OPTION_FUNCTION

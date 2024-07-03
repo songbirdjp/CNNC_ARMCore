@@ -90,6 +90,7 @@ static int8_t ospi_close(DEVICE_OSPI *ospi)
 static int8_t ospi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8_t *data_buf, uint32_t timeout)
 {
     osStatus_t ret = osOK;
+    HAL_StatusTypeDef status = HAL_OK;
 
     if (!ospi->open_state)
     {
@@ -119,48 +120,52 @@ static int8_t ospi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uin
 
     if (data_buf != NULL)
     {
-        ret = HAL_OSPI_Command((OSPI_HandleTypeDef *)ospi, cmd_buf, timeout);
-        if (ret != HAL_OK)
+        status = HAL_OSPI_Command((OSPI_HandleTypeDef *)ospi, cmd_buf, timeout);
+        if (status != HAL_OK)
         {
-            printf("device %s write cmd err:%d\r\n", ospi->name, ret);
-            return -4;
+            printf("device %s write cmd err:%d\r\n", ospi->name, status);
+            ret = -4;
+            goto err;
         }
 
 #ifdef USING_OSPI_DMA_MODE
         if (cmd_buf->NbData != sizeof(uint32_t))
         {
-            ret = HAL_OSPI_Transmit_DMA((OSPI_HandleTypeDef *)ospi, data_buf);
+            status = HAL_OSPI_Transmit_DMA((OSPI_HandleTypeDef *)ospi, data_buf);
         }
         else
         {
-            ret = HAL_OSPI_Transmit((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
+            status = HAL_OSPI_Transmit((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
         }
 #else
-        ret = HAL_OSPI_Transmit((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
+        status = HAL_OSPI_Transmit((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
 #endif
 
-        if (ret != HAL_OK)
+        if (status != HAL_OK)
         {
-            printf("device %s write data err:%d\r\n", ospi->name, ret);
-            return -5;
+            printf("device %s write data err:%d\r\n", ospi->name, status);
+            ret = -5;
+            goto err;
         }
 
     }
     else
     {
-        ret = HAL_OSPI_Command_IT((OSPI_HandleTypeDef *)ospi, cmd_buf);
-        if (ret != HAL_OK)
+        status = HAL_OSPI_Command_IT((OSPI_HandleTypeDef *)ospi, cmd_buf);
+        if (status != HAL_OK)
         {
-            printf("device %s write cmd err:%d\r\n", ospi->name, ret);
-            return -4;
+            printf("device %s write cmd err:%d\r\n", ospi->name, status);
+            ret = -4;
+            goto err;
         }
 
 #ifndef USING_OSPI_DMA_MODE
-        ret = osEventFlagsWait(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-        if (ret != OSPI_SEND_SUCCEED_EVENT)
+        uint32_t ret_val = osEventFlagsWait(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret_val != OSPI_SEND_SUCCEED_EVENT)
         {
-            printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
-            return -5;
+            printf("device %s wait event flag err: %#.8x\r\n", ospi->name, ret_val);
+            ret = -5;
+            goto err;
         }
 #endif
 
@@ -176,15 +181,17 @@ static int8_t ospi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uin
 #ifdef USING_OSPI_DMA_MODE
     if (cmd_buf->NbData != sizeof(uint32_t))
     {
-        ret = osEventFlagsWait(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-        if (ret != OSPI_SEND_SUCCEED_EVENT)
+        uint32_t ret_val = osEventFlagsWait(ospi->tx_event, OSPI_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret_val != OSPI_SEND_SUCCEED_EVENT)
         {
-            printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
-            return -6;
+            printf("device %s wait event flag err: %#.8x\r\n", ospi->name, ret_val);
+            ret = -6;
+            goto err;
         }
     }
 #endif
 
+err:
 #ifdef USING_OSPI_OPTION_FUNCTION
     if (ospi->opt.complete_write != NULL)
     {
@@ -194,12 +201,13 @@ static int8_t ospi_write(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uin
 
     osMutexRelease(ospi->tx_mutex);
 
-    return 0;
+    return ret;
 }
 
 static int8_t ospi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint8_t *data_buf, uint32_t timeout)
 {
     osStatus_t ret = osOK;
+    HAL_StatusTypeDef status = HAL_OK;
 
     if (!ospi->open_state)
     {
@@ -227,30 +235,32 @@ static int8_t ospi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
     }
 #endif
 
-    ret = HAL_OSPI_Command((OSPI_HandleTypeDef *)ospi, cmd_buf, timeout);
-    if (ret != HAL_OK)
+    status = HAL_OSPI_Command((OSPI_HandleTypeDef *)ospi, cmd_buf, timeout);
+    if (status != HAL_OK)
     {
-        printf("device %s write cmd err:%d\r\n", ospi->name, ret);
-        return -4;
+        printf("device %s write cmd err:%d\r\n", ospi->name, status);
+        ret = -4;
+        goto err;
     }
 
 #ifdef USING_OSPI_DMA_MODE
     if (cmd_buf->NbData != sizeof(uint32_t))
     {
-        ret = HAL_OSPI_Receive_DMA(&ospi->hospi, data_buf);
+        status = HAL_OSPI_Receive_DMA(&ospi->hospi, data_buf);
     }
     else
     {
-        ret = HAL_OSPI_Receive((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
+        status = HAL_OSPI_Receive((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
     }
 #else
-    ret = HAL_OSPI_Receive((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
+    status = HAL_OSPI_Receive((OSPI_HandleTypeDef *)ospi, data_buf, timeout);
 #endif
 
-    if (ret != HAL_OK)
+    if (status != HAL_OK)
     {
-        printf("device %s receive dma err:%d\r\n", ospi->name, ret);
-        return -5;
+        printf("device %s receive dma err:%d\r\n", ospi->name, status);
+        ret = -5;
+        goto err;
     }
 
 #ifdef USING_OSPI_OPTION_FUNCTION
@@ -263,15 +273,17 @@ static int8_t ospi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
 #ifdef USING_OSPI_DMA_MODE
     if (cmd_buf->NbData != sizeof(uint32_t))
     {
-        ret = osEventFlagsWait(ospi->rx_event, OSPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-        if (ret != OSPI_RECV_SUCCEED_EVENT)
+        uint32_t ret_val = osEventFlagsWait(ospi->rx_event, OSPI_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret_val != OSPI_RECV_SUCCEED_EVENT)
         {
-            printf("device %s wait event flag err:%d\r\n", ospi->name, ret);
-            return -6;
+            printf("device %s wait event flag err: %#.8x\r\n", ospi->name, ret_val);
+            ret = -6;
+            goto err;
         }
     }
 #endif
 
+err:
 #ifdef USING_OSPI_OPTION_FUNCTION
     if (ospi->opt.complete_read != NULL)
     {
@@ -281,7 +293,7 @@ static int8_t ospi_read(DEVICE_OSPI *ospi, OSPI_RegularCmdTypeDef *cmd_buf, uint
 
     osMutexRelease(ospi->tx_mutex);
 
-    return 0;
+    return ret;
 }
 
 #ifdef USING_OSPI_OPTION_FUNCTION
@@ -595,9 +607,9 @@ static int8_t ospi_ioctl(DEVICE_OSPI *ospi, uint32_t cmd, void *arg)
     
     case OSPI_CMD_SET_DMA_RX_BUF:
     {
-        uint32_t buf = *(uint32_t *)((uint8_t *)arg + offset);printf("buff:%.8x\r\n", buf);
+        uint32_t buf = *(uint32_t *)((uint8_t *)arg + offset);
         offset += ALIGN(sizeof(buf), 4);
-        uint16_t len = *(uint16_t *)((uint8_t *)arg + offset);printf("len:%d\r\n", len);
+        uint16_t len = *(uint16_t *)((uint8_t *)arg + offset);
         ret = ospi_dma_rx_buf_init(ospi, buf, len);
         if (ret != 0)
         {

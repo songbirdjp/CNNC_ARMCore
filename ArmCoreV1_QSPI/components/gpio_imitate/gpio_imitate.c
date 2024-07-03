@@ -88,7 +88,7 @@ int8_t gpio_imitate_start(uint8_t *gpio_pin, uint8_t *buf, uint16_t len)
         return -1;
     }
 
-    HAL_StatusTypeDef hal_status = HAL_OK;
+    HAL_StatusTypeDef status = HAL_OK;
     int8_t ret = 0;
     uint32_t data_len = len * 8;
 
@@ -100,7 +100,8 @@ int8_t gpio_imitate_start(uint8_t *gpio_pin, uint8_t *buf, uint16_t len)
     if (ret < 0)
     {
         printf("gpio parse err\r\n");
-        return -2;
+        ret = -2;
+        goto out;
     }
 
     /* 2. generate array for gpio pin according to buffer data */
@@ -108,7 +109,8 @@ int8_t gpio_imitate_start(uint8_t *gpio_pin, uint8_t *buf, uint16_t len)
     if (io_buf == NULL)
     {
         printf("malloc err\r\n");
-        return -3;
+        ret = -3;
+        goto out;
     }
 
     ret = gpio_array_generate(buf, len, gpio.pin, io_buf);
@@ -128,30 +130,38 @@ int8_t gpio_imitate_start(uint8_t *gpio_pin, uint8_t *buf, uint16_t len)
 
     /* 3. start dma transfer with tim7 period */
     /* TODO: must wait for dma transfer complete, but not implement here, add mutex if necessary */
-    hal_status = HAL_TIM_Base_Stop(&htim7);
-    if (hal_status != HAL_OK)
+    status = HAL_TIM_Base_Stop(&htim7);
+    if (status != HAL_OK)
     {
-        printf("tim stop err:%d\r\n", hal_status);
+        printf("tim stop err:%d\r\n", status);
+        ret = -4;
         goto err;
     }
 
-    hal_status = HAL_DMA_Start_IT(&hdma_tim7_up, io_buf, &gpio.port->BSRR, data_len);
-    if (hal_status != HAL_OK)
+    status = HAL_DMA_Start_IT(&hdma_tim7_up, io_buf, &gpio.port->BSRR, data_len);
+    if (status != HAL_OK)
     {
-        printf("dma start err:%d\r\n", hal_status);
+        printf("dma start err:%d\r\n", status);
+        ret = -5;
         goto err;
     }
 
     __HAL_TIM_ENABLE_DMA(&htim7, TIM_DMA_UPDATE);
-    hal_status = HAL_TIM_Base_Start(&htim7);
-    if (hal_status != HAL_OK)
+    status = HAL_TIM_Base_Start(&htim7);
+    if (status != HAL_OK)
     {
-        printf("tim start err:%d\r\n", hal_status);
+        printf("tim start err:%d\r\n", status);
+        ret = -6;
         goto err;
     }
 
-    osEventFlagsWait(io_event, GPIO_IMITATE_SEND_SUCCEED_EVENT, osFlagsWaitAny, osWaitForever);
-    osMutexRelease(io_mutex);
+    uint32_t ret_val = osEventFlagsWait(io_event, GPIO_IMITATE_SEND_SUCCEED_EVENT, osFlagsWaitAny, osWaitForever);
+    if (ret_val != GPIO_IMITATE_SEND_SUCCEED_EVENT)
+    {
+        printf("gpio imitate wait event flag err: %#.8x\r\n", ret_val);
+        ret = -7;
+        goto err;
+    }
 
 err:
     if (io_buf != NULL)
@@ -159,6 +169,9 @@ err:
         vPortFree(io_buf);
         io_buf = NULL;
     }
+
+out:
+    osMutexRelease(io_mutex);
 
     return ret;
 }

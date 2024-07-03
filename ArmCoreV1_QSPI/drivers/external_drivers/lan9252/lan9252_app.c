@@ -2,6 +2,7 @@
 * This source file is part of the EtherCAT Slave Stack Code licensed by Beckhoff Automation GmbH & Co KG, 33415 Verl, Germany.
 * The corresponding license agreement applies. This hint shall not be removed.
 */
+
 /**
 \addtogroup lan9252_app lan9252_app
 @{
@@ -100,8 +101,8 @@ UINT16 APPL_StopMailboxHandler(void)
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
  \param    pIntMask    pointer to the AL Event Mask which will be written to the AL event Mask
-                        register (0x204) when this function is succeeded. The event mask can be adapted
-                        in this function
+                       register (0x204) when this function is succeeded. The event mask can be adapted
+                       in this function
  \return    AL Status Code (see ecatslv.h ALSTATUSCODE_....)
 
  \brief    The function is called in the state transition from PREOP to SAFEOP when
@@ -218,7 +219,6 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
 #endif
 
 #if MAX_PD_INPUT_SIZE > 0
-										   
     if(result == 0)
     {
         /*Scan Object 0x1C13 TXPDO assign*/
@@ -230,7 +230,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
                 PDOSubindex0 = *((UINT16 *)pPDO->pVarPtr);
                 for(PDOEntryCnt = 0; PDOEntryCnt < PDOSubindex0; PDOEntryCnt++)
                 {
-                     pPDOEntry = (UINT32 *)(((UINT16 *)pPDO->pVarPtr) + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>4));    //goto PDO entry
+                    pPDOEntry = (UINT32 *)(((UINT16 *)pPDO->pVarPtr) + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>4));    //goto PDO entry
                     // we increment the expected output size depending on the mapped Entry
                     InputSize += (UINT16) ((*pPDOEntry) & 0xFF);
                 }
@@ -246,6 +246,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
     }
     InputSize = (InputSize + 7) >> 3;
 #endif
+
 #else
 #if _WIN32
    #pragma message ("Warning: Define 'InputSize' and 'OutputSize'.")
@@ -271,7 +272,7 @@ void APPL_InputMapping(UINT16* pData)
 #if _WIN32
    #pragma message ("Warning: Implement input (Slave->Master) mapping")
 #else
-     #warning "Implement input (Slave->Master) mapping"
+    //  #warning "Implement input (Slave->Master) mapping"
 
     UINT16 j = 0;
     UINT16 *pTmpData = pData;
@@ -285,18 +286,8 @@ void APPL_InputMapping(UINT16* pData)
         {
             /* TxPDO 1 */
             case 0x1A00:
-  /*              for (int i = 1; i <= (nPdInputSize / 2); i++)
-                {
-                    *pTmpData++ = SWAPWORD(((UINT16 * ) & InputData0x6000)[i]);
-                }*/
-                 memcpy(pTmpData, (UINT16 *)&InputData0x6000+1 , sizeof(InputData0x6000)-2);
+                memcpy(pTmpData, (UINT16 *)&InputData0x6000 + 1 , sizeof(InputData0x6000) - 2);
                 break;
-            /* TxPDO 3 */
-          //  case 0x1A02:
-            //    *pTmpData++ = SWAPWORD(((UINT16 * ) & sAIInputs)[1]);
-            //    *pTmpData++ = SWAPWORD(((UINT16 * ) & sAIInputs)[2]);
-
-             //   break;
         }
     }
 
@@ -340,24 +331,6 @@ void APPL_OutputMapping(UINT16* pData)
         osEventFlagsSet(lan9252_app_ops_get()->pdo_output_event, lan9252_app_ops_get()->event_flag);
     }
 
-    // UINT16 j = 0;
-    // UINT16 *pTmpData = (UINT16 *) pData;
-
-    // /* we go through all entries of the RxPDO Assign object to get the assigned RxPDOs */
-    // for (j = 0; j < sRxPDOassign.u16SubIndex0; j++)
-    // {
-    //     switch (sRxPDOassign.aEntries[j])
-    //     {
-    //         /* RxPDO 2 */
-    //         case 0x1601:
-    //             for (int i = 1; i <= (nPdOutputSize / 2); i++)
-    //             {
-    //                 ((UINT16 *) &sDOOutputs)[i] = SWAPWORD(*pTmpData++);
-    //             }
-    //             break;
-    //     }
-    // }
-
 #if 0
     for (int i = 1; i <= nPdOutputSize / 2; i++)
     {
@@ -383,7 +356,7 @@ void APPL_Application(void)
 #if _WIN32
    #pragma message ("Warning: Implement the slave application")
 #else
-    #warning "Implement the slave application"
+    // #warning "Implement the slave application"
 
     if (lan9252_app_ops_get()->appl_cb != NULL)
     {
@@ -411,8 +384,6 @@ UINT16 APPL_GetDeviceID()
     return 0x5;
 }
 #endif
-
-
 
 #if USE_DEFAULT_MAIN
 /////////////////////////////////////////////////////////////////////////////////////////

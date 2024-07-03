@@ -94,6 +94,7 @@ static int8_t uart_close(DEVICE_UART *uart)
 static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_t timeout)
 {
     osStatus_t ret = osOK;
+    HAL_StatusTypeDef status = HAL_OK;
 
     if (!uart->open_state)
     {
@@ -117,11 +118,12 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
     }
 #endif
 
-    ret = HAL_UART_Transmit_DMA((UART_HandleTypeDef *)uart, buf, size);
-    if (ret != HAL_OK)
+    status = HAL_UART_Transmit_DMA((UART_HandleTypeDef *)uart, buf, size);
+    if (status != HAL_OK)
     {
-        printf("device %s write data err:%d\r\n", uart->name, ret);
-        return -3;
+        printf("device %s write data err:%d\r\n", uart->name, status);
+        ret = -3;
+        goto err;
     }
 
 #ifdef USING_UART_OPTION_FUNCTION
@@ -132,13 +134,16 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
 #endif
 
 #ifndef ULOG_USING_ISR
-    ret = osEventFlagsWait(uart->tx_event, UART_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-    if (ret != UART_SEND_SUCCEED_EVENT)
+    uint32_t ret_val = osEventFlagsWait(uart->tx_event, UART_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+    if (ret_val != UART_SEND_SUCCEED_EVENT)
     {
-        printf("device %s  wait event flag err:%d\r\n", uart->name, ret);
-        return -4;
+        printf("device %s  wait event flag err: %#.8x\r\n", uart->name, ret_val);
+        ret = -4;
+        goto err;
     }
+#endif
 
+err:
 #ifdef USING_UART_OPTION_FUNCTION
     if (uart->opt.complete_write != NULL)
     {
@@ -146,17 +151,11 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
     }
 #endif
 
+#ifndef ULOG_USING_ISR
     osMutexRelease(uart->tx_mutex);
-#else
-#ifdef USING_UART_OPTION_FUNCTION
-    if (uart->opt.complete_write != NULL)
-    {
-        uart->opt.complete_write(uart);
-    }
-#endif
 #endif
 
-    return 0;
+    return ret;
 }
 
 static int8_t uart_read(DEVICE_UART *uart, uint8_t *buf, uint32_t timeout)
@@ -187,7 +186,7 @@ static int8_t uart_read(DEVICE_UART *uart, uint8_t *buf, uint32_t timeout)
     if (ret != osOK)
     {
         printf("device %s read data err:%d\r\n", uart->name, ret);
-        return -2;
+        ret = -2;
     }
 
 #ifdef USING_UART_OPTION_FUNCTION
@@ -197,7 +196,7 @@ static int8_t uart_read(DEVICE_UART *uart, uint8_t *buf, uint32_t timeout)
     }
 #endif
 
-    return 0;
+    return ret;
 }
 
 
