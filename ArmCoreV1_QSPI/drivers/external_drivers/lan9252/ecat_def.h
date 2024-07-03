@@ -97,13 +97,13 @@ This processor is mounted on the Beckhoff Slave Evaluation Board (Hardware versi
 /** 
 ESC_16BIT_ACCESS: If the microcontroller only supports 16Bit access to the ESC. */
 #ifndef ESC_16BIT_ACCESS
-#define ESC_16BIT_ACCESS                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.5.3.0)!
+#define ESC_16BIT_ACCESS                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.5.3.0)!
 #endif
 
 /** 
 ESC_32BIT_ACCESS: If the microcontroller only supports 32Bit access to the ESC. */
 #ifndef ESC_32BIT_ACCESS
-#define ESC_32BIT_ACCESS                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.5.3.0)!
+#define ESC_32BIT_ACCESS                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.5.3.0)!
 #endif
 
 /** 

@@ -1,3 +1,7 @@
+/*
+* This source file is part of the EtherCAT Slave Stack Code licensed by Beckhoff Automation GmbH & Co KG, 33415 Verl, Germany.
+* The corresponding license agreement applies. This hint shall not be removed.
+*/
 /**
 \addtogroup lan9252_app lan9252_app
 @{
@@ -6,8 +10,8 @@
 /**
 \file lan9252_app.c
 \brief Implementation
-
-\version 1.0.0.11
+ Created with SSC Tool application parser 1.6.4.0
+\version 0.0.0.1
 */
 
 
@@ -186,6 +190,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
     UINT32 *pPDOEntry = NULL;
     UINT16 PDOEntryCnt = 0;
    
+#if MAX_PD_OUTPUT_SIZE > 0
     /*Scan object 0x1C12 RXPDO assign*/
     for(PDOAssignEntryCnt = 0; PDOAssignEntryCnt < sRxPDOassign.u16SubIndex0; PDOAssignEntryCnt++)
     {
@@ -195,7 +200,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
             PDOSubindex0 = *((UINT16 *)pPDO->pVarPtr);
             for(PDOEntryCnt = 0; PDOEntryCnt < PDOSubindex0; PDOEntryCnt++)
             {
-                pPDOEntry = (UINT32 *)((UINT8 *)pPDO->pVarPtr + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>3));    //goto PDO entry
+                pPDOEntry = (UINT32 *)(((UINT16 *)pPDO->pVarPtr) + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>4));    //goto PDO entry
                 // we increment the expected output size depending on the mapped Entry
                 OutputSize += (UINT16) ((*pPDOEntry) & 0xFF);
             }
@@ -210,7 +215,10 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
     }
 
     OutputSize = (OutputSize + 7) >> 3;
+#endif
 
+#if MAX_PD_INPUT_SIZE > 0
+										   
     if(result == 0)
     {
         /*Scan Object 0x1C13 TXPDO assign*/
@@ -222,7 +230,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
                 PDOSubindex0 = *((UINT16 *)pPDO->pVarPtr);
                 for(PDOEntryCnt = 0; PDOEntryCnt < PDOSubindex0; PDOEntryCnt++)
                 {
-                    pPDOEntry = (UINT32 *)((UINT8 *)pPDO->pVarPtr + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>3));    //goto PDO entry
+                     pPDOEntry = (UINT32 *)(((UINT16 *)pPDO->pVarPtr) + (OBJ_GetEntryOffset((PDOEntryCnt+1),pPDO)>>4));    //goto PDO entry
                     // we increment the expected output size depending on the mapped Entry
                     InputSize += (UINT16) ((*pPDOEntry) & 0xFF);
                 }
@@ -237,7 +245,7 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
         }
     }
     InputSize = (InputSize + 7) >> 3;
-   
+#endif
 #else
 #if _WIN32
    #pragma message ("Warning: Define 'InputSize' and 'OutputSize'.")
@@ -261,9 +269,9 @@ UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
 void APPL_InputMapping(UINT16* pData)
 {
 #if _WIN32
-   #pragma message ("Warning: Implement input (Slave -> Master) mapping")
+   #pragma message ("Warning: Implement input (Slave->Master) mapping")
 #else
-    // #warning "Implement input (Slave -> Master) mapping"
+     #warning "Implement input (Slave->Master) mapping"
 
     UINT16 j = 0;
     UINT16 *pTmpData = pData;
@@ -315,9 +323,9 @@ void APPL_InputMapping(UINT16* pData)
 void APPL_OutputMapping(UINT16* pData)
 {
 #if _WIN32
-   #pragma message ("Warning: Implement output (Master -> Slave) mapping")
+   #pragma message ("Warning: Implement output (Master->Slave) mapping")
 #else
-    // #warning "Implement output (Master -> Slave) mapping"
+    #warning "Implement output (Master->Slave) mapping"
 
     osStatus_t stat = osOK;
 
@@ -375,7 +383,7 @@ void APPL_Application(void)
 #if _WIN32
    #pragma message ("Warning: Implement the slave application")
 #else
-    // #warning "Implement the slave application"
+    #warning "Implement the slave application"
 
     if (lan9252_app_ops_get()->appl_cb != NULL)
     {
@@ -390,7 +398,7 @@ void APPL_Application(void)
 /**
  \return    The Explicit Device ID of the EtherCAT slave
 
- \brief     Calculate the Explicit Device ID
+ \brief     Read the Explicit Device ID (from an external ID switch)
 *////////////////////////////////////////////////////////////////////////////////////////
 UINT16 APPL_GetDeviceID()
 {
@@ -413,14 +421,23 @@ UINT16 APPL_GetDeviceID()
  \brief    This is the main function
 
 *////////////////////////////////////////////////////////////////////////////////////////
-#if _PIC24
+#if _PIC24 && EL9800_HW
 int main(void)
+#elif _WIN32
+int main(int argc, char* argv[])
 #else
 void main(void)
 #endif
 {
     /* initialize the Hardware and the EtherCAT Slave Controller */
 #if FC1100_HW
+#if _WIN32
+    u16FcInstance = 0;
+    if (argc > 1)
+    {
+        u16FcInstance = atoi(argv[1]);
+    }
+#endif
     if(HW_Init())
     {
         HW_Release();
