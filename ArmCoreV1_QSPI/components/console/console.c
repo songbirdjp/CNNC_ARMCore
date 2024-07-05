@@ -180,6 +180,12 @@ static int8_t console_cmd_process(void)
 
     console.read(&console, &msg, osWaitForever);
 
+    if (msg.len <= 2)
+    {
+        printf("cmd len must more than 2\r\n");
+        return -1;
+    }
+
     msg.buf[msg.len - 2] = 0;
 
     shell_cmd_parse_entry(msg.buf, msg.len - 2);
