@@ -194,6 +194,16 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
         return -1;
     }
 
+    if (spi->master_or_slave == SPI_MASTER)
+    {
+        ret = osMutexAcquire(spi->tx_mutex, timeout);
+        if (ret != osOK)
+        {
+            printf("device %s acquire mutex err:%d\r\n", spi->name, ret);
+            return ret;
+        }
+    }
+
 #ifdef USING_SPI_OPTION_FUNCTION
     if (spi->opt.before_read != NULL)
     {
@@ -239,6 +249,7 @@ static int8_t spi_read(DEVICE_SPI *spi, uint8_t *buf, uint16_t size, uint32_t ti
         if (ret != osOK)
         {
             printf("device %s read data err:%d\r\n", spi->name, ret);
+            ret = -2;
             goto err;
         }
     }
@@ -251,6 +262,11 @@ err:
     }
 #endif
 
+    if (spi->master_or_slave == SPI_MASTER)
+    {
+        osMutexRelease(spi->tx_mutex);
+    }
+
     return ret;
 }
 
@@ -262,6 +278,16 @@ static int8_t spi_write_and_read(DEVICE_SPI *spi, uint8_t *send_buf, uint8_t *re
     {
         printf("device %s is closed\r\n", spi->name);
         return -1;
+    }
+
+    if (spi->master_or_slave == SPI_MASTER)
+    {
+        ret = osMutexAcquire(spi->tx_mutex, timeout);
+        if (ret != osOK)
+        {
+            printf("device %s acquire mutex err:%d\r\n", spi->name, ret);
+            return ret;
+        }
     }
 
 #ifdef USING_SPI_OPTION_FUNCTION
@@ -309,6 +335,11 @@ err:
         spi->opt.complete_read(spi);
     }
 #endif
+
+    if (spi->master_or_slave == SPI_MASTER)
+    {
+        osMutexRelease(spi->tx_mutex);
+    }
 
     return ret;
 }
