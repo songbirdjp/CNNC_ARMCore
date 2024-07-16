@@ -1545,7 +1545,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
             if result is unequal 0, the slave will stay in PREOP and set
             the ErrorInd Bit (bit 4) of the AL-Status */
         result = APPL_GenerateMapping(&nPdInputSize,&nPdOutputSize);
-        printf("EtherCAT Input:%d Bytes, Output:%d Bytes\r\n",nPdInputSize,nPdOutputSize);
+
             if (result != 0)
             {
                 break;

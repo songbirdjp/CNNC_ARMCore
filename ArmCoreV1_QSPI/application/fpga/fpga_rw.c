@@ -291,7 +291,7 @@ static int8_t fpga_thread_init(void)
 {
     osThreadAttr_t fpga_communication_thread_attributes = {
     .name = "fpga_communication_thread",
-    .stack_size = 256 * 4,
+    .stack_size = 512 * 4,
     .priority = (osPriority_t) osPriorityNormal7,
     };
 

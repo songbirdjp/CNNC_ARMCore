@@ -5,7 +5,6 @@ ArmCoreV1_QSPI
 ├─ .gitignore
 ├─ .mxproject
 ├─ .project
-├─ 7312.xml
 ├─ application
 │  ├─ app
 │  │  ├─ bootloader_patch
@@ -18,6 +17,8 @@ ArmCoreV1_QSPI
 │  │  │  ├─ main.c
 │  │  │  └─ main.h
 │  │  ├─ main_app
+│  │  │  ├─ fsm_app.c
+│  │  │  ├─ fsm_app.h
 │  │  │  ├─ main_app.c
 │  │  │  └─ main_app.h
 │  │  └─ sys_cfg
@@ -27,6 +28,9 @@ ArmCoreV1_QSPI
 │  ├─ ethercat
 │  │  ├─ ethercat.c
 │  │  └─ ethercat.h
+│  ├─ fdcan
+│  │  ├─ fdcan_port.c
+│  │  └─ fdcan_port.h
 │  ├─ flash
 │  │  ├─ flash_port.c
 │  │  └─ flash_port.h
@@ -175,6 +179,11 @@ ArmCoreV1_QSPI
 │     ├─ dma
 │     │  ├─ dma.c
 │     │  └─ dma.h
+│     ├─ fdcan
+│     │  ├─ drv_fdcan.c
+│     │  ├─ drv_fdcan.h
+│     │  ├─ fdcan.c
+│     │  └─ fdcan.h
 │     ├─ flash
 │     │  ├─ drv_flash.c
 │     │  └─ drv_flash.h
@@ -216,6 +225,7 @@ ArmCoreV1_QSPI
 │     └─ wwdg
 │        ├─ wwdg.c
 │        └─ wwdg.h
+├─ EcScript.exe
 ├─ ETHERCAT_CNNCPM.ioc
 ├─ file_reorganize.exe
 ├─ info_generation.exe
@@ -479,6 +489,31 @@ ArmCoreV1_QSPI
 │           ├─ stream_buffer.c
 │           ├─ tasks.c
 │           └─ timers.c
+├─ SSCProject
+│  ├─ lan9252_app.xlsx
+│  ├─ PIC32 EtherCAT Slave.esp
+│  ├─ PIC32 EtherCAT Slave.xml
+│  └─ Src
+│     ├─ applInterface.h
+│     ├─ coeappl.c
+│     ├─ coeappl.h
+│     ├─ ecatappl.c
+│     ├─ ecatappl.h
+│     ├─ ecatcoe.c
+│     ├─ ecatcoe.h
+│     ├─ ecatslv.c
+│     ├─ ecatslv.h
+│     ├─ ecat_def.h
+│     ├─ esc.h
+│     ├─ lan9252_app.c
+│     ├─ lan9252_app.h
+│     ├─ lan9252_appObjects.h
+│     ├─ mailbox.c
+│     ├─ mailbox.h
+│     ├─ objdef.c
+│     ├─ objdef.h
+│     ├─ sdoserv.c
+│     └─ sdoserv.h
 ├─ st_link.cfg
 └─ 使用说明
    ├─ ARM CORE固件模块复用使用指南V1.1.pdf

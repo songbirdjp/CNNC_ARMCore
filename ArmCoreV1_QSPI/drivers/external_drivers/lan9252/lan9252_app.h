@@ -2,6 +2,7 @@
 * This source file is part of the EtherCAT Slave Stack Code licensed by Beckhoff Automation GmbH & Co KG, 33415 Verl, Germany.
 * The corresponding license agreement applies. This hint shall not be removed.
 */
+
 /**
  * \addtogroup lan9252_app lan9252_app
  * @{

@@ -82,7 +82,7 @@ static int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, ui
     {
 #ifdef OS_FREERTOS
         ret = -4;
-        goto err;
+        goto out;
 #else
         return -4;
 #endif
@@ -101,15 +101,15 @@ static int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, ui
     {
         printf("Erase sector err:%d\r\n", status);
         ret = -5;
-        goto out;
+        goto err;
     }
 
-    ret = osEventFlagsWait(flash->operation_event, FLASH_OPERATION_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-    if (ret != FLASH_OPERATION_SUCCEED_EVENT)
+    uint32_t ret_val = osEventFlagsWait(flash->operation_event, FLASH_OPERATION_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+    if (ret_val != FLASH_OPERATION_SUCCEED_EVENT)
     {
-        printf("device %s  wait event flag err:%d\r\n", flash->name, ret);
+        printf("device %s  wait event flag err: %#.8x\r\n", flash->name, ret_val);
         ret = -6;
-        goto out;
+        goto err;
     }
 #else
     uint32_t SectorError = 0;
@@ -118,19 +118,19 @@ static int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, ui
     {
         printf("Erase sector err:%d(%u)\r\n", status, SectorError);
         ret = -5;
-        goto out;
+        goto err;
     }
 #endif
 
-out:
+err:
     status = HAL_FLASH_Lock();
     if (status != HAL_OK) 
     {
-        return -4;
+        ret = -7;
     }
 
 #ifdef OS_FREERTOS
-err:
+out:
     ret = osMutexRelease(flash->rw_mutex);
     if (ret != osOK)
     {
@@ -223,7 +223,7 @@ static int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, ui
     {
 #ifdef OS_FREERTOS
         ret = -5;
-        goto err;
+        goto out;
 #else
         return -5;
 #endif
@@ -237,14 +237,14 @@ static int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, ui
         {
             printf("flash write err:%d\r\n", status);
             ret = -6;
-            goto out;
+            goto err;
         }
-        ret = osEventFlagsWait(flash->operation_event, FLASH_OPERATION_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-        if (ret != FLASH_OPERATION_SUCCEED_EVENT)
+        uint32_t ret_val = osEventFlagsWait(flash->operation_event, FLASH_OPERATION_SUCCEED_EVENT, osFlagsWaitAny, timeout);
+        if (ret_val != FLASH_OPERATION_SUCCEED_EVENT)
         {
-            printf("device %s  wait event flag err:%d\r\n", flash->name, ret);
+            printf("device %s  wait event flag err: %#.8x\r\n", flash->name, ret_val);
             ret = -7;
-            goto out;
+            goto err;
         }
 #else
         status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, flash->addr_base + offset + i, buf + i); /* flash word == 256bit == 32bytes */
@@ -252,20 +252,20 @@ static int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, ui
         {
             printf("flash write err:%d\r\n", status);
             ret = -6;
-            goto out;
+            goto err;
         }
 #endif
     }
 
-out:
+err:
     status = HAL_FLASH_Lock();
     if (status != HAL_OK) 
     {
-        return -8;
+        ret = -8;
     }
 
 #ifdef OS_FREERTOS
-err:
+out:
     ret = osMutexRelease(flash->rw_mutex);
     if (ret != osOK)
     {

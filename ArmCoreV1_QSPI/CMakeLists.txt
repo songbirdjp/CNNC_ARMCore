@@ -78,6 +78,7 @@ include_directories(
     drivers/internal_drivers/bdma 
     drivers/internal_drivers/crc 
     drivers/internal_drivers/dma 
+    # drivers/internal_drivers/fdcan 
     drivers/internal_drivers/flash 
     drivers/internal_drivers/fmc 
     drivers/internal_drivers/gpio 
@@ -89,6 +90,7 @@ include_directories(
     drivers/internal_drivers/tim 
     drivers/internal_drivers/usart 
     drivers/internal_drivers/wwdg 
+    components/cjson 
     components/cm_backtrace 
     components/common 
     components/console 
@@ -104,6 +106,7 @@ include_directories(
     components/ymodem 
     board/board_config/inc 
     application/ethercat 
+    # application/fdcan 
     application/flash 
     # application/fpga 
     application/system_common 
@@ -121,6 +124,7 @@ file(GLOB_RECURSE SOURCES
     "libraries/*.*" 
     "Middlewares/*.*" 
     "drivers/*.*" 
+    "components/cjson/*.*" 
     "components/cm_backtrace/*.*" 
     "components/common/*.*" 
     "components/console/*.*" 
@@ -138,6 +142,7 @@ file(GLOB_RECURSE SOURCES
     "board/linker_scripts/*.*" 
     "board/startup/*.*" 
     "application/ethercat/*.*" 
+    # "application/fdcan/*.*" 
     "application/flash/*.*" 
     # "application/fpga/*.*" 
     "application/system_common/*.*" 
@@ -148,6 +153,12 @@ file(GLOB_RECURSE SOURCES
     "application/app/main_app/*.*" 
     "application/app/sys_cfg/*.*" 
     "bootloader/*.*")
+
+# remove fdcan driver source files
+file(GLOB_RECURSE DEL_SOURCES 
+    "drivers/internal_drivers/fdcan/*.*")
+
+list(REMOVE_ITEM SOURCES ${DEL_SOURCES})
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/board/linker_scripts/STM32H723ZGTX_FLASH.ld)
 

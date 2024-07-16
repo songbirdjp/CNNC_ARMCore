@@ -180,11 +180,11 @@ static int8_t device_fram_sleep_exit(void)
     return device_fram_get()->write(device_fram_get(), opcode_buf, 1, 1000);
 }
 
-int8_t device_fram_write(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t timeout)
+int8_t device_fram_write(uint16_t offset, uint8_t *buf, uint16_t len, uint32_t timeout)
 {
-    if (addr + len >= FRAM_ADDR_END)
+    if (offset + len >= FRAM_ADDR_END)
     {
-        printf("addr + len must less than 0x%x\r\n", FRAM_ADDR_END);
+        printf("offset + len must less than 0x%x\r\n", FRAM_ADDR_END);
         return -1;
     }
 
@@ -193,7 +193,7 @@ int8_t device_fram_write(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t tim
         return -2;
     }
 
-    if (len == 0 || len > 128)
+    if (len == 0 || len > BYTE_LEN_PER_LINE)
     {
         return -3;
     }
@@ -205,19 +205,19 @@ int8_t device_fram_write(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t tim
     uint8_t *opcode_buf = fram_opcode_and_addr_buf_get();
 
     opcode_buf[0] = WRITE;
-    opcode_buf[1] = addr >> 8;
-    opcode_buf[2] = addr;
+    opcode_buf[1] = offset >> 8;
+    opcode_buf[2] = offset;
 
     memcpy(&opcode_buf[3], buf, len);
 
     return device_fram_get()->write(device_fram_get(), opcode_buf, 3 + len, timeout);
 }
 
-int8_t device_fram_read(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t timeout)
+int8_t device_fram_read(uint16_t offset, uint8_t *buf, uint16_t len, uint32_t timeout)
 {
-    if (addr + len >= FRAM_ADDR_END)
+    if (offset + len >= FRAM_ADDR_END)
     {
-        printf("addr + len must less than 0x%x\r\n", FRAM_ADDR_END);
+        printf("offset + len must less than 0x%x\r\n", FRAM_ADDR_END);
         return -1;
     }
 
@@ -226,7 +226,7 @@ int8_t device_fram_read(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t time
         return -2;
     }
 
-    if (len == 0 || len > 128)
+    if (len == 0 || len > BYTE_LEN_PER_LINE)
     {
         return -3;
     }
@@ -235,8 +235,8 @@ int8_t device_fram_read(uint16_t addr, uint8_t *buf, uint16_t len, uint32_t time
     uint8_t *data_buf = fram_data_buf_get();
 
     opcode_buf[0] = READ;
-    opcode_buf[1] = addr >> 8;
-    opcode_buf[2] = addr;
+    opcode_buf[1] = offset >> 8;
+    opcode_buf[2] = offset;
 
     device_fram_get()->write_and_read(device_fram_get(), opcode_buf, data_buf, 3 + len, timeout);
 
@@ -259,7 +259,7 @@ static int8_t device_fram_fast_read(uint16_t addr, uint8_t *buf, uint16_t len, u
         return -2;
     }
 
-    if (len == 0 || len > 128)
+    if (len == 0 || len > BYTE_LEN_PER_LINE)
     {
         return -3;
     }
@@ -629,7 +629,7 @@ static int8_t fram_log_init(void)
 {
 #ifdef USING_ULOG_FLASH
     struct ulog_write_func_info info = {
-        .func_init = fram_log_info_self_detect,
+        .func_init = NULL,//fram_log_info_self_detect,
         .func_callback = fram_log_write,
         .index = 1};
     
