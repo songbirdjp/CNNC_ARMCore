@@ -4,6 +4,7 @@
 #include "stdbool.h"
 #include "init_call.h"
 #include "main.h"
+#include "tcp_server.h"
 
 #define SOCK_TCPS   0
 
@@ -50,7 +51,7 @@ static uint8_t tcp_link_status_get(void)
 
 static void (*fun_ptr)(void);
 
-static void tcp_establish_cb(void)
+void tcp_establish_cb(void)
 {
     if (fun_ptr != NULL)
     {
@@ -104,110 +105,6 @@ static int8_t do_tcp_client(uint8_t sn)
 
     return ret;
 }
-#if 0
-void do_tcp_server(void)
-{
-    uint8_t flag = 0;
-    uint16_t len;
-    switch (getSn_SR(SOCK_TCPS))
-    {
-        case SOCK_INIT:
-            listen(SOCK_TCPS);
-            printf("SERVER_SOCK_INIT\r\n");
-            break;
-        case SOCK_ESTABLISHED:
-            if (getSn_IR(SOCK_TCPS) & Sn_IR_CON)
-            {
-                setSn_IR(SOCK_TCPS, Sn_IR_CON);
-            }
-
-            len = 4096;//TODO 这里是个坑，getSn_RX_RSR(SOCK_TCPS)取数总是问题，目前把长度写成4096各方面都是正常的，如果有问题先查这里。
-            memset(gDATABUF, 0, sizeof(gDATABUF));
-            recv(SOCK_TCPS, gDATABUF, len);
-            if (len)
-            {
-                // 解析HTTP请求
-                int http_request_type = parse_http_request(gDATABUF);
-                printf("%s\r\n",gDATABUF);
-                // 根据HTTP请求的类型，发送HTTP响应
-                if (http_request_type == 1)
-                {
-                    printf("http_request_type = %x\r\n", http_request_type);
-                    if(Get_IO_Flag(gDATABUF) == 1)//抓取HTTP响应头是否有io-state标志
-                    {
-                        handleIOStatusRequest(SOCK_TCPS);
-                    }
-                    else//没有io位即正常响应标准页面
-                    {
-                        SendHttpResponse_Get(SOCK_TCPS);
-                    }
-
-                }
-                else if (http_request_type == 2)
-                {
-                    printf("http_request_type22222 = %x\r\n", http_request_type);
-
-                    handle_request(gDATABUF);
-                }
-                else if (http_request_type == 4)
-                {
-                    // 处理DELETE请求的响应
-                    // ...
-                }
-                else if (http_request_type == 5)
-                {
-                    // 处理HEAD请求的响应
-                    // ...
-                }
-                else if (http_request_type == 6)
-                {
-                    // 处理OPTIONS请求的响应
-                    // ...
-
-                }
-                else if (http_request_type == 7)
-                {
-                    // 处理PATCH请求的响应
-                    // ...
-                }
-                else if (http_request_type == 8)
-                {
-                    // 处理TRACE请求的响应
-                    // ...
-                }
-                else if (http_request_type == 9)
-                {
-                    // 处理CONNECT请求的响应
-                    // ...
-                }
-                else if(http_request_type == 10)
-                {
-                    char httpResponse[] = "HTTP/1.1 Option type\r\n\r\n";
-                    send(SOCK_TCPS, (uint8_t *) httpResponse, sizeof(httpResponse));
-                    printf("%s\r\n",gDATABUF);
-                    http_String2Numbers(gDATABUF);
-                }
-                else
-                {
-                    // 对于我们不支持的HTTP请求，返回"404 Not Found"错误
-                    char httpResponse[] = "HTTP/1.1 404 Not Found\r\n\r\n";
-                    send(SOCK_TCPS, (uint8_t *) httpResponse, sizeof(httpResponse));
-                }
-            }
-            printf("SERVER_SOCKSOCK_ESTABLISHED\r\n");
-            disconnect(SOCK_TCPS);
-            break;
-        case SOCK_CLOSE_WAIT:
-            disconnect(SOCK_TCPS);
-            printf("SERVER_SOCK_CLOSED_WAIT\r\n");
-            break;
-        case SOCK_CLOSED:
-            socket(SOCK_TCPS, Sn_MR_TCP, 5000, 0x00);
-            printf("SERVER_SOCK_CLOSED\r\n");
-            break;
-    }
-}
-#endif
 
 static uint8_t socket_num_get(void)
 {
@@ -230,6 +127,8 @@ static int8_t tcp_init(osMessageQueueId_t queue)
     device_w5500_rx_buffer_init(recvInfo.gDATABUF, sizeof(recvInfo.gDATABUF));
 
     device_w5500_rx_queue_init(queue);
+
+    tcp_app_init();
 
     return 0;
 }
@@ -284,7 +183,8 @@ static void TCPClientTask(void *argument)
             osDelay(100);
         }
 
-        ret = do_tcp_client(socket_num_get());
+      //  ret = do_tcp_client(socket_num_get());
+        ret = do_tcp_server_send(socket_num_get());
         if (ret != 0)
         {
             printf("do_tcp_client err:%d\r\n", ret);
@@ -334,7 +234,7 @@ static int8_t tcp_client_thread_init(void)
 {
     osThreadAttr_t tcp_irq_thread_attributes = {
     .name = "tcp_irq_thread",
-    .stack_size = 512 * 4,
+    .stack_size = 1024 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
     osThreadAttr_t TCPClient_attributes = {
@@ -388,11 +288,11 @@ osStatus_t tcp_client_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout
     return osMessageQueueGet(tcp_rx_queueHandle, buf, 0, timeout);
 }
 
-int32_t tcp_client_data_send(uint8_t *buf, uint16_t len)
+int32_t tcp_client_data_send(uint8_t s, uint8_t *buf, uint16_t len)
 {
     osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
 
-    int32_t ret = send(socket_num_get(), buf, len);
+    int32_t ret = send(s, buf, len);
     if (ret <= SOCK_BUSY)
     {
         printf("tcp client send err:%d\r\n", ret);

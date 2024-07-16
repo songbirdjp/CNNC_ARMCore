@@ -1,10 +1,9 @@
 #include "main_app.h"
 #include "fmc_sdram_port.h"
-#include "fpga_rw.h"
 #include "tcp_client.h"
 #include "main.h"
 #include "init_call.h"
-
+#if 0
 #define PARAM_SETTING_TAG 1
 #define PLAN_DATA_SETTING_TAG 2
 
@@ -105,7 +104,6 @@ CARRIER_POS carrierPosCal;
 bool InitCrc32Table(void);
 void sendParamtoFPGA(void);
 void calCarrierTrajectory(void);
-
 uint16_t *feedback = NULL, feedback16Len;
 
 void TCPFeedbackInit(void)
@@ -126,7 +124,6 @@ uint16_t beam_cmd_get(void)
 {
     return rtBeamData.planCmd;
 }
-
 
 void nrtInit(void)
 {
@@ -890,17 +887,17 @@ void nrtDataMainLoop(void)
     }
 }
 
-
+#endif
 
 /********************************************************************************************/
 #include "ethercat.h"
 
-#define DATA_PROCESS_FPGA_EVENT   (1<<0)
+//#define DATA_PROCESS_FPGA_EVENT   (1<<0)
 #define DATA_PROCESS_LAN_EVENT    (1<<1)
 #define DATA_PROCESS_TCP_EVENT    (1<<2)
 static osEventFlagsId_t data_process_eventHandle = NULL;
 
-static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
+/*static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
 {
     uint32_t checkSum = 0;
 
@@ -955,7 +952,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
     }
 
     return 0;
-}
+}*/
 
 #include "lan9252_app.h"
 static int8_t realtime_ethercat_data_process(void)
@@ -1036,7 +1033,7 @@ static int8_t realtime_ethercat_data_process(void)
                     
     //     }
     // }
-
+#if 0
     InfoIn1PTR[0] = rtBeamData.faultInfo1&0x000f;
     memcpy(&InfoIn1PTR[1], &InfoOutPTR[1], sizeof(uint16_t) * 7);         //rt upload， echo
 
@@ -1087,32 +1084,33 @@ static int8_t realtime_ethercat_data_process(void)
         }
     }
 
-
+#endif
     return ethercat_send_data_update(send, sizeof(send_data));
 }
 
-static int8_t non_realtime_tcp_callback(void)
-{
-    if(beam_cmd_get() == NO_USE)
-    {
-        sendFeedback();
-    }
+ static int8_t non_realtime_tcp_callback(void)
+ {
+    tcp_send_process();
+//     if(beam_cmd_get() == NO_USE)
+//     {
+//         sendFeedback();
+//     }
 
-    return 0;
-}
+//     return 0;
+ }
 
 static int8_t non_realtime_tcp_recv_data_callback(void)
 {
     osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_TCP_EVENT);
     return 0;
 }
-
+/*
 static int8_t non_realtime_fpga_recv_data_callback(void)
 {
     osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT);
     return 0;
 }
-
+*/
 static int8_t data_process_init(void)
 {
     int8_t ret = 0;
@@ -1137,16 +1135,16 @@ static int8_t data_process_init(void)
         return ret;
     }
 
-    ret = recv_from_fpga_callback_register(non_realtime_fpga_recv_data_callback);
-    if (ret != 0)
-    {
-        printf("recv fpga callback register err:%d\r\n", ret);
-        return ret;
-    }
+    // ret = recv_from_fpga_callback_register(non_realtime_fpga_recv_data_callback);
+    // if (ret != 0)
+    // {
+    //     printf("recv fpga callback register err:%d\r\n", ret);
+    //     return ret;
+    // }
 
     return 0;
 }
-
+#if 0
 static void DataProccessTask(void *argument)
 {
   /* USER CODE BEGIN DataProccessTask */
@@ -1160,33 +1158,33 @@ static void DataProccessTask(void *argument)
     }
   /* USER CODE END DataProccessTask */
 }
+#endif
 static void data_process_entry(void *argument)
 {
   /* USER CODE BEGIN data_process_entry */
   /* Infinite loop */
   osStatus_t stat = 0;
   uint32_t event_flag = 0;  
-  uint8_t recv_from_fpga_buf[RECV_BUF_LEN];
   TCP_DATA_t tcp_info = {0};
 
   osDelay(1000);
 
-  TCPFeedbackInit();
+ // TCPFeedbackInit();
   data_process_init();  /* register callback functions for tcp 、ethercat、fpga */
 
   /* here need add start functions for data receive */
-  recv_from_fpga_data_start();
+//  recv_from_fpga_data_start();
 
   for(;;)
   {
 
-    event_flag = osEventFlagsWait(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT | DATA_PROCESS_LAN_EVENT | DATA_PROCESS_TCP_EVENT, osFlagsWaitAny, osWaitForever);
+     event_flag = osEventFlagsWait(data_process_eventHandle, /*DATA_PROCESS_FPGA_EVENT |*/ DATA_PROCESS_LAN_EVENT | DATA_PROCESS_TCP_EVENT, osFlagsWaitAny, osWaitForever);
     if (event_flag & DATA_PROCESS_LAN_EVENT)
     {
         ethercat_recv_data_update_with_block(0);
     }
 
-    if (event_flag & DATA_PROCESS_FPGA_EVENT)
+ /*   if (event_flag & DATA_PROCESS_FPGA_EVENT)
     {
         stat = recv_from_fpga_data_get(recv_from_fpga_buf);
         if (stat == osOK)
@@ -1199,16 +1197,17 @@ static void data_process_entry(void *argument)
         {
             printf("no msg in spi2 rx queue:%d\r\n", stat);
         }
-    }
+    }*/
 
     if (event_flag & DATA_PROCESS_TCP_EVENT)
     {
         stat = tcp_client_data_recv_get_with_block(&tcp_info, 0);
         if (stat == osOK)
         {
-            ntrRecvParamAndPlan(&tcp_info);
+          //  ntrRecvParamAndPlan(&tcp_info);
 
-            sendFeedback();
+          //  sendFeedback();
+          tcp_recv_process(&tcp_info);
 
             // printf("tcp_info len:%d\r\n", tcp_info.Len);
             // printf("tcp_info %x %x %x %x\r\n", tcp_info.gDATABUF[0], tcp_info.gDATABUF[1], tcp_info.gDATABUF[2], tcp_info.gDATABUF[3]);
@@ -1231,11 +1230,11 @@ static int8_t main_app_thread_init(void)
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
 
-    osThreadAttr_t DataProcess_attributes = {
-    .name = "DataProcess",
-    .stack_size = 1024 * 4,
-    .priority = (osPriority_t) osPriorityNormal,
-    };
+    // osThreadAttr_t DataProcess_attributes = {
+    // .name = "DataProcess",
+    // .stack_size = 1024 * 4,
+    // .priority = (osPriority_t) osPriorityNormal,
+    // };
 
     data_process_eventHandle = osEventFlagsNew(NULL);
     if (data_process_eventHandle == NULL)
@@ -1244,12 +1243,12 @@ static int8_t main_app_thread_init(void)
         return -1;
     }
 
-    osThreadId_t DataProcessHandle = osThreadNew(DataProccessTask, NULL, &DataProcess_attributes);
-    if (DataProcessHandle == NULL)
-    {
-        printf("thread data process create failed\r\n");
-        return -1;
-    }
+    // osThreadId_t DataProcessHandle = osThreadNew(DataProccessTask, NULL, &DataProcess_attributes);
+    // if (DataProcessHandle == NULL)
+    // {
+    //     printf("thread data process create failed\r\n");
+    //     return -1;
+    // }
 
     osThreadId_t recv_data_process_threadHandle = osThreadNew(data_process_entry, NULL, &recv_data_process_thread_attributes);
     if (recv_data_process_threadHandle == NULL)

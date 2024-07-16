@@ -156,7 +156,7 @@ static void W5500_interrupt_status_print(uint8_t sn)
     //     printf("---W5500 INTn pin reset---\r\n");
     // }
 }
-
+#include "tcp_client.h"
 static int32_t w5500_irq_process(void)
 {
     uint16_t interrupt_type = 0; // SIR << 8 | IR
@@ -245,10 +245,13 @@ static int32_t w5500_irq_process(void)
                     printf("tcp client receive err:%d\r\n", recv_ret);
                     return recv_ret;
                 }
-
-                *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* TODO: must according to static TCP_DATA_t */
-
-                recv_ret = osMessageQueuePut(dev->rx_queue, dev->rx_buf, 0, 100);
+               // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* TODO: must according to static TCP_DATA_t */
+                TCP_DATA_t rxBufTmp;
+                rxBufTmp.sn = sn;
+                rxBufTmp.Len = recv_len;
+                memset(rxBufTmp.gDATABUF, 0, sizeof(rxBufTmp.gDATABUF));
+                memcpy(rxBufTmp.gDATABUF, dev->rx_buf, recv_len);
+                recv_ret = osMessageQueuePut(dev->rx_queue, &rxBufTmp, 0, 100);
                 if (recv_ret != osOK)
                 {
                     printf("w5500 queue put err:%d\r\n", recv_ret);

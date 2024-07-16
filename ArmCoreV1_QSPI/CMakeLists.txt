@@ -111,7 +111,7 @@ include_directories(
     application/app/bootloader_patch 
     application/app/freertos 
     application/app/main 
-    # application/app/main_app 
+    application/app/main_app 
     application/app/sys_cfg 
     bootloader)
 
@@ -145,7 +145,7 @@ file(GLOB_RECURSE SOURCES
     "application/app/bootloader_patch/*.*" 
     "application/app/freertos/*.*" 
     "application/app/main/*.*" 
-    # "application/app/main_app/*.*" 
+    "application/app/main_app/*.*" 
     "application/app/sys_cfg/*.*" 
     "bootloader/*.*")
 
