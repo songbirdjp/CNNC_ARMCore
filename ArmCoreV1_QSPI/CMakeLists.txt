@@ -90,6 +90,7 @@ include_directories(
     drivers/internal_drivers/tim 
     drivers/internal_drivers/usart 
     drivers/internal_drivers/wwdg 
+    components/cjson 
     components/cm_backtrace 
     components/common 
     components/console 
@@ -123,6 +124,7 @@ file(GLOB_RECURSE SOURCES
     "libraries/*.*" 
     "Middlewares/*.*" 
     "drivers/*.*" 
+    "components/cjson/*.*" 
     "components/cm_backtrace/*.*" 
     "components/common/*.*" 
     "components/console/*.*" 

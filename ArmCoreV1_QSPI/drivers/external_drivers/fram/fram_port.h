@@ -16,6 +16,9 @@ extern "C" {
 #define LOG_INFO_UPDATE_LINES   1   /* log info update every line */
 
 
+int8_t device_fram_write(uint16_t offset, uint8_t *buf, uint16_t len, uint32_t timeout);
+int8_t device_fram_read(uint16_t offset, uint8_t *buf, uint16_t len, uint32_t timeout);
+
 #ifdef __cplusplus
 }
 #endif
