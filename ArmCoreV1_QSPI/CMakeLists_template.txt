@@ -89,6 +89,7 @@ include_directories(
     drivers/internal_drivers/tim 
     drivers/internal_drivers/usart 
     drivers/internal_drivers/wwdg 
+    components/cjson 
     components/cm_backtrace 
     components/common 
     components/console 
@@ -122,6 +123,7 @@ file(GLOB_RECURSE SOURCES
     "libraries/*.*" 
     "Middlewares/*.*" 
     "drivers/*.*" 
+    "components/cjson/*.*" 
     "components/cm_backtrace/*.*" 
     "components/common/*.*" 
     "components/console/*.*" 
@@ -151,6 +153,12 @@ file(GLOB_RECURSE SOURCES
     "application/app/sys_cfg/*.*" 
     "bootloader/*.*")
 
+# remove fdcan driver source files
+file(GLOB_RECURSE DEL_SOURCES 
+    "drivers/internal_drivers/fdcan/*.*")
+
+list(REMOVE_ITEM SOURCES ${DEL_SOURCES})
+
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/board/linker_scripts/STM32H723ZGTX_FLASH.ld)
 
 add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=$${PROJECT_BINARY_DIR}/$${PROJECT_NAME}.map)
@@ -159,7 +167,7 @@ add_link_options(-T $${LINKER_SCRIPT})
 
 add_executable($${PROJECT_NAME}.elf $${SOURCES} $${LINKER_SCRIPT})
 
-target_link_libraries(${PROJECT_NAME}.elf ${CMAKE_SOURCE_DIR}/Middlewares/ST/STM32_Cryptographic/lib/libSTM32Cryptographic_CM7.a)
+target_link_libraries($${PROJECT_NAME}.elf $${CMAKE_SOURCE_DIR}/Middlewares/ST/STM32_Cryptographic/lib/libSTM32Cryptographic_CM7.a)
 
 set(HEX_FILE $${PROJECT_BINARY_DIR}/$${PROJECT_NAME}.hex)
 set(BIN_FILE $${PROJECT_BINARY_DIR}/$${PROJECT_NAME}.bin)
@@ -168,10 +176,12 @@ set(MAKE_FILE $${PROJECT_BINARY_DIR}/Makefile)
 
 set(CMAKE_USER ${CMAKE_SOURCE_DIR}/info_generation)
 set(CMAKE_USER_MAKEFILE ${CMAKE_SOURCE_DIR}/makefile_update)
+set(CMAKE_USER_EC ${CMAKE_SOURCE_DIR}/EcScript)
 
-add_custom_command(TARGET ${PROJECT_NAME}.elf PRE_BUILD
-        COMMAND ${CMAKE_USER_MAKEFILE} -input_file_path ${MAKE_FILE} -output_file_path ${MAKE_FILE} -name ${PROJECT_NAME}
-        COMMENT "Updating ${MAKE_FILE}")
+add_custom_command(TARGET $${PROJECT_NAME}.elf PRE_BUILD
+        COMMAND $${CMAKE_USER_EC}
+        COMMAND $${CMAKE_USER_MAKEFILE} -input_file_path $${MAKE_FILE} -output_file_path $${MAKE_FILE} -name $${PROJECT_NAME}
+        COMMENT "Updating $${MAKE_FILE}")
 
 add_custom_command(TARGET $${PROJECT_NAME}.elf POST_BUILD
         COMMAND $${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:$${PROJECT_NAME}.elf> $${HEX_FILE}

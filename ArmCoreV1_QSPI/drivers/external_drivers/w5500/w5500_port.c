@@ -246,10 +246,9 @@ static int32_t w5500_irq_process(void)
                     return recv_ret;
                 }
                // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* TODO: must according to static TCP_DATA_t */
-                TCP_DATA_t rxBufTmp;
+                TCP_DATA_t rxBufTmp = {0};
                 rxBufTmp.sn = sn;
                 rxBufTmp.Len = recv_len;
-                memset(rxBufTmp.gDATABUF, 0, sizeof(rxBufTmp.gDATABUF));
                 memcpy(rxBufTmp.gDATABUF, dev->rx_buf, recv_len);
                 recv_ret = osMessageQueuePut(dev->rx_queue, &rxBufTmp, 0, 100);
                 if (recv_ret != osOK)

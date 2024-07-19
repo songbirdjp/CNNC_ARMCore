@@ -451,14 +451,7 @@ static void appl_output_update(UINT16 *pData)
         {
             /* RxPDO 2 */
             case 0x1601:
-            /*    for (int i = 1; i <= (nPdOutputSize / 2); i++)
-                {
-                    ((UINT16 *) &OutputData0x7010)[i] = SWAPWORD(*pTmpData++);
-                    
-                    // printf("i = %d, value:%.4x\r\n", i, SWAPWORD(*pTmpData++));
-                    // printf("i = %d, value:%.4x\r\n", i, OutputData0x7010.DataOut1[(i-1)%8]);
-                }*/
-                memcpy( (UINT16 *)&OutputData0x7010+1 , pTmpData, sizeof(OutputData0x7010)-2);
+                memcpy((UINT16 *)&OutputData0x7010 + 1, pTmpData, sizeof(OutputData0x7010) - 2);
                 break;
         }
     }
