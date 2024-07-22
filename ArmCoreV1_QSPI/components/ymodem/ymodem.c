@@ -947,7 +947,7 @@ static int8_t ymodem_thread_init(uint8_t argc, uint8_t **argv)
     }
 
     osThreadAttr_t ymodem_attributes = {
-    .name = "ymodem",
+    .name = "ymodem_thread",
     .stack_size = 1024 * 4,
     .priority = (osPriority_t) osPriorityLow,
     };

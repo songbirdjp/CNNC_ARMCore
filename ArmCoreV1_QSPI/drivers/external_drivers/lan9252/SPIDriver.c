@@ -45,8 +45,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "9252_HW.h"
 #include "SPIDriver.h"
 #include "lan9252_port.h"
+#include "utilities.h"
 
-#define ALIGN(size, align)          (((size) + (align) - 1) & ~((align) - 1))
 /*******************************************************************************
   Function:
 	UINT32 SPIReadDWord (UINT16 Address)
@@ -525,7 +525,6 @@ void PDIWriteReg( UINT8 *WriteBuffer, UINT16 Address, UINT16 Count)
             i++;
         }
 #else
-    
         SPIWritePDRamRegister(WriteBuffer, Address,Count);
 #endif
    }

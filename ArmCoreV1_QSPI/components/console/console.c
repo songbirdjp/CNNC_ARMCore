@@ -101,7 +101,6 @@ int8_t device_console_init(uint8_t *device_name)
 {
     int8_t ret = 0;
 
-
     ret = uart_init(&console, device_name);
     if (ret != 0)
     {
