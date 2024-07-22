@@ -1088,9 +1088,9 @@ static int8_t realtime_ethercat_data_process(void)
     return ethercat_send_data_update(send, sizeof(send_data));
 }
 
- static int8_t non_realtime_tcp_callback(void)
+ static int8_t non_realtime_tcp_callback(uint8_t sn)
  {
-    tcp_send_process();
+    tcp_send_process(sn);
 //     if(beam_cmd_get() == NO_USE)
 //     {
 //         sendFeedback();

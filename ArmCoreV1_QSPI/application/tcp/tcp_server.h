@@ -10,7 +10,7 @@
 
 #define MAX_HTTPSEND_NUMBERS 64
 #define DATA_BUF_SIZE  2048
-#define MAX_CLIENT_NUM   2
+#define MAX_CLIENT_NUM   3
 
 typedef enum
 {
@@ -43,7 +43,7 @@ typedef struct
     uint8_t sendMode;//send by text:WDT_TXTDATA   send by binary:WDT_BINDATA
     uint16_t reqFsmState;//Only r/w data in this FSM state
     void *tcpData;
-    void (*cbFunc)(void);
+    void (*cbFunc)(void*);
 }TCP_DATA_ITEMS;
 
 typedef struct
@@ -67,6 +67,6 @@ typedef struct
 
 void tcp_app_init(void);
 int8_t do_tcp_server_send(uint8_t s);
-void tcp_send_process(void);
+uint8_t tcp_send_process(uint8_t s);
 
 #endif //F407_W5500_HTTPSERVER_H

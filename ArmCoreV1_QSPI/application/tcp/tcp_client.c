@@ -49,17 +49,17 @@ static uint8_t tcp_link_status_get(void)
     return tcp_link_state;
 }
 
-static void (*fun_ptr)(void);
+static void (*fun_ptr)(uint8_t sn);
 
-void tcp_establish_cb(void)
+void tcp_establish_cb(uint8_t sn)
 {
     if (fun_ptr != NULL)
     {
-        fun_ptr();
+        fun_ptr(sn);
     }
 }
 
-int8_t tcp_establish_cb_register(void (*fun_cb)(void))
+int8_t tcp_establish_cb_register(void (*fun_cb)(uint8_t sn))
 {
     fun_ptr = fun_cb;
 
@@ -94,7 +94,7 @@ static int8_t do_tcp_client(uint8_t sn)
             break;
 
         case SOCK_ESTABLISHED:               /*socket处于连接建立状态*/
-            tcp_establish_cb();
+            tcp_establish_cb(sn);
             break;
 
         case SOCK_CLOSE_WAIT:        /*socket处于等待关闭状态*/
@@ -184,10 +184,12 @@ static void TCPClientTask(void *argument)
         }
 
       //  ret = do_tcp_client(socket_num_get());
-        ret = do_tcp_server_send(socket_num_get());
-        if (ret != 0)
-        {
-            printf("do_tcp_client err:%d\r\n", ret);
+        for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++){
+            ret = do_tcp_server_send(i);
+            if (ret != 0)
+            {
+                printf("do_tcp_client err:%d sn = %d\r\n", ret, i);
+            }
         }
 
         osMutexRelease(tcp_access_mutexHandle);
@@ -239,7 +241,7 @@ static int8_t tcp_client_thread_init(void)
     };
     osThreadAttr_t TCPClient_attributes = {
     .name = "TCPClient",
-    .stack_size = 1024 * 4,
+    .stack_size = 2048 * 4,
     .priority = (osPriority_t) osPriorityNormal,
     };
 
