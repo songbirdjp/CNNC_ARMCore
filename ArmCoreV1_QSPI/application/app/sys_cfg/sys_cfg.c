@@ -1,6 +1,6 @@
 #include "sys_cfg.h"
 #include "stm32h7xx_hal.h"
-#include "crypto_sha256.h"
+#include "crypto_sha.h"
 #include "cmsis_os.h"
 #include "shell.h"
 #include "config.h"
