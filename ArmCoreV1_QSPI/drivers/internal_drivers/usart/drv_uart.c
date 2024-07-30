@@ -48,7 +48,14 @@ static int8_t uart_open(DEVICE_UART *uart)
         uart->open_state = 1;
     }
 
-    HAL_UARTEx_ReceiveToIdle_DMA((UART_HandleTypeDef *)uart, (uint8_t *)uart->rx_buf, uart->rx_buf_len);
+    HAL_StatusTypeDef status = HAL_UARTEx_ReceiveToIdle_DMA((UART_HandleTypeDef *)uart, (uint8_t *)uart->rx_buf, uart->rx_buf_len);
+    if (status != HAL_OK)
+    {
+        printf("device %s dma rx err:%d\r\n", uart->name, status);
+        return -2;
+    }
+
+    __HAL_UART_ENABLE(&uart->huart);
 
     return 0;
 }
@@ -304,6 +311,8 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     }
 
     /* 1. init hardware */
+    __disable_irq();
+    
     if (!memcmp(device_name, DEVICE_NAME_UART1, sizeof(DEVICE_NAME_UART1)))
     {
         MX_USART1_UART_Init();
@@ -313,6 +322,10 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     {
         /* add other uart here */
     }
+
+    __HAL_UART_DISABLE(&uart->huart);
+
+    __enable_irq();
 
     /* 2. create queue 、event and mutex for device */
     // osMessageQueueAttr_t CmdQueue_attributes = {

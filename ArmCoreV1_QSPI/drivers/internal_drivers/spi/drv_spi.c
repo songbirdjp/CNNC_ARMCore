@@ -72,7 +72,14 @@ static int8_t spi_open(DEVICE_SPI *spi)
     }
     else
     {
-        HAL_SPI_Receive_DMA((SPI_HandleTypeDef *)spi, (uint8_t *)spi->rx_buf, spi->rx_buf_len);
+        HAL_StatusTypeDef status = HAL_SPI_Receive_DMA((SPI_HandleTypeDef *)spi, (uint8_t *)spi->rx_buf, spi->rx_buf_len);
+        if (status != HAL_OK)
+        {
+            printf("device %s receive dma err:%d\r\n", spi->name, status);
+            return -2;
+        }
+
+        __HAL_SPI_ENABLE(&spi->hspi);
     }
 
     return 0;
@@ -770,6 +777,8 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     }
 
     /* 1. init hardware */
+    __disable_irq();
+
     if (!memcmp(device_name, DEVICE_NAME_SPI1, sizeof(DEVICE_NAME_SPI1)))
     {
         MX_SPI1_Init();
@@ -814,6 +823,10 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     {
         /* add other spi here */
     }
+
+    __HAL_SPI_DISABLE(&spi->hspi);
+
+    __enable_irq();
 
     /* 2. create queue 、event and mutex for device */
     // osMessageQueueAttr_t CmdQueue_attributes = {
