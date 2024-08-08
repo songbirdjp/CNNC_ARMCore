@@ -18,11 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "cmsis_os.h"
+#include "adc.h"
 #include "bdma.h"
 #include "crc.h"
 #include "dma.h"
 #include "iwdg.h"
+#include "lptim.h"
 #include "mdma.h"
+#include "memorymap.h"
 #include "rtc.h"
 #include "tim.h"
 #include "gpio.h"
@@ -238,7 +241,8 @@ int main(void)
   MX_IWDG1_Init();
   MX_RTC_Init();
   MX_TIM6_Init();
-
+  MX_ADC3_Init();
+  MX_LPTIM1_Init();
   /* USER CODE BEGIN 2 */
 #ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);
@@ -406,6 +410,7 @@ void PeriphCommonClock_Config(void)
   /** Initializes the peripherals clock
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_OSPI|RCC_PERIPHCLK_SPI6
+                              |RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_LPTIM1
                               |RCC_PERIPHCLK_USART1;
   PeriphClkInitStruct.PLL2.PLL2M = 5;
   PeriphClkInitStruct.PLL2.PLL2N = 96;
@@ -417,6 +422,8 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
   PeriphClkInitStruct.OspiClockSelection = RCC_OSPICLKSOURCE_PLL2;
   PeriphClkInitStruct.Usart16ClockSelection = RCC_USART16910CLKSOURCE_PLL2;
+  PeriphClkInitStruct.Lptim1ClockSelection = RCC_LPTIM1CLKSOURCE_PLL2;
+  PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
   PeriphClkInitStruct.Spi6ClockSelection = RCC_SPI6CLKSOURCE_PLL2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {

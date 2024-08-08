@@ -75,6 +75,7 @@ include_directories(
     drivers/external_drivers/lan9252 
     drivers/external_drivers/sdram 
     drivers/external_drivers/w5500 
+    drivers/internal_drivers/adc 
     drivers/internal_drivers/bdma 
     drivers/internal_drivers/crc 
     drivers/internal_drivers/dma 
@@ -83,6 +84,7 @@ include_directories(
     drivers/internal_drivers/fmc 
     drivers/internal_drivers/gpio 
     drivers/internal_drivers/iwdg 
+    drivers/internal_drivers/lptim 
     drivers/internal_drivers/mdma 
     drivers/internal_drivers/octospi 
     drivers/internal_drivers/rtc 
@@ -101,10 +103,12 @@ include_directories(
     components/hw_semaphore 
     components/hw_wwdg  
     components/shell 
+    components/uart_frame 
     components/ulog 
     components/utilities 
     components/ymodem 
     board/board_config/inc 
+    application/adc 
     application/ethercat 
     # application/fdcan 
     application/flash 
@@ -135,12 +139,14 @@ file(GLOB_RECURSE SOURCES
     "components/hw_semaphore/*.*" 
     "components/hw_wwdg/*.*" 
     "components/shell/*.*" 
+    "components/uart_frame/*.*" 
     "components/ulog/*.*" 
     "components/utilities/*.*" 
     "components/ymodem/*.*" 
     "board/board_config/*.*" 
     "board/linker_scripts/*.*" 
     "board/startup/*.*" 
+    "application/adc/*.*"
     "application/ethercat/*.*" 
     # "application/fdcan/*.*" 
     "application/flash/*.*" 

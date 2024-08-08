@@ -69,6 +69,7 @@ void MDMA_IRQHandler(void);
 void HSEM1_IRQHandler(void);
 void BDMA_Channel0_IRQHandler(void);
 void BDMA_Channel1_IRQHandler(void);
+void BDMA_Channel2_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

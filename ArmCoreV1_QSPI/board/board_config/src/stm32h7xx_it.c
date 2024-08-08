@@ -58,6 +58,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef hdma_adc3;
 extern SDRAM_HandleTypeDef hsdram1;
 extern MDMA_HandleTypeDef hmdma_mdma_channel1_dma1_stream2_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel2_dma1_stream5_tc_0;
@@ -300,7 +301,10 @@ void DMA1_Stream5_IRQHandler(void)
 void DMA1_Stream6_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
-  __HAL_TIM_DISABLE(&htim7);
+  if (hdma_tim7_up.Init.Mode != DMA_CIRCULAR)
+  {
+    __HAL_TIM_DISABLE(&htim7);
+  }
 
   /* USER CODE END DMA1_Stream6_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_tim7_up);
@@ -425,6 +429,20 @@ void BDMA_Channel1_IRQHandler(void)
   /* USER CODE BEGIN BDMA_Channel1_IRQn 1 */
 
   /* USER CODE END BDMA_Channel1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles BDMA channel2 global interrupt.
+  */
+void BDMA_Channel2_IRQHandler(void)
+{
+  /* USER CODE BEGIN BDMA_Channel2_IRQn 0 */
+
+  /* USER CODE END BDMA_Channel2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_adc3);
+  /* USER CODE BEGIN BDMA_Channel2_IRQn 1 */
+
+  /* USER CODE END BDMA_Channel2_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

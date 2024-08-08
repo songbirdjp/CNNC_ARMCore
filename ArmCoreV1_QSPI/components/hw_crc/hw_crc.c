@@ -35,5 +35,7 @@ HAL_StatusTypeDef hardware_crc_config(enum hardware_crc_default index)
     __HAL_CRC_INITIALCRCVALUE_CONFIG(&hcrc, crc_config_default[index].init_val);
     status = HAL_CRCEx_Polynomial_Set(&hcrc, crc_config_default[index].poly, crc_config_default[index].bit_len);
     status |= HAL_CRCEx_Input_Data_Reverse(&hcrc, crc_config_default[index].input_inversion);
-    status |= HAL_CRCEx_Output_Data_Reverse(&hcrc, crc_config_default[index].output_inversion);    
+    status |= HAL_CRCEx_Output_Data_Reverse(&hcrc, crc_config_default[index].output_inversion);
+
+    return status;
 }
