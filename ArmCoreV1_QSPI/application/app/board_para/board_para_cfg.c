@@ -1,4 +1,4 @@
-#include "board_cfg.h"
+#include "board_para_cfg.h"
 #include "fram_port.h"
 #include "cJSON.h"
 #include "json_struct.h"

@@ -61,112 +61,34 @@ message("git hash: ${GIT_HASH}")
 
 configure_file(config.h.in "../application/app/sys_cfg/config.h")
 
-include_directories(
-    libraries/CMSIS/Device/ST/STM32H7xx/Include 
-    libraries/CMSIS/Include 
-    libraries/STM32H7xx_HAL_Driver/Inc 
-    libraries/STM32H7xx_HAL_Driver/Inc/Legacy 
-    Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2 
-    Middlewares/Third_Party/FreeRTOS/Source/include 
-    Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F 
-    Middlewares/ST/STM32_Cryptographic/include 
-    drivers/external_drivers/backup_sram 
-    drivers/external_drivers/fram 
-    drivers/external_drivers/lan9252 
-    drivers/external_drivers/sdram 
-    drivers/external_drivers/w5500 
-    drivers/internal_drivers/adc 
-    drivers/internal_drivers/bdma 
-    drivers/internal_drivers/crc 
-    drivers/internal_drivers/dma 
-    # drivers/internal_drivers/fdcan 
-    drivers/internal_drivers/flash 
-    drivers/internal_drivers/fmc 
-    drivers/internal_drivers/gpio 
-    drivers/internal_drivers/iwdg 
-    drivers/internal_drivers/lptim 
-    drivers/internal_drivers/mdma 
-    drivers/internal_drivers/octospi 
-    drivers/internal_drivers/rtc 
-    drivers/internal_drivers/spi 
-    drivers/internal_drivers/tim 
-    drivers/internal_drivers/usart 
-    drivers/internal_drivers/wwdg 
-    components/cjson 
-    components/cm_backtrace 
-    components/common 
-    components/console 
-    components/crypto 
-    components/gpio 
-    components/gpio_imitate 
-    components/hw_crc 
-    components/hw_semaphore 
-    components/hw_wwdg  
-    components/shell 
-    components/uart_frame 
-    components/ulog 
-    components/utilities 
-    components/ymodem 
-    board/board_config/inc 
-    application/adc 
-    application/ethercat 
-    # application/fdcan 
-    application/flash 
-    # application/fpga 
-    application/system_common 
-    application/tcp 
-    application/app/bootloader_patch 
-    application/app/freertos 
-    application/app/main 
-    application/app/main_app 
-    application/app/sys_cfg 
-    bootloader)
+set(include_path "")
+set(src_path "")
+set(link_path "")
+add_subdirectory(Middlewares)
+add_subdirectory(libraries)
+add_subdirectory(drivers)
+add_subdirectory(components)
+add_subdirectory(board)
+add_subdirectory(application)
+add_subdirectory(bootloader)
 
-add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32H723xx)
+# message("include_path: ${include_path}")
+# message("src_path: ${src_path}")
+# message("link_path: ${link_path}")
 
-file(GLOB_RECURSE SOURCES 
-    "libraries/*.*" 
-    "Middlewares/*.*" 
-    "drivers/*.*" 
-    "components/cjson/*.*" 
-    "components/cm_backtrace/*.*" 
-    "components/common/*.*" 
-    "components/console/*.*" 
-    "components/crypto/*.*" 
-    "components/gpio/*.*" 
-    "components/gpio_imitate/*.*" 
-    "components/hw_crc/*.*" 
-    "components/hw_semaphore/*.*" 
-    "components/hw_wwdg/*.*" 
-    "components/shell/*.*" 
-    "components/uart_frame/*.*" 
-    "components/ulog/*.*" 
-    "components/utilities/*.*" 
-    "components/ymodem/*.*" 
-    "board/board_config/*.*" 
-    "board/linker_scripts/*.*" 
-    "board/startup/*.*" 
-    "application/adc/*.*"
-    "application/ethercat/*.*" 
-    # "application/fdcan/*.*" 
-    "application/flash/*.*" 
-    # "application/fpga/*.*" 
-    "application/system_common/*.*" 
-    "application/tcp/*.*" 
-    "application/app/bootloader_patch/*.*" 
-    "application/app/freertos/*.*" 
-    "application/app/main/*.*" 
-    "application/app/main_app/*.*" 
-    "application/app/sys_cfg/*.*" 
-    "bootloader/*.*")
+include_directories( ${include_path} )
+
+file(GLOB_RECURSE SOURCES ${src_path})
 
 # remove fdcan driver source files
-file(GLOB_RECURSE DEL_SOURCES 
-    "drivers/internal_drivers/fdcan/*.*")
+# file(GLOB_RECURSE DEL_SOURCES 
+#     "drivers/internal_drivers/fdcan/*.*")
 
-list(REMOVE_ITEM SOURCES ${DEL_SOURCES})
+# list(REMOVE_ITEM SOURCES ${DEL_SOURCES})
 
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/board/linker_scripts/STM32H723ZGTX_FLASH.ld)
+
+add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32H723xx)
 
 add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map)
 add_link_options(-mcpu=cortex-m7 -mthumb -mthumb-interwork)
@@ -174,7 +96,7 @@ add_link_options(-T ${LINKER_SCRIPT})
 
 add_executable(${PROJECT_NAME}.elf ${SOURCES} ${LINKER_SCRIPT})
 
-target_link_libraries(${PROJECT_NAME}.elf ${CMAKE_SOURCE_DIR}/Middlewares/ST/STM32_Cryptographic/lib/libSTM32Cryptographic_CM7.a)
+target_link_libraries(${PROJECT_NAME}.elf ${link_path})
 
 set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
 set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
