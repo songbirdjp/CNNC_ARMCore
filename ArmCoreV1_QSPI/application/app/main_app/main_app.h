@@ -6,18 +6,6 @@
 extern "C" {
 #endif
 
-#define MAX_BEAM_NUM    30
-
-struct ethercat_data_recv     /* master -> slave */
-{
-    /* data */
-};
-
-struct ethercat_data_send    /* slave -> master */
-{
-    /* data */
-};
-
 
 #ifdef __cplusplus
 }

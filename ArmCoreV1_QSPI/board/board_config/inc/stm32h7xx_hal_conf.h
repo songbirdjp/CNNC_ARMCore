@@ -51,7 +51,7 @@
 /* #define HAL_NOR_MODULE_ENABLED   */
 /* #define HAL_OTFDEC_MODULE_ENABLED   */
 /* #define HAL_SRAM_MODULE_ENABLED   */
-#define HAL_SDRAM_MODULE_ENABLED
+/* #define HAL_SDRAM_MODULE_ENABLED   */
 /* #define HAL_HASH_MODULE_ENABLED   */
 /* #define HAL_HRTIM_MODULE_ENABLED   */
 /* #define HAL_HSEM_MODULE_ENABLED   */
@@ -59,7 +59,7 @@
 /* #define HAL_JPEG_MODULE_ENABLED   */
 /* #define HAL_OPAMP_MODULE_ENABLED   */
 /* #define HAL_OSPI_MODULE_ENABLED   */
-#define HAL_OSPI_MODULE_ENABLED
+/* #define HAL_XSPI_MODULE_ENABLED   */
 /* #define HAL_I2S_MODULE_ENABLED   */
 /* #define HAL_SMBUS_MODULE_ENABLED   */
 #define HAL_IWDG_MODULE_ENABLED
@@ -217,7 +217,7 @@
 #define  USE_HAL_SWPMI_REGISTER_CALLBACKS   0U /* SWPMI register callback disabled   */
 #define  USE_HAL_TIM_REGISTER_CALLBACKS     1U /* TIM register callback enabled     */
 #define  USE_HAL_UART_REGISTER_CALLBACKS    1U /* UART register callback enabled    */
-#define  USE_HAL_USART_REGISTER_CALLBACKS   0U /* USART register callback disabled   */
+#define  USE_HAL_USART_REGISTER_CALLBACKS   1U /* USART register callback enabled   */
 #define  USE_HAL_WWDG_REGISTER_CALLBACKS    1U /* WWDG register callback enabled    */
 
 /* ########################### Ethernet Configuration ######################### */

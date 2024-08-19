@@ -116,7 +116,7 @@ add_custom_command(TARGET ${PROJECT_NAME}.elf PRE_BUILD
 add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:${PROJECT_NAME}.elf> ${HEX_FILE}
         COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}.elf> ${BIN_FILE}
-        COMMAND ${CMAKE_USER} -o ${INFO_BIN_FILE} -k ${BIN_FILE} -n mlc_arm_code
+        COMMAND ${CMAKE_USER} -o ${INFO_BIN_FILE} -k ${BIN_FILE} -n dose_arm_code
         COMMENT "Building ${HEX_FILE} 
 Building ${BIN_FILE}
 Building ${INFO_BIN_FILE}")

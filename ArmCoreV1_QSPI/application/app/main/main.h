@@ -57,40 +57,27 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LAN9252_IRQ_Pin GPIO_PIN_3
-#define LAN9252_IRQ_GPIO_Port GPIOE
-#define LAN9252_IRQ_EXTI_IRQn EXTI3_IRQn
-#define LAN9252_SYNC0_Pin GPIO_PIN_13
-#define LAN9252_SYNC0_GPIO_Port GPIOC
-#define LAN9252_SYNC0_EXTI_IRQn EXTI15_10_IRQn
-#define CHIP_RUN_LED_Pin GPIO_PIN_1
-#define CHIP_RUN_LED_GPIO_Port GPIOC
-#define SYSTEM_STATE_Pin GPIO_PIN_2
-#define SYSTEM_STATE_GPIO_Port GPIOC
-#define LAN9252_SYNC1_Pin GPIO_PIN_2
-#define LAN9252_SYNC1_GPIO_Port GPIOB
-#define LAN9252_SYNC1_EXTI_IRQn EXTI2_IRQn
-#define LAN9252_CSn_Pin GPIO_PIN_11
-#define LAN9252_CSn_GPIO_Port GPIOE
-#define W5500_RSTn_Pin GPIO_PIN_3
-#define W5500_RSTn_GPIO_Port GPIOD
-#define W5500_INTn_Pin GPIO_PIN_4
-#define W5500_INTn_GPIO_Port GPIOD
-#define W5500_INTn_EXTI_IRQn EXTI4_IRQn
-#define WATCHDOG2_Pin GPIO_PIN_7
-#define WATCHDOG2_GPIO_Port GPIOD
-#define WATCHDOG1_Pin GPIO_PIN_9
-#define WATCHDOG1_GPIO_Port GPIOG
-#define W5500_CSn_Pin GPIO_PIN_10
-#define W5500_CSn_GPIO_Port GPIOG
-#define FM25V02_CSn_Pin GPIO_PIN_11
-#define FM25V02_CSn_GPIO_Port GPIOG
+#define SYSTEM_RUN_LED_Pin GPIO_PIN_2
+#define SYSTEM_RUN_LED_GPIO_Port GPIOE
+#define ADC_READING_LED_Pin GPIO_PIN_3
+#define ADC_READING_LED_GPIO_Port GPIOE
+#define WDT_IN_LED_Pin GPIO_PIN_4
+#define WDT_IN_LED_GPIO_Port GPIOE
+#define WDT_OK_LED_Pin GPIO_PIN_5
+#define WDT_OK_LED_GPIO_Port GPIOE
+#define WDT_RESET_Pin GPIO_PIN_1
+#define WDT_RESET_GPIO_Port GPIOD
+#define WDT_IN_Pin GPIO_PIN_4
+#define WDT_IN_GPIO_Port GPIOD
+#define WDT_OK_Pin GPIO_PIN_5
+#define WDT_OK_GPIO_Port GPIOD
+#define WDT_OK_EXTI_IRQn EXTI9_5_IRQn
+#define DOSE_EN_Pin GPIO_PIN_8
+#define DOSE_EN_GPIO_Port GPIOB
+#define TRIGGER_OUT_Pin GPIO_PIN_9
+#define TRIGGER_OUT_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
-#define BANKA
-//#define TEST
-
 
 /* USER CODE END Private defines */
 

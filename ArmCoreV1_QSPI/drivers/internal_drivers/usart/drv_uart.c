@@ -318,6 +318,11 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
         MX_USART1_UART_Init();
         memcpy(uart, &huart1, sizeof(UART_HandleTypeDef));
     }
+    else if (!memcmp(device_name, DEVICE_NAME_UART5, sizeof(DEVICE_NAME_UART5)))
+    {
+        MX_UART5_Init();
+        memcpy(uart, &huart5, sizeof(UART_HandleTypeDef));
+    }
     else
     {
         /* add other uart here */
