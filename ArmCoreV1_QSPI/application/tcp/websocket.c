@@ -1,65 +1,17 @@
-#include <stddef.h>
-#include "main.h"
-#include "wizchip_conf.h"
-#include "socket.h"
-#include "string.h"
 #include "stdlib.h"
-#include "tcp_server.h"
-#include "tcp_client.h"
+#include "websocket.h"
+#include "tcp_tasks.h"
+#include <stdio.h>
+#include "crypto_sha.h"
 
+#ifdef IS_TCP_SERVER
+
+SEND_INFO sendStructInfo;
+
+static char *broswerName[]={ "Mozilla", "AppleWebKit", "Chrome", "Safari", "Edg" };
 static CLIENT_INFO client[MAX_CLIENT_NUM];
-static DATA_TEST testStruct = {1, 1, 180, 4, 0, "1_2_3"};
-void dealWithRecvData(void);
-
-static TCP_DATA_ITEMS itemSendByControl = {
-    "toEPIDParams", sizeof(testStruct), 2, 0, 3, 0, &testStruct, NULL};
-
-static TCP_DATA_ITEMS itemSendPeriodic[] = {
-    "testSend", sizeof(testStruct), 1, 2, 3, 0, &testStruct, NULL};
-
-static TCP_DATA_ITEMS itemRecv = {
-    "testRecv", 0, 2, 0, 3, 0, &testStruct, dealWithRecvData};
-
-#define SHA1CircularShift(bits, word) ((((word) << (bits)) & 0xFFFFFFFF) | ((word) >> (32 - (bits))))
 static const char ws_base64char[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-void dealWithRecvData(void)
-{
-    if (itemRecv.status == 1)
-    {
-    }
-    // do sth. to process recv data
-    osDelay(100);
-    itemRecv.status = 2; // note that data has used
-}
-
-int8_t do_tcp_server_send(uint8_t s)
-{
-    int8_t ret = 0;
-
-    switch (getSn_SR(s))
-    {
-    case SOCK_INIT:
-        listen(s);
-        //    if(s==1) printf("SERVER_SOCK_INIT\r\n");
-        break;
-    case SOCK_ESTABLISHED:
-        tcp_establish_cb(s); // period feedback here
-        break;
-    case SOCK_CLOSE_WAIT:
-        osDelay(500);
-        close(s);
-        break;
-    case SOCK_CLOSED:
-        ret = socket(s, Sn_MR_TCP, 80, 0);
-        break;
-    default:
-        break;
-    }
-
-    return ret;
-}
 
 static void ws_getRandomString(char *buff, uint32_t len)
 {
@@ -81,6 +33,7 @@ static int32_t ws_enPackage(
     uint32_t dataLen,
     uint8_t *package,
     uint32_t packageMaxLen,
+    bool fin,
     bool mask,
     Ws_DataType type)
 {
@@ -91,19 +44,21 @@ static int32_t ws_enPackage(
     // 最小长度检查
     if (packageMaxLen < 2)
         return -1;
+
+    if(!fin)    type = WDT_MINDATA;//continuation frame
     // 根据包类型设置头字节
     if (type == WDT_MINDATA)
-        *package++ = 0x80;
+        *package++ = fin << 7;//0x80;
     else if (type == WDT_TXTDATA)
-        *package++ = 0x81;
+        *package++ = (fin << 7) + 1;//0x81;
     else if (type == WDT_BINDATA)
-        *package++ = 0x82;
+        *package++ = (fin << 7) + 2;//0x82;
     else if (type == WDT_DISCONN)
-        *package++ = 0x88;
+        *package++ = (fin << 7) + 8;//0x88;
     else if (type == WDT_PING)
-        *package++ = 0x89;
+        *package++ = (fin << 7) + 9;//0x89;
     else if (type == WDT_PONG)
-        *package++ = 0x8A;
+        *package++ = (fin << 7) + 0xA;//0x8A;
     else
         return -1;
     pkgLen += 1;
@@ -206,8 +161,7 @@ static int32_t ws_dePackage(
     bool mask = false;
     uint8_t maskCount = 0;
     // 数据长度过短
-    if (len < 2)
-        return 0;
+    if (len < 2)    {return 0;}
     // 解析包类型
     if ((data[0] & 0x80) == 0x80)
     {
@@ -215,7 +169,7 @@ static int32_t ws_dePackage(
         if (type == 0x00)
             *retPkgType = WDT_MINDATA;
         else if (type == 0x01)
-            *retPkgType = WDT_TXTDATA;
+             *retPkgType = WDT_TXTDATA;
         else if (type == 0x02)
             *retPkgType = WDT_BINDATA;
         else if (type == 0x08)
@@ -224,11 +178,10 @@ static int32_t ws_dePackage(
             *retPkgType = WDT_PING;
         else if (type == 0x0A)
             *retPkgType = WDT_PONG;
-        else
-            return 0;
+        else    return 0;
     }
-    else
-        return 0;
+    else    return 0;
+    
     // 是否掩码,及长度占用字节数
     if ((data[1] & 0x80) == 0x80)
     {
@@ -240,8 +193,7 @@ static int32_t ws_dePackage(
     if (dataLen == 126)
     {
         // 数据长度不足以包含长度信息
-        if (len < 4)
-            return 0;
+        if (len < 4)    return 0;
         // 2字节记录长度
         dataLen = data[2];
         dataLen = (dataLen << 8) + data[3];
@@ -320,12 +272,15 @@ static int32_t ws_dePackage(
     if (len < dataLen + dataOffset)
         return -(int32_t)(dataLen + dataOffset - len);
     // 解包数据使用掩码时, 使用异或解码, maskKey[4]依次和数据异或运算, 逻辑如下
+ 
     if (mask)
     {
         cIn = dataOffset;
         cOut = 0;
         maskCount = 0;
-        printf("recv data %d: ", dataLen);
+        // if (type == 0x02)   printf("bin");
+        // else if (type == 0x01)  printf("txt");
+        // printf(" %dB:", dataLen);
         for (; cOut < dataLen; cIn++, cOut++, maskCount++)
         {
             // maskKey[4]循环使用
@@ -333,11 +288,12 @@ static int32_t ws_dePackage(
                 maskCount = 0;
             // 异或运算后得到数据
             data[cOut] = maskKey[maskCount] ^ data[cIn];
-            printf("%c", data[cOut]);
+         //   if (type == 0x02)   printf("%x ", data[cOut]);
+          //  else if (type == 0x01)  printf("%c", data[cOut]);
         }
         // 断尾
         data[cOut] = '\0';
-        printf("\r\n");
+     //   printf("\r\n");
     }
     // 解包数据没使用掩码, 直接复制数据段
     else
@@ -353,12 +309,12 @@ static int32_t ws_dePackage(
         data[dataLen] = '\0';
     }
     // 有些特殊包数据段长度可能为0,这里为区分格式错误返回,置为1
-    if (dataLen == 0)
-        dataLen = 1;
+    if (dataLen == 0)   dataLen = 1;
+
     return dataLen;
 }
 
-int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool mask, Ws_DataType type)
+int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type)
 {
     // uint8_t* wsPkg = NULL;
     uint8_t wsPkg[buffLen + 14];
@@ -380,7 +336,7 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool mask, Ws_DataType t
     // 数据打包 +14 预留类型、掩码、长度保存位
     // wsPkg = (uint8_t*)pvPortMalloc(buffLen + 14);
     memset(wsPkg, 0, buffLen + 14);
-    retLen = ws_enPackage((uint8_t *)buff, buffLen, wsPkg, (buffLen + 14), mask, type);
+    retLen = ws_enPackage((uint8_t *)buff, buffLen, wsPkg, (buffLen + 14), fin, mask, type);
     //   printf("retLen: %d\r\n",retLen );
     if (retLen <= 0)
     {
@@ -389,7 +345,7 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool mask, Ws_DataType t
     }
 
     // 显示数据
-    // printf("ws_send: %x %x %x %x %x %x\r\n", wsPkg[0],wsPkg[1],wsPkg[2],wsPkg[3],wsPkg[4],wsPkg[5] );
+  //   printf("ws_send: %x %x %x %x %x %x\r\n", wsPkg[0],wsPkg[1],wsPkg[2],wsPkg[3],wsPkg[4],wsPkg[5] );
     //  for(int32_t i = 0; i < retLen; i++)    printf("0x%x ", wsPkg[i]);
     //
     // ret = send(fd, wsPkg, retLen, MSG_NOSIGNAL);
@@ -397,199 +353,74 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool mask, Ws_DataType t
     //  vPortFree(wsPkg);
     return ret;
 }
-#if 0
-static void SHA1ProcessMessageBlock(SHA1Context *context)
+
+int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* retType)
 {
-    const uint32_t K[] = {0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6};
-    int32_t t;
-    uint32_t temp;
-    uint32_t W[80];
-    uint32_t A, B, C, D, E;
+    int32_t retDePkg = -1;        //调用解包的返回
+    uint32_t timeout = 0;    //接收超时计数
+    Ws_DataType retPkgType = WDT_NULL; //默认返回包类型
+   // char* cBuff = (char*)buff; //转换指针类型
+    uint8_t maxHeadLen = 14;
+    uint32_t retDataLen = 0; //解包得到的数据段长度
+    uint32_t retHeadLen = 0; //解包得到的包头部长度
+    int32_t retFinal = -1;
 
-    for (t = 0; t < 16; t++)
+    retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen, &retDataLen, &retHeadLen, &retPkgType); //为防止一次接收到多包数据(粘包),先尝试性解析ws头部字节（最大14Bytes）,得知总长度后再解析剩下部分
+    if (retDePkg == 0 || (retDePkg < 0 && maxHeadLen - retDePkg > buffSize))//头部解析失败或解析出的包长过大（超过2K）
     {
-        W[t] = ((uint32_t)context->Message_Block[t * 4]) << 24;
-        W[t] |= ((uint32_t)context->Message_Block[t * 4 + 1]) << 16;
-        W[t] |= ((uint32_t)context->Message_Block[t * 4 + 2]) << 8;
-        W[t] |= ((uint32_t)context->Message_Block[t * 4 + 3]);
-    }
-
-    for (t = 16; t < 80; t++)
-        W[t] = SHA1CircularShift(1, W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16]);
-
-    A = context->Message_Digest[0];
-    B = context->Message_Digest[1];
-    C = context->Message_Digest[2];
-    D = context->Message_Digest[3];
-    E = context->Message_Digest[4];
-
-    for (t = 0; t < 20; t++)
-    {
-        temp = SHA1CircularShift(5, A) + ((B & C) | ((~B) & D)) + E + W[t] + K[0];
-        temp &= 0xFFFFFFFF;
-        E = D;
-        D = C;
-        C = SHA1CircularShift(30, B);
-        B = A;
-        A = temp;
-    }
-    for (t = 20; t < 40; t++)
-    {
-        temp = SHA1CircularShift(5, A) + (B ^ C ^ D) + E + W[t] + K[1];
-        temp &= 0xFFFFFFFF;
-        E = D;
-        D = C;
-        C = SHA1CircularShift(30, B);
-        B = A;
-        A = temp;
-    }
-    for (t = 40; t < 60; t++)
-    {
-        temp = SHA1CircularShift(5, A) + ((B & C) | (B & D) | (C & D)) + E + W[t] + K[2];
-        temp &= 0xFFFFFFFF;
-        E = D;
-        D = C;
-        C = SHA1CircularShift(30, B);
-        B = A;
-        A = temp;
-    }
-    for (t = 60; t < 80; t++)
-    {
-        temp = SHA1CircularShift(5, A) + (B ^ C ^ D) + E + W[t] + K[3];
-        temp &= 0xFFFFFFFF;
-        E = D;
-        D = C;
-        C = SHA1CircularShift(30, B);
-        B = A;
-        A = temp;
-    }
-    context->Message_Digest[0] = (context->Message_Digest[0] + A) & 0xFFFFFFFF;
-    context->Message_Digest[1] = (context->Message_Digest[1] + B) & 0xFFFFFFFF;
-    context->Message_Digest[2] = (context->Message_Digest[2] + C) & 0xFFFFFFFF;
-    context->Message_Digest[3] = (context->Message_Digest[3] + D) & 0xFFFFFFFF;
-    context->Message_Digest[4] = (context->Message_Digest[4] + E) & 0xFFFFFFFF;
-    context->Message_Block_Index = 0;
-}
-
-static void SHA1Reset(SHA1Context *context)
-{
-    context->Length_Low = 0;
-    context->Length_High = 0;
-    context->Message_Block_Index = 0;
-
-    context->Message_Digest[0] = 0x67452301;
-    context->Message_Digest[1] = 0xEFCDAB89;
-    context->Message_Digest[2] = 0x98BADCFE;
-    context->Message_Digest[3] = 0x10325476;
-    context->Message_Digest[4] = 0xC3D2E1F0;
-
-    context->Computed = 0;
-    context->Corrupted = 0;
-}
-
-static void SHA1PadMessage(SHA1Context *context)
-{
-    if (context->Message_Block_Index > 55)
-    {
-        context->Message_Block[context->Message_Block_Index++] = 0x80;
-        while (context->Message_Block_Index < 64)
-            context->Message_Block[context->Message_Block_Index++] = 0;
-        SHA1ProcessMessageBlock(context);
-        while (context->Message_Block_Index < 56)
-            context->Message_Block[context->Message_Block_Index++] = 0;
-    }
+         printf("tcp recv error %d\r\n", retDePkg);
+    } 
     else
     {
-        context->Message_Block[context->Message_Block_Index++] = 0x80;
-        while (context->Message_Block_Index < 56)
-            context->Message_Block[context->Message_Block_Index++] = 0;
-    }
-    context->Message_Block[56] = (context->Length_High >> 24) & 0xFF;
-    context->Message_Block[57] = (context->Length_High >> 16) & 0xFF;
-    context->Message_Block[58] = (context->Length_High >> 8) & 0xFF;
-    context->Message_Block[59] = (context->Length_High) & 0xFF;
-    context->Message_Block[60] = (context->Length_Low >> 24) & 0xFF;
-    context->Message_Block[61] = (context->Length_Low >> 16) & 0xFF;
-    context->Message_Block[62] = (context->Length_Low >> 8) & 0xFF;
-    context->Message_Block[63] = (context->Length_Low) & 0xFF;
-
-    SHA1ProcessMessageBlock(context);
-}
-
-static int32_t SHA1Result(SHA1Context *context)
-{
-    if (context->Corrupted)
-    {
-        return 0;
-    }
-    if (!context->Computed)
-    {
-        SHA1PadMessage(context);
-        context->Computed = 1;
-    }
-    return 1;
-}
-
-static void SHA1Input(SHA1Context *context, const char *message_array, uint32_t length)
-{
-    if (!length)
-        return;
-
-    if (context->Computed || context->Corrupted)
-    {
-        context->Corrupted = 1;
-        return;
-    }
-
-    while (length-- && !context->Corrupted)
-    {
-        context->Message_Block[context->Message_Block_Index++] = (*message_array & 0xFF);
-
-        context->Length_Low += 8;
-
-        context->Length_Low &= 0xFFFFFFFF;
-        if (context->Length_Low == 0)
+       // printf("retDePkg1 %d\r\n", retDePkg);
+        if (retDePkg < 0)//尝试解析出完整的一包
         {
-            context->Length_High++;
-            context->Length_High &= 0xFFFFFFFF;
-            if (context->Length_High == 0)
-                context->Corrupted = 1;
+            retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen - retDePkg, &retDataLen, &retHeadLen, &retPkgType);
         }
-
-        if (context->Message_Block_Index == 64)
+     //   printf("retDePkg2 %d\r\n", retDePkg);
+        if (retDePkg > 0)   //已经解析到完整的一包
         {
-            SHA1ProcessMessageBlock(context);
+            //收到 PING 包,应自动回复 PONG
+            if (retPkgType == WDT_PING)
+            {
+                //自动 ping-pong
+                ws_send(s, NULL, 0, true, false, WDT_PONG);
+                // WS_INFO("ws_recv: WDT_PING\r\n");
+                retFinal = 0;
+            }
+            //收到 PONG 包
+            else if (retPkgType == WDT_PONG)
+            {
+                // WS_INFO("ws_recv: WDT_PONG\r\n");
+                retFinal = 0;
+            }
+            //收到 断连 包
+            else if (retPkgType == WDT_DISCONN)
+            {
+                // WS_INFO("ws_recv: WDT_DISCONN\r\n");
+                retFinal = 0;
+            }
+            //其它正常数据包
+            else    retFinal = retDePkg;
         }
-        message_array++;
-    }
+        else    retFinal = retDePkg; //没有解析到完整的一包，说明本次接收的数据不包含完整的数据段
+    } 
+
+    if (retType)    *retType = retPkgType;
+    
+    return retFinal; 
 }
-#endif
-// static char* sha1_hash(const char* source, char* buff)
+
 static void sha1_hash(const char *source, char *buff)
 {
     uint8_t Message_Digest[64], i;
     uint32_t len;
-     // SHA1Context sha;
-    //  char* buff = NULL;
-
-    // SHA1Reset(&sha);
-    // SHA1Input(&sha, source, strlen(source));
-   
-   // if (!SHA1Result(&sha))
+    
    if(crypto_sha1_cal(source, strlen(source), Message_Digest, &len))
         printf("SHA1 ERROR: Could not compute message digest \r\n");
     else
     {
-        for(i = 0; i < len; i++)    
-            sprintf(buff+2*i, "%02X", Message_Digest[i]);
-
-        // buff = (char*)pvPortMalloc(128);
-        // sprintf(buff, "%08lX%08lX%08lX%08lX%08lX",
-        //         sha.Message_Digest[0],
-        //         sha.Message_Digest[1],
-        //         sha.Message_Digest[2],
-        //         sha.Message_Digest[3],
-        //         sha.Message_Digest[4]);
+        for(i = 0; i < len; i++)    sprintf(buff+2*i, "%02X", Message_Digest[i]);
         
     }
 }
@@ -640,7 +471,6 @@ static int32_t ws_buildRespondShakeKey(char *acceptKey, uint32_t acceptKeyLen, c
     const char guid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     uint32_t guidLen = sizeof(guid), sha1DataTempLen;
     char clientKey[acceptKeyLen + guidLen + 10];
-  //  char *clientKey = "fh6Tn9Eak4Sbr72ugyuNEg==258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
     if (acceptKey == NULL)
         return 0;
@@ -651,7 +481,7 @@ static int32_t ws_buildRespondShakeKey(char *acceptKey, uint32_t acceptKeyLen, c
    // printf("message: %s\r\n", clientKey);
      sha1_hash(clientKey, sha1DataTemp);
      sha1DataTempLen = strlen((const char *)sha1DataTemp);
-     printf("digest:  %d %s\r\n", sha1DataTempLen, sha1DataTemp);
+    // printf("digest:  %d %s\r\n", sha1DataTempLen, sha1DataTemp);
 
     // 把hex字符串如"12ABCDEF",转为数值数组如{0x12,0xAB,0xCD,0xEF}
     for (i = j = 0; i < sha1DataTempLen;)
@@ -693,7 +523,7 @@ static void ws_buildHttpRespond(char *acceptKey, uint32_t acceptKeyLen, char *pa
     sprintf(package, httpResp, respondShakeKey);
 }
 
-int32_t ws_replyClient(uint8_t s, char *buff, char *path)
+static int32_t ws_replyClient(uint8_t s, char *buff, char *path)
 {
     char *keyOffset;
     uint32_t ret;
@@ -725,89 +555,143 @@ int32_t ws_replyClient(uint8_t s, char *buff, char *path)
     }
     // 创建回复key
     ws_buildHttpRespond(recvShakeKey, ret, respondPackage);
-    //  printf("response %s\r\n",respondPackage);
-    //  send(s, (uint8_t *) respondPackage, sizeof(respondPackage));
-    tcp_client_data_send(s, (uint8_t *)respondPackage, sizeof(respondPackage));
+  //    printf("response %s\r\n",respondPackage);
+    tcp_client_data_send(s, (uint8_t *)respondPackage, strlen(respondPackage));
     printf("Handshake Success!\r\n");
 
     return 1;
 }
 
-#define CONTROLLER_IP "192.168.10.110"
+bool isBroswer(uint8_t *pString)
+{
+    for(uint8_t i = 0; i < sizeof(broswerName)/sizeof(char*); i++)
+    {
+        if(strstr(pString, broswerName[i])) return 1;
+    }
+
+    return 0;
+}
+
+int8_t getClientType(uint8_t s, uint8_t *pString)
+{
+    char *p = strstr(pString, "User-Agent");
+
+    if (p != NULL)
+    {
+        if(strstr(p, CONTROLLER_USER_AGENT)) 
+        {
+            client[s].clientType = CONTROLLER;//this client is controller
+            printf("client %d is controller\r\n", s);
+        }
+        else if( isBroswer(p) )
+        {
+            client[s].clientType = SERVICE;//this client is controller
+            printf("client %d is service\r\n", s);
+        }
+        else    return -1;
+    }
+    else    return -1;
+
+    return 1;
+}
+
+__weak void nrtRecvDataProcess(APP_DATA_RECV* info)
+{
+    return;
+}
+
 int32_t tcp_recv_process(TCP_DATA_t *recvData)
 {
-    uint32_t retDataLen = 0;           // 解包得到的数据段长度
-    uint32_t retHeadLen = 0;           // 解包得到的包头部长度
-    Ws_DataType retPkgType = WDT_NULL; // 默认返回包类型
     uint8_t s = recvData->sn;
-    char *data = (char *)recvData->gDATABUF;
-    uint16_t len = recvData->Len;
+    uint8_t *data = recvData->gDATABUF, *controllerIP;
+    uint16_t len = recvData->Len, i, controllerPORT;
+    Ws_DataType retPkgType = WDT_NULL;
     int32_t ret = 0;
+    APP_DATA_RECV itemRecv;
 
+   // printf("recv length = %d\r\n", len);
+    
     if (strncmp(data, "GET", 3) == 0)
     { // deal with handshake
+      //  printf("%s\r\n",data);
         if (strstr(data, "Sec-WebSocket-Key"))
         {
-            //  printf("%s\r\n",data);
-            char chDestIP[20];
-            client[s].socketNum = s;
-
-            getSn_DIPR(s, client[s].destIP);  
-            sprintf(chDestIP, "%d.%d.%d.%d", client[s].destIP[0], client[s].destIP[1], client[s].destIP[2], client[s].destIP[3]);
-            if (strncmp(chDestIP, CONTROLLER_IP, sizeof(CONTROLLER_IP)) == 0)   client[s].clientType = 0;//this client is controller
-            else    client[s].clientType = 1;//this client is service
-            //  printf("%s %d\r\n", chDestIP, client[s].clientType);
             ret = ws_replyClient(s, data, "/");
-            if (ret > 0)    client[s].loopCnt = 0;
-            client[s].connectStatus = ret;   
+            if (ret > 0)
+            {
+                client[s].socketNum = s;
+                client[s].loopCnt = 0;
+                client[s].connectStatus = ret; 
+
+                ret = getClientType(s, data);
+                if(ret < 0){
+                    printf("failed to get client type!\r\n"); 
+                }  
+            } 
+            else{
+                printf("handshake failed!\r\n");
+                ret = -1;
+            }   
         }
         else{
             printf("Invalid client request!\r\n");
             ret = -1;
         }
-        // else{
-        //         printf("show service interface!\r\n");
-        //         showServiceInterfaceOnPC(s);
-        //         disconnect(s);
-        //         client[s].clientType = 1;//service, default is 0 - developer
-        // }
+        #if 0
+        else{
+                printf("show service interface!\r\n");
+                showServiceInterfaceOnPC(s);
+               // disconnect(s);
+                close(s);
+                client[s].clientType = 1;//service, default is 0 - developer
+        }
+        #endif
     }
     else if (client[s].connectStatus > 0)
     {   // recv data after handshake
-        // for (i = 0; i < len; i++) printf("%x ", recvInfo.gDATABUF[i]);
-        ret = ws_dePackage(data, len, &retDataLen, &retHeadLen, &retPkgType);
-        if (WDT_DISCONN == retPkgType)
+       // for (i = 0; i < len; i++) printf("%x ", data[i]);
+     //   printf("\r\n");
+        ret = ws_recv(s, data, DATA_BUF_SIZE, &retPkgType);
+//printf("ret %d\r\n", ret);
+        if(ret < 0)//本包数据内容或长度错误，直接丢弃
         {
-            printf("socket%d going to disconnect!\r\n", s);
-            uint8_t closeFrame[] = {0x88, 0x02, 0x03, 0xe8}; // status code:1000    close normal
-            ws_send(s, closeFrame, sizeof(closeFrame), false, WDT_NULL);
-            //  disconnect(s);
-            close(s);
-            client[s].connectStatus = 0;
-            client[s].clientType = 0;
-            client[s].socketNum = -1;
-            memset(client[s].destIP, 0, 4);
-        }
-        else if (WDT_TXTDATA == retPkgType)
+            printf("this pack is wrong\r\n");
+            return 0;
+        } 
+        else//正常解包
         {
-            printf("recv text\r\n");
-        }
-        else if (WDT_BINDATA == retPkgType)
-        {
-            printf("recv binary\r\n");
-            itemRecv.status = 1; // note that data has updated
-            memcpy(itemRecv.tcpData, data, len);
-            if (itemRecv.cbFunc != NULL)    itemRecv.cbFunc(NULL); //  deal with receive data in callback function
+            switch(retPkgType)
+            {
+            case WDT_DISCONN:
+                printf("socket%d going to disconnect!\r\n", s);
+                uint8_t closeFrame[] = {0x88, 0x02, 0x03, 0xe8}; // status code:1000    close normal
+                ws_send(s, closeFrame, sizeof(closeFrame), true, false, WDT_NULL);
+                close(s);
+                client[s].connectStatus = 0;
+                client[s].clientType = 0;
+                client[s].socketNum = -1;
+            case WDT_TXTDATA:
+            case WDT_BINDATA:
+                itemRecv.length = ret;
+                itemRecv.sn = s;
+                itemRecv.clientType = client[s].clientType;
+                itemRecv.tcpData = data;
+            //    for(uint8_t i = 0; i < retS.retDataLen; i++) printf("%d ", data[retS.retHeadLen+i]);
+              //  printf("\r\n");
+               nrtRecvDataProcess(&itemRecv);
+            break;
+            default:    break;
+            }
         }
     }
 
     return ret;
 }
 
-static uint16_t sendPeriodNum, sendByControlNum;
-uint8_t tcp_send_process(uint8_t s)
+int8_t tcp_send_process(uint8_t s)
 {
     uint8_t i;
+    int32_t ret = 0;
 
     if ((s > MAX_CLIENT_NUM) || (s < 0))
     {
@@ -822,65 +706,55 @@ uint8_t tcp_send_process(uint8_t s)
     }
     if (i == MAX_CLIENT_NUM)
     {
-        printf("Not a client sn %d!\r\n", s);
+      //  printf("Not a client sn %d!\r\n", s);
         return -1;
     }
 
-    if (client[s].connectStatus > 0)
+    if (client[s].connectStatus <= 0)    return -1; //connect is not establish
+    if((sendStructInfo.pActiveSend == NULL) || (sendStructInfo.sendItemNum == 0))
     {
-        for (i = 0; i < sendByControlNum; i++)
-        {
-            if (itemSendByControl.status == 1)
-            {
-                if (client[s].clientType > 0)
-                { // send data to service
-                }
-                else
-                {
-                    if (itemSendByControl.sendMode == WDT_BINDATA)
-                        ws_send(s, itemSendByControl.tcpData, itemSendByControl.Length, false, WDT_BINDATA);
-                    else if (itemSendByControl.sendMode == WDT_TXTDATA)
-                        ws_send(s, itemSendByControl.tcpData, itemSendByControl.Length, false, WDT_TXTDATA);
-                    if (itemSendByControl.cbFunc != NULL)   itemSendByControl.cbFunc(NULL);
-                    itemSendByControl.status = 2;
-                }
-            }
+      //  printf("no send data struct is attached\r\n");
+        return 0;// no send data struct is attached
+    } 
+
+    for (i = 0; i < sendStructInfo.sendItemNum; i++)
+    {
+        if(sendStructInfo.pActiveSend[i].tcpData == NULL)   continue;//no data is assigned, go to next item
+        if (((sendStructInfo.pActiveSend[i].controlSignal == TO_SEND) ||    //send once or
+            ((sendStructInfo.pActiveSend[i].controlSignal > STOP_SEND) && ((client[s].loopCnt++ % sendStructInfo.pActiveSend[i].controlSignal) == 0)))&&//send period and
+            ((client[s].clientType == SERVICE) && (sendStructInfo.pActiveSend[i].assignedClientType == SERVICE) || //client is service and data assigned to service
+            (client[s].clientType == CONTROLLER) && (sendStructInfo.pActiveSend[i].assignedClientType == CONTROLLER)))//client is controller and data assigned to controller
+        {   // send data
+            if (sendStructInfo.pActiveSend[i].sendMode == WDT_BINDATA)
+                ret = ws_send(s, sendStructInfo.pActiveSend[i].tcpData, sendStructInfo.pActiveSend[i].length, true, false, WDT_BINDATA);
+            else if (sendStructInfo.pActiveSend[i].sendMode == WDT_TXTDATA)
+                ret = ws_send(s, sendStructInfo.pActiveSend[i].tcpData, sendStructInfo.pActiveSend[i].length, true, false, WDT_TXTDATA);
+            else{
+                printf("Wrong ws send data type!\r\n");
+                return -1;
+            } 
+
+            if(ret > 0){
+                if(sendStructInfo.pActiveSend[i].controlSignal == TO_SEND)    
+                    sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;
+            }  
+            else{
+                printf("ws send failed!\r\n");
+                return -1;
+            }   
         }
-        for (i = 0; i < sendPeriodNum; i++)
-        {
-            if ((itemSendPeriodic[i].sendPeriod > 0) && ((client[s].loopCnt++ % itemSendPeriodic[i].sendPeriod) == 0))
-            {
-                if (client[s].clientType > 0)
-                { // send data to service
-                }
-                else
-                { // send data to program
-                  //   printf("send %d!!!\r\n", loop_cnt);
-                    uint8_t temp[] = {1, 2, 3, 4};
-                    //   char temp[]="1234";
-                    itemSendPeriodic[i].tcpData = temp;
-                    itemSendPeriodic[i].Length = 4;
-                    if (itemSendByControl.sendMode == WDT_BINDATA)
-                        ws_send(s, itemSendPeriodic[i].tcpData, itemSendPeriodic[i].Length, false, WDT_BINDATA);
-                    else if (itemSendByControl.sendMode == WDT_TXTDATA)
-                        ws_send(s, itemSendPeriodic[i].tcpData, itemSendPeriodic[i].Length, false, WDT_TXTDATA);
-                    if (itemSendPeriodic[i].cbFunc != NULL) itemSendPeriodic[i].cbFunc(NULL);
-                    //   ws_send(itemSendPeriodic[i].tcpData,itemSendPeriodic[i].Length,false,WDT_TXTDATA);
-                }
-            }
-        }
-    }
+    }   
 
     return 0;
 }
 
-void tcp_app_init(void)
+void tcp_server_init(void)
 {
     for (uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
     {
         client[i].socketNum = -1;
         client[i].clientType = -1;
     }
-    sendPeriodNum = sizeof(itemSendPeriodic) / sizeof(TCP_DATA_ITEMS);
-    sendByControlNum = sizeof(itemSendByControl) / sizeof(TCP_DATA_ITEMS);
 }
+
+#endif

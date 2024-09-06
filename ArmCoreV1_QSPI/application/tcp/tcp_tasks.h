@@ -3,11 +3,12 @@
 
 #include "stdint.h"
 #include "cmsis_os2.h"
+#include "main_app.h"
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #define DATA_BUF_SIZE  2048
 
@@ -22,6 +23,8 @@ osStatus_t tcp_client_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout
 int32_t tcp_client_data_send(uint8_t s, uint8_t *buf, uint16_t len);
 int8_t tcp_establish_cb_register(void (*fun_cb)(uint8_t sn));
 int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg));
+uint8_t *remote_ip_get(void);
+uint16_t remote_port_get(void);
 
 #ifdef __cplusplus
 }

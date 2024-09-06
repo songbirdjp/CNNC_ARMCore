@@ -88,10 +88,6 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
-#define BANKA
-//#define TEST
-
-
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

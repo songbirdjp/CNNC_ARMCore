@@ -18,6 +18,7 @@ struct ethercat_data_send    /* slave -> master */
     /* data */
 };
 
+#define IS_TCP_SERVER
 
 #ifdef __cplusplus
 }

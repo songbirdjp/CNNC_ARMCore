@@ -1,6 +1,6 @@
 #include "main_app.h"
 #include "fmc_sdram_port.h"
-#include "tcp_client.h"
+#include "tcp_tasks.h"
 #include "main.h"
 #include "init_call.h"
 #if 0
@@ -1090,13 +1090,15 @@ static int8_t realtime_ethercat_data_process(void)
 
  static int8_t non_realtime_tcp_callback(uint8_t sn)
  {
-    tcp_send_process(sn);
-//     if(beam_cmd_get() == NO_USE)
-//     {
-//         sendFeedback();
-//     }
-
-//     return 0;
+#ifdef IS_TCP_SERVER
+    return tcp_send_process(sn);
+#else
+    // if(beam_cmd_get() == NO_USE)
+    // {
+    //     sendFeedback();
+    // }
+    return 0;
+#endif
  }
 
 static int8_t non_realtime_tcp_recv_data_callback(void)
@@ -1207,8 +1209,9 @@ static void data_process_entry(void *argument)
           //  ntrRecvParamAndPlan(&tcp_info);
 
           //  sendFeedback();
+    #ifdef IS_TCP_SERVER
           tcp_recv_process(&tcp_info);
-
+    #endif
             // printf("tcp_info len:%d\r\n", tcp_info.Len);
             // printf("tcp_info %x %x %x %x\r\n", tcp_info.gDATABUF[0], tcp_info.gDATABUF[1], tcp_info.gDATABUF[2], tcp_info.gDATABUF[3]);
         }
