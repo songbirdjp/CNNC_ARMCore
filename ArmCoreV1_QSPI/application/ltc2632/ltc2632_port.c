@@ -69,28 +69,47 @@ int8_t device_ltc2632_callback_register(int8_t (*cb)(void *arg))
 static int8_t ltc2632_test(int8_t argc, char **argv)
 {
     int8_t ret = 0;
+    uint32_t tx_buf = {0};
 
-    ret = device_ltc2632_init(DEVICE_LTC2632_NAME_DEFAULT);
-    if (ret != 0)
+    switch (atoi(argv[1]))
     {
-        printf("device_ltc2632_init failed\r\n");
-        return -1;
-    }
+    case 0x00:
+        ret = device_ltc2632_init(DEVICE_LTC2632_NAME_DEFAULT);
+        if (ret != 0)
+        {
+            printf("device_ltc2632_init failed\r\n");
+            return -1;
+        }
 
-    ret = device_ltc2632_open();
-    if (ret != 0)
-    {
-        printf("device_ltc2632_open failed\r\n");
-        return -2;
-    }
+        ret = device_ltc2632_open();
+        if (ret != 0)
+        {
+            printf("device_ltc2632_open failed\r\n");
+            return -2;
+        }
+        break;
+    case 0x01:
+        tx_buf = (0x06 << 4 | 0x0f) << 16 | 0xff << 8 | 0xf0;
 
-    static uint32_t tx_buf[10] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A};
+        ret = device_ltc2632_write(&tx_buf, 1, 1000);
+        if (ret != 0)
+        {
+            printf("device_ltc2632_write failed\r\n");
+            return -3;
+        }
+        break;
+    case 0x02:
+        tx_buf = (0x02 << 4 | atoi(argv[2])) << 16 | 0xff << 8 | 0xf0;
 
-    ret = device_ltc2632_write(tx_buf, sizeof(tx_buf) / sizeof(tx_buf[0]), 1000);
-    if (ret != 0)
-    {
-        printf("device_ltc2632_write failed\r\n");
-        return -3;
+        ret = device_ltc2632_write(&tx_buf, 1, 1000);
+        if (ret != 0)
+        {
+            printf("device_ltc2632_write failed\r\n");
+            return -3;
+        }
+        break;
+    default:
+        break;
     }
 
     return 0;

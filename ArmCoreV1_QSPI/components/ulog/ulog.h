@@ -113,10 +113,10 @@ typedef enum {
 #endif
 
 #define USING_ULOG_THREAD       /* use thread output log */
-#define USING_ULOG_TIMESTAMP    /* use timestamp log */
-#define USING_ULOG_LEVEL_TAG    /* use level tag log */
+// #define USING_ULOG_TIMESTAMP    /* use timestamp log */
+// #define USING_ULOG_LEVEL_TAG    /* use level tag log */
 #define USING_ULOG_CONSOLE      /* use console log */
-#define USING_ULOG_FLASH        /* use flash log */
+// #define USING_ULOG_FLASH        /* use flash log */
 
 struct ulog_write_func_info
 {

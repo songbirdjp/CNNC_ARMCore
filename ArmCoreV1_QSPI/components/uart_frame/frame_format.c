@@ -10,7 +10,7 @@
  *   crc32: 4 bytes，表示数据校验值，采用CRC32算法， polynomial=0x04C11DB7, init=0xFFFFFFFF, xor=0xFFFFFFFF
  *                   计算时，包含count、data len、data三个字段
  *  
- *   data segment:  | id | ack | protocol data |
+ *   data segment:  | ack | id | protocol data |
  *   
  *   id 与 ack 共占用 1 byte -> id：7 bits, ack：1 bit
  *   id: 标识访问的总线上设备的id标号，范围0~127，0：广播    1~127：具体设备
@@ -21,10 +21,8 @@
  *   - UART: 500kbps, 8-N-1, no flow control;  DMA mode, no fifo, idle interrupt
  */
 
-#include <stdint.h>
-
+#include "frame_format.h"
 #include "hw_crc.h"
-#include "frame_statistics.h"
 
 #define FRAME_HEADER_OFFSET     0
 #define FRAME_HEADER_LEN        2
@@ -58,26 +56,18 @@ struct frame_statistics frame_stats_com1 = {
 
 };
 
-struct frame_statistics *frame_stats_get(void)
-{
-    return &frame_stats_com1;
-}
-
-
-static uint16_t frame_count = 0;
-
-uint16_t *frame_stats_send_cnt_get(void)
+static uint16_t *frame_stats_send_cnt_get(struct frame_statistics *stats)
 {
 #if DEVICE_IS_MASTER
-    return (uint16_t *)&frame_stats_get()->send_cnt;
+    return (uint16_t *)&stats->send_cnt;
 #else
-    return &frame_count;
+    return &stats->ack_cnt;
 #endif
 }
 
-int8_t frame_format_parse(uint8_t *buf, uint16_t size, uint16_t *offset, uint16_t *length)
+int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t size, uint16_t *offset, uint16_t *length)
 {
-    if (buf == NULL || size < FRAME_EXTRA_LEN)
+    if (stats == NULL || buf == NULL || size < FRAME_EXTRA_LEN)
     {
         printf("args error\r\n");
         return -1;
@@ -128,24 +118,24 @@ int8_t frame_format_parse(uint8_t *buf, uint16_t size, uint16_t *offset, uint16_
 
 #if !DEVICE_IS_MASTER
     /* 4. update frame count */
-    *frame_stats_send_cnt_get() = buf[FRAME_COUNT_OFFSET] | buf[FRAME_COUNT_OFFSET + 1] << 8;
+    *frame_stats_send_cnt_get(stats) = buf[FRAME_COUNT_OFFSET] | buf[FRAME_COUNT_OFFSET + 1] << 8;
 #endif
 
 #ifdef USING_FRAME_STATISTICS
     /* 5. update frame statistics */
-    ret = frame_stats_recv_update(frame_stats_get(), FRAME_UPDATE_CNT, 1);
+    ret = frame_stats_recv_update(stats, FRAME_UPDATE_CNT, 1);
     if (ret != 0)
     {
         printf("frame stats update cnt error: %d\r\n", ret);
     }
 
-    ret = frame_stats_recv_update(frame_stats_get(), FRAME_UPDATE_CRC, ret);
+    ret = frame_stats_recv_update(stats, FRAME_UPDATE_CRC, ret);
     if (ret != 0)
     {
         printf("frame stats update crc error: %d\r\n", ret);
     }
 
-    ret = frame_stats_recv_update(frame_stats_get(), FRAME_UPDATE_LOST, buf[FRAME_COUNT_OFFSET] | buf[FRAME_COUNT_OFFSET + 1] << 8);
+    ret = frame_stats_recv_update(stats, FRAME_UPDATE_LOST, buf[FRAME_COUNT_OFFSET] | buf[FRAME_COUNT_OFFSET + 1] << 8);
     if (ret != 0)
     {
         printf("frame stats update lost error: %d\r\n", ret);
@@ -156,7 +146,7 @@ int8_t frame_format_parse(uint8_t *buf, uint16_t size, uint16_t *offset, uint16_
 }
 
 
-int8_t frame_format_pack(uint8_t *buf, uint16_t len)
+int8_t frame_format_pack_and_send(struct frame_statistics *stats, uint8_t *buf, uint16_t len, int8_t (*cb)(uint8_t *buf, uint16_t size, uint32_t timeout), uint32_t timeout)
 {
     if (buf == NULL || len == 0)
     {
@@ -173,7 +163,7 @@ int8_t frame_format_pack(uint8_t *buf, uint16_t len)
     buf_send[FRAME_HEADER_OFFSET + 1] = 0xAA;
 
     /* 2. fill count */
-    uint16_t *cnt = frame_stats_send_cnt_get();
+    uint16_t *cnt = frame_stats_send_cnt_get(stats);
     buf_send[FRAME_COUNT_OFFSET] = *cnt & 0xFF;
     buf_send[FRAME_COUNT_OFFSET + 1] = (*cnt >> 8) & 0xFF;
 
@@ -199,18 +189,26 @@ int8_t frame_format_pack(uint8_t *buf, uint16_t len)
     buf_send[len + FRAME_DATA_OFFSET + 3] = (crc_cal >> 24) & 0xFF;
 
     /* 6. send data */
-    // TODO: send data
+    if (cb != NULL)
+    {
+        ret = cb(buf_send, len + FRAME_EXTRA_LEN, timeout);
+    }
 
 #ifdef USING_FRAME_STATISTICS
     /* 7. update frame statistics */
-    ret = frame_stats_send_update(frame_stats_get());
+    ret |= frame_stats_send_update(stats);
 
 #endif
 
-    return 0;
+    return ret;
 }
 
 #ifdef FRAME_TIMEOUT_THREAD_DETECT
+static struct frame_statistics *frame_stats_get(void)
+{
+    return &frame_stats_com1;
+}
+
 static int8_t frame_statistics_init(void)
 {
     osMutexAttr_t mutex_attributes = {

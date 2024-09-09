@@ -60,7 +60,7 @@ int8_t device_adcs7476_init(uint8_t *device_name)
     }
     else
     {
-        printf("device name is not correct\r\n");
+        printf("device name is not correct: %s\r\n", device_name);
         return -2;
     }
 
@@ -87,7 +87,7 @@ int8_t device_adcs7476_open(uint8_t *device_name)
     }
     else
     {
-        printf("device name is not correct\r\n");
+        printf("device name is not correct: %s\r\n", device_name);
         return -2;
     }
 
@@ -116,7 +116,7 @@ static int8_t device_adcs7476_data_buf_init(uint8_t *device_name, uint8_t *rx_bu
     }
     else
     {
-        printf("device name is not correct\r\n");
+        printf("device name is not correct: %s\r\n", device_name);
         return -2;
     }
 
@@ -166,7 +166,7 @@ int8_t device_adcs7476_buffer_init(uint8_t *device_name, uint8_t *buf, uint16_t 
     }
     else
     {
-        printf("device name is not correct\r\n");
+        printf("device name is not correct: %s\r\n", device_name);
         return -3;
     }
 
@@ -199,7 +199,7 @@ int8_t device_adcs7476_queue_init(uint8_t *device_name, osMessageQueueId_t queue
     }
     else
     {
-        printf("device name is not correct\r\n");
+        printf("device name is not correct: %s\r\n", device_name);
         return -2;
     }
 
@@ -226,7 +226,7 @@ int8_t device_adcs7476_callback_register(uint8_t *device_name, int8_t (*cb)(void
     }
     else
     {
-        printf("device name is not correct\r\n");
+        printf("device name is not correct: %s\r\n", device_name);
         return -2;
     }
 
@@ -239,32 +239,74 @@ int8_t device_adcs7476_callback_register(uint8_t *device_name, int8_t (*cb)(void
     return 0;
 }
 
-int8_t device_adcs7476_sample_start(uint16_t sample_interval_us)
+static void AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
 {
-    if (sample_interval_us * 100 > 0xFFFF)
+#if 0
+    HAL_LPTIM_Counter_Stop_IT(hlptim);
+
+    HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Stop_IT(hlptim);
+    if (status != HAL_OK)
     {
-        printf("sample interval is too large: (interval * 100 <= 0xFFFF)\r\n");
+        printf("HAL_LPTIM_SetOnce_Stop_IT err: %d\r\n", status);
+    }
+#endif
+}
+
+int8_t device_adcs7476_sample_interval_set(uint16_t sample_interval_10ns)
+{
+    if (sample_interval_10ns > 0xFFFF)
+    {
+        printf("sample interval is too large: (sample_interval_10ns <= 0xFFFF)\r\n");
         return -1;
     }
 
     HAL_StatusTypeDef status = HAL_OK;
 
-    MX_LPTIM2_Init();
+    if (HAL_LPTIM_GetState(&hlptim2) == HAL_LPTIM_STATE_RESET)
+    {
+        MX_LPTIM2_Init();
+    }
+    
+    status = HAL_LPTIM_RegisterCallback(&hlptim2, HAL_LPTIM_AUTORELOAD_MATCH_CB_ID, AutoReloadMatchCallback);
+    if (status != HAL_OK)
+    {
+        printf("HAL_LPTIM_RegisterCallback err: %d\r\n", status);
+        return -2;
+    }
 
     status = HAL_LPTIM_Counter_Stop(&hlptim2);
     if (status != HAL_OK)
     {
-        printf("HAL_LPTIM_Counter_Stop failed\r\n");
-        return -2;
-    }
-
-    status = HAL_LPTIM_Counter_Start(&hlptim2, 100 * sample_interval_us - 1);   /* 100M / 1分频 / 100 * sample_interval_us */
-    if (status != HAL_OK)
-    {
-        printf("HAL_LPTIM_Counter_Start failed\r\n");
+        printf("HAL_LPTIM_Counter_Stop err: %d\r\n", status);
         return -3;
     }
 
+    __HAL_LPTIM_AUTORELOAD_SET(&hlptim2, sample_interval_10ns);
+
+    return 0;
+}
+
+int8_t device_adcs7476_sample_start(void)
+{
+    HAL_StatusTypeDef status = HAL_OK;
+
+    uint32_t period = HAL_LPTIM_ReadAutoReload(&hlptim2);
+
+#if 1
+    status = HAL_LPTIM_Counter_Start(&hlptim2, period);   /* 100M / 1分频 */
+    if (status != HAL_OK)
+    {
+        printf("HAL_LPTIM_Counter_Start err: %d\r\n", status);
+        return -1;
+    }
+#else
+    status = HAL_LPTIM_SetOnce_Start_IT(&hlptim2, period, period);   /* 100M / 1分频 */
+    if (status != HAL_OK)
+    {
+        printf("HAL_LPTIM_Counter_Start err: %d\r\n", status);
+        return -1;
+    }
+#endif
     return 0;
 }
 
@@ -430,7 +472,9 @@ static int8_t adcs7476_test(int8_t argc, char **argv)
 
     extern SPI_HandleTypeDef hspi4;
 
-    device_adcs7476_sample_start(100);    /* 1us * 100 = 10kHz */
+    device_adcs7476_sample_interval_set(10000);
+
+    device_adcs7476_sample_start();    /* 1us * 100 = 10kHz */
 
     static uint16_t recv_tmp[BUF_LEN] = {0};
 

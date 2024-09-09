@@ -36,12 +36,15 @@ extern LPTIM_HandleTypeDef hlptim1;
 
 extern LPTIM_HandleTypeDef hlptim2;
 
+extern LPTIM_HandleTypeDef hlptim3;
+
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
 void MX_LPTIM1_Init(void);
 void MX_LPTIM2_Init(void);
+void MX_LPTIM3_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 

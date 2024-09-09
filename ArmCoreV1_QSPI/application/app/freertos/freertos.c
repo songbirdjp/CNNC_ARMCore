@@ -205,19 +205,19 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
     osDelay(1000);//delay 1s
-    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_9, GPIO_PIN_SET);//watchdog signal 2
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
     /* Infinite loop */
 
-    uint8_t count = 0;
+    uint32_t count = 0;
     for(;;)
     {
-        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_7);//watchdog signal 1
+        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_4);
 
-        osDelay(100);
+        osDelay(10);
 
-        if (count++ % 5 == 0)
+        if (count++ % 50 == 0)
         {
-            HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
+            HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
         }
     }
   /* USER CODE END StartDefaultTask */
