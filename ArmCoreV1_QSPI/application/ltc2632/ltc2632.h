@@ -36,7 +36,7 @@ struct ltc2632_object
 
 struct ltc2632_object *ltc2632_object_data_get(void);
 int8_t ltc2632_data_write(struct ltc2632_object *buf);
-
+uint16_t ltc2632_data_value_get(uint8_t channel);
 
 #ifdef __cplusplus
 }

@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#define USING_LPTIM3_FOR_RADIATION_TIMEOUT
+
 
 #ifdef __cplusplus
 }

@@ -7,9 +7,9 @@
 extern "C" {
 #endif
 
-enum dose_fsm_state
+enum fsm_state
 {
-    FSM_STATE_INIT,
+    FSM_STATE_INIT = 0,
     FSM_STATE_SETTING,
     FSM_STATE_DUMMY,
     FSM_STATE_READY,
@@ -19,8 +19,8 @@ enum dose_fsm_state
     FSM_STATE_MAX
 };
 
-int8_t dose_fsm_state_set(enum dose_fsm_state state);
-enum dose_fsm_state dose_fsm_state_get(void);
+enum fsm_state fsm_state_get(void);
+int8_t fsm_state_switch(enum fsm_state new_state);
 
 #ifdef __cplusplus
 }

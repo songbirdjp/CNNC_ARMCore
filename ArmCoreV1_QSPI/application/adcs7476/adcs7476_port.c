@@ -241,8 +241,8 @@ int8_t device_adcs7476_callback_register(uint8_t *device_name, int8_t (*cb)(void
 
 static void AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
 {
-#if 0
-    HAL_LPTIM_Counter_Stop_IT(hlptim);
+#if 1
+    // HAL_LPTIM_Counter_Stop_IT(hlptim);
 
     HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Stop_IT(hlptim);
     if (status != HAL_OK)
@@ -292,7 +292,7 @@ int8_t device_adcs7476_sample_start(void)
 
     uint32_t period = HAL_LPTIM_ReadAutoReload(&hlptim2);
 
-#if 1
+#if 0
     status = HAL_LPTIM_Counter_Start(&hlptim2, period);   /* 100M / 1分频 */
     if (status != HAL_OK)
     {

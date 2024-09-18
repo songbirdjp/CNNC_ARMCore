@@ -1,4 +1,4 @@
-#include "dose_uart_port.h"
+#include "uart_port.h"
 #include "drv_uart.h"
 
 static DEVICE_UART dose_uart = {0};

@@ -228,27 +228,29 @@ int8_t adcs7476_object_data_limit_fault_get(uint8_t *device_name)
         return -1;
     }
 
-    struct adcs7476_object *obj = adcs7476_object_get(device_name);
-    if (obj == NULL)
+    uint16_t buf[BUF_LEN] = {0};
+    int8_t ret = adcs7476_object_data_read(device_name, buf, BUF_LEN, osWaitForever);
+    if (ret != 0)
     {
-        printf("adcs7476 %s object get failed\r\n", device_name);
+        printf("adcs7476 %s data read failed\r\n", device_name);
         return -2;
     }
 
-    osMutexAcquire(obj->mutex, osWaitForever);
-
-    uint16_t limit_h = obj->limit_h;
-    uint16_t limit_l = obj->limit_l;
-
-    osMutexRelease(obj->mutex);
-
-    for (uint8_t i = 0; i < obj->buf_len; i++)
+    uint16_t limit_h = 0, limit_l = 0;
+    ret = adcs7476_object_data_limit_get(device_name, &limit_h, &limit_l);
+    if (ret != 0)
     {
-        if (obj->data[i] > limit_h)
+        printf("adcs7476 %s data limit get failed\r\n", device_name);
+        return -3;
+    }
+
+    for (uint8_t i = 0; i < BUF_LEN; i++)
+    {
+        if (buf[i] > limit_h)
         {
             return (1 << 1);
         }
-        else if (obj->data[i] < limit_l)
+        else if (buf[i] < limit_l)
         {
             return (1 << 0);
         }
@@ -257,7 +259,7 @@ int8_t adcs7476_object_data_limit_fault_get(uint8_t *device_name)
     return 0;
 }
 
-void (*callback)(void) = NULL;
+static void (*callback)(void) = NULL;
 
 int8_t adcs7476_object_data_callback_register(void (*cb)(void *arg))
 {

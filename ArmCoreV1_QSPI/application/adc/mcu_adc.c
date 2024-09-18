@@ -39,7 +39,7 @@ int8_t board_power_limit_fault_get(void)
         ret |= (1 << 0);
     }
 
-    if (abs(adc_n500v - 500000) > 500000 * POWER_DIFF_TOLERANCE)
+    if (abs(adc_n500v - 392000) > 392000 * POWER_DIFF_TOLERANCE)
     {
         ret |= (1 << 1);
     }
@@ -52,7 +52,46 @@ int8_t board_power_limit_fault_get(void)
     return ret;
 }
 
-int8_t mcu_adc_sample_start(uint16_t sample_interval_10ns)
+float mcu_adc_value_get(enum mcu_adc_channel channel)
+{
+    int8_t ret = 0;
+    uint16_t result = 0;
+    float value = 0.0f;
+
+    struct adc_object *adc1 = adc_object_get(DEVICE_NAME_ADC1_DEFAULT);
+
+    osMutexAcquire(adc1->mutex, osWaitForever);
+    memcpy(&result, &adc1->data[channel], sizeof(uint16_t));
+    osMutexRelease(adc1->mutex);
+
+    ret = adc_sample_data_amend(&result, 1);
+    if (ret != 0)
+    {
+        printf("adc_sample_data_amend err: %d\r\n", ret);
+        return -1;
+    }
+
+    switch (channel)
+    {
+    case MCU_ADC_CHANNEL_P5V:
+        value = (float)result * 3 / 2;  /* unit: mV */
+        break;
+    case MCU_ADC_CHANNEL_N500V:
+        value = (float)result * 201;
+        break;
+    case MCU_ADC_CHANNEL_N5V:
+        value = (float)result * 2;
+        break;
+    default:
+        printf("invalid channel: %d\r\n", channel);
+        return -2;
+        break;
+    }
+
+    return value;
+}
+
+static int8_t mcu_adc_sample_start(uint16_t sample_interval_10ns)
 {
     int8_t ret = adc_sample_interval_set(sample_interval_10ns);
     if (ret != 0)

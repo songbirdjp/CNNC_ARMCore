@@ -29,6 +29,28 @@ int8_t ltc2632_data_write(struct ltc2632_object *buf)
     return 0;
 }
 
+uint16_t ltc2632_data_value_get(uint8_t channel)
+{
+    uint16_t value = 0;
+    struct ltc2632_object *ltc2632 = ltc2632_object_data_get();
+
+    switch (channel)
+    {
+    case LTC2632_CHANNEL_OUTA:
+        value = ltc2632->out_a_value;
+        break;
+    case LTC2632_CHANNEL_OUTB:
+        value = ltc2632->out_b_value;
+        break;
+    default:
+        printf("invalid channel: %d\r\n", channel);
+        value = 0;
+        break;
+    }
+
+    return value;
+}
+
 static int8_t ltc2632_init(void)
 {
     int8_t ret = 0;

@@ -1,49 +1,89 @@
 #include "fsm_app.h"
 #include "cmsis_os2.h"
 #include "init_call.h"
+#include "gpio_app.h"
 
-static osMutexId_t dose_fsm_mutex = NULL;
-static enum dose_fsm_state dose_fsm_state_current = FSM_STATE_INIT;
-static osEventFlagsId_t dose_fsm_event = NULL;
-#define DOSE_FSM_CHANGE_EVENT   (1 << 0)
-int8_t dose_fsm_state_set(enum dose_fsm_state state)
+static osMutexId_t fsm_mutex = NULL;
+static enum fsm_state fsm_state_current = FSM_STATE_INIT;
+static osEventFlagsId_t fsm_event = NULL;
+#define FSM_CHANGE_EVENT   (1 << 0)
+static int8_t fsm_state_set(enum fsm_state state)
 {
     if (state >= FSM_STATE_MAX) 
     {
         return -1;
     }
 
-    osMutexAcquire(dose_fsm_mutex, osWaitForever);
+    osMutexAcquire(fsm_mutex, osWaitForever);
 
-    dose_fsm_state_current = state;
+    fsm_state_current = state;
 
-    osMutexRelease(dose_fsm_mutex);
+    osMutexRelease(fsm_mutex);
 
-    osEventFlagsSet(dose_fsm_event, DOSE_FSM_CHANGE_EVENT);
+    osEventFlagsSet(fsm_event, FSM_CHANGE_EVENT);
 
     return 0;
 }
 
-enum dose_fsm_state dose_fsm_state_get(void)
+enum fsm_state fsm_state_get(void)
 {
-    enum dose_fsm_state state;
+    enum fsm_state state;
 
-    osMutexAcquire(dose_fsm_mutex, osWaitForever);
+    osMutexAcquire(fsm_mutex, osWaitForever);
 
-    state = dose_fsm_state_current;
+    state = fsm_state_current;
 
-    osMutexRelease(dose_fsm_mutex);
+    osMutexRelease(fsm_mutex);
 
     return state;
 }
 
-static int8_t dose_fsm_process_entry(void *argument)
+int8_t fsm_state_switch(enum fsm_state new_state)
 {
+    int8_t ret = 0;
+
+    switch (new_state)
+    {
+    case FSM_STATE_INIT:
+        break;
+    case FSM_STATE_SETTING:
+        ret = dose_hv_enable_set(0);
+        break;
+    case FSM_STATE_DUMMY:
+        ret = dose_hv_enable_set(1);
+        break;
+    case FSM_STATE_READY:
+        ret = dose_hv_enable_set(1);
+        break;
+    case FSM_STATE_RADIATION:
+        break;
+    case FSM_STATE_STOP:
+    case FSM_STATE_FAULT:
+        ret = dose_hv_enable_set(0);
+        ret |= dose_trigger_out_set(0);
+        break;
+    default:
+        ret = -1;
+        break;
+    }
+
+    if (ret == 0)
+    {
+        ret = fsm_state_set(new_state);
+    }
+
+    return ret;
+}
+
+static int8_t fsm_process_entry(void *argument)
+{
+    int8_t ret = 0;
+
     for (;;)
     {
-        osEventFlagsWait(dose_fsm_event, DOSE_FSM_CHANGE_EVENT, osFlagsWaitAny, osWaitForever);
+        osEventFlagsWait(fsm_event, FSM_CHANGE_EVENT, osFlagsWaitAny, osWaitForever);
 
-        switch (dose_fsm_state_get())
+        switch (fsm_state_get())
         {
         case FSM_STATE_INIT:
             break;
@@ -69,40 +109,40 @@ static int8_t dose_fsm_process_entry(void *argument)
     return 0;
 }
 
-static int8_t dose_fsm_thread_init(void)
+static int8_t fsm_thread_init(void)
 {
-    osMutexAttr_t dose_fsm_mutex_attr = {
-    .name = "dose_fsm_mutex",
+    osMutexAttr_t fsm_mutex_attr = {
+    .name = "fsm_mutex",
     .attr_bits = osMutexRecursive | osMutexPrioInherit
     };
 
-    dose_fsm_mutex = osMutexNew(&dose_fsm_mutex_attr);
-    if (dose_fsm_mutex == NULL)
+    fsm_mutex = osMutexNew(&fsm_mutex_attr);
+    if (fsm_mutex == NULL)
     {
-        printf("dose fsm mutex create failed\r\n");
+        printf("fsm mutex create failed\r\n");
         return -1;
     }
 
-    dose_fsm_event = osEventFlagsNew(NULL);
-    if (dose_fsm_event == NULL)
+    fsm_event = osEventFlagsNew(NULL);
+    if (fsm_event == NULL)
     {
-        printf("dose fsm event create failed\r\n");
+        printf("fsm event create failed\r\n");
         return -2;
     }   
 
-    osThreadAttr_t dose_fsm_thread_attributes = {
-    .name = "dose_fsm_thread",
+    osThreadAttr_t fsm_thread_attributes = {
+    .name = "fsm_thread",
     .stack_size = 1024 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
 
-    osThreadId_t dose_fsm_threadHandle = osThreadNew(dose_fsm_process_entry, NULL, &dose_fsm_thread_attributes);
-    if (dose_fsm_threadHandle == NULL)
+    osThreadId_t fsm_threadHandle = osThreadNew(fsm_process_entry, NULL, &fsm_thread_attributes);
+    if (fsm_threadHandle == NULL)
     {
-        printf("thread dose fsm create failed\r\n");
+        printf("thread fsm create failed\r\n");
         return -3;
     }
 
     return 0;
 }
-INIT_APP_EXPORT(dose_fsm_thread_init);
+INIT_APP_EXPORT(fsm_thread_init);

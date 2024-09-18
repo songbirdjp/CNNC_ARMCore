@@ -1,5 +1,5 @@
-#ifndef __DOSE_UART_PORT_H__
-#define __DOSE_UART_PORT_H__
+#ifndef __UART_PORT_H__
+#define __UART_PORT_H__
 
 #include <stdint.h>
 
@@ -26,4 +26,4 @@ int8_t device_dose_uart_data_write(struct dose_uart *buf, uint16_t size, uint32_
 #endif
 
 
-#endif /* __DOSE_UART_PORT_H__ */
+#endif /* __UART_PORT_H__ */
