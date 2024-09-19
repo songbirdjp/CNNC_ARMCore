@@ -12,11 +12,15 @@
 
 static struct control_para control_data = 
 {
-    .calibration.adc_factor = {1},
-    .calibration.dac_factor = 30,
-    .calibration.trig_interval_min = 4000,
-
-    .treatment.prf_hz = 250
+    .calibration = {.adc_factor = {1}, 
+                    .dac_factor = 30,
+                    .trig_interval_min = 4000},
+    .treatment = {.prf_hz = 250},
+    .interlock = {.threshold_dose_rate = {10}, 
+                  .threshold_dose_cp = {10}, 
+                  .one_pulse = {.threshold_low = 10, .threshold_high = 10}, 
+                  .threshold_symmetry = 10, 
+                  .communication_timeout = 5000},
 };
 static struct control_para *control_data_get(void)
 {
@@ -395,6 +399,14 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
             struct control_para *obj = control_data_get();
             osMutexAcquire(obj->mutex, osWaitForever);
             if (obj->calibration.status.bits.lock == 0 || obj->treatment.status.bits.lock == 0)
+            {
+                ret = -1;
+            }
+            if (new_state == FSM_STATE_READY && obj->treatment.dose_mode != 1)
+            {
+                ret = -1;
+            }
+            else if (new_state == FSM_STATE_DUMMY && obj->treatment.dose_mode != 0)
             {
                 ret = -1;
             }

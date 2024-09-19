@@ -30,6 +30,7 @@ enum interlock_status_bits
 int8_t interlock_status_set(enum interlock_status_bits bit, uint8_t value);
 uint16_t interlock_status_get(void);
 int8_t interlock_status_cleanup(void);
+int8_t interlock_fault_register_callback(int8_t (*cb)(void));
 
 #ifdef __cplusplus
 }

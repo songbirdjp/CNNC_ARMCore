@@ -302,9 +302,9 @@ int8_t adcs7476_sample_interval_set(uint16_t time_interval_10ns)
     return device_adcs7476_sample_interval_set(time_interval_10ns);
 }
 
-int8_t adcs7476_sample_start(void)
+int8_t adcs7476_sample_enable(uint8_t enable)
 {
-    return device_adcs7476_sample_start();
+    return device_adcs7476_sample_enable(enable);
 }
 
 static int8_t adcs7476_sample_data_recv_process(void)
@@ -364,10 +364,10 @@ static int8_t adcs7476_sample_entry(void *argument)
         return -2;
     }
 
-    ret = adcs7476_sample_start();
+    ret = adcs7476_sample_enable(1);
     if (ret != 0)
     {
-        printf("adcs7476 sample start err: %d\r\n", ret);
+        printf("adcs7476 sample enable err: %d\r\n", ret);
         return -3;
     }
 
@@ -416,7 +416,7 @@ static int adcs7476_sample_test(int argc, char **argv)
 
     adcs7476_sample_interval_set(atoi(argv[1]));
 
-    adcs7476_sample_start();
+    adcs7476_sample_enable(1);
 
     return 0;
 }

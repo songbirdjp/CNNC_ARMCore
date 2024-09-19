@@ -3,6 +3,7 @@
 #include "adcs7476.h"
 #include "init_call.h"
 #include "fsm_app.h"
+#include "ulog.h"
 
 struct interlock_status
 {
@@ -106,7 +107,7 @@ int8_t interlock_status_set(enum interlock_status_bits bit, uint8_t value)
         stat->value.bits.dose_dummy_timeout = value;
         break;
     default:
-        printf("invalid interlock bit: %d\r\n", bit);
+        LOG_E("invalid interlock bit: %d\r\n", bit);
         ret = -1;
         break;
     }
@@ -127,6 +128,15 @@ int8_t interlock_status_cleanup(void)
     return 0;    
 }
 
+static int8_t (*interlock_fault_callback)(void) = NULL;
+
+int8_t interlock_fault_register_callback(int8_t (*cb)(void))
+{
+    interlock_fault_callback = cb;
+
+    return 0;
+}
+
 static int8_t interlock_status_update(void)
 {
     struct interlock_status *stat = interlock_stat_get();
@@ -138,7 +148,7 @@ static int8_t interlock_status_update(void)
     if (ret > 0)
     {
         stat->value.bits.board_power_fault = (ret & ~(1 << 1)) ? 1 : 0;
-        stat->value.bits.hv_limit = (ret & (1 << 1)) ? 1 : 0;
+        // stat->value.bits.hv_limit = (ret & (1 << 1)) ? 1 : 0;
     }
 
     /* 2. check communication status */
@@ -181,12 +191,17 @@ static int8_t interlock_status_update(void)
 
     osMutexRelease(stat->mutex);
 
+    // LOG_I("interlock status: 0x%04x\r\n", interlock_status_get());
+
     if (interlock_status_get() != 0 && fsm_state_get() != FSM_STATE_INIT)
     {
-        ret = fsm_state_switch(FSM_STATE_FAULT);
-        if (ret != 0)
+        if (interlock_fault_callback != NULL)
         {
-            printf("fsm state switch err: %d\r\n", ret);
+            ret = interlock_fault_callback();
+            if (ret != 0)
+            {
+                LOG_E("interlock fault callback err: %d\r\n", ret);
+            }
         }
     }
 
@@ -207,21 +222,21 @@ static int8_t interlock_app_init(void)
     interlock_stat_get()->mutex = osMutexNew(&mutex_attr);
     if (interlock_stat_get()->mutex == NULL)
     {
-        printf("mutex create failed\r\n");
+        LOG_E("mutex create failed\r\n");
         return -1;
     }
 
     osTimerId_t timer_id = osTimerNew(timer_callback, osTimerPeriodic, NULL, NULL);
     if (timer_id == NULL)
     {
-        printf("timer create failed\r\n");
+        LOG_E("timer create failed\r\n");
         return -2;
     }
 
     osStatus_t stat = osTimerStart(timer_id, 100);  /* start timer with 100ms interval */
     if (stat != osOK)
     {
-        printf("timer start err: %d\r\n", stat);
+        LOG_E("timer start err: %d\r\n", stat);
         return -3;
     }
 

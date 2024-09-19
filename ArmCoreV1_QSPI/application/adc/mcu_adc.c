@@ -188,6 +188,13 @@ static int8_t mcu_adc_data_convert_entry(void *argument)
         return -1;
     }
 
+    ret = mcu_adc_sample_start(0xFFFF);
+    if (ret != 0)
+    {
+        printf("mcu_adc_sample_start err: %d\r\n", ret);
+        return -2;
+    }
+
     uint32_t event_flag = 0;
 
     struct adc_object *adc1 = adc_object_get(DEVICE_NAME_ADC1_DEFAULT);

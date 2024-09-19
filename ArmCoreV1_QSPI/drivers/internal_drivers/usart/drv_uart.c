@@ -144,7 +144,7 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
     uint32_t ret_val = osEventFlagsWait(uart->tx_event, UART_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
     if (ret_val != UART_SEND_SUCCEED_EVENT)
     {
-        printf("device %s  wait event flag err: %#.8x\r\n", uart->name, ret_val);
+        printf("device %s wait event flag err: %#.8x\r\n", uart->name, ret_val);
         ret = -4;
         goto err;
     }

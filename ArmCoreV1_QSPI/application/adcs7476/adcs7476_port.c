@@ -241,7 +241,7 @@ int8_t device_adcs7476_callback_register(uint8_t *device_name, int8_t (*cb)(void
 
 static void AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
 {
-#if 1
+#if 0
     // HAL_LPTIM_Counter_Stop_IT(hlptim);
 
     HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Stop_IT(hlptim);
@@ -286,11 +286,18 @@ int8_t device_adcs7476_sample_interval_set(uint16_t sample_interval_10ns)
     return 0;
 }
 
-int8_t device_adcs7476_sample_start(void)
+int8_t device_adcs7476_sample_enable(uint8_t en)
 {
     HAL_StatusTypeDef status = HAL_OK;
 
     uint32_t period = HAL_LPTIM_ReadAutoReload(&hlptim2);
+
+    status = (en == 0) ? HAL_LPTIM_Counter_Stop(&hlptim2) : HAL_LPTIM_Counter_Start(&hlptim2, period);
+    if (status != HAL_OK)
+    {
+        printf("HAL_LPTIM_Counter_Start/Stop err: %d\r\n", status);
+        return -1;
+    }
 
 #if 0
     status = HAL_LPTIM_Counter_Start(&hlptim2, period);   /* 100M / 1分频 */
@@ -299,11 +306,11 @@ int8_t device_adcs7476_sample_start(void)
         printf("HAL_LPTIM_Counter_Start err: %d\r\n", status);
         return -1;
     }
-#else
+
     status = HAL_LPTIM_SetOnce_Start_IT(&hlptim2, period, period);   /* 100M / 1分频 */
     if (status != HAL_OK)
     {
-        printf("HAL_LPTIM_Counter_Start err: %d\r\n", status);
+        printf("HAL_LPTIM_SetOnce_Start_IT err: %d\r\n", status);
         return -1;
     }
 #endif
@@ -474,7 +481,7 @@ static int8_t adcs7476_test(int8_t argc, char **argv)
 
     device_adcs7476_sample_interval_set(10000);
 
-    device_adcs7476_sample_start();    /* 1us * 100 = 10kHz */
+    device_adcs7476_sample_enable(1);   /* 1us * 100 = 10kHz */
 
     static uint16_t recv_tmp[BUF_LEN] = {0};
 

@@ -14,7 +14,7 @@ extern "C" {
 #define BUF_LEN 100   /* sample buffer length, which indicates the number of samples to be read at a time */
 
 int8_t adcs7476_sample_interval_set(uint16_t time_interval_10ns);
-int8_t adcs7476_sample_start(void);
+int8_t adcs7476_sample_enable(uint8_t enable);
 int8_t adcs7476_object_data_read(uint8_t *device_name, uint16_t *data, uint8_t len, uint32_t timeout);
 int8_t adcs7476_object_data_limit_set(uint8_t *device_name, uint16_t limit_h, uint16_t limit_l);
 int8_t adcs7476_object_data_limit_get(uint8_t *device_name, uint16_t *limit_h, uint16_t *limit_l);
