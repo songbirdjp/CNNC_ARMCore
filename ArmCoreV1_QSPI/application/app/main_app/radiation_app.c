@@ -507,6 +507,7 @@ static int8_t adcs7476_value_restore(void)
     int8_t ret = 0;
     struct ltc2632_object *ltc2632 = ltc2632_object_data_get();
 
+#if 1
     ltc2632->value.bits.data = ltc2632->out_a_value;
     ltc2632->value.bits.channel = LTC2632_CHANNEL_OUTA;
 
@@ -526,6 +527,17 @@ static int8_t adcs7476_value_restore(void)
         LOG_E("ltc2632_data_write err: %d\r\n", ret);
         return ret;
     }
+#else
+    ltc2632->value.bits.data = 1500;
+    ltc2632->value.bits.channel = LTC2632_CHANNEL_ALL;
+    
+    ret = ltc2632_data_write(ltc2632);
+    if (ret != 0)
+    {
+        LOG_E("ltc2632_data_write err: %d\r\n", ret);
+        return ret;
+    }
+#endif
 
     return 0;
 }
@@ -782,6 +794,69 @@ static int8_t detect_whether_one_pulse_repeat(void)
     return 0;
 }
 
+// #define ADCS7476_DATA_DUMP
+#ifdef ADCS7476_DATA_DUMP
+#include "shell.h"
+static uint16_t adcs7476_data_buf[2][BUF_LEN * 10] = {0};
+static uint16_t adcs7476_data_len[2] = {0};
+static int8_t adcs7476_data_array_clear(uint8_t index)
+{
+    if (index >= 2)
+    {
+        return -1;
+    }
+
+    memset(adcs7476_data_len, 0, sizeof(adcs7476_data_len));
+    memset(adcs7476_data_buf, 0, sizeof(adcs7476_data_buf));
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(adcs7476_data_array_clear, adcs7476_data_array_clear, adcs7476 data array clear);
+static int8_t adcs7476_data_save(uint8_t index, uint16_t *buf, uint16_t len)
+{
+    if (index >= 2)
+    {
+        return -1;
+    }
+
+    memcpy(&adcs7476_data_buf[index][adcs7476_data_len[index]], buf, len * sizeof(uint16_t));
+    adcs7476_data_len[index] += len;
+    if (adcs7476_data_len[index] >= sizeof(adcs7476_data_buf[index]) / sizeof(uint16_t))
+    {
+        adcs7476_data_len[index] = 0;
+    }
+
+    return 0;
+}
+static int8_t adcs7476_data_dump(uint8_t argc, char *argv[])
+{
+    if (argc != 2)
+    {
+        return -1;
+    }
+
+    uint8_t index = atoi(argv[1]);
+
+    if (index >= 2)
+    {
+        return -2;
+    }
+
+    uint16_t *buf = adcs7476_data_buf[index];
+    uint16_t len = adcs7476_data_len[index];
+
+    LOG_I("adcs7476 data dump: %d\r\n", len);
+    for (uint16_t i = 0; i < len; i++)
+    {
+        LOG_I("%.4d ", buf[i]);
+    }
+    LOG_I("\r\n");
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(adcs7476_data_dump, adcs7476_data_dump, adcs7476 data dump);
+#endif
+
 int8_t adcs7476_value_process(void)
 {
     int8_t ret = 0;
@@ -817,6 +892,19 @@ int8_t adcs7476_value_process(void)
 #endif
         pulse_cnt = pulse_cnt <= pulse_cnt_1 ? pulse_cnt : pulse_cnt_1;
     }
+
+#ifdef ADCS7476_DATA_DUMP
+    if (pulse_cnt != 0 && pulse_cnt < BUF_LEN)
+    {
+        ret = adcs7476_data_save(0, buf, BUF_LEN);
+        ret = adcs7476_data_save(1, buf_1, BUF_LEN);
+        if (ret != 0)
+        {
+            LOG_E("adcs7476_data_save err: %d\r\n", ret);
+            return ret;
+        }
+    }
+#endif
 
 #if 0
     static uint32_t cnt = 0;
@@ -873,6 +961,7 @@ int8_t adcs7476_value_process(void)
                 LOG_E("adcs7476 value dose err: %d\r\n", ret);
             }
 
+#if 0       /* reduce mcu work load, so value servo delayed maximum is 100 sample cycles */
             ret = adcs7476_value_servo(servo_value, BUF_LEN - pulse_cnt, LTC2632_CHANNEL_OUTA);
             if (ret != 0)
             {
@@ -883,6 +972,7 @@ int8_t adcs7476_value_process(void)
             {
                 LOG_E("adcs7476 value servo err: %d\r\n", ret);
             }
+#endif
         }
         else
         {
