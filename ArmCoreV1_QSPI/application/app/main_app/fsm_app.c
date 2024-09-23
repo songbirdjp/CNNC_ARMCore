@@ -46,18 +46,21 @@ int8_t fsm_state_switch(enum fsm_state new_state)
     {
     case FSM_STATE_INIT:
         break;
-    case FSM_STATE_SETTING:
+    case FSM_STATE_IDLE:
         ret = dose_hv_enable_set(0);
         break;
     case FSM_STATE_DUMMY:
         ret = dose_hv_enable_set(1);
         break;
-    case FSM_STATE_READY:
+    case FSM_STATE_PREPARE:
         ret = dose_hv_enable_set(1);
+        break;
+    case FSM_STATE_READY:
         break;
     case FSM_STATE_RADIATION:
         break;
-    case FSM_STATE_STOP:
+    case FSM_STATE_COMPLETE:
+        break;
     case FSM_STATE_FAULT:
         ret = dose_hv_enable_set(0);
         ret |= dose_trigger_out_set(0);
@@ -87,15 +90,17 @@ static int8_t fsm_process_entry(void *argument)
         {
         case FSM_STATE_INIT:
             break;
-        case FSM_STATE_SETTING:
+        case FSM_STATE_IDLE:
             break;
         case FSM_STATE_DUMMY:
+            break;
+        case FSM_STATE_PREPARE:
             break;
         case FSM_STATE_READY:
             break;
         case FSM_STATE_RADIATION:
             break;
-        case FSM_STATE_STOP:
+        case FSM_STATE_COMPLETE:
             break;
         case FSM_STATE_FAULT:
             break;

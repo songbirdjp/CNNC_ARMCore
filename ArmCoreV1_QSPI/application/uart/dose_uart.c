@@ -50,6 +50,12 @@ static int8_t dose_handshake_frame_parse(struct dose_object *cmd)
 {
     int8_t ret = 0;
 
+    struct control_para *obj = control_data_get();
+
+    osMutexAcquire(obj->mutex, osWaitForever);
+    obj->board_id = cmd->data[4];
+    osMutexRelease(obj->mutex);
+
 #if 1
     printf("bgm arm core handshake frame parse: %d\r\n", cmd->len);
     printf("hardware version: %#.2x\r\n", cmd->data[0]);
@@ -383,17 +389,17 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
     switch (state)
     {
     case FSM_STATE_INIT:
-        if (new_state != FSM_STATE_SETTING)
+        if (new_state != FSM_STATE_IDLE)
         {
             ret = -1;
         }
         break;
-    case FSM_STATE_SETTING:
-        if (new_state != FSM_STATE_READY && new_state != FSM_STATE_DUMMY)
+    case FSM_STATE_IDLE:
+        if (new_state == FSM_STATE_INIT || new_state == FSM_STATE_PREPARE)
         {
-            ret = -1;
+            /* do nothing */
         }
-        else
+        else if (new_state == FSM_STATE_DUMMY)
         {
             /* check lock status */
             struct control_para *obj = control_data_get();
@@ -402,37 +408,88 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
             {
                 ret = -1;
             }
-            if (new_state == FSM_STATE_READY && obj->treatment.dose_mode != 1)
-            {
-                ret = -1;
-            }
-            else if (new_state == FSM_STATE_DUMMY && obj->treatment.dose_mode != 0)
+            if (obj->treatment.dose_mode != 0)
             {
                 ret = -1;
             }
             osMutexRelease(obj->mutex);
         }
+        else
+        {
+            ret = -1;
+        }
         break;
     case FSM_STATE_DUMMY:
-        ret = -1;
+        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_FAULT)
+        {
+            ret = -1;
+        }
+        break;
+    case FSM_STATE_PREPARE:
+        if (new_state == FSM_STATE_IDLE || new_state == FSM_STATE_FAULT)
+        {
+
+        }
+        else if (new_state == FSM_STATE_READY)
+        {
+            /* check lock status */
+            struct control_para *obj = control_data_get();
+            osMutexAcquire(obj->mutex, osWaitForever);
+            if (obj->calibration.status.bits.lock == 0 || obj->treatment.status.bits.lock == 0)
+            {
+                ret = -1;
+            }
+            if (obj->treatment.dose_mode != 1)
+            {
+                ret = -1;
+            }
+            osMutexRelease(obj->mutex);
+        }
+        else
+        {
+            ret = -1;
+        }
         break;
     case FSM_STATE_READY:
-        if (new_state != FSM_STATE_SETTING && new_state != FSM_STATE_RADIATION)
+        if (new_state != FSM_STATE_RADIATION && new_state != FSM_STATE_FAULT)
         {
             ret = -1;
         }
         break;
     case FSM_STATE_RADIATION:
-        ret = -1;
+        struct control_para *obj = control_data_get();
+        osMutexAcquire(obj->mutex, osWaitForever);
+        enum dose_board board = obj->board_id;
+        osMutexRelease(obj->mutex);
+        switch (board)
+        {
+        case DOSE_BOARD_TRIGGER_OUT:
+            if (new_state != FSM_STATE_FAULT)
+            {
+                ret = -1;
+            }
+            break;
+        case DOSE_BOARD_NO_TRIGGER_OUT:
+            if (new_state != FSM_STATE_FAULT && new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE)
+            {
+                ret = -1;
+            }
+            break;
+        default:
+            break;
+        }
         break;
-    case FSM_STATE_STOP:
-        if (new_state != FSM_STATE_SETTING)
+    case FSM_STATE_COMPLETE:
+        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE)
         {
             ret = -1;
         }
         break;
     case FSM_STATE_FAULT:
-        ret = -1;
+        if (new_state != FSM_STATE_IDLE)
+        {
+            ret = -1;
+        }
         break;
     default:
         ret = -1;
@@ -449,25 +506,32 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
     switch (cmd->data[0])
     {
     case 0xC0:
-        cmd->len = 3;
-        cmd->data[2] = ret = fsm_state_switch_check(cmd->data[1] + 1);
-        if (ret != 0)
+        switch (cmd->data[1])
         {
-            printf("fsm state switch check err: %d\r\n", ret);
+        case 0x00:
+            cmd->data[2] = ret = fsm_state_switch_check(cmd->data[2]);
+            if (ret != 0)
+            {
+                printf("fsm state switch check err: %d\r\n", ret);
+                break;
+            }
+            cmd->data[2] = ret = fsm_state_switch(cmd->data[2]);
+            if (ret != 0)
+            {
+                printf("fsm state switch err: %d\r\n", ret);
+                break;
+            }
+            cmd->len = 3;
             break;
-        }
-        cmd->data[2] = ret = fsm_state_switch(cmd->data[1] + 1);
-        if (ret != 0)
-        {
-            printf("fsm state switch err: %d\r\n", ret);
+        case 0x01:
+            cmd->data[2] = fsm_state_get();
+            cmd->len = 3;
+            break;
+        default:
             break;
         }
         break;
-    case 0xCF:
-        cmd->data[2] = fsm_state_get();
-        cmd->len = 3;
-        break;
-    case 0xFA:
+    case 0xC1:
         switch (cmd->data[1])
         {
         case 0x00:
@@ -513,7 +577,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             break;
         }
         break;
-    case 0xFB:
+    case 0xC2:
         switch (cmd->data[1])
         {
         case 0x00:
@@ -562,9 +626,8 @@ static int8_t dose_command_frame_parse(struct dose_object *cmd)
         ret = dose_interlock_parse(cmd);
         break;
     case 0xC0:
-    case 0xCF:
-    case 0xFA:
-    case 0xFB:
+    case 0xC1:
+    case 0xC2:
         ret = dose_state_control_parse(cmd);
         break;
     default:
@@ -590,7 +653,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
         {
             /* emergency stop, just change machine state */
             printf("emergency stop\r\n");
-            ret = fsm_state_switch(FSM_STATE_STOP);
+            ret = fsm_state_switch(FSM_STATE_FAULT);
             if (ret != 0)
             {
                 printf("fsm state switch err: %d\r\n", ret);

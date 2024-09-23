@@ -27,6 +27,13 @@ struct dose_object
     uint8_t *data;  /* data pointer */
 };
 
+enum dose_board
+{
+    DOSE_BOARD_TRIGGER_OUT = 0,
+    DOSE_BOARD_NO_TRIGGER_OUT,
+    DOSE_BOARD_MAX
+};
+
 struct calibration_para
 {
     union
@@ -110,6 +117,7 @@ struct radiation_point_para
 
 struct control_para
 {
+    enum dose_board board_id;    
     struct calibration_para calibration;
     struct treatment_para treatment;
     struct interlock_para interlock;

@@ -56,7 +56,8 @@ static int8_t radiation_data_init(void)
 
 enum radiation_data_state
 {
-    DOSE_BEAM_METER = 0,
+    DOSE_BOARD_ID = 0,
+    DOSE_BEAM_METER,
     DOSE_RADIATION_IDX,
     DOSE_RATE_RADIATION_IDX,
     DOSE_TIME_RADIATION_IDX,
@@ -75,6 +76,11 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
 
     switch (state)
     {
+    case DOSE_BOARD_ID:
+        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        value = obj->control_data->board_id;
+        osMutexRelease(obj->control_data->mutex);
+        break;
     case DOSE_BEAM_METER:
         {
             osMutexAcquire(obj->control_data->mutex, osWaitForever);
@@ -394,11 +400,13 @@ static int8_t time_delay_entry(void *argument)
             {
                 LOG_E("dose value status update err: %d\r\n", ret);
             }
-
-            ret = dose_trigger_out_set(1);
-            if (ret != 0)
+            if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
             {
-                LOG_E("dose_trigger_out_set err: %d\r\n", ret);
+                ret = dose_trigger_out_set(1);
+                if (ret != 0)
+                {
+                    LOG_E("dose_trigger_out_set err: %d\r\n", ret);
+                }
             }
         }
         else if (event_flag & TIM_DELAY_NO_PULSE_INTERVAL_TIME_US)
@@ -634,6 +642,14 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
     uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
     uint64_t dose_accumulated_target = radiation_data_value_get(DOSE_BEAM_METER);
 
+    uint64_t board_id = radiation_data_value_get(DOSE_BOARD_ID);
+
+    #define DOSE_BOARD_NO_TRIGGER_OUT_SCALE 1.1
+    if (board_id == DOSE_BOARD_NO_TRIGGER_OUT)
+    {
+        dose_accumulated_target *= DOSE_BOARD_NO_TRIGGER_OUT_SCALE;
+    }
+
 #if 0
     static uint32_t cnt = 0;
     if (cnt++ % 1000 == 0)
@@ -661,9 +677,13 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
                 LOG_E("adcs7476_value_restore err: %d\r\n", ret);
                 return ret;
             }
-        }
 
-        return fsm_state_switch(FSM_STATE_STOP);
+            ret = fsm_state_switch(FSM_STATE_IDLE);
+        }
+        else
+        {
+            ret = (board_id == DOSE_BOARD_NO_TRIGGER_OUT) ? LOG_E("detected dose reached upper limit\r\n"), fsm_state_switch(FSM_STATE_FAULT) : fsm_state_switch(FSM_STATE_COMPLETE);
+        }
     }
 
     return ret;
@@ -934,7 +954,7 @@ static int8_t interlock_fault_callback(void)
     // if (ret != 0)
     // {
     //     LOG_E("fsm state switch err: %d\r\n", ret);
-    // }    
+    // }
 
     // return ret;
     return 0;
