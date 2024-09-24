@@ -6,10 +6,18 @@ ArmCoreV1_QSPI
 ├─ .mxproject
 ├─ .project
 ├─ application
+│  ├─ adc
+│  │  ├─ adc_port.c
+│  │  └─ adc_port.h
 │  ├─ app
+│  │  ├─ board_para
+│  │  │  ├─ board_para_cfg.c
+│  │  │  ├─ board_para_cfg.h
+│  │  │  └─ json_struct.h
 │  │  ├─ bootloader_patch
 │  │  │  ├─ bootloader_patch.c
 │  │  │  └─ bootloader_patch.h
+│  │  ├─ CMakeLists.txt
 │  │  ├─ freertos
 │  │  │  ├─ freertos.c
 │  │  │  └─ FreeRTOSConfig.h
@@ -25,6 +33,7 @@ ArmCoreV1_QSPI
 │  │     ├─ config.h
 │  │     ├─ sys_cfg.c
 │  │     └─ sys_cfg.h
+│  ├─ CMakeLists.txt
 │  ├─ ethercat
 │  │  ├─ ethercat.c
 │  │  └─ ethercat.h
@@ -40,14 +49,16 @@ ArmCoreV1_QSPI
 │  │  ├─ fpga_rw.c
 │  │  └─ fpga_rw.h
 │  ├─ system_common
+│  │  ├─ memorymap.c
+│  │  ├─ memorymap.h
 │  │  ├─ syscall.h
 │  │  ├─ syscalls.c
 │  │  └─ sysmem.c
 │  └─ tcp
-│     ├─ httpserver.c
-│     ├─ httpserver.h
-│     ├─ tcp_client.c
-│     └─ tcp_client.h
+│     ├─ tcp_tasks.c
+│     ├─ tcp_tasks.h
+│     ├─ websocket.c
+│     └─ websocket.h
 ├─ ARM_core.pdf
 ├─ board
 │  ├─ board_config
@@ -58,6 +69,7 @@ ArmCoreV1_QSPI
 │  │     ├─ stm32h7xx_hal_msp.c
 │  │     ├─ stm32h7xx_it.c
 │  │     └─ system_stm32h7xx.c
+│  ├─ CMakeLists.txt
 │  ├─ linker_scripts
 │  │  ├─ STM32H723ZGTX_FLASH.ld
 │  │  └─ STM32H723ZGTX_RAM.ld
@@ -65,10 +77,17 @@ ArmCoreV1_QSPI
 │     └─ startup_stm32h723zgtx.s
 ├─ bootloader
 │  ├─ bootloader.c
-│  └─ bootloader.h
+│  ├─ bootloader.h
+│  └─ CMakeLists.txt
 ├─ CMakeLists.txt
 ├─ CMakeLists_template.txt
 ├─ components
+│  ├─ cjson
+│  │  ├─ cJSON.c
+│  │  ├─ cJSON.h
+│  │  ├─ cJSON_Utils.c
+│  │  └─ cJSON_Utils.h
+│  ├─ CMakeLists.txt
 │  ├─ cm_backtrace
 │  │  ├─ cmb_cfg.h
 │  │  ├─ cmb_def.h
@@ -91,8 +110,8 @@ ArmCoreV1_QSPI
 │  │  ├─ console.c
 │  │  └─ console.h
 │  ├─ crypto
-│  │  ├─ crypto_sha256.c
-│  │  └─ crypto_sha256.h
+│  │  ├─ crypto_sha.c
+│  │  └─ crypto_sha.h
 │  ├─ gpio
 │  │  ├─ gpio_port.c
 │  │  └─ gpio_port.h
@@ -108,9 +127,17 @@ ArmCoreV1_QSPI
 │  ├─ hw_wwdg
 │  │  ├─ hw_wwdg.c
 │  │  └─ hw_wwdg.h
+│  ├─ pid_ctrl
+│  │  ├─ pid_ctrl.c
+│  │  └─ pid_ctrl.h
 │  ├─ shell
 │  │  ├─ shell.c
 │  │  └─ shell.h
+│  ├─ uart_frame
+│  │  ├─ frame_format.c
+│  │  ├─ frame_format.h
+│  │  ├─ frame_statistics.c
+│  │  └─ frame_statistics.h
 │  ├─ ulog
 │  │  ├─ ulog.c
 │  │  └─ ulog.h
@@ -122,11 +149,16 @@ ArmCoreV1_QSPI
 │     └─ ymodem.h
 ├─ config.cmake
 ├─ config.h.in
+├─ Core
+│  ├─ Inc
+│  └─ Src
 ├─ drivers
+│  ├─ CMakeLists.txt
 │  ├─ external_drivers
 │  │  ├─ backup_sram
 │  │  │  ├─ backup_sram_port.c
 │  │  │  └─ backup_sram_port.h
+│  │  ├─ CMakeLists.txt
 │  │  ├─ fram
 │  │  │  ├─ fram_port.c
 │  │  │  └─ fram_port.h
@@ -170,9 +202,13 @@ ArmCoreV1_QSPI
 │  │     ├─ wizchip_conf.c
 │  │     └─ wizchip_conf.h
 │  └─ internal_drivers
+│     ├─ adc
+│     │  ├─ adc.c
+│     │  └─ adc.h
 │     ├─ bdma
 │     │  ├─ bdma.c
 │     │  └─ bdma.h
+│     ├─ CMakeLists.txt
 │     ├─ crc
 │     │  ├─ crc.c
 │     │  └─ crc.h
@@ -198,6 +234,9 @@ ArmCoreV1_QSPI
 │     ├─ iwdg
 │     │  ├─ iwdg.c
 │     │  └─ iwdg.h
+│     ├─ lptim
+│     │  ├─ lptim.c
+│     │  └─ lptim.h
 │     ├─ mdma
 │     │  ├─ mdma.c
 │     │  └─ mdma.h
@@ -230,6 +269,7 @@ ArmCoreV1_QSPI
 ├─ file_reorganize.exe
 ├─ info_generation.exe
 ├─ libraries
+│  ├─ CMakeLists.txt
 │  ├─ CMSIS
 │  │  ├─ Device
 │  │  │  └─ ST
@@ -267,11 +307,18 @@ ArmCoreV1_QSPI
 │  │  │  ├─ mpu_armv8.h
 │  │  │  └─ tz_context.h
 │  │  └─ LICENSE.txt
+│  ├─ CMSIS_DSP
+│  │  ├─ Include
+│  │  │  └─ arm_math.h
+│  │  └─ Lib
+│  │     └─ libarm_cortexM7lfsp_math.a
 │  └─ STM32H7xx_HAL_Driver
 │     ├─ Inc
 │     │  ├─ Legacy
 │     │  │  └─ stm32_hal_legacy.h
 │     │  ├─ stm32h7xx_hal.h
+│     │  ├─ stm32h7xx_hal_adc.h
+│     │  ├─ stm32h7xx_hal_adc_ex.h
 │     │  ├─ stm32h7xx_hal_cortex.h
 │     │  ├─ stm32h7xx_hal_crc.h
 │     │  ├─ stm32h7xx_hal_crc_ex.h
@@ -287,6 +334,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_i2c.h
 │     │  ├─ stm32h7xx_hal_i2c_ex.h
 │     │  ├─ stm32h7xx_hal_iwdg.h
+│     │  ├─ stm32h7xx_hal_lptim.h
 │     │  ├─ stm32h7xx_hal_mdma.h
 │     │  ├─ stm32h7xx_hal_ospi.h
 │     │  ├─ stm32h7xx_hal_pwr.h
@@ -303,6 +351,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_uart.h
 │     │  ├─ stm32h7xx_hal_uart_ex.h
 │     │  ├─ stm32h7xx_hal_wwdg.h
+│     │  ├─ stm32h7xx_ll_adc.h
 │     │  ├─ stm32h7xx_ll_bus.h
 │     │  ├─ stm32h7xx_ll_cortex.h
 │     │  ├─ stm32h7xx_ll_crc.h
@@ -314,6 +363,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_ll_gpio.h
 │     │  ├─ stm32h7xx_ll_hsem.h
 │     │  ├─ stm32h7xx_ll_iwdg.h
+│     │  ├─ stm32h7xx_ll_lptim.h
 │     │  ├─ stm32h7xx_ll_lpuart.h
 │     │  ├─ stm32h7xx_ll_pwr.h
 │     │  ├─ stm32h7xx_ll_rcc.h
@@ -327,6 +377,8 @@ ArmCoreV1_QSPI
 │     ├─ LICENSE.txt
 │     └─ Src
 │        ├─ stm32h7xx_hal.c
+│        ├─ stm32h7xx_hal_adc.c
+│        ├─ stm32h7xx_hal_adc_ex.c
 │        ├─ stm32h7xx_hal_cortex.c
 │        ├─ stm32h7xx_hal_crc.c
 │        ├─ stm32h7xx_hal_crc_ex.c
@@ -340,6 +392,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_i2c.c
 │        ├─ stm32h7xx_hal_i2c_ex.c
 │        ├─ stm32h7xx_hal_iwdg.c
+│        ├─ stm32h7xx_hal_lptim.c
 │        ├─ stm32h7xx_hal_mdma.c
 │        ├─ stm32h7xx_hal_ospi.c
 │        ├─ stm32h7xx_hal_pwr.c
@@ -359,6 +412,7 @@ ArmCoreV1_QSPI
 │        └─ stm32h7xx_ll_fmc.c
 ├─ makefile_update.exe
 ├─ Middlewares
+│  ├─ CMakeLists.txt
 │  ├─ ST
 │  │  └─ STM32_Cryptographic
 │  │     ├─ include
