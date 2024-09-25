@@ -10,6 +10,8 @@
 #include "gpio_app.h"
 #include "ulog.h"
 
+#define RADIATION_SIMULATION_MODE
+
 #define USING_LPTIM3_FOR_RADIATION_TIMEOUT
 #ifdef USING_LPTIM3_FOR_RADIATION_TIMEOUT
 #include "lptim.h"
@@ -193,6 +195,16 @@ static int8_t radiation_data_value_set(enum radiation_data_state state, uint64_t
         obj->control_data->radiation.dose_rate_interpolated = value;
         osMutexRelease(obj->control_data->mutex);
         break;
+    case DOSE_GENERATION_MODE:
+        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        obj->control_data->treatment.dose_mode = value;
+        osMutexRelease(obj->control_data->mutex);
+        break;
+    case PULSE_GENERATION_MODE:
+        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        obj->control_data->treatment.pulse_mode = value;
+        osMutexRelease(obj->control_data->mutex);
+        break;
     case PULSE_INTERVAL:
         {
             osMutexAcquire(obj->control_data->mutex, osWaitForever);
@@ -364,6 +376,49 @@ static void LPTIM3_Callback(LPTIM_HandleTypeDef *hlptim)
     osEventFlagsSet(timer_delay_event, timer_delay_flag & ~TIM_DELAY_RUNNING_FLAG_BIT_7);
 }
 static int8_t adcs7476_value_dummy(uint16_t value, uint8_t channel);
+#ifdef RADIATION_SIMULATION_MODE
+static uint8_t radiation_simulation_trigger_out_flag = 0;
+uint16_t dose_simulated[BUF_LEN] = {0}, dose_simulated_1[BUF_LEN] = {0};
+static int8_t radiation_simulation_dose_deal(uint16_t *buf, uint8_t len)
+{
+    if (buf == NULL || len == 0)
+    {
+        return -1;
+    }
+
+    if (dose_simulated[0] == 0)
+    {
+        for (uint16_t i = 0; i < BUF_LEN; i++)
+        {
+            dose_simulated[i] = i * 2 + 50;
+            dose_simulated_1[i] =  (BUF_LEN - i - 1) * 2 + 50;
+        }
+    }
+
+#if 0
+    for (uint16_t i = 0; i < BUF_LEN; i++)
+    {
+        LOG_I("%d ", dose_simulated_1[i]);
+    }
+    LOG_I("\r\n");
+#endif
+
+    static uint8_t cnt = 0;
+    if (cnt < 2)
+    {
+        memcpy(buf, dose_simulated, len * 2);
+    }
+    else
+    {
+        memcpy(buf, dose_simulated_1, len * 2);
+    }
+
+    cnt++;
+    cnt %= 4;
+
+    return 0;
+}
+#endif
 static int8_t time_delay_entry(void *argument)
 {
     int8_t ret = 0;
@@ -407,6 +462,9 @@ static int8_t time_delay_entry(void *argument)
                 {
                     LOG_E("dose_trigger_out_set err: %d\r\n", ret);
                 }
+#ifdef RADIATION_SIMULATION_MODE
+                radiation_simulation_trigger_out_flag = 1;
+#endif
             }
         }
         else if (event_flag & TIM_DELAY_NO_PULSE_INTERVAL_TIME_US)
@@ -637,6 +695,10 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
             return ret;
         }
 
+#ifdef RADIATION_SIMULATION_MODE
+        radiation_simulation_trigger_out_flag = 0;
+#endif
+
         /* 2. update one pulse status */
         ret = dose_value_status_update(ONE_PULSE_COMPLETE, 0, 0);
         if (ret != 0)
@@ -664,7 +726,11 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
 
 #if 0
     static uint32_t cnt = 0;
+#ifndef RADIATION_SIMULATION_MODE
     if (cnt++ % 1000 == 0)
+#else
+    if (radiation_simulation_trigger_out_flag == 0)
+#endif
     {
         LOG_I("dose accumulated: %llu, target: %llu\r\n", dose_accumulated_cur, dose_accumulated_target);
     }
@@ -878,6 +944,14 @@ int8_t adcs7476_value_process(void)
         LOG_E("adcs7476_object_data_read err: %d\r\n", ret);
         return ret;
     }
+
+#ifdef RADIATION_SIMULATION_MODE
+    if (radiation_simulation_trigger_out_flag)
+    {
+        radiation_simulation_dose_deal(buf, BUF_LEN);
+        radiation_simulation_dose_deal(buf_1, BUF_LEN);
+    }
+#endif
 
     /* 2. check value */
     pulse_cnt = adcs7476_value_check(buf, BUF_LEN, &pulse_value, &servo_value);
@@ -1137,7 +1211,47 @@ static int8_t dose_dummy_mode_test(uint8_t argc, char **argv)
         return ret;
     }
     /* 3. update fsm state */
-    ret = fsm_state_switch(FSM_STATE_DUMMY);
+    enum fsm_state state = atoi(argv[1]);   /* FSM_STATE_DUMMY: 2   FSM_STATE_RADIATION: 5 */
+
+    if (state == FSM_STATE_DUMMY)
+    {
+        ret = radiation_data_value_set(DOSE_GENERATION_MODE, 0);
+        ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);
+    }
+    else if (state == FSM_STATE_RADIATION)
+    {
+        ret = radiation_data_value_set(DOSE_GENERATION_MODE, 1);
+        ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);
+    }
+
+    // ret = fsm_state_switch(state);
+    // if (ret != 0)
+    // {
+    //     LOG_E("fsm state switch err: %d\r\n", ret);
+    //     return ret;
+    // }   
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(dose_dummy_mode_test, dose_dummy_mode_test, dose dummy mode test);
+
+static int8_t fsm_state_switch_test(uint8_t argc, char **argv)
+{
+    LOG_I("fsm state current: %d\r\n", fsm_state_get());
+
+    enum fsm_state state = atoi(argv[1]);
+    /*     
+    0：FSM_STATE_INIT,
+    1：FSM_STATE_IDLE,
+    2：FSM_STATE_DUMMY,
+    3：FSM_STATE_PREPARE,
+    4：FSM_STATE_READY,
+    5：FSM_STATE_RADIATION,
+    6：FSM_STATE_COMPLETE,
+    7：FSM_STATE_FAULT, */
+    
+    int8_t ret = fsm_state_switch(state);
+
     if (ret != 0)
     {
         LOG_E("fsm state switch err: %d\r\n", ret);
@@ -1146,6 +1260,5 @@ static int8_t dose_dummy_mode_test(uint8_t argc, char **argv)
 
     return 0;
 }
-MSH_CMD_EXPORT_ALIAS(dose_dummy_mode_test, dose_dummy_mode_test, dose dummy mode test);
-
+MSH_CMD_EXPORT_ALIAS(fsm_state_switch_test, fsm_state_switch_test, fsm state test);
 #endif

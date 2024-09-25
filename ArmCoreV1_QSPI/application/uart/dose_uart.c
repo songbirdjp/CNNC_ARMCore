@@ -773,7 +773,7 @@ static int8_t dose_cmd_parse(struct dose_object *cmd)
         ret = dose_handshake_frame_parse(cmd);
         if (ret != 0)
         {
-            printf("dose_uart_handshake_parse err: %d\r\n", ret);
+            printf("dose_handshake_frame_parse err: %d\r\n", ret);
             return -2;
         }
         break;
@@ -789,7 +789,7 @@ static int8_t dose_cmd_parse(struct dose_object *cmd)
         ret = dose_realtime_frame_parse(cmd);
         if (ret != 0)
         {
-            printf("dose_uart_realtime_parse err: %d\r\n", ret);
+            printf("dose_realtime_frame_parse err: %d\r\n", ret);
             return -2;
         }
         break;

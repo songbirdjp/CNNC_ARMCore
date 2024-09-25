@@ -297,7 +297,7 @@ static int8_t adcs7476_sample_init(void)
     return 0;
 }
 
-int8_t adcs7476_sample_interval_set(uint16_t time_interval_10ns)
+static int8_t adcs7476_sample_interval_set(uint16_t time_interval_10ns)
 {
     return device_adcs7476_sample_interval_set(time_interval_10ns);
 }
