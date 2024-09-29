@@ -9,6 +9,7 @@
 #include "gpio_app.h"
 #include "interlock_app.h"
 #include "radiation_app.h"
+#include "ulog.h"
 
 static struct control_para control_data = 
 {
@@ -46,6 +47,27 @@ int8_t radiation_index_update_callback(int8_t (*cb)(void))
     return 0;
 }
 
+osMessageQueueId_t dose_uart_send_queue = NULL;
+static int8_t dose_uart_cmd_write(struct dose_object *cmd)
+{
+    osStatus_t stat = osOK;
+    struct dose_uart send_buf = {0};
+    uint8_t offset = sizeof(struct dose_object) - sizeof(uint8_t *);
+
+    memcpy(send_buf.buf, cmd, sizeof(struct dose_object));
+    memcpy(&send_buf.buf[offset], cmd->data, cmd->len);
+    send_buf.len = offset + cmd->len;
+
+    stat = osMessageQueuePut(dose_uart_send_queue, &send_buf, 0, 0);
+    if (stat != osOK)
+    {
+        LOG_E("dose uart send queue put err: %d\r\n", stat);
+        return -1;
+    }
+
+    return 0;
+}
+
 static int8_t dose_handshake_frame_parse(struct dose_object *cmd)
 {
     int8_t ret = 0;
@@ -57,10 +79,10 @@ static int8_t dose_handshake_frame_parse(struct dose_object *cmd)
     osMutexRelease(obj->mutex);
 
 #if 1
-    printf("bgm arm core handshake frame parse: %d\r\n", cmd->len);
-    printf("hardware version: %#.2x\r\n", cmd->data[0]);
-    printf("software version: %u.%u.%u\r\n", cmd->data[1], cmd->data[2], cmd->data[3]);
-    printf("dose id: %u\r\n", cmd->data[4]);
+    LOG_I("bgm arm core handshake frame parse: %d\r\n", cmd->len);
+    LOG_I("hardware version: %#.2x\r\n", cmd->data[0]);
+    LOG_I("software version: %u.%u.%u\r\n", cmd->data[1], cmd->data[2], cmd->data[3]);
+    LOG_I("dose id: %u\r\n", cmd->data[4]);
 #endif
 
     uint8_t *fw_ver = system_info_get()->fw_version;
@@ -143,6 +165,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             obj->treatment.pulse_mode = (cmd->data[2] == 0) ? 0 : 1;
             break;
         case 0x01:
+            LOG_I("dose uart prf set: %d\r\n", cmd->data[2]);
             if (1000000 / cmd->data[2] < obj->calibration.trig_interval_min)
             {
                 ret = -1;
@@ -165,19 +188,19 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, cmd->data[3] << 8 | cmd->data[2]);
             if (ret != 0)
             {
-                printf("beam data dose meter set err: %d\r\n", ret);
+                LOG_E("beam data dose meter set err: %d\r\n", ret);
             }
             break;
         case 0x02:
             ret = beam_data_value_set(0, BEAM_TOTAL_CP, 0, cmd->data[2]);
             if (ret != 0)
             {
-                printf("beam data total cp set err: %d\r\n", ret);
+                LOG_E("beam data total cp set err: %d\r\n", ret);
             }
             ret |= beam_data_value_set(0, BEAM_TOTAL_RI, 0, cmd->data[4] << 8 | cmd->data[3]);
             if (ret != 0)
             {
-                printf("beam data total ri set err: %d\r\n", ret);
+                LOG_E("beam data total ri set err: %d\r\n", ret);
             }
             break;
         case 0x03:
@@ -186,24 +209,24 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             ret = beam_data_value_set(0, BEAM_CP_RI_MAP, cmd->data[2], cmd->data[4] << 8 | cmd->data[3]);
             if (ret != 0)
             {
-                printf("beam data cp ri map set err: %d\r\n", ret);
+                LOG_E("beam data cp ri map set err: %d\r\n", ret);
             }
             break;
         case 0x05:
             ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4]);
             if (ret != 0)
             {
-                printf("beam data ri cumulative set err: %d\r\n", ret);
+                LOG_E("beam data ri cumulative set err: %d\r\n", ret);
             }
             ret = beam_data_value_set(0, BEAM_RI_DOSE_RATE, cmd->data[3] << 8 | cmd->data[2], cmd->data[7] << 8 | cmd->data[6]);
             if (ret != 0)
             {
-                printf("beam data ri dose rate set err: %d\r\n", ret);
+                LOG_E("beam data ri dose rate set err: %d\r\n", ret);
             }
             ret = beam_data_value_set(0, BEAM_RI_TIME_EXPECTED, cmd->data[3] << 8 | cmd->data[2], cmd->data[9] << 8 | cmd->data[8]);
             if (ret != 0)
             {
-                printf("beam data ri time expected set err: %d\r\n", ret);
+                LOG_E("beam data ri time expected set err: %d\r\n", ret);
             }
             break;
         default:
@@ -374,7 +397,7 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
 {
     if (new_state >= FSM_STATE_MAX)
     {
-        printf("invalid fsm state: %d\r\n", new_state);
+        LOG_E("invalid fsm state: %d\r\n", new_state);
         return -1;
     }
 
@@ -512,13 +535,13 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             cmd->data[2] = ret = fsm_state_switch_check(cmd->data[2]);
             if (ret != 0)
             {
-                printf("fsm state switch check err: %d\r\n", ret);
+                LOG_E("fsm state switch check err: %d\r\n", ret);
                 break;
             }
             cmd->data[2] = ret = fsm_state_switch(cmd->data[2]);
             if (ret != 0)
             {
-                printf("fsm state switch err: %d\r\n", ret);
+                LOG_E("fsm state switch err: %d\r\n", ret);
                 break;
             }
             cmd->len = 3;
@@ -548,28 +571,28 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             ret = beam_data_cleanup(0);
             if (ret != 0)
             {
-                printf("beam data clean err: %d\r\n", ret);
+                LOG_E("beam data clean err: %d\r\n", ret);
             }
             break;
         case 0x02:
             ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
             if (ret != 0)
             {
-                printf("dose value status set err: %d\r\n", ret);
+                LOG_E("dose value status set err: %d\r\n", ret);
             }
             break;
         case 0x03:
             ret = interlock_status_cleanup();
             if (ret != 0)
             {
-                printf("interlock status cleanup err: %d\r\n", ret);
+                LOG_E("interlock status cleanup err: %d\r\n", ret);
             }
             break;
         case 0x04:
             ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0);
             if (ret != 0)
             {
-                printf("dose value status set err: %d\r\n", ret);
+                LOG_E("dose value status set err: %d\r\n", ret);
             }
             break;
         default:
@@ -585,6 +608,21 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             ret |= wdt_reset_set(0);
             break;
         case 0x01:
+            if (cmd->id.bits.cmd_ack != 0)  /* need ack */
+            {
+                cmd->id.bits.cmd_ack = 0;
+
+                cmd->type |= 0x80;
+
+                ret = dose_uart_cmd_write(cmd);
+                if (ret != 0)
+                {
+                    LOG_E("dose uart cmd write err: %d\r\n", ret);
+                }
+            }
+
+            osDelay(100);
+
             HAL_NVIC_SystemReset();
             break;
         default:
@@ -636,7 +674,7 @@ static int8_t dose_command_frame_parse(struct dose_object *cmd)
 
     if (ret != 0)
     {
-        printf("dose uart command [%d, %d] parse err: %d\r\n", cmd->data[0], cmd->data[1], ret);
+        LOG_E("dose uart command [%d, %d] parse err: %d\r\n", cmd->data[0], cmd->data[1], ret);
     }
 
     return ret;
@@ -652,11 +690,11 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
         if (cmd->data[3] == 0x01)
         {
             /* emergency stop, just change machine state */
-            printf("emergency stop\r\n");
+            LOG_I("emergency stop\r\n");
             ret = fsm_state_switch(FSM_STATE_FAULT);
             if (ret != 0)
             {
-                printf("fsm state switch err: %d\r\n", ret);
+                LOG_E("fsm state switch err: %d\r\n", ret);
             }
         }
         else
@@ -679,10 +717,10 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
                 ret = callback();
                 if (ret != 0)
                 {
-                    printf("dose_uart_radiation_index_update_callback err: %d\r\n", ret);
+                    LOG_E("dose_uart_radiation_index_update_callback err: %d\r\n", ret);
                 }
             }            
-            printf("dose uart radiation index: %d\r\n", obj->radiation.index);
+            LOG_I("dose uart radiation index: %d\r\n", obj->radiation.index);
         }
         break;
     case 0x01:  /* get radiation status */
@@ -728,7 +766,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
             ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0);
             if (ret != 0)
             {
-                printf("dose value status set err: %d\r\n", ret);
+                LOG_E("dose value status set err: %d\r\n", ret);
             }
             cmd->data[12] = one_pulse_valid;                /* one pulse valid */
             cmd->data[13] = one_pulse_dose;                 /* dose one pulse */
@@ -740,7 +778,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
         }
         break;
     default:
-        printf("invalid dose uart realtime frame type: %d\r\n", cmd->data[0]);
+        LOG_E("invalid dose uart realtime frame type: %d\r\n", cmd->data[0]);
         ret = -1;
         break;
     }
@@ -748,13 +786,11 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
     return ret;
 }
 
-static int8_t dose_uart_cmd_write(struct dose_object *cmd);
-
 static int8_t dose_cmd_parse(struct dose_object *cmd)
 {
     if (cmd == NULL)
     {
-        printf("cmd is NULL\r\n");
+        LOG_E("cmd is NULL\r\n");
         return -1;
     }
 
@@ -773,7 +809,7 @@ static int8_t dose_cmd_parse(struct dose_object *cmd)
         ret = dose_handshake_frame_parse(cmd);
         if (ret != 0)
         {
-            printf("dose_handshake_frame_parse err: %d\r\n", ret);
+            LOG_E("dose_handshake_frame_parse err: %d\r\n", ret);
             return -2;
         }
         break;
@@ -781,7 +817,7 @@ static int8_t dose_cmd_parse(struct dose_object *cmd)
         ret = dose_command_frame_parse(cmd);
         if (ret != 0)
         {
-            printf("dose_command_frame_parse err: %d\r\n", ret);
+            LOG_E("dose_command_frame_parse err: %d\r\n", ret);
             return -2;
         }
         break;
@@ -789,12 +825,12 @@ static int8_t dose_cmd_parse(struct dose_object *cmd)
         ret = dose_realtime_frame_parse(cmd);
         if (ret != 0)
         {
-            printf("dose_realtime_frame_parse err: %d\r\n", ret);
+            LOG_E("dose_realtime_frame_parse err: %d\r\n", ret);
             return -2;
         }
         break;
     default:
-        printf("invalid cmd type: %d\r\n", cmd->type);
+        LOG_E("invalid cmd type: %d\r\n", cmd->type);
         return -2;
         break;
     }
@@ -808,33 +844,14 @@ static int8_t dose_cmd_parse(struct dose_object *cmd)
         ret = dose_uart_cmd_write(cmd);
         if (ret != 0)
         {
-            printf("dose_uart_cmd_write err: %d\r\n", ret);
+            LOG_E("dose uart cmd write err: %d\r\n", ret);
         }
     }
 
     return ret;
 }
 
-osMessageQueueId_t dose_uart_send_queue = NULL;
-static int8_t dose_uart_cmd_write(struct dose_object *cmd)
-{
-    osStatus_t stat = osOK;
-    struct dose_uart send_buf = {0};
-    uint8_t offset = sizeof(struct dose_object) - sizeof(uint8_t *);
 
-    memcpy(send_buf.buf, cmd, sizeof(struct dose_object));
-    memcpy(&send_buf.buf[offset], cmd->data, cmd->len);
-    send_buf.len = offset + cmd->len;
-
-    stat = osMessageQueuePut(dose_uart_send_queue, &send_buf, 0, 0);
-    if (stat != osOK)
-    {
-        printf("dose uart send queue put err: %d\r\n", stat);
-        return -1;
-    }
-
-    return 0;
-}
 
 static int8_t dose_uart_send_entry(void *argument)
 {
@@ -846,18 +863,18 @@ static int8_t dose_uart_send_entry(void *argument)
         osMessageQueueGet(dose_uart_send_queue, &send_buf, NULL, osWaitForever);
 
 #if 1
-        printf("send_buf len: %d\r\n", send_buf.len);
+        LOG_I("send_buf len: %d\r\n", send_buf.len);
         for (uint8_t i = 0; i < send_buf.len; i++)
         {
-            printf("%02x ", send_buf.buf[i]);
+            LOG_I("%02x ", send_buf.buf[i]);
         }
-        printf("\r\n");
+        LOG_I("\r\n");
 #endif
 
         ret = device_dose_uart_data_write(&send_buf, send_buf.len, 1000);
         if (ret != 0)
         {
-            printf("device_dose_uart_data_write err: %d\r\n", ret);
+            LOG_E("device_dose_uart_data_write err: %d\r\n", ret);
         }
     }
 
@@ -872,12 +889,12 @@ static int8_t dose_uart_cmd_process(struct dose_uart *buf)
     }
 
 #if 0
-    printf("recv_buf len: %d\r\n", buf->len);
+    LOG_I("recv_buf len: %d\r\n", buf->len);
     for (uint8_t i = 0; i < buf->len; i++)
     {
-        printf("%02x ", buf->buf[i]);
+        LOG_I("%02x ", buf->buf[i]);
     }
-    printf("\r\n");
+    LOG_I("\r\n");
 #endif
 
     struct dose_object cmd = {0};
@@ -892,14 +909,14 @@ static int8_t dose_uart_init(void)
     int8_t ret = device_dose_uart_init(DEVICE_DOSE_UART_NAME_DEFAULT);
     if (ret != 0)
     {
-        printf("device_dose_uart_init err: %d\r\n", ret);
+        LOG_E("device_dose_uart_init err: %d\r\n", ret);
         return -1;
     }
 
     ret = device_dose_uart_open();
     if (ret != 0)
     {
-        printf("device_dose_uart_open err: %d\r\n", ret);
+        LOG_E("device_dose_uart_open err: %d\r\n", ret);
         return -2;
     }
 
@@ -914,7 +931,7 @@ static int8_t dose_uart_recv_entry(void *argument)
     ret = dose_uart_init();
     if (ret != 0)
     {
-        printf("dose_uart_init err: %d\r\n", ret);
+        LOG_E("dose_uart_init err: %d\r\n", ret);
         return -1;
     }
 
@@ -923,14 +940,14 @@ static int8_t dose_uart_recv_entry(void *argument)
         ret = device_dose_uart_data_read(&recv_buf, osWaitForever);
         if (ret != 0)
         {
-            printf("device_dose_uart_data_read err: %d\r\n", ret);
+            LOG_E("device_dose_uart_data_read err: %d\r\n", ret);
             continue;
         }
 
         ret = dose_uart_cmd_process(&recv_buf);
         if (ret!= 0)
         {
-            printf("dose_uart_cmd_process err: %d\r\n", ret);
+            LOG_E("dose_uart_cmd_process err: %d\r\n", ret);
         }
     }
 
@@ -948,21 +965,21 @@ static int8_t dose_uart_thread_init(void)
     osThreadId_t thread_id = osThreadNew(dose_uart_recv_entry, NULL, &thread_attr);
     if (thread_id == NULL)
     {
-        printf("thread dose uart create failed\r\n");
+        LOG_E("thread dose uart create failed\r\n");
         return -1;
     }
 
     dose_uart_send_queue = osMessageQueueNew(5, sizeof(struct dose_uart), NULL);
     if (dose_uart_send_queue == NULL)
     {
-        printf("message queue create failed\r\n");
+        LOG_E("message queue create failed\r\n");
         return -2;
     }
 
     thread_id = osThreadNew(dose_uart_send_entry, NULL, &thread_attr);
     if (thread_id == NULL)
     {
-        printf("thread dose uart create failed\r\n");
+        LOG_E("thread dose uart create failed\r\n");
         return -3;
     }
 
@@ -973,7 +990,7 @@ static int8_t dose_uart_thread_init(void)
     control_data_get()->mutex = osMutexNew(&mutex_attributes);
     if (control_data_get()->mutex == NULL)
     {
-        printf("mutex create failed\r\n");
+        LOG_E("mutex create failed\r\n");
         return -4;
     }
 
@@ -1005,7 +1022,7 @@ static int8_t dose_uart_cmd_send(uint8_t argc, char **argv)
     ret = dose_uart_cmd_write(&cmd);
     if (ret != 0)
     {
-        printf("dose_uart_cmd_write err: %d\r\n", ret);
+        LOG_E("dose uart cmd write err: %d\r\n", ret);
         return -1;
     }
 

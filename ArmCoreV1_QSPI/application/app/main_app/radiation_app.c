@@ -1235,10 +1235,16 @@ static int8_t dose_dummy_mode_test(uint8_t argc, char **argv)
 }
 MSH_CMD_EXPORT_ALIAS(dose_dummy_mode_test, dose_dummy_mode_test, dose dummy mode test);
 
-static int8_t fsm_state_switch_test(uint8_t argc, char **argv)
+static int8_t fsm_state_current_get(uint8_t argc, char **argv)
 {
     LOG_I("fsm state current: %d\r\n", fsm_state_get());
 
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(fsm_state_current_get, fsm_state_current_get, fsm state current get);
+
+static int8_t fsm_state_current_set(uint8_t argc, char **argv)
+{
     enum fsm_state state = atoi(argv[1]);
     /*     
     0：FSM_STATE_INIT,
@@ -1260,5 +1266,5 @@ static int8_t fsm_state_switch_test(uint8_t argc, char **argv)
 
     return 0;
 }
-MSH_CMD_EXPORT_ALIAS(fsm_state_switch_test, fsm_state_switch_test, fsm state test);
+MSH_CMD_EXPORT_ALIAS(fsm_state_current_set, fsm_state_current_set, fsm state current set);
 #endif
