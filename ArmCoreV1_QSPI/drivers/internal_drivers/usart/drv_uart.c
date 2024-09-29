@@ -317,6 +317,8 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     {
         MX_USART1_UART_Init();
         memcpy(uart, &huart1, sizeof(UART_HandleTypeDef));
+        extern DMA_HandleTypeDef hdma_usart1_tx;
+        hdma_usart1_tx.Parent = (void *)uart;
     }
     else
     {
@@ -324,6 +326,11 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     }
 
     __HAL_UART_DISABLE(&uart->huart);
+
+    __HAL_UART_CLEAR_FLAG((UART_HandleTypeDef *)uart, UART_CLEAR_PEF | UART_CLEAR_FEF | UART_CLEAR_NEF 
+                            | UART_CLEAR_OREF | UART_CLEAR_IDLEF | UART_CLEAR_TXFECF 
+                            | UART_CLEAR_TCF | UART_CLEAR_LBDF | UART_CLEAR_CTSF 
+                            | UART_CLEAR_CMF | UART_CLEAR_WUF | UART_CLEAR_RTOF);
 
     __enable_irq();
 
