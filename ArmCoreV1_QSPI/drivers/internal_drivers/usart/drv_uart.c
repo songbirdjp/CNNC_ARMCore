@@ -322,6 +322,51 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
         hdma_usart1_tx.Parent = (void *)uart;
         hdma_usart1_rx.Parent = (void *)uart;
     }
+    else if (!memcmp(device_name, DEVICE_NAME_UART2, sizeof(DEVICE_NAME_UART2)))
+    {
+        MX_USART2_UART_Init();
+        memcpy(uart, &huart2, sizeof(UART_HandleTypeDef));
+        extern DMA_HandleTypeDef hdma_usart2_tx;
+        extern DMA_HandleTypeDef hdma_usart2_rx;
+        hdma_usart2_tx.Parent = (void *)uart;
+        hdma_usart2_rx.Parent = (void *)uart;
+    }
+    else if (!memcmp(device_name, DEVICE_NAME_UART3, sizeof(DEVICE_NAME_UART3)))
+    {
+        MX_USART3_UART_Init();
+        memcpy(uart, &huart3, sizeof(UART_HandleTypeDef));
+        extern DMA_HandleTypeDef hdma_usart3_tx;
+        extern DMA_HandleTypeDef hdma_usart3_rx;
+        hdma_usart3_tx.Parent = (void *)uart;
+        hdma_usart3_rx.Parent = (void *)uart;
+    }
+    else if (!memcmp(device_name, DEVICE_NAME_UART4, sizeof(DEVICE_NAME_UART4)))
+    {
+        MX_UART4_Init();
+        memcpy(uart, &huart4, sizeof(UART_HandleTypeDef));
+        extern DMA_HandleTypeDef hdma_uart4_tx;
+        extern DMA_HandleTypeDef hdma_uart4_rx;
+        hdma_uart4_tx.Parent = (void *)uart;
+        hdma_uart4_rx.Parent = (void *)uart;
+    }
+    else if (!memcmp(device_name, DEVICE_NAME_UART5, sizeof(DEVICE_NAME_UART5)))
+    {
+        MX_UART5_Init();
+        memcpy(uart, &huart5, sizeof(UART_HandleTypeDef));
+        extern DMA_HandleTypeDef hdma_uart5_tx;
+        extern DMA_HandleTypeDef hdma_uart5_rx;
+        hdma_uart5_tx.Parent = (void *)uart;
+        hdma_uart5_rx.Parent = (void *)uart;
+    }
+    else if (!memcmp(device_name, DEVICE_NAME_UART7, sizeof(DEVICE_NAME_UART7)))
+    {
+        MX_UART7_Init();
+        memcpy(uart, &huart7, sizeof(UART_HandleTypeDef));
+        extern DMA_HandleTypeDef hdma_uart7_tx;
+        extern DMA_HandleTypeDef hdma_uart7_rx;
+        hdma_uart7_tx.Parent = (void *)uart;
+        hdma_uart7_rx.Parent = (void *)uart;
+    }
     else
     {
         /* add other uart here */
