@@ -5,6 +5,7 @@
 #include "tcp_tasks.h"
 #include "websocket_console.h"
 #include "lan9252_app.h"
+#include "BGM_def.h"
 
 #define DATA_PROCESS_LAN_EVENT      (1<<0)
 #define DATA_PROCESS_TCP_EVENT      (1<<1)
@@ -24,6 +25,24 @@ static int8_t realtime_ethercat_data_process(void)
         return -1;
     }
 
+	static uint16_t recvData2QPrev[64] = {0};
+    static uint16_t recvData2Q[64] = {0};
+    static uint16_t QSend2Data[64] = {0};
+
+    memcpy(recvData2Q, &recv_data, 64 * sizeof(uint16_t));//recv from EtherCAT
+    if (memcmp(recvData2Q, recvData2QPrev, 64 * sizeof(uint16_t)) != 0)
+    {
+        ECATSendToARMQueueSend(recvData2Q);
+        memcpy(recvData2QPrev, recvData2Q, 64 * sizeof(uint16_t));
+    }
+
+    extern osMessageQueueId_t ethercatA2EQueueHandle;
+    if(osMessageQueueGetCount(ethercatA2EQueueHandle) != 0)//Send to Ethercat
+    {
+        memcpy(QSend2Data,ARMSendToECATQueueRecv(),64 * sizeof(uint16_t));
+        printf("QSend2Data[14] = %d\r\n",QSend2Data[14]);
+        memcpy(&send_data,QSend2Data,64 * sizeof(uint16_t));
+    }
     return ethercat_send_data_update(send, sizeof(send_data));
 }
 
