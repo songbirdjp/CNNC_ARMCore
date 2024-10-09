@@ -199,7 +199,7 @@ static int32_t w5500_irq_process(void)
         // printf("reg_sn_ir:%x\r\n", reg_sn_ir);
         (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: Connected to peer succeed\r\n", sn) : NULL;
         (reg_sn_ir & Sn_IR_DISCON) ? printf("disconnect to peer\r\n") : NULL;
-        // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp client recv interrupt\r\n") : NULL;
+        // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp recv interrupt\r\n") : NULL;
         (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("tcp timeout interrupt\r\n") : NULL;
         // (reg_sn_ir & Sn_IR_SENDOK) ? socket_sending_status_set(socket_sending_status_get() & (~(1<<sn))) : NULL;
 
@@ -248,7 +248,7 @@ static int32_t w5500_irq_process(void)
                     printf("tcp receive err:%d\r\n", recv_ret);
                     return recv_ret;
                 }
-               // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* TODO: must according to static TCP_DATA_t */
+               // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* NOTE: must according to static TCP_DATA_t */
                 TCP_DATA_t rxBufTmp = {0};
                 rxBufTmp.sn = sn;
                 rxBufTmp.Len = recv_len;

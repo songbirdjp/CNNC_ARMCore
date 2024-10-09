@@ -129,7 +129,7 @@ int8_t gpio_imitate_start(uint8_t *gpio_pin, uint8_t *buf, uint16_t len)
 #endif
 
     /* 3. start dma transfer with tim7 period */
-    /* TODO: must wait for dma transfer complete, but not implement here, add mutex if necessary */
+    /* NOTE: must wait for dma transfer complete, but not implement here, add mutex if necessary */
     status = HAL_TIM_Base_Stop(&htim7);
     if (status != HAL_OK)
     {

@@ -9,7 +9,7 @@ static void ErrorCallback(UART_HandleTypeDef *huart)
 {
     DEVICE_UART *uart = (DEVICE_UART *)huart;
 
-    printf("%s err", uart->name);
+    printf("%s err\r\n", uart->name);
 }
 
 static void RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
@@ -144,7 +144,7 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
     uint32_t ret_val = osEventFlagsWait(uart->tx_event, UART_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
     if (ret_val != UART_SEND_SUCCEED_EVENT)
     {
-        printf("device %s  wait event flag err: %#.8x\r\n", uart->name, ret_val);
+        printf("device %s wait event flag err: %#.8x\r\n", uart->name, ret_val);
         ret = -4;
         goto err;
     }
@@ -318,7 +318,9 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
         MX_USART1_UART_Init();
         memcpy(uart, &huart1, sizeof(UART_HandleTypeDef));
         extern DMA_HandleTypeDef hdma_usart1_tx;
+        extern DMA_HandleTypeDef hdma_usart1_rx;
         hdma_usart1_tx.Parent = (void *)uart;
+        hdma_usart1_rx.Parent = (void *)uart;
     }
     else
     {
@@ -326,6 +328,8 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     }
 
     __HAL_UART_DISABLE(&uart->huart);
+
+    __HAL_UART_DISABLE_IT(&uart->huart, UART_IT_ERR);
 
     __HAL_UART_CLEAR_FLAG((UART_HandleTypeDef *)uart, UART_CLEAR_PEF | UART_CLEAR_FEF | UART_CLEAR_NEF 
                             | UART_CLEAR_OREF | UART_CLEAR_IDLEF | UART_CLEAR_TXFECF 

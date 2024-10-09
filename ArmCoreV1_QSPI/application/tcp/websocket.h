@@ -1,16 +1,10 @@
-#ifndef F407_W5500_HTTPSERVER_H
-#define F407_W5500_HTTPSERVER_H
+#ifndef __WEBSOCKET_H__
+#define __WEBSOCKET_H__
 
-#include <stddef.h>
-#include "main.h"
-#include "wizchip_conf.h"
-#include "socket.h"
-#include "string.h"
-#include "stdbool.h"
+#include <stdint.h>
+#include <stdbool.h>
 
-#define MAX_HTTPSEND_NUMBERS 64
-#define DATA_BUF_SIZE  2048
-#define MAX_CLIENT_NUM   2
+#define TCP_WEBSOCKET
 
 #define CONTROLLER_USER_AGENT   "TcWebSocket"//TwinCAT webSocket client
 
@@ -24,18 +18,6 @@ typedef enum
     WDT_PING,     // 0x8：ping类型数据包 ws_recv 函数内自动回复pong
     WDT_PONG,     // 0xA：pong类型数据包
 } Ws_DataType;
-
-typedef enum
-{
-    TO_SEND = -1,
-    STOP_SEND,
-} App_SendStatus;
-
-typedef enum
-{
-    CONTROLLER,
-    SERVICE,
-} Client_Type;
 
 typedef struct 
 {
@@ -55,26 +37,9 @@ typedef struct
     uint8_t* tcpData;
 }APP_DATA_RECV;
 
-typedef struct
-{
-    APP_DATA_SEND * pActiveSend;
-    uint16_t sendItemNum;
-}SEND_INFO;
 
-typedef struct
-{
-    int8_t socketNum;
-  //  uint8_t destIP[4];
-  //  uint16_t destPort;
-    uint8_t clientType; //0 - controller, data come from program  1 - service, data come from browser. distinguish by IP and PORT
-    int32_t connectStatus;// -1 - fail  1 - success
-    uint32_t loopCnt;
-}CLIENT_INFO;
-
-extern SEND_INFO sendStructInfo;
-
+int8_t ws_send_data_process(uint8_t s);
+int8_t ws_data_process_callback_register(void (*cb)(APP_DATA_RECV* info));
 int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type);
-void tcp_server_init(void);
-int8_t tcp_send_process(uint8_t s);
 
-#endif //F407_W5500_HTTPSERVER_H
+#endif //__WEBSOCKET_H__

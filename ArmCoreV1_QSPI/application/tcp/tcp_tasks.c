@@ -4,7 +4,6 @@
 #include "stdbool.h"
 #include "init_call.h"
 #include "main.h"
-#include "websocket.h"
 
 #define SOCK_TCPS   0
 
@@ -27,12 +26,12 @@ static wiz_NetInfo *local_netinfo_get(void)
     return &local_net_info;
 }
 #ifndef IS_TCP_SERVER
-uint8_t *remote_ip_get(void)
+static uint8_t *remote_ip_get(void)
 {
     return remote_ip;
 }
 
-uint16_t remote_port_get(void)
+static uint16_t remote_port_get(void)
 {
     return remote_port;
 }
@@ -146,14 +145,11 @@ static int8_t tcp_init(osMessageQueueId_t queue)
     }
 
     device_w5500_interrupt_init(MAX_CLIENT_NUM);
-   // W5500_interrupt_status_print(0);
 
     device_w5500_rx_buffer_init(recvInfo.gDATABUF, sizeof(recvInfo.gDATABUF));
 
     device_w5500_rx_queue_init(queue);
-#ifdef IS_TCP_SERVER
-    tcp_server_init();
-#endif
+
     return 0;
 }
 
@@ -184,7 +180,7 @@ static osMutexId_t tcp_access_mutexHandle = NULL;
 
 static void TCPSendTask(void *argument)
 {
-  /* USER CODE BEGIN TCPClientTask */
+  /* USER CODE BEGIN TCPSendTask */
 
     int8_t ret = 0;
 
@@ -214,7 +210,7 @@ static void TCPSendTask(void *argument)
             ret = do_tcp_server_send(i);
             if (ret != 0)
             {
-                printf("do_tcp_client err:%d sn = %d\r\n", ret, i);
+                printf("do_tcp_server_send err:%d sn = %d\r\n", ret, i);
             }
         }
     #else
@@ -224,12 +220,12 @@ static void TCPSendTask(void *argument)
 
         osDelay(10);
     }
-  /* USER CODE END TCPClientTask */
+  /* USER CODE END TCPSendTask */
 }
 
 static void tcp_recv_entry(void *argument)
 {
-  /* USER CODE BEGIN tcp_client_entry */
+  /* USER CODE BEGIN tcp_recv_entry */
   /* Infinite loop */
   int32_t ret = 0;
 
@@ -257,7 +253,7 @@ static void tcp_recv_entry(void *argument)
         osMutexRelease(tcp_access_mutexHandle);
 
   }
-  /* USER CODE END tcp_client_entry */
+  /* USER CODE END tcp_recv_entry */
 }
 
 static int8_t tcp_thread_init(void)
@@ -311,12 +307,12 @@ static int8_t tcp_thread_init(void)
 }
 INIT_APP_EXPORT(tcp_thread_init);
 
-osStatus_t tcp_client_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
+osStatus_t tcp_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
 {
     return osMessageQueueGet(tcp_rx_queueHandle, buf, 0, timeout);
 }
 
-int32_t tcp_client_data_send(uint8_t s, uint8_t *buf, uint16_t len)
+int32_t tcp_data_send(uint8_t s, uint8_t *buf, uint16_t len)
 {
     osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
 

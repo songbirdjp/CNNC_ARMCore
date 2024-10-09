@@ -181,7 +181,7 @@ static int8_t console_cmd_process(void)
 
     if (msg.len <= 2)
     {
-        printf("cmd len must more than 2\r\n");
+        LOG_E("cmd len must more than 2\r\n");
         return -1;
     }
 
@@ -290,14 +290,14 @@ static int8_t cmd_help(uint8_t argc, uint8_t **argv)
 
     const struct shell_cmd_desc *desc;
 
-    printf("shell commands:\r\n");
+    LOG_I("shell commands:\r\n");
 
     for (desc = &__shell_cmd_start; desc < &__shell_cmd_end; desc++)
     {
-        printf("%-32s - %s\r\n", desc->name, desc->desc);
+        LOG_I("%-32s - %s\r\n", desc->name, desc->desc);
     }
 
-    printf("\r\n");
+    LOG_I("\r\n");
 
     return 0;
 }

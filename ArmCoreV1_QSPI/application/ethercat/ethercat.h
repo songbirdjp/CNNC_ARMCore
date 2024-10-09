@@ -1,7 +1,7 @@
 #ifndef __ETHERCAT_H__
 #define __ETHERCAT_H__
 
-#include "stdint.h"
+#include <stdint.h>
 #include "cmsis_os2.h"
 
 #ifdef __cpuluplus

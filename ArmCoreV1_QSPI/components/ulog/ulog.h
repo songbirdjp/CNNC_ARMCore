@@ -109,14 +109,14 @@ typedef enum {
 
 // maximum length of formatted log message
 #ifndef ULOG_MAX_MESSAGE_LENGTH
-#define ULOG_MAX_MESSAGE_LENGTH 128
+#define ULOG_MAX_MESSAGE_LENGTH 512
 #endif
 
 #define USING_ULOG_THREAD       /* use thread output log */
-#define USING_ULOG_TIMESTAMP    /* use timestamp log */
-#define USING_ULOG_LEVEL_TAG    /* use level tag log */
+// #define USING_ULOG_TIMESTAMP    /* use timestamp log */
+// #define USING_ULOG_LEVEL_TAG    /* use level tag log */
 #define USING_ULOG_CONSOLE      /* use console log */
-#define USING_ULOG_FLASH        /* use flash log */
+// #define USING_ULOG_FLASH        /* use flash log */
 
 struct ulog_write_func_info
 {

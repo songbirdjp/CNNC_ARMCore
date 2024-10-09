@@ -58,7 +58,9 @@ ArmCoreV1_QSPI
 │     ├─ tcp_tasks.c
 │     ├─ tcp_tasks.h
 │     ├─ websocket.c
-│     └─ websocket.h
+│     ├─ websocket.h
+│     ├─ websocket_console.c
+│     └─ websocket_console.h
 ├─ ARM_core.pdf
 ├─ board
 │  ├─ board_config
@@ -80,7 +82,6 @@ ArmCoreV1_QSPI
 │  ├─ bootloader.h
 │  └─ CMakeLists.txt
 ├─ CMakeLists.txt
-├─ CMakeLists_template.txt
 ├─ components
 │  ├─ cjson
 │  │  ├─ cJSON.c
@@ -149,9 +150,6 @@ ArmCoreV1_QSPI
 │     └─ ymodem.h
 ├─ config.cmake
 ├─ config.h.in
-├─ Core
-│  ├─ Inc
-│  └─ Src
 ├─ drivers
 │  ├─ CMakeLists.txt
 │  ├─ external_drivers

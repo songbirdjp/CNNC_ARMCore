@@ -1,15 +1,42 @@
-#include "stdlib.h"
 #include "websocket.h"
 #include "tcp_tasks.h"
-#include <stdio.h>
 #include "crypto_sha.h"
+#include <stdio.h>
 
-#ifdef IS_TCP_SERVER
+#ifdef TCP_WEBSOCKET
 
-SEND_INFO sendStructInfo;
+typedef enum
+{
+    TO_SEND = -1,
+    STOP_SEND,
+} App_SendStatus;
+
+typedef enum
+{
+    CONTROLLER,
+    SERVICE,
+} Client_Type;
+
+typedef struct
+{
+    APP_DATA_SEND *pActiveSend;
+    uint16_t sendItemNum;
+}SEND_INFO;
+
+typedef struct
+{
+    int8_t socketNum;
+  //  uint8_t destIP[4];
+  //  uint16_t destPort;
+    uint8_t clientType; //0 - controller, data come from program  1 - service, data come from browser. distinguish by IP and PORT
+    int32_t connectStatus;// -1 - fail  1 - success
+    uint32_t loopCnt;
+}CLIENT_INFO;
+
+static SEND_INFO sendStructInfo = {0};
 
 static char *broswerName[]={ "Mozilla", "AppleWebKit", "Chrome", "Safari", "Edg" };
-static CLIENT_INFO client[MAX_CLIENT_NUM];
+static CLIENT_INFO client[MAX_CLIENT_NUM] = {-1};
 static const char ws_base64char[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -316,9 +343,10 @@ static int32_t ws_dePackage(
 
 int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type)
 {
+    if (client[s].connectStatus <= 0)    return -1; //connect is not establish
     // uint8_t* wsPkg = NULL;
-    uint8_t wsPkg[buffLen + 14];
-    int32_t retLen, ret;
+    uint8_t wsPkg[DATA_BUF_SIZE] = {0};
+    int32_t retLen;
     // 参数检查
     if (buffLen < 0)
         return 0;
@@ -328,20 +356,20 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_
         printf("send WDT_NULL \r\n");
         //  memcpy(wsPkg, (uint8_t *)buff, buffLen);
         //  for(int i = 0; i < buffLen; i++)    printf("%x\r\n", wsPkg[i]);
-        return tcp_client_data_send(s, (uint8_t *)buff, buffLen);
+        return tcp_data_send(s, (uint8_t *)buff, buffLen);
         // return 0;
     }
 
     // return send(fd, buff, buffLen, MSG_NOSIGNAL);
     // 数据打包 +14 预留类型、掩码、长度保存位
     // wsPkg = (uint8_t*)pvPortMalloc(buffLen + 14);
-    memset(wsPkg, 0, buffLen + 14);
+    memset(wsPkg, 0, DATA_BUF_SIZE);
     retLen = ws_enPackage((uint8_t *)buff, buffLen, wsPkg, (buffLen + 14), fin, mask, type);
     //   printf("retLen: %d\r\n",retLen );
     if (retLen <= 0)
     {
         //  vPortFree(wsPkg);
-        return 0;
+        return -1;
     }
 
     // 显示数据
@@ -349,12 +377,11 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_
     //  for(int32_t i = 0; i < retLen; i++)    printf("0x%x ", wsPkg[i]);
     //
     // ret = send(fd, wsPkg, retLen, MSG_NOSIGNAL);
-    ret = tcp_client_data_send(s, wsPkg, retLen);
+    return tcp_data_send(s, wsPkg, retLen);
     //  vPortFree(wsPkg);
-    return ret;
 }
 
-int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* retType)
+static int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* retType)
 {
     int32_t retDePkg = -1;        //调用解包的返回
     uint32_t timeout = 0;    //接收超时计数
@@ -421,11 +448,10 @@ static void sha1_hash(const char *source, char *buff)
     else
     {
         for(i = 0; i < len; i++)    sprintf(buff+2*i, "%02X", Message_Digest[i]);
-        
     }
 }
 
-int32_t ws_base64_encode(const uint8_t *bindata, char *base64, int32_t binlength)
+static int32_t ws_base64_encode(const uint8_t *bindata, char *base64, int32_t binlength)
 {
     int32_t i, j;
     uint8_t current;
@@ -470,7 +496,7 @@ static int32_t ws_buildRespondShakeKey(char *acceptKey, uint32_t acceptKeyLen, c
     int32_t i, j, ret;
     const char guid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     uint32_t guidLen = sizeof(guid), sha1DataTempLen;
-    char clientKey[acceptKeyLen + guidLen + 10];
+    char clientKey[96] = {0};
 
     if (acceptKey == NULL)
         return 0;
@@ -556,13 +582,13 @@ static int32_t ws_replyClient(uint8_t s, char *buff, char *path)
     // 创建回复key
     ws_buildHttpRespond(recvShakeKey, ret, respondPackage);
   //    printf("response %s\r\n",respondPackage);
-    tcp_client_data_send(s, (uint8_t *)respondPackage, strlen(respondPackage));
+    tcp_data_send(s, (uint8_t *)respondPackage, strlen(respondPackage));
     printf("Handshake Success!\r\n");
 
     return 1;
 }
 
-bool isBroswer(uint8_t *pString)
+static bool isBroswer(uint8_t *pString)
 {
     for(uint8_t i = 0; i < sizeof(broswerName)/sizeof(char*); i++)
     {
@@ -572,7 +598,7 @@ bool isBroswer(uint8_t *pString)
     return 0;
 }
 
-int8_t getClientType(uint8_t s, uint8_t *pString)
+static int8_t getClientType(uint8_t s, uint8_t *pString)
 {
     char *p = strstr(pString, "User-Agent");
 
@@ -595,19 +621,22 @@ int8_t getClientType(uint8_t s, uint8_t *pString)
     return 1;
 }
 
-__weak void nrtRecvDataProcess(APP_DATA_RECV* info)
+static void (*DataProcessCallback)(APP_DATA_RECV *info) = NULL;
+int8_t ws_data_process_callback_register(void (*cb)(APP_DATA_RECV *info))
 {
-    return;
+    DataProcessCallback = cb;
+
+    return 0;
 }
 
-int32_t tcp_recv_process(TCP_DATA_t *recvData)
+int32_t ws_recv_data_process(TCP_DATA_t *recvData)
 {
     uint8_t s = recvData->sn;
     uint8_t *data = recvData->gDATABUF, *controllerIP;
     uint16_t len = recvData->Len, i, controllerPORT;
     Ws_DataType retPkgType = WDT_NULL;
     int32_t ret = 0;
-    APP_DATA_RECV itemRecv;
+    APP_DATA_RECV itemRecv = {0};
 
    // printf("recv length = %d\r\n", len);
     
@@ -676,9 +705,18 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
                 itemRecv.sn = s;
                 itemRecv.clientType = client[s].clientType;
                 itemRecv.tcpData = data;
-            //    for(uint8_t i = 0; i < retS.retDataLen; i++) printf("%d ", data[retS.retHeadLen+i]);
-              //  printf("\r\n");
-               nrtRecvDataProcess(&itemRecv);
+#if 0
+                printf("recv data from client %d, length %d, type %d\r\n", s, ret, retPkgType);
+                for (i = 0; i < ret; i++)
+                {
+                    printf("%x ", data[i]);
+                }
+                printf("\r\n");
+#endif
+                if (DataProcessCallback != NULL)
+                {
+                    DataProcessCallback(&itemRecv);
+                }
             break;
             default:    break;
             }
@@ -688,7 +726,7 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
     return ret;
 }
 
-int8_t tcp_send_process(uint8_t s)
+int8_t ws_send_data_process(uint8_t s)
 {
     uint8_t i;
     int32_t ret = 0;
@@ -701,7 +739,7 @@ int8_t tcp_send_process(uint8_t s)
 
     for (i = 0; i < MAX_CLIENT_NUM; i++)
     {
-        if (s == client[s].socketNum)
+        if (s == client[i].socketNum)
             break;
     }
     if (i == MAX_CLIENT_NUM)
@@ -747,14 +785,4 @@ int8_t tcp_send_process(uint8_t s)
 
     return 0;
 }
-
-void tcp_server_init(void)
-{
-    for (uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
-    {
-        client[i].socketNum = -1;
-        client[i].clientType = -1;
-    }
-}
-
 #endif
