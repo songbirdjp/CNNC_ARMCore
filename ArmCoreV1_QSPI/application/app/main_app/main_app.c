@@ -6,11 +6,86 @@
 #include "websocket_console.h"
 #include "lan9252_app.h"
 #include "BGM_def.h"
-
+#include "ulog.h"
 #define DATA_PROCESS_LAN_EVENT      (1<<0)
 #define DATA_PROCESS_TCP_EVENT      (1<<1)
 #define DATA_PROCESS_FPGA_EVENT     (1<<2)
 static osEventFlagsId_t data_process_eventHandle = NULL;
+
+void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
+{
+    static TOBJ7010 EcatDataOutPrev = {0};
+    uint32_t _ecatADCUART1Val = EcatDataOut->DataOut3[3] | (EcatDataOut->DataOut3[4] << 16);
+    uint32_t _ecatADCUART2Val = EcatDataOut->DataOut3[5] | (EcatDataOut->DataOut3[6] << 16);
+    uint32_t _ecatADCUART1ValPrev;
+    uint32_t _ecatADCUART2ValPrev;
+    if (memcmp(&EcatDataOutPrev, EcatDataOut,sizeof(TOBJ7010)) != 0)
+    {
+        // update ARM FSM
+        if(EcatDataOut->DataOut1[0] != EcatDataOutPrev.DataOut1[0])  
+        {
+            LOG_I("FSM change to %d\r\n",EcatDataOut->DataOut1[0]);
+            //BGM_CtrlDoseBoardFSM((DoseFsmState_t)EcatDataOut->DataOut1[0]);
+            EcatDataOutPrev.DataOut1[0] =  EcatDataOut->DataOut1[0];
+        }
+        //prf set to dose by plc
+        if(EcatDataOut->DataOut3[0] != EcatDataOutPrev.DataOut3[0])  
+        {
+            BGM_SetDoseBoardPRF(BGM_UART_DOSE1,EcatDataOut->DataOut3[0]);
+            LOG_I("Set PRF to %d\r\n",EcatDataOut->DataOut3[0]);
+            EcatDataOutPrev.DataOut3[0] =  EcatDataOut->DataOut3[0];
+        }
+        //Dose Meter set to Dose Board by plc
+        if(EcatDataOut->DataOut3[1] != EcatDataOutPrev.DataOut3[1])  
+        {
+            BGM_SetDoseBoardDose(BGM_UART_DOSE1,EcatDataOut->DataOut3[1]);
+            BGM_SetDoseBoardDose(BGM_UART_DOSE2,(EcatDataOut->DataOut3[1])*1.1);
+            LOG_I("Set Dose Meter to %d\r\n",EcatDataOut->DataOut3[1]);
+            EcatDataOutPrev.DataOut3[1] =  EcatDataOut->DataOut3[1];
+        }
+
+        //DAC set to Dose Board by plc
+        if(EcatDataOut->DataOut3[2] != EcatDataOutPrev.DataOut3[2])  
+        {
+            BGM_SetDoseBoardDAC(BGM_UART_DOSE1,EcatDataOut->DataOut3[2]);
+            LOG_I("Set DAC to %d\r\n",EcatDataOut->DataOut3[2]);
+            EcatDataOutPrev.DataOut3[2] =  EcatDataOut->DataOut3[2];
+        }
+
+        
+        //AFC POS set to AFC by plc
+        if(EcatDataOut->DataOut4[2] != EcatDataOutPrev.DataOut4[2])  
+        {
+            uint8_t cmd[4] = {0x41,0x03,0x00,0x00};
+            //BGM_SetDoseBoardDAC(BGM_UART_DOSE1,EcatDataOut->DataOut3[2]);
+            cmd[2] = EcatDataOut->DataOut4[2];
+            cmd[3] = (EcatDataOut->DataOut4[2]) >> 8;
+            BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,cmd,4); 
+            LOG_I("Set AFC pos to %d\r\n",EcatDataOut->DataOut4[2]);
+            EcatDataOutPrev.DataOut4[2] =  EcatDataOut->DataOut4[2];
+        }
+
+        //ADC1 set to Dose Board 1 by plc
+        if(_ecatADCUART1Val != _ecatADCUART1ValPrev)  
+        {
+            BGM_SetDoseBoardDAC(BGM_UART_DOSE1,_ecatADCUART1Val);
+            LOG_I("Set ADC1 to %ld\r\n",_ecatADCUART1Val);
+            _ecatADCUART1ValPrev = _ecatADCUART1Val;
+        }
+          //ADC2 set to Dose Board 2 by plc
+        if(_ecatADCUART2Val != _ecatADCUART2ValPrev)  
+        {
+            BGM_SetDoseBoardDAC(BGM_UART_DOSE2,_ecatADCUART2Val);
+            LOG_I("Set ADC2 to %ld\r\n",_ecatADCUART2Val);
+            _ecatADCUART2ValPrev = _ecatADCUART2Val;
+        }
+
+        
+
+
+        memcpy(&EcatDataOutPrev, EcatDataOut,sizeof(TOBJ7010));
+    }
+}
 
 static int8_t realtime_ethercat_data_process(void)
 {
@@ -24,17 +99,18 @@ static int8_t realtime_ethercat_data_process(void)
         printf("ethercat data get failed\r\n");
         return -1;
     }
-
-	static uint16_t recvData2QPrev[64] = {0};
-    static uint16_t recvData2Q[64] = {0};
+  
+    BGMEthercatDataParsePoint(recv);
+	// static uint16_t recvData2QPrev[64] = {0};
+    // static uint16_t recvData2Q[64] = {0};
     static uint16_t QSend2Data[64] = {0};
 
-    memcpy(recvData2Q, &recv_data, 64 * sizeof(uint16_t));//recv from EtherCAT
-    if (memcmp(recvData2Q, recvData2QPrev, 64 * sizeof(uint16_t)) != 0)
-    {
-        ECATSendToARMQueueSend(recvData2Q);
-        memcpy(recvData2QPrev, recvData2Q, 64 * sizeof(uint16_t));
-    }
+    // memcpy(recvData2Q, &recv_data, 64 * sizeof(uint16_t));//recv from EtherCAT
+    // if (memcmp(recvData2Q, recvData2QPrev, 64 * sizeof(uint16_t)) != 0)
+    // {
+    //     ECATSendToARMQueueSend(recvData2Q);
+    //     memcpy(recvData2QPrev, recvData2Q, 64 * sizeof(uint16_t));
+    // }
 
     extern osMessageQueueId_t ethercatA2EQueueHandle;
     if(osMessageQueueGetCount(ethercatA2EQueueHandle) != 0)//Send to Ethercat
@@ -45,6 +121,8 @@ static int8_t realtime_ethercat_data_process(void)
     }
     return ethercat_send_data_update(send, sizeof(send_data));
 }
+
+
 
 static int8_t non_realtime_tcp_callback(uint8_t sn)
 {

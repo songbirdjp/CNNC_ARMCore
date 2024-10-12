@@ -7,6 +7,7 @@
 #include "IOE.h"
 #include "AFCCmd.h"
 #include "bgm_uart.h"
+
 typedef enum {
     AFCTriggerPin,  //  GPIOG Pin 14
     QAMTriggerPin,  //  GPIOC Pin 7
@@ -79,6 +80,17 @@ typedef struct {
 // } ECATDataIn_t;//ARM to Ethercat
 
 
+typedef enum{
+    Dose_FSM_STATE_INIT = 0,
+    Dose_FSM_STATE_IDLE,
+    Dose_FSM_STATE_DUMMY,
+    Dose_FSM_STATE_PREPARE,
+    Dose_FSM_STATE_READY,
+    Dose_FSM_STATE_RADIATION,
+    Dose_FSM_STATE_COMPLETE,
+    Dose_FSM_STATE_FAULT,
+    Dose_FSM_STATE_MAX
+}DoseFsmState_t;
 
 
 static void BGMIOEfunc(void *argument);
@@ -99,11 +111,14 @@ void ARMSendToECATQueueSend(uint16_t* value_to_send);
 uint16_t* ARMSendToECATQueueRecv(void);
 void BGMEthercatDataParse(uint16_t * EcatDataOut);
 void ECATSendToARMQueueSend(uint16_t *valueOut);
-void BGMSendCmd(enum uart_id,UARTCmdType_t cmdType, uint8_t *cmdData);
+void BGM_SendCmd(enum uart_id uartID,UARTCmdType_t cmdType, uint8_t *cmdData,uint8_t len);
 uint16_t* ECATSendToARMQueueRecv(void);
 int BGM2Dose_Handshake(enum uart_id uartID);
 int BGM2AFC_Handshake(void);
 BGMInterlocksDetect_t BGM_ReadAllInterlocks(void);
 uint16_t BGM_ReadModInterlocks(void);
+void BGM_CtrlDoseBoardFSM(DoseFsmState_t doseFSM);
+void BGM_SetDoseBoardPRF(enum uart_id uartID,uint8_t prfVal);
+void BGM_SetDoseBoardDose(enum uart_id uartID,uint16_t doseVal);
 // void ECATSendToARMQueueSend(TOBJ7010 *valueOut);
 #endif /* __BGM_DEF_H__ */

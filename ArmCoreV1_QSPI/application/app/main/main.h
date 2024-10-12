@@ -112,8 +112,6 @@ void Error_Handler(void);
 #define PulseInhibitDetect_Pin GPIO_PIN_9
 #define PulseInhibitDetect_GPIO_Port GPIOC
 #define PulseInhibitDetect_EXTI_IRQn EXTI9_5_IRQn
-#define DoseTriggerDetect_Pin GPIO_PIN_8
-#define DoseTriggerDetect_GPIO_Port GPIOA
 #define UART4_DE_Pin GPIO_PIN_15
 #define UART4_DE_GPIO_Port GPIOA
 #define W5500_RSTn_Pin GPIO_PIN_3

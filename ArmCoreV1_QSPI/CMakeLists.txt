@@ -77,8 +77,10 @@ add_subdirectory(bootloader)
 # message("link_path: ${link_path}")
 
 include_directories( ${include_path} )
+ 
 
 file(GLOB_RECURSE SOURCES ${src_path})
+
 
 # remove fdcan driver source files
 # file(GLOB_RECURSE DEL_SOURCES 

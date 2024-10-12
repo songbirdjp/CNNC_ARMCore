@@ -642,7 +642,7 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
     
     if (strncmp(data, "GET", 3) == 0)
     { // deal with handshake
-      //  printf("%s\r\n",data);
+       printf("%s\r\n",data);
         if (strstr(data, "Sec-WebSocket-Key"))
         {
             ret = ws_replyClient(s, data, "/");
@@ -677,11 +677,12 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
         #endif
     }
     else if (client[s].connectStatus > 0)
-    {   // recv data after handshake
-       // for (i = 0; i < len; i++) printf("%x ", data[i]);
-     //   printf("\r\n");
+    {   
+        // recv data after handshake
+        //    for (i = 0; i < len; i++) printf("%x ", data[i]);
+        //    printf("\r\n");
         ret = ws_recv(s, data, DATA_BUF_SIZE, &retPkgType);
-//printf("ret %d\r\n", ret);
+        //printf("ret %d\r\n", ret);
         if(ret < 0)//本包数据内容或长度错误，直接丢弃
         {
             printf("this pack is wrong\r\n");

@@ -1,7 +1,7 @@
 #include "bgm_uart.h"
 #include "init_call.h"
 #include "cmsis_os2.h"
-
+#include "ulog.h"
 struct dose_info_t
 {
     uint8_t hw_version;
@@ -33,8 +33,8 @@ static int8_t dose_handshake_frame_parse(struct cmd_object *cmd)
     dose_info.sw_version[2] = cmd->data[3];
     dose_info.sw_version[3] = '.';
     dose_info.sw_version[4] = cmd->data[4];
-    printf("dose hw version: %d\r\n", dose_info.hw_version);
-    printf("dose sw version: %s\r\n", dose_info.sw_version);
+    LOG_I("dose hw version: %d\r\n", dose_info.hw_version);
+    LOG_I("dose sw version: %s\r\n", dose_info.sw_version);
 
     return ret;
 }
@@ -49,10 +49,10 @@ static int8_t dose_calibration_parse(struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            cmd->data[2] == 0 ? printf("dose calibration data lock opened\r\n") : printf("dose calibration data lock closed\r\n");
+            cmd->data[2] == 0 ? LOG_I("dose calibration data lock opened\r\n") : LOG_I("dose calibration data lock closed\r\n");
             break;
         case 0x01:
-            cmd->data[2] == 0 ? printf("dose calibration data invalid\r\n") : printf("dose calibration data valid\r\n");
+            cmd->data[2] == 0 ? LOG_I("dose calibration data invalid\r\n") : LOG_I("dose calibration data valid\r\n");
             break;
         default:
             ret = -1;
@@ -67,7 +67,7 @@ static int8_t dose_calibration_parse(struct cmd_object *cmd)
         case 0x02:
         case 0x03:
         case 0x04:
-            printf("dose adc factor set (1MU == %u code)\r\n", cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("dose adc factor set (1MU == %u code)\r\n", cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
             break;
         default:
             ret = -1;
@@ -75,13 +75,13 @@ static int8_t dose_calibration_parse(struct cmd_object *cmd)
         }
         break;
     case 0x03:
-        printf("dose dac factor set : %u\r\n", cmd->data[3] << 8 | cmd->data[2]);
+        LOG_I("dose dac factor set : %u\r\n", cmd->data[3] << 8 | cmd->data[2]);
         break;
     case 0x04:
-        printf("dose trigger interval set: %u\r\n", cmd->data[3] << 8 | cmd->data[2]);
+        LOG_I("dose trigger interval set: %u\r\n", cmd->data[3] << 8 | cmd->data[2]);
         break;
     default:
-        printf("invalid calibration cmd type: %x\r\n", cmd->data[0]);
+        LOG_I("invalid calibration cmd type: %x\r\n", cmd->data[0]);
         ret = -1;
         break;
     }
@@ -95,16 +95,16 @@ static int8_t dose_treatment_parse(struct cmd_object *cmd)
     switch (cmd->data[0])
     {
     case 0x40:
-        cmd->data[2] == 0 ? printf("dose dummy mode set\r\n") : printf("dose normal mode set\r\n");
+        cmd->data[2] == 0 ? LOG_I("dose dummy mode set\r\n") : LOG_I("dose normal mode set\r\n");
         break;
     case 0x41:
         switch (cmd->data[1])
         {
         case 0x00:
-            printf("pulse generation mode set %d\r\n", cmd->data[2]);
+            LOG_I("pulse generation mode set %d\r\n", cmd->data[2]);
             break;
         case 0x01:
-            printf("dose prf set %u ok\r\n", cmd->data[2]);
+            LOG_I("dose prf set %u ok\r\n", cmd->data[2]);
             break;
         default:
             ret = -1;
@@ -117,7 +117,7 @@ static int8_t dose_treatment_parse(struct cmd_object *cmd)
         case 0x00:
             break;
         case 0x01:
-            printf("dose meter set %u ok\r\n", cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("dose meter set %u ok\r\n", cmd->data[3] << 8 | cmd->data[2]);
             break;
         case 0x02:
         case 0x03:
@@ -133,10 +133,10 @@ static int8_t dose_treatment_parse(struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            cmd->data[2] == 0 ? printf("beam data lock opened\r\n") : printf("beam data lock closed\r\n");
+            cmd->data[2] == 0 ? LOG_I("beam data lock opened\r\n") : LOG_I("beam data lock closed\r\n");
             break;
         case 0x01:
-            cmd->data[2] == 0 ? printf("beam data valid\r\n") : printf("beam data invalid\r\n");
+            cmd->data[2] == 0 ? LOG_I("beam data valid\r\n") : LOG_I("beam data invalid\r\n");
             break;
         default:
             ret = -1;
@@ -144,7 +144,7 @@ static int8_t dose_treatment_parse(struct cmd_object *cmd)
         }
         break;
     default:
-        printf("invalid treatment cmd type: %x\r\n", cmd->data[0]);
+        LOG_I("invalid treatment cmd type: %x\r\n", cmd->data[0]);
         ret = -1;
         break;
     }
@@ -165,19 +165,19 @@ static int8_t dose_interlock_parse(struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            printf("ionization chamber voltage get: %u\r\n", (cmd->data[3] << 8 | cmd->data[2]) / 100);
+            LOG_I("ionization chamber voltage get: %u\r\n", (cmd->data[3] << 8 | cmd->data[2]) / 100);
             break;
         case 0x01:
-            printf("P5V voltage get: %u\r\n", (cmd->data[3] << 8 | cmd->data[2]) / 100);
+            LOG_I("P5V voltage get: %u\r\n", (cmd->data[3] << 8 | cmd->data[2]) / 100);
             break;
         case 0x02:
-            printf("N5V voltage get: %u\r\n", (cmd->data[3] << 8 | cmd->data[2]) / 100);
+            LOG_I("N5V voltage get: %u\r\n", (cmd->data[3] << 8 | cmd->data[2]) / 100);
             break;
         case 0x03:
-            printf("dac1 channelA offset code get: %u\r\n", cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("dac1 channelA offset code get: %u\r\n", cmd->data[3] << 8 | cmd->data[2]);
             break;
         case 0x04:
-            printf("dac1 channelB offset code get: %u\r\n", cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("dac1 channelB offset code get: %u\r\n", cmd->data[3] << 8 | cmd->data[2]);
             break;
         default:
             ret = -1;
@@ -185,12 +185,12 @@ static int8_t dose_interlock_parse(struct cmd_object *cmd)
         }
         break;
     case 0xB0:
-        printf("dose interlock get %#.4x\r\n", cmd->data[3] << 8 | cmd->data[2]);
+        LOG_I("dose interlock get %#.4x\r\n", cmd->data[3] << 8 | cmd->data[2]);
         break;
     case 0xB1:
         break;
     default:
-        printf("invalid interlock cmd type: %x\r\n", cmd->data[0]);
+        LOG_I("invalid interlock cmd type: %x\r\n", cmd->data[0]);
         ret = -1;
         break;
     }
@@ -207,7 +207,7 @@ static int8_t dose_state_control_parse(struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:  /* dose state switch result */
-            cmd->data[2] == 0 ? printf("dose state switch success\r\n") : printf("dose state switch fail\r\n");
+            cmd->data[2] == 0 ? LOG_I("dose state switch success\r\n") : LOG_I("dose state switch fail\r\n");
             break;
         case 0x01:  /* dose current state */
             printf("dose current state: %d\r\n", cmd->data[2]);
@@ -221,19 +221,19 @@ static int8_t dose_state_control_parse(struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            printf("pulse abnormal cleanup ok\r\n");
+            LOG_I("pulse abnormal cleanup ok\r\n");
             break;
         case 0x01:
-            printf("beam data cleanup ok\r\n");
+            LOG_I("beam data cleanup ok\r\n");
             break;
         case 0x02:
-            printf("dose cumulative data cleanup ok\r\n");
+            LOG_I("dose cumulative data cleanup ok\r\n");
             break;
         case 0x03:
-            printf("interlock cleanup ok\r\n");
+            LOG_I("interlock cleanup ok\r\n");
             break;
         case 0x04:
-            printf("one pulse valid flag cleanup ok\r\n");
+            LOG_I("one pulse valid flag cleanup ok\r\n");
             break;
         default:
             ret = -1;
@@ -244,10 +244,10 @@ static int8_t dose_state_control_parse(struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            printf("dose reset wdt ok\r\n");
+            LOG_I("dose reset wdt ok\r\n");
             break;
         case 0x01:
-            printf("dose reset ok\r\n");
+            LOG_I("dose reset ok\r\n");
             break;
         default:
             ret = -1;
@@ -255,7 +255,7 @@ static int8_t dose_state_control_parse(struct cmd_object *cmd)
         }
         break;
     default:
-        printf("invalid state control cmd type: %x\r\n", cmd->data[0]);
+        LOG_I("invalid state control cmd type: %x\r\n", cmd->data[0]);
         ret = -1;
         break;
     }
@@ -294,7 +294,7 @@ static int8_t dose_command_frame_parse(struct cmd_object *cmd)
         ret = dose_state_control_parse(cmd);
         break;    
     default:
-        printf("invalid cmd type: %x\r\n", cmd->data[0]);
+        LOG_I("invalid cmd type: %x\r\n", cmd->data[0]);
         ret = -1;
         break;
     }
@@ -703,13 +703,12 @@ static int8_t uart_cmd_process(enum uart_id id, struct bgm_uart *buf)
         return -1;
     }
 
-#if 0
-    printf("recv_buf len: %d\r\n", buf->len);
+#if 1
+    LOG_I("recv_buf len: %d\r\n", buf->len);
     for (uint8_t i = 0; i < buf->len; i++)
     {
-        printf("%02x ", buf->buf[i]);
+        LOG_I("%02x ", buf->buf[i]);
     }
-    printf("\r\n");
 #endif
 
     struct cmd_object cmd = {0};
@@ -798,13 +797,12 @@ static int8_t uart_send_entry(void *argument)
     {
         osMessageQueueGet(uart_send_queue[uart_id], &send_buf, NULL, osWaitForever);
 
-#if 0
-        printf("send_buf len: %d\r\n", send_buf.len);
+#if 1
+        ("send_buf len: %d\r\n", send_buf.len);
         for (uint8_t i = 0; i < send_buf.len; i++)
         {
-            printf("%02x ", send_buf.buf[i]);
+            LOG_I("%02x ", send_buf.buf[i]);
         }
-        printf("\r\n");
 #endif
 
 send_data:

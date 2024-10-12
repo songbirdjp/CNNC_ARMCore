@@ -1,10 +1,6 @@
 #include "main.h"
 #include "BGM_def.h"
 #include "SPIDriver.h"
-#include "ethercat.h"
-#include "applInterface.h"
-#include "lan9252_port.h"
-#include "lan9252_app.h"
 #include "cmsis_os2.h"
 #include "init_call.h"
 #include "drv_tim.h"
@@ -16,6 +12,8 @@
 #include "drv_spi.h"
 #include "spi.h"
 #include "IOE.h"
+#include "ulog.h"
+#include "ethercat.h"
 
 #define ethercatA2EQueue_LENGTH 16
 #define ethercatA2EQueue_SIZE 64*sizeof(uint16_t)
@@ -25,6 +23,9 @@
 
 #define ExpandGPIOQueue_LENGTH 16
 #define ExpandGPIOQueue_SIZE    sizeof(uint16_t)
+
+#define isDoseTriggerQueue_LENGTH 16
+#define isDoseTriggerQueue_SIZE    sizeof(uint16_t)
 
 static BGMStateMachine_t currentState = BGM_STATE_BOOT;
 
@@ -39,6 +40,10 @@ const osMessageQueueAttr_t ethercatA2EQueue_attributes = {
 osMessageQueueId_t ExpandGPIOQueueHandle;
 const osMessageQueueAttr_t ExpandGPIOQueue_attributes = {
     .name = "ExpandGPIOQueueHandle"};
+
+osMessageQueueId_t isDoseTriggerQueueHandle;
+const osMessageQueueAttr_t isDoseTriggerQueue_attributes = {
+    .name = "isDoseTriggerQueueHandle"};
 
 osThreadAttr_t BGMFSM_attributes = {
     .name = "BGM_FSM",
@@ -95,6 +100,19 @@ static int8_t BGMFSM_thread_init(void)
         return -1;
     }
 
+    ethercatA2EQueueHandle = osMessageQueueNew(ethercatA2EQueue_LENGTH, ethercatA2EQueue_SIZE, &ethercatA2EQueue_attributes);
+    if (ethercatA2EQueueHandle == NULL)
+    {
+        printf("thread ethercatRecvQueue failed\r\n");
+        return -1;
+    }
+
+    isDoseTriggerQueueHandle = osMessageQueueNew(isDoseTriggerQueue_LENGTH, isDoseTriggerQueue_SIZE, &isDoseTriggerQueue_attributes);
+    if (isDoseTriggerQueueHandle == NULL)
+    {
+        printf("thread ethercatRecvQueue failed\r\n");
+        return -1;
+    }
     return 0;
 }
 INIT_APP_EXPORT(BGMFSM_thread_init);
@@ -104,6 +122,13 @@ static int8_t ioe_irq_callback(void)
     uint16_t ExpandGPIOData = IOE_GPIORead();
 
     osMessageQueuePut(ExpandGPIOQueueHandle,&ExpandGPIOData,0,0);    
+}
+uint16_t isDoseTrigger = 0;
+static int8_t DoseTrigger_irq_callback(void)
+{
+    isDoseTrigger = 1;
+    osMessageQueuePut(isDoseTriggerQueueHandle,&isDoseTrigger,0,0);  
+    isDoseTrigger = 0;  
 }
 
 static void BGMIOEfunc(void *argument)
@@ -120,10 +145,10 @@ static void BGMIOEfunc(void *argument)
     HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2,GPIO_PIN_SET);//PRF Enable
     HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4,GPIO_PIN_SET);//Lv Interlock Enable
     HAL_GPIO_WritePin(GPIOE,GPIO_PIN_5,GPIO_PIN_SET);//Hv Interlock Enable
-    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_6,GPIO_PIN_SET);//Trig Ibhibit Disable
+    HAL_GPIO_WritePin(GPIOC,GPIO_PIN_6,GPIO_PIN_SET);//Trig Inhibit Disable
 
     gpio_pin_irq_callback_register("GPIOG_6", ioe_irq_callback);
-
+    gpio_pin_irq_callback_register("GPIOA_8", DoseTrigger_irq_callback);
     for (;;)
     {
         if(osMessageQueueGetCount(ExpandGPIOQueueHandle) != 0)
@@ -149,26 +174,22 @@ static void BGMFSMfunc(void *argument)
     static uint8_t doseTest[5]= {0x42,0x01,0xEE,0xAA};
     uint32_t AFCTriggerTime = 4;
     uint16_t ExpandGPIOValue;
-    AFCCmdtest.id.byte = 0x80;
-    AFCCmdtest.type = 0x02;
-    AFCCmdtest.len = 3;
-    AFCCmdtest.data = doseTest;
     // BGM2Dose_Handshake(BGM_UART_DOSE1);
     for (;;)
-    { 
-        //BGM2Dose_Handshake(BGM_UART_DOSE1);
-        //uart_cmd_write(BGM_UART_DOSE1,&AFCCmdtest);
-        // BGM_ReadAllInterlocks();
+    {
         // TriggerOutCtrl(BGMTriggerPin, AFCTriggerTime, 4000);
         // TriggerOutCtrl(AFCTriggerPin, AFCTriggerTime, 4000);
-        //uart_cmd_write(BGM_UART_DOSE1,&AFCCmdtest);
-        // ECATSendToARMQueueRecv();
-        // BGMFiniteStateMachine();
+        BGMFiniteStateMachine();
+        if(osMessageQueueGetCount(isDoseTriggerQueueHandle) != 0)
+        {   
+            osMessageQueueGet(isDoseTriggerQueueHandle,&ExpandGPIOValue,0,0);
+            TriggerOutCtrl(BGMTriggerPin, AFCTriggerTime, 4000);
+            LOG_I("TriggerOutCtrl\r\n");
+        }
         if(osMessageQueueGetCount(ethercatE2AQueueHandle) != 0)
         {
-            BGMEthercatDataParse(ECATSendToARMQueueRecv());
+            BGMEthercatDataParse(ECATSendToARMQueueRecv());// parse data from bus and send to 422
         }
-        // printf("test\r\n");
         osDelay(1);
     }
 }
@@ -218,18 +239,16 @@ void BGMEthercatDataParse(uint16_t * EcatDataOut)
     memcpy(dataToParse,EcatDataOut,64 * sizeof(uint16_t));
     currentState = (BGMStateMachine_t)dataToParse[9];//PLC FSM
     AFCMotorPos = dataToParse[35];
-    // printf("AFCMotorInitPrev = %d\r\n",AFCMotorInitPrev);
     if(AFCMotorPos != AFCMotorPosPrev)
     {
         RtDataParseToCmd[0] = 0x41;
         RtDataParseToCmd[1] = 0x03;
         RtDataParseToCmd[2] = (AFCMotorPos >> 8) & 0xFF; 
         RtDataParseToCmd[3] = AFCMotorPos & 0xFF;        
-        BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,RtDataParseToCmd);
+        BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,RtDataParseToCmd,4);
         printf("dataToParse35 = %d\r\n",dataToParse[35]);
         AFCMotorPosPrev = AFCMotorPos;
     }
-    
 }
 
 uint16_t* ECATSendToARMQueueRecv(void)
@@ -238,7 +257,10 @@ uint16_t* ECATSendToARMQueueRecv(void)
     if(osMessageQueueGetCount(ethercatE2AQueueHandle) != 0)
     {
         osStatus_t status = osMessageQueueGet(ethercatE2AQueueHandle, received_value,0, 0);
-        // printf("received_value[33] = %d \r\n",received_value[33]); 
+        // for(uint8_t i=0;i<63;i++)
+        // {
+        //     LOG_I("received_value = %d\r\n",received_value[i]); 
+        // }
         if (status != osOK)
         {
             printf("1Queue status = %d \r\n",status);
@@ -254,21 +276,6 @@ void BGMFiniteStateMachine(void)
     uint16_t ethercatALStatus;
     switch (currentState)
     {
-        /*    BGM_STATE_BOOT,//0
-    BGM_STATE_INIT,//1
-    BGM_STATE_IDLE,//2
-    BGM_STATE_PRELIMINARY,//3
-    BGM_STATE_PREPARE,//4
-    BGM_STATE_READY,//5
-    BGM_STATE_WORK,//6
-
-    BGM_STATE_PARK = 10,
-    BGM_STATE_MANUAL,//11
-    BGM_STATE_COMPLETE,//12
-    BGM_STATE_SHUTDOWN,//13
-    BGM_STATE_POWERSAVER,//14
-    BGM_STATE_TERMINATE,//15
-    BGM_STATE_INTERRUPT,//16 */
     case BGM_STATE_BOOT:
         printf("BGM_STATE_BOOT\r\n");
         osDelay(1000);

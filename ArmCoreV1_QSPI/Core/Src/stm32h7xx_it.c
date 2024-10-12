@@ -25,7 +25,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "FreeRTOSConfig.h"
-#include "ulog.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,7 +71,6 @@ extern DMA_HandleTypeDef hdma_spi6_tx;
 extern DMA_HandleTypeDef hdma_tim7_up;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim6;
-extern TIM_HandleTypeDef htim7;
 extern DMA_HandleTypeDef hdma_uart4_tx;
 extern DMA_HandleTypeDef hdma_uart5_tx;
 extern DMA_HandleTypeDef hdma_uart7_tx;
@@ -81,6 +79,7 @@ extern DMA_HandleTypeDef hdma_usart2_tx;
 extern DMA_HandleTypeDef hdma_usart3_tx;
 extern WWDG_HandleTypeDef hwwdg1;
 /* USER CODE BEGIN EV */
+extern TIM_HandleTypeDef htim7;
 
 /* USER CODE END EV */
 
@@ -321,10 +320,7 @@ void DMA1_Stream5_IRQHandler(void)
 void DMA1_Stream6_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Stream6_IRQn 0 */
-  if (hdma_tim7_up.Init.Mode != DMA_CIRCULAR)
-  {
-    __HAL_TIM_DISABLE(&htim7);
-  }
+  __HAL_TIM_DISABLE(&htim7);
 
   /* USER CODE END DMA1_Stream6_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_tim7_up);
@@ -339,13 +335,13 @@ void DMA1_Stream6_IRQHandler(void)
 void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-  
+
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(IOEIntB_Pin);
-  HAL_GPIO_EXTI_IRQHandler(PulseInhibitDetect_Pin);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
+  HAL_GPIO_EXTI_IRQHandler(PulseInhibitDetect_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
-  
+
   /* USER CODE END EXTI9_5_IRQn 1 */
 }
 
