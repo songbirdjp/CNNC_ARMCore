@@ -166,7 +166,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             break;
         case 0x01:
             LOG_I("dose uart prf set: %d\r\n", cmd->data[2]);
-            if (1000000 / cmd->data[2] < obj->calibration.trig_interval_min)
+            if (cmd->data[2] == 0 || 1000000 / cmd->data[2] < obj->calibration.trig_interval_min)
             {
                 ret = -1;
                 break;
@@ -185,6 +185,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             obj->treatment.ri_src = (cmd->data[2] == 0) ? 0 : 1;
             break;
         case 0x01:
+            LOG_I("dose beam meter set: %d\r\n", cmd->data[3] << 8 | cmd->data[2]);
             ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, cmd->data[3] << 8 | cmd->data[2]);
             if (ret != 0)
             {
@@ -238,14 +239,13 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            obj->treatment.status.bits.lock = 0;
-            cmd->data[2] = 1;
+            obj->treatment.status.bits.lock = (cmd->data[2] == 0) ? 0 : 1;
             cmd->len = 3;
             break;
         case 0x01:
             obj->treatment.status.bits.check = 1;
             obj->treatment.status.bits.lock = 1;
-            cmd->data[2] = 1;
+            cmd->data[2] = obj->treatment.status.bits.check ^ obj->treatment.status.bits.lock;
             cmd->len = 3;
             break;
         default:
@@ -331,19 +331,19 @@ static int8_t dose_interlock_parse(struct dose_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            value = mcu_adc_value_get(MCU_ADC_CHANNEL_N500V) * 100;
+            value = mcu_adc_value_get(MCU_ADC_CHANNEL_N500V) / 10;
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
             cmd->len = 4;
             break;
         case 0x01:
-            value = mcu_adc_value_get(MCU_ADC_CHANNEL_P5V) * 100;
+            value = mcu_adc_value_get(MCU_ADC_CHANNEL_P5V) / 10;
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
             cmd->len = 4;
             break;
         case 0x02:
-            value = mcu_adc_value_get(MCU_ADC_CHANNEL_N5V) * 100;
+            value = mcu_adc_value_get(MCU_ADC_CHANNEL_N5V) / 10;
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
             cmd->len = 4;
@@ -532,7 +532,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            cmd->data[2] = ret = fsm_state_switch_check(cmd->data[2]);
+            ret = fsm_state_switch_check(cmd->data[2]);
             if (ret != 0)
             {
                 LOG_E("fsm state switch check err: %d\r\n", ret);
@@ -674,7 +674,7 @@ static int8_t dose_command_frame_parse(struct dose_object *cmd)
 
     if (ret != 0)
     {
-        LOG_E("dose uart command [%d, %d] parse err: %d\r\n", cmd->data[0], cmd->data[1], ret);
+        LOG_E("dose uart command [%.2x, %.2x] parse err: %d\r\n", cmd->data[0], cmd->data[1], ret);
     }
 
     return ret;

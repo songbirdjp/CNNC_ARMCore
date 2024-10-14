@@ -50,37 +50,37 @@ PUTCHAR_PROTOTYPE
 static DEVICE_UART_OPT console_opt = {0};
 static int8_t console_opt_before_write(DEVICE_UART *uart)
 {
-    // LOG_I("before write\r\n");
+    // printf("before write\r\n");
 
     return 0;
 }
 static int8_t console_opt_after_write(DEVICE_UART *uart)
 {
-    // LOG_I("after write\r\n");
+    // printf("after write\r\n");
 
     return 0;
 }
 static int8_t console_opt_complete_write(DEVICE_UART *uart)
 {
-    // LOG_I("complete write\r\n");
+    // printf("complete write\r\n");
 
     return 0;
 }
 static int8_t console_opt_before_read(DEVICE_UART *uart)
 {
-    // LOG_I("before read\r\n");
+    // printf("before read\r\n");
 
     return 0;
 }
 static int8_t console_opt_after_read(DEVICE_UART *uart)
 {
-    // LOG_I("after read\r\n");
+    // printf("after read\r\n");
 
     return 0;
 }
 static int8_t console_opt_complete_read(DEVICE_UART *uart)
 {
-    // LOG_I("complete read\r\n");
+    // printf("complete read\r\n");
 
     return 0;
 }
@@ -164,7 +164,7 @@ static int8_t console_log_init(void)
     int8_t ret = ulog_write_func_register(&info);
     if (ret != 0)
     {
-        LOG_E("console log register err:%d\r\n", ret);
+        printf("console log register err:%d\r\n", ret);
         return ret;
     }
 #endif
@@ -202,12 +202,12 @@ static int8_t console_cmd_process(void)
     }
 
 #if 0
-    LOG_I("recv cmd %d: ", msg_tmp.len);
+    printf("recv cmd %d: ", msg_tmp.len);
     for (uint16_t i = 0; i < msg_tmp.len; i++)
     {
-        LOG_I("%c", msg_tmp.buf[i]);
+        printf("%c", msg_tmp.buf[i]);
     }
-    LOG_I("\r\n");
+    printf("\r\n");
 #endif
 
     memcpy(&msg, &msg_tmp, sizeof(struct CmdMessage));
@@ -343,29 +343,29 @@ static void cmd_thread_info(uint8_t argc, uint8_t **argv)
     HeapStats_t *heap_stats = (HeapStats_t *)pvPortMalloc(sizeof( HeapStats_t ));
     if (heap_stats == NULL)
     {
-        LOG_E("heap stats malloc failed\r\n");
+        printf("heap stats malloc failed\r\n");
         return;
     }
 
     vPortGetHeapStats(heap_stats);
 
-    LOG_I("\r\n***************************************************************\r\n");
+    printf("\r\n***************************************************************\r\n");
 
-    LOG_I("Heap Stats:\r\n");
-    LOG_I("allocation_success: %d\r\n", heap_stats->xNumberOfSuccessfulAllocations);
-    LOG_I("free_success: %d\r\n", heap_stats->xNumberOfSuccessfulFrees);
-    LOG_I("free_blocks: %d\r\n", heap_stats->xNumberOfFreeBlocks);
-    LOG_I("bytes_of_largest_block: %d\r\n", heap_stats->xSizeOfLargestFreeBlockInBytes);
-    LOG_I("bytes_of_smallest_block: %d\r\n", heap_stats->xSizeOfSmallestFreeBlockInBytes);
-    LOG_I("bytes_of_available: %d\r\n", heap_stats->xAvailableHeapSpaceInBytes);
-    LOG_I("bytes_remaining_ever: %d\r\n", heap_stats->xMinimumEverFreeBytesRemaining);
+    printf("Heap Stats:\r\n");
+    printf("allocation_success: %d\r\n", heap_stats->xNumberOfSuccessfulAllocations);
+    printf("free_success: %d\r\n", heap_stats->xNumberOfSuccessfulFrees);
+    printf("free_blocks: %d\r\n", heap_stats->xNumberOfFreeBlocks);
+    printf("bytes_of_largest_block: %d\r\n", heap_stats->xSizeOfLargestFreeBlockInBytes);
+    printf("bytes_of_smallest_block: %d\r\n", heap_stats->xSizeOfSmallestFreeBlockInBytes);
+    printf("bytes_of_available: %d\r\n", heap_stats->xAvailableHeapSpaceInBytes);
+    printf("bytes_remaining_ever: %d\r\n", heap_stats->xMinimumEverFreeBytesRemaining);
 
-    LOG_I("---------------------------------------------------------------\r\n");
+    printf("---------------------------------------------------------------\r\n");
 
     uint8_t *buf = (uint8_t *)pvPortMalloc(thread_total_num * (configMAX_TASK_NAME_LEN + 15));
     if (buf == NULL)
     {
-        LOG_E("buf malloc failed\r\n");
+        printf("buf malloc failed\r\n");
         vPortFree(heap_stats);
         return;
     }
@@ -374,19 +374,19 @@ static void cmd_thread_info(uint8_t argc, uint8_t **argv)
     vTaskList(buf);
     // taskEXIT_CRITICAL();
 
-    LOG_I("task_name   task_status	task_priority	stack_left	task_num\r\n");
-    LOG_I("%s", buf);
+    printf("task_name   task_status	task_priority	stack_left	task_num\r\n");
+    printf("%s", buf);
 
-    LOG_I("---------------------------------------------------------------\r\n");
+    printf("---------------------------------------------------------------\r\n");
 
     // taskENTER_CRITICAL();
     vTaskGetRunTimeStats(buf);
     // taskEXIT_CRITICAL();
 
-    LOG_I("task_name       run_time        cpu_usage\r\n");
-    LOG_I("%s", buf);
+    printf("task_name       run_time        cpu_usage\r\n");
+    printf("%s", buf);
 
-    LOG_I("***************************************************************\r\n");
+    printf("***************************************************************\r\n");
 
     vPortFree(heap_stats);
     vPortFree(buf);
@@ -401,7 +401,7 @@ static void cmd_mem_read(uint8_t argc, uint8_t **argv)
 
     if (argc < 3)
     {
-        LOG_E("argv too few\r\n");
+        printf("argv too few\r\n");
         return;
     }
 
@@ -411,9 +411,9 @@ static void cmd_mem_read(uint8_t argc, uint8_t **argv)
 
     for (uint8_t i = 0; i < read_num; i++)
     {
-        LOG_I("%.8x  ", *(uint32_t *)(opt_addr + i * 4));
+        printf("%.8x  ", *(uint32_t *)(opt_addr + i * 4));
     }
-    LOG_I("\r\n");
+    printf("\r\n");
 
 }
 MSH_CMD_EXPORT_ALIAS(cmd_mem_read, mem_read, read memory);
@@ -425,7 +425,7 @@ static void cmd_mem_write(uint8_t argc, uint8_t **argv)
 
     if (argc < 3)
     {
-        LOG_E("argv too few\r\n");
+        printf("argv too few\r\n");
         return;
     }
 

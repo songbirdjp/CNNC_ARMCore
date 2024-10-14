@@ -1,7 +1,7 @@
 #ifndef __TCP_CLIENT_H__
 #define __TCP_CLIENT_H__
 
-#include "stdint.h"
+#include <stdint.h>
 #include "cmsis_os2.h"
 
 #ifdef __cplusplus

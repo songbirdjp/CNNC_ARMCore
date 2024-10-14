@@ -29,7 +29,7 @@ struct dose_object
 
 enum dose_board
 {
-    DOSE_BOARD_TRIGGER_OUT = 0,
+    DOSE_BOARD_TRIGGER_OUT = 1,
     DOSE_BOARD_NO_TRIGGER_OUT,
     DOSE_BOARD_MAX
 };

@@ -17,7 +17,7 @@ set(include_path ${include_path}
 
 set(src_path ${src_path}
     "${current_path}/adc/*.*" 
-    "${current_path}/adcs7476/*.*"  
+    "${current_path}/adcs7476/*.*" 
     # "${current_path}/ethercat/*.*" 
     # "${current_path}/fdcan/*.*" 
     "${current_path}/flash/*.*" 

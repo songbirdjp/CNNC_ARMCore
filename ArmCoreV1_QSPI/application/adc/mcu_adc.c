@@ -1,6 +1,7 @@
 #include "mcu_adc.h"
 #include "adc_port.h"
 #include "init_call.h"
+#include "ulog.h"
 
 int8_t board_power_limit_fault_get(void)
 {
@@ -29,9 +30,9 @@ int8_t board_power_limit_fault_get(void)
     uint16_t adc_n5v = result[2] * 2;
 
 #if 0
-    printf("adc_p5v: %u mv\r\n", adc_p5v);
-    printf("adc_n500v: %u mv\r\n", adc_n500v);
-    printf("adc_n5v: %u mv\r\n", adc_n5v);
+    LOG_I("adc_p5v: %u mv\r\n", adc_p5v);
+    LOG_I("adc_n500v: %u mv\r\n", adc_n500v);
+    LOG_I("adc_n5v: %u mv\r\n", adc_n5v);
 #endif
 
     if (abs(adc_p5v - 5000) > 5000 * POWER_DIFF_TOLERANCE)
@@ -67,7 +68,7 @@ float mcu_adc_value_get(enum mcu_adc_channel channel)
     ret = adc_sample_data_amend(&result, 1);
     if (ret != 0)
     {
-        printf("adc_sample_data_amend err: %d\r\n", ret);
+        LOG_E("adc_sample_data_amend err: %d\r\n", ret);
         return -1;
     }
 
@@ -83,7 +84,7 @@ float mcu_adc_value_get(enum mcu_adc_channel channel)
         value = (float)result * 2;
         break;
     default:
-        printf("invalid channel: %d\r\n", channel);
+        LOG_E("invalid channel: %d\r\n", channel);
         return -2;
         break;
     }
@@ -96,14 +97,14 @@ static int8_t mcu_adc_sample_start(uint16_t sample_interval_10ns)
     int8_t ret = adc_sample_interval_set(sample_interval_10ns);
     if (ret != 0)
     {
-        printf("adc_sample_interval_set err: %d\r\n", ret);
+        LOG_E("adc_sample_interval_set err: %d\r\n", ret);
         return -1;
     }
 
     ret = adc_sample_start();
     if (ret != 0)
     {
-        printf("adc_sample_start err: %d\r\n", ret);
+        LOG_E("adc_sample_start err: %d\r\n", ret);
         return -2;
     }
 
@@ -116,21 +117,21 @@ static int8_t mcu_adc_init(void)
     adc_event = osEventFlagsNew(NULL);
     if (adc_event == NULL)
     {
-        printf("adc_event create failed\r\n");
+        LOG_E("adc_event create failed\r\n");
         return -1;
     }
 
     int8_t ret = adc_init(DEVICE_NAME_ADC1_DEFAULT, adc_event);
     if (ret != 0)
     {
-        printf("%s init err: %d\r\n", DEVICE_NAME_ADC1_DEFAULT, ret);
+        LOG_E("%s init err: %d\r\n", DEVICE_NAME_ADC1_DEFAULT, ret);
         return -2;
     }
 
     ret = adc_init(DEVICE_NAME_ADC3_DEFAULT, adc_event);
     if (ret != 0)
     {
-        printf("%s init err: %d\r\n", DEVICE_NAME_ADC3_DEFAULT, ret);
+        LOG_E("%s init err: %d\r\n", DEVICE_NAME_ADC3_DEFAULT, ret);
         return -3;
     }
 
@@ -160,17 +161,17 @@ static int8_t mcu_adc_data_convert_process(struct adc_object *obj)
     if (obj == adc_object_get(DEVICE_NAME_ADC3_DEFAULT))
     {
         ref_vol = __HAL_ADC_CALC_VREFANALOG_VOLTAGE(obj->data[0], ADC_RESOLUTION_16B);
-        printf("Vref: %u mv\r\n", ref_vol);
-        printf("temperature: %u\r\n", __HAL_ADC_CALC_TEMPERATURE(ref_vol, obj->data[1], ADC_RESOLUTION_16B));
-        printf("vbat: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[2], ADC_RESOLUTION_12B) * 4);
-        printf("adc_n5v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[3], ADC_RESOLUTION_12B));
+        LOG_I("Vref: %u mv\r\n", ref_vol);
+        LOG_I("temperature: %u\r\n", __HAL_ADC_CALC_TEMPERATURE(ref_vol, obj->data[1], ADC_RESOLUTION_16B));
+        LOG_I("vbat: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[2], ADC_RESOLUTION_12B) * 4);
+        LOG_I("adc_n5v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[3], ADC_RESOLUTION_12B));
     }
 
     if (obj == adc_object_get(DEVICE_NAME_ADC1_DEFAULT))
     {
-        printf("adc_p5v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[0], ADC_RESOLUTION_16B));
-        printf("adc_n500v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[1], ADC_RESOLUTION_16B));
-        printf("adc_n5v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[2], ADC_RESOLUTION_16B));
+        LOG_I("adc_p5v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[0], ADC_RESOLUTION_16B));
+        LOG_I("adc_n500v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[1], ADC_RESOLUTION_16B));
+        LOG_I("adc_n5v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[2], ADC_RESOLUTION_16B));
     }
 #endif
 
@@ -184,14 +185,14 @@ static int8_t mcu_adc_data_convert_entry(void *argument)
     ret = mcu_adc_init();
     if (ret != 0)
     {
-        printf("mcu_adc_init err: %d\r\n", ret);
+        LOG_E("mcu_adc_init err: %d\r\n", ret);
         return -1;
     }
 
     ret = mcu_adc_sample_start(0xFFFF);
     if (ret != 0)
     {
-        printf("mcu_adc_sample_start err: %d\r\n", ret);
+        LOG_E("mcu_adc_sample_start err: %d\r\n", ret);
         return -2;
     }
 
@@ -228,7 +229,7 @@ static int8_t mcu_adc_thread_init(void)
     osThreadId_t tid = osThreadNew(mcu_adc_data_convert_entry, NULL, &attr);
     if (tid == NULL)
     {
-        printf("thread mcu adc data convert create failed\r\n");
+        LOG_E("thread mcu adc data convert create failed\r\n");
         return -1;
     }
 
@@ -243,7 +244,7 @@ static int8_t mcu_adc_test(int argc, char **argv)
 {
     if (argc != 2)
     {
-        printf("Usage: mcu_adc_test <sample_interval_10ns>\r\n");
+        LOG_E("Usage: mcu_adc_test <sample_interval_10ns>\r\n");
     }
 
     uint16_t sample_interval_10ns = atoi(argv[1]);

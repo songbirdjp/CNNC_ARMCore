@@ -1,5 +1,6 @@
 #include "uart_port.h"
 #include "drv_uart.h"
+#include "ulog.h"
 
 static DEVICE_UART dose_uart = {0};
 
@@ -143,12 +144,12 @@ int8_t device_dose_uart_data_read(struct dose_uart *buf, uint32_t timeout)
     }
 
 #if 0
-    printf("recv original: %d bytes\r\n", buf->len);
+    LOG_I("recv original: %d bytes\r\n", buf->len);
     for (uint8_t i = 0; i < buf->len; i++)
     {
-        printf("%.2x ", buf->buf[i]);
+        LOG_I("%.2x ", buf->buf[i]);
     }
-    printf("\r\n");
+    LOG_I("\r\n");
 #endif
 
     uint16_t offset = 0, length = 0;

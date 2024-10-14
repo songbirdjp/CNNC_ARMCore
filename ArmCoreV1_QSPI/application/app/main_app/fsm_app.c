@@ -63,7 +63,7 @@ int8_t fsm_state_switch(enum fsm_state new_state)
         break;
     case FSM_STATE_FAULT:
         ret = dose_hv_enable_set(0);
-        ret |= dose_trigger_out_set(0);
+        ret |= dose_trigger_out_set(1);
         break;
     default:
         ret = -1;
@@ -73,6 +73,10 @@ int8_t fsm_state_switch(enum fsm_state new_state)
     if (ret == 0)
     {
         ret = fsm_state_set(new_state);
+    }
+    else
+    {
+        printf("fsm state switch %d failed: %d\r\n", new_state, ret);
     }
 
     return ret;

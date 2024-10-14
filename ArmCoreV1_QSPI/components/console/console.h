@@ -1,7 +1,7 @@
 #ifndef __CONSOLE_H__
 #define __CONSOLE_H__
 
-#include "stdint.h"
+#include <stdint.h>
 
 
 #ifdef __cplusplus

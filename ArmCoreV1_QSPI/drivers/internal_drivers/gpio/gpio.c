@@ -59,7 +59,10 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, WDT_RESET_Pin|WDT_IN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, DOSE_EN_Pin|TRIGGER_OUT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(DOSE_EN_GPIO_Port, DOSE_EN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(TRIGGER_OUT_GPIO_Port, TRIGGER_OUT_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : PEPin PEPin PEPin PEPin */
   GPIO_InitStruct.Pin = SYSTEM_RUN_LED_Pin|ADC_READING_LED_Pin|WDT_IN_LED_Pin|WDT_OK_LED_Pin;
