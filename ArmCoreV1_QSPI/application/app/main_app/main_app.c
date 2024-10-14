@@ -12,6 +12,9 @@
 #define DATA_PROCESS_FPGA_EVENT     (1<<2)
 static osEventFlagsId_t data_process_eventHandle = NULL;
 
+extern BGMStateMachine_t ARMcurrentState;
+extern BGMStateMachine_t PLCcurrentState;
+
 void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
 {
     static TOBJ7010 EcatDataOutPrev = {0};
@@ -24,7 +27,9 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
         // update ARM FSM
         if(EcatDataOut->DataOut1[0] != EcatDataOutPrev.DataOut1[0])  
         {
-            LOG_I("FSM change to %d\r\n",EcatDataOut->DataOut1[0]);
+            // ARMcurrentState = (BGMStateMachine_t)EcatDataOut->DataOut1[0];
+            PLCcurrentState = (BGMStateMachine_t)EcatDataOut->DataOut1[0];
+            LOG_I("PCL FSM change to %d\r\n",PLCcurrentState);
             //BGM_CtrlDoseBoardFSM((DoseFsmState_t)EcatDataOut->DataOut1[0]);
             EcatDataOutPrev.DataOut1[0] =  EcatDataOut->DataOut1[0];
         }
@@ -51,8 +56,6 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
             LOG_I("Set DAC to %d\r\n",EcatDataOut->DataOut3[2]);
             EcatDataOutPrev.DataOut3[2] =  EcatDataOut->DataOut3[2];
         }
-
-        
         //AFC POS set to AFC by plc
         if(EcatDataOut->DataOut4[2] != EcatDataOutPrev.DataOut4[2])  
         {
@@ -71,6 +74,9 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
             BGM_SetDoseBoardDAC(BGM_UART_DOSE1,_ecatADCUART1Val);
             LOG_I("Set ADC1 to %ld\r\n",_ecatADCUART1Val);
             _ecatADCUART1ValPrev = _ecatADCUART1Val;
+            BGM_LockDoseCaliPara(BGM_UART_DOSE1,1);
+            BGM_LockDoseCaliPara(BGM_UART_DOSE2,1);
+            BGM_CtrlDoseBoardFSM((DoseFsmState_t)3);//change Dose FSM to Prepare
         }
           //ADC2 set to Dose Board 2 by plc
         if(_ecatADCUART2Val != _ecatADCUART2ValPrev)  
@@ -79,14 +85,10 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
             LOG_I("Set ADC2 to %ld\r\n",_ecatADCUART2Val);
             _ecatADCUART2ValPrev = _ecatADCUART2Val;
         }
-
-        
-
-
         memcpy(&EcatDataOutPrev, EcatDataOut,sizeof(TOBJ7010));
     }
 }
-
+TOBJ6000 dataToSend = {0};
 static int8_t realtime_ethercat_data_process(void)
 {
     TOBJ7010 recv_data = {0};
@@ -99,26 +101,8 @@ static int8_t realtime_ethercat_data_process(void)
         printf("ethercat data get failed\r\n");
         return -1;
     }
-  
     BGMEthercatDataParsePoint(recv);
-	// static uint16_t recvData2QPrev[64] = {0};
-    // static uint16_t recvData2Q[64] = {0};
-    static uint16_t QSend2Data[64] = {0};
-
-    // memcpy(recvData2Q, &recv_data, 64 * sizeof(uint16_t));//recv from EtherCAT
-    // if (memcmp(recvData2Q, recvData2QPrev, 64 * sizeof(uint16_t)) != 0)
-    // {
-    //     ECATSendToARMQueueSend(recvData2Q);
-    //     memcpy(recvData2QPrev, recvData2Q, 64 * sizeof(uint16_t));
-    // }
-
-    extern osMessageQueueId_t ethercatA2EQueueHandle;
-    if(osMessageQueueGetCount(ethercatA2EQueueHandle) != 0)//Send to Ethercat
-    {
-        memcpy(QSend2Data,ARMSendToECATQueueRecv(),64 * sizeof(uint16_t));
-        printf("QSend2Data[14] = %d\r\n",QSend2Data[14]);
-        memcpy(&send_data,QSend2Data,64 * sizeof(uint16_t));
-    }
+    memcpy(send, &dataToSend, sizeof(TOBJ6000));
     return ethercat_send_data_update(send, sizeof(send_data));
 }
 

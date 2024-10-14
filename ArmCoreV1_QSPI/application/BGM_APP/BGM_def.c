@@ -20,7 +20,14 @@
 
 const uint8_t BGM_ARM_IO_Version[4] = {0x19,0,0,1};//Hardware version0x19 ,firmware version xx,yy,zz 
 
-
+extern BGMStateMachine_t ARMcurrentState;
+void Shell_CheckALLFSM(void)
+{
+    uint8_t cmdToCheck[2] = {0xc0,0x01};
+    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheck,2); 
+    LOG_I("ARM currentState = %d\r\n",ARMcurrentState);
+}
+MSH_CMD_EXPORT_ALIAS(Shell_CheckALLFSM,ReadAllFSM,"Read All FSM");
 int BGM2AFC_Handshake(void)
 {
     struct cmd_object BGM2AFCHandshake;
@@ -69,24 +76,6 @@ void Shell_BGM2Dose_Handshake(int8_t argc, uint8_t **argv)
     BGM2Dose_Handshake(uartID); 
 }
 MSH_CMD_EXPORT_ALIAS(Shell_BGM2Dose_Handshake,B2DHS,"Dose Board Handshake Set");
-
-
-void BGMShell_BGM2AFTHandshake(int8_t argc, uint8_t **argv)
-{
-    if(argc >1)
-    {
-        printf("hand shake command wrong\r\n");
-    }
-    if(BGM2AFC_Handshake() == 0)
-    {
-        printf("BGM to AFC handshake command Send success\r\n");
-    }
-    else
-    {
-        printf("BGM to AFC handshake command Fail\r\n");
-    }
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_BGM2AFTHandshake,AFCHS,"AFTHandshake Set");
 
 void BGM_SendCmd(enum uart_id uartID,UARTCmdType_t cmdType, uint8_t *cmdData,uint8_t len)
 {
@@ -379,6 +368,7 @@ void BGM_LockBeamData(enum uart_id uartID,uint8_t _lockStatus)
     BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,LockCmd,3); 
     BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,LockCmd,3); 
 }
+
 
 void BGMShell_LockBeamData(int8_t argc, uint8_t **argv)
 {

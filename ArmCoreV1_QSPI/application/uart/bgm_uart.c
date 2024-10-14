@@ -2,14 +2,21 @@
 #include "init_call.h"
 #include "cmsis_os2.h"
 #include "ulog.h"
+#include "BGM_def.h"
 struct dose_info_t
 {
     uint8_t hw_version;
     uint8_t sw_version[6];
 };
 
-struct dose_info_t dose_info = {0};
+struct AFC_info_t
+{
+    uint8_t hw_version;
+    uint8_t sw_version[6];
+};
 
+struct dose_info_t dose_info = {0};
+struct AFC_info_t AFC_info = {0};
 static int8_t dose_handshake_frame_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
@@ -26,7 +33,7 @@ static int8_t dose_handshake_frame_parse(struct cmd_object *cmd)
     // printf("Dose Handshake ok\r\n");
     // ret = 0;
 
-    printf("Dose ID = %x\r\n", cmd->data[0]);
+    LOG_I("Dose ID = %x,Handshake success", cmd->data[0]);
     dose_info.hw_version = cmd->data[1];
     dose_info.sw_version[0] = cmd->data[2];
     dose_info.sw_version[1] = '.';
@@ -35,7 +42,6 @@ static int8_t dose_handshake_frame_parse(struct cmd_object *cmd)
     dose_info.sw_version[4] = cmd->data[4];
     LOG_I("dose hw version: %d\r\n", dose_info.hw_version);
     LOG_I("dose sw version: %s\r\n", dose_info.sw_version);
-
     return ret;
 }
 
@@ -197,6 +203,7 @@ static int8_t dose_interlock_parse(struct cmd_object *cmd)
 
     return ret;
 }
+extern BGMStateMachine_t ARMcurrentState;
 static int8_t dose_state_control_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
@@ -210,7 +217,19 @@ static int8_t dose_state_control_parse(struct cmd_object *cmd)
             cmd->data[2] == 0 ? LOG_I("dose state switch success\r\n") : LOG_I("dose state switch fail\r\n");
             break;
         case 0x01:  /* dose current state */
-            printf("dose current state: %d\r\n", cmd->data[2]);
+            LOG_I("Dose Board current state: %d\r\n", cmd->data[2]);
+            if(cmd->data[2] == 1)
+            {
+                ARMcurrentState = BGM_STATE_IDLE;
+            }
+            if(cmd->data[2] == 3)
+            {
+                ARMcurrentState = BGM_STATE_PREPARE;
+            }
+            if(cmd->data[2] == 6)//complete
+            {
+                ARMcurrentState = BGM_STATE_COMPLETE;
+            }
             break;
         default:
             ret = -1;
@@ -394,7 +413,15 @@ static int8_t uart_dose_cmd_parse(struct cmd_object *cmd)
 static int8_t afc_handshake_frame_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
-
+   LOG_I("AFC Handshake success");
+    AFC_info.hw_version = cmd->data[1];
+    AFC_info.sw_version[0] = cmd->data[2];
+    AFC_info.sw_version[1] = '.';
+    AFC_info.sw_version[2] = cmd->data[3];
+    AFC_info.sw_version[3] = '.';
+    AFC_info.sw_version[4] = cmd->data[4];
+    LOG_I("AFC hw version: %d\r\n", AFC_info.hw_version);
+    LOG_I("AFC sw version: %s\r\n", AFC_info.sw_version);
     return ret;
 }
 
@@ -817,7 +844,7 @@ send_data:
         if (ret != 0)
         {
             printf("device uart[%d] data read err: %d\r\n", uart_id, ret);
-            goto send_data;
+            //goto send_data;
         }
 
         ret = uart_cmd_process(uart_id, &recv_buf);

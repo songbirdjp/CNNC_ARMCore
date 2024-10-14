@@ -14,6 +14,7 @@
 #include "IOE.h"
 #include "ulog.h"
 #include "ethercat.h"
+#include "lan9252_app.h"
 
 #define ethercatA2EQueue_LENGTH 16
 #define ethercatA2EQueue_SIZE 64*sizeof(uint16_t)
@@ -27,8 +28,9 @@
 #define isDoseTriggerQueue_LENGTH 16
 #define isDoseTriggerQueue_SIZE    sizeof(uint16_t)
 
-static BGMStateMachine_t currentState = BGM_STATE_BOOT;
-
+volatile BGMStateMachine_t ARMcurrentState = BGM_STATE_BOOT;
+volatile BGMStateMachine_t PLCcurrentState = BGM_STATE_BOOT;
+extern TOBJ6000 dataToSend;
 osMessageQueueId_t ethercatE2AQueueHandle;
 const osMessageQueueAttr_t ethercatE2AQueue_attributes = {
     .name = "ethercatE2AQueue"};
@@ -130,9 +132,10 @@ static int8_t DoseTrigger_irq_callback(void)
     osMessageQueuePut(isDoseTriggerQueueHandle,&isDoseTrigger,0,0);  
     isDoseTrigger = 0;  
 }
-
+uint16_t RtDataUP[64] = {0};
 static void BGMIOEfunc(void *argument)
 {   
+     //osMutexId_t dataMutex;
     int IOE_Status = IOE_Init();
     IOE_GPIORead();//for stable
     uint16_t ExpandGPIOValue;
@@ -140,7 +143,7 @@ static void BGMIOEfunc(void *argument)
     EPSEnable(1);
     VPSEnable(1);
     ExpandGPIOStatus_t exGPIOState;
-    uint16_t RtDataUP[64] = {0};
+    //uint16_t RtDataUP[64] = {0};
     printf("IOE_Status = %d\r\n",IOE_Status);
     HAL_GPIO_WritePin(GPIOE,GPIO_PIN_2,GPIO_PIN_SET);//PRF Enable
     HAL_GPIO_WritePin(GPIOE,GPIO_PIN_4,GPIO_PIN_SET);//Lv Interlock Enable
@@ -156,36 +159,23 @@ static void BGMIOEfunc(void *argument)
             osMessageQueueGet(ExpandGPIOQueueHandle,&ExpandGPIOValue,0,0);
             exGPIOState = IOE_ExpandGPIODataParse(ExpandGPIOValue);
         }
-        RtDataUP[10] = ExpandGPIOValue;
+        //RtDataUP[10] = ExpandGPIOValue;
+        //(dataMutex, osWaitForever);
+        dataToSend.DataIn1[0] = ExpandGPIOValue;
+        //osMutexRelease(dataMutex);
         RtDataUP[11] = BGM_ReadModInterlocks();
-        if(ExpandGPIOValue!=ExpandGPIOValuePrev)
-        {
-            ARMSendToECATQueueSend(RtDataUP);
-            ExpandGPIOValuePrev = ExpandGPIOValue;
-            //printf("ExpandGPIOValuePrev = %x\t%x\r\n",ExpandGPIOValuePrev,ExpandGPIOValue);
-        }
+        //ARMSendToECATQueueSend(RtDataUP);
         osDelay(1);
     }
 }
 
 struct cmd_object AFCCmdtest;
+uint8_t DoseHandshakeOK = 0;
 static void BGMFSMfunc(void *argument)
 {
-    static uint8_t doseTest[5]= {0x42,0x01,0xEE,0xAA};
-    uint32_t AFCTriggerTime = 4;
-    uint16_t ExpandGPIOValue;
-    // BGM2Dose_Handshake(BGM_UART_DOSE1);
     for (;;)
     {
-        // TriggerOutCtrl(BGMTriggerPin, AFCTriggerTime, 4000);
-        // TriggerOutCtrl(AFCTriggerPin, AFCTriggerTime, 4000);
         BGMFiniteStateMachine();
-        if(osMessageQueueGetCount(isDoseTriggerQueueHandle) != 0)
-        {   
-            osMessageQueueGet(isDoseTriggerQueueHandle,&ExpandGPIOValue,0,0);
-            TriggerOutCtrl(BGMTriggerPin, AFCTriggerTime, 4000);
-            LOG_I("TriggerOutCtrl\r\n");
-        }
         if(osMessageQueueGetCount(ethercatE2AQueueHandle) != 0)
         {
             BGMEthercatDataParse(ECATSendToARMQueueRecv());// parse data from bus and send to 422
@@ -237,7 +227,6 @@ void BGMEthercatDataParse(uint16_t * EcatDataOut)
     static uint16_t dataToParse[64];
     uint8_t RtDataParseToCmd[16];
     memcpy(dataToParse,EcatDataOut,64 * sizeof(uint16_t));
-    currentState = (BGMStateMachine_t)dataToParse[9];//PLC FSM
     AFCMotorPos = dataToParse[35];
     if(AFCMotorPos != AFCMotorPosPrev)
     {
@@ -246,7 +235,6 @@ void BGMEthercatDataParse(uint16_t * EcatDataOut)
         RtDataParseToCmd[2] = (AFCMotorPos >> 8) & 0xFF; 
         RtDataParseToCmd[3] = AFCMotorPos & 0xFF;        
         BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,RtDataParseToCmd,4);
-        printf("dataToParse35 = %d\r\n",dataToParse[35]);
         AFCMotorPosPrev = AFCMotorPos;
     }
 }
@@ -274,128 +262,98 @@ uint16_t* ECATSendToARMQueueRecv(void)
 void BGMFiniteStateMachine(void)
 {
     uint16_t ethercatALStatus;
-    switch (currentState)
+    uint8_t cmdToCheckFSM[2] = {0xc0,0x01};
+    const uint32_t AFCTriggerTime = 5;
+    uint16_t isDoseTrig = 0;
+    uint8_t cmdToCheck[2] = {0xc0,0x01};
+    switch (ARMcurrentState)
     {
     case BGM_STATE_BOOT:
-        printf("BGM_STATE_BOOT\r\n");
-        osDelay(1000);
+        dataToSend.DataIn3[0] = 1;//maintain cali para lock
+        dataToSend.DataIn3[1] = 1;//maintain beam para lock
+        BGM_LockDoseCaliPara(BGM_UART_DOSE1,1);
+        BGM_LockDoseCaliPara(BGM_UART_DOSE2,1);
+        BGM_LockBeamData(BGM_UART_DOSE1,1);
+        BGM_LockBeamData(BGM_UART_DOSE2,1);//lock all data
+        if(BGM_STATE_INIT == PLCcurrentState)
+        {
+            ARMcurrentState = BGM_STATE_INIT;
+        }
+        osDelay(100);
         break;
     case BGM_STATE_INIT:
-        printf("BGM_STATE_INIT\r\n");
-        // initStateHandler();
-        osDelay(1000);
-        // currentState = BGM_STATE_IDLE;
+           //Handshake with dose board
+        if(0 == BGM2Dose_Handshake(BGM_UART_DOSE1))
+        {
+            if(0 == BGM2Dose_Handshake(BGM_UART_DOSE2))
+            {
+                LOG_I("Dose 1&2 Handshake cmd sent OK!");
+                ARMcurrentState = BGM_STATE_IDLE;
+                BGM_CtrlDoseBoardFSM(1);//handshake ok ,change Dose board FSM to idle
+            }
+        }
+        else
+        {
+            LOG_I("Dose 1&2 Handshake cmd sent error!");
+        }
+        //Handshake with dose board complete
+        osDelay(100);
         break;
     case BGM_STATE_IDLE:
-        printf("BGM_STATE_IDLE\r\n");
-        // idleStateHandler();
-        //osDelay(1000);
-        // currentState = BGM_STATE_INIT;
+        BGM_LockDoseCaliPara(BGM_UART_DOSE1,0);// unlock dose board cali parameter 
+        BGM_LockDoseCaliPara(BGM_UART_DOSE2,0);// unlock dose board cali parameter 
+        dataToSend.DataIn3[0] = 0;//tell PLC ready to  set cali parameter 
+        //waiting for adc dac parameter
+        // when plc have sent the parameter,ARM will send them to dose automatically in {BGMEthercatDataParsePoint}
+        //then check dose board 's FSM
+        BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheckFSM,2);
+        // if dose fsm change to pre ,arm will change to pre automatically 
         break;
-
-    case BGM_STATE_PRELIMINARY:
-        // preliminaryStateHandler();
-        printf("BGM_STATE_PRELIMINARY\r\n");
-        osDelay(1000);
-        break;
-
     case BGM_STATE_PREPARE:
-        // prepareStateHandler();
-        printf("BGM_STATE_PREPARE\r\n");
-        osDelay(1000);
+        dataToSend.DataIn3[0] = 1;// tell PLC do not write cali para
+        dataToSend.DataIn3[1] = 0;//tell PLC beam parameter unlock
+        BGM_LockBeamData(BGM_UART_DOSE1,0);
+        BGM_LockBeamData(BGM_UART_DOSE2,0);//lock all data;
+        //waiting for prf &dose set & normal module set
+        // when plc have sent the parameter,ARM will send them to dose automatically in {BGMEthercatDataParsePoint}
+        if(5 == PLCcurrentState)//PLC FSM change to Ready when HMI have sent beam parameters,then arm will lock the data
+        {
+            BGM_LockBeamData(BGM_UART_DOSE1,1);
+            BGM_LockBeamData(BGM_UART_DOSE2,1);//lock all data;
+            dataToSend.DataIn3[1] = 1;
+            ARMcurrentState = BGM_STATE_READY;
+            //todo :add some read back logic
+        }
         break;
 
     case BGM_STATE_READY:
-        // readyStateHandler();
-        printf("BGM_STATE_READY\r\n");
-        osDelay(1000);
+        BGM_CtrlDoseBoardFSM((DoseFsmState_t)4);//change dose board fsm to ready
+        if(6 == PLCcurrentState) //Mod FSM change to TRIG，PLC FSM change to WORK,then change arm to work
+        {
+            BGM_CtrlDoseBoardFSM((DoseFsmState_t)5);//change dose board fsm to radiation
+            ARMcurrentState = BGM_STATE_WORK;
+        }
         break;
 
     case BGM_STATE_WORK:
-        // workStateHandler();
-        printf("BGM_STATE_WORK\r\n");
-        osDelay(1000);
+        if(osMessageQueueGetCount(isDoseTriggerQueueHandle) != 0)
+        {   
+            osMessageQueueGet(isDoseTriggerQueueHandle,&isDoseTrig,0,0);
+            TriggerOutCtrl(BGMTriggerPin, AFCTriggerTime, 4000);
+            LOG_I("TriggerOutCtrl\r\n");
+            BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheck,2); //Polling to check if dose board complete
+            //when dose board change fsm to complete,whole trig process complete
+            // ARM will be changed to BGM_STATE_COMPLETE in function {dose_state_control_parse}
+        }
         break;
-
-    case BGM_STATE_POWERSAVER:
-        // powerSaverStateHandler();
-        printf("BGM_STATE_POWERSAVER\r\n");
-        osDelay(1000);
-        break;
-
-    case BGM_STATE_TERMINATE:
-        // terminateStateHandler();
-        printf("BGM_STATE_TERMINATE\r\n");
-        osDelay(1000);
-        break;
-
-    case BGM_STATE_INTERRUPT:
-        // interruptStateHandler();
-        printf("BGM_STATE_INTERRUPT\r\n");
-        osDelay(1000);
-        break;
-
-    case BGM_STATE_PARK:
-        // parkStateHandler();
-        printf("BGM_STATE_PARK\r\n");
-        osDelay(1000);
-        break;
-
     case BGM_STATE_COMPLETE:
-        // completeStateHandler();
         printf("BGM_STATE_COMPLETE\r\n");
         osDelay(1000);
         break;
-
     default:
-        currentState = BGM_STATE_BOOT;
+        ARMcurrentState = BGM_STATE_BOOT;
         break;
     }
-}
-
-void initStateHandler(void)
-{
-    ;
-}
-void idleStateHandler(void)
-{
-    ;
-}
-void preliminaryStateHandler(void)
-{
-    ;
-}
-void prepareStateHandler(void)
-{
-    ;
-}
-void readyStateHandler(void)
-{
-    ;
-}
-void workStateHandler(void)
-{
-    ;
-}
-void powerSaverStateHandler(void)
-{
-    ;
-}
-void terminateStateHandler(void)
-{
-    ;
-}
-void interruptStateHandler(void)
-{
-    ;
-}
-void parkStateHandler(void)
-{
-    ;
-}
-void completeStateHandler(void)
-{
-    ;
 }
 GPIOConfig TriggerPinTable[] = {
     {GPIOG, GPIO_PIN_14}, // AFCTriggerPin
