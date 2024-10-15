@@ -95,17 +95,6 @@ typedef enum{
 
 static void BGMIOEfunc(void *argument);
 static void BGMFSMfunc(void *argument);
-void initStateHandler(void);
-void idleStateHandler(void);
-void preliminaryStateHandler(void);
-void prepareStateHandler(void);
-void readyStateHandler(void);
-void workStateHandler(void);
-void powerSaverStateHandler(void);
-void terminateStateHandler(void);
-void interruptStateHandler(void);
-void parkStateHandler(void);
-void completeStateHandler(void);
 void TriggerOutCtrl(TriggerIO_Name TriggerPin, uint32_t _triggerHighTime_us, uint32_t _triggerLowTime_us);
 void ARMSendToECATQueueSend(uint16_t* value_to_send);
 uint16_t* ARMSendToECATQueueRecv(void);
@@ -117,8 +106,15 @@ int BGM2Dose_Handshake(enum uart_id uartID);
 int BGM2AFC_Handshake(void);
 BGMInterlocksDetect_t BGM_ReadAllInterlocks(void);
 uint16_t BGM_ReadModInterlocks(void);
+
 void BGM_CtrlDoseBoardFSM(DoseFsmState_t doseFSM);
 void BGM_SetDoseBoardPRF(enum uart_id uartID,uint8_t prfVal);
 void BGM_SetDoseBoardDose(enum uart_id uartID,uint16_t doseVal);
+void BGM_LockBeamData(enum uart_id uartID,uint8_t _lockStatus);
+void BGM_LockDoseCaliPara(enum uart_id uartID,uint8_t _lockStatus);
+
+void BGM_SetDoseMode(enum uart_id uartID,uint8_t doseMode);
+void BGM_SetDoseBoardKadc(enum uart_id uartID,uint32_t kadcVal);
+void BGM_SetDoseBoardDAC(enum uart_id uartID,uint32_t dacVal);
 // void ECATSendToARMQueueSend(TOBJ7010 *valueOut);
 #endif /* __BGM_DEF_H__ */

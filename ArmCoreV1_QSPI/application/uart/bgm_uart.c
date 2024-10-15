@@ -94,6 +94,10 @@ static int8_t dose_calibration_parse(struct cmd_object *cmd)
 
     return ret;
 }
+
+extern uint8_t isDoseSetOK;
+extern uint8_t isPRFOK;
+extern uint8_t isDoseModeOK;
 static int8_t dose_treatment_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
@@ -102,15 +106,18 @@ static int8_t dose_treatment_parse(struct cmd_object *cmd)
     {
     case 0x40:
         cmd->data[2] == 0 ? LOG_I("dose dummy mode set\r\n") : LOG_I("dose normal mode set\r\n");
+         isDoseModeOK = 1;
         break;
     case 0x41:
         switch (cmd->data[1])
         {
         case 0x00:
             LOG_I("pulse generation mode set %d\r\n", cmd->data[2]);
+            // isDoseModeOK = 1;
             break;
         case 0x01:
             LOG_I("dose prf set %u ok\r\n", cmd->data[2]);
+            isPRFOK = 1;
             break;
         default:
             ret = -1;
@@ -124,6 +131,7 @@ static int8_t dose_treatment_parse(struct cmd_object *cmd)
             break;
         case 0x01:
             LOG_I("dose meter set %u ok\r\n", cmd->data[3] << 8 | cmd->data[2]);
+            isDoseSetOK = 1;
             break;
         case 0x02:
         case 0x03:
@@ -604,14 +612,14 @@ static int8_t uart_vps_cmd_parse(struct cmd_object *cmd)
 {
     if (cmd == NULL)
     {
-        printf("cmd is NULL\r\n");
+        LOG_I("cmd is NULL\r\n");
         return -1;
     }
 
     /* 1. check cmd id */
     if (cmd->id.byte != DEVICE_ADDRESS_VPS)
     {
-        printf("invalid cmd id: %d\r\n", cmd->id.byte);
+        LOG_I("invalid cmd id: %d\r\n", cmd->id.byte);
         return -2;
     }
 
@@ -625,7 +633,7 @@ static int8_t uart_vps_cmd_parse(struct cmd_object *cmd)
     uint16_t crc_cal = modbus_crc16_cal(buf, cmd->len);
     if (crc_cal != crc)
     {
-        printf("crc err: %x, %x \r\n", crc_cal, crc);
+        LOG_I("crc err: %x, %x \r\n", crc_cal, crc);
         return -3;
     }
 
@@ -637,7 +645,7 @@ static int8_t uart_vps_cmd_parse(struct cmd_object *cmd)
          * 3：寄存器数量超限
          * 4：内部处理出错
          */
-        printf("cmd frame err: %d\r\n", cmd->data[0]);
+        LOG_I("cmd frame err: %d\r\n", cmd->data[0]);
         return -4;
     }
 
@@ -646,25 +654,25 @@ static int8_t uart_vps_cmd_parse(struct cmd_object *cmd)
     case READ_HOLDING_REGISTERS:
         for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
         {
-            printf("%.4x ", cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("%.4x ", cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
         }
-        printf("\r\n");
+        LOG_I("\r\n");
         break;
     case READ_INPUT_REGISTERS:
         for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
         {
-            printf("%.4x ", cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("%.4x ", cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
         }
-        printf("\r\n");
+        LOG_I("\r\n");
         break;
     case WRITE_SINGLE_REGISTER:
-        printf("reg addr: %#.4x, value: %#.4x\r\n", cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("reg addr: %#.4x, value: %#.4x\r\n", cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
         break;
     case WRITE_MULTIPLE_REGISTERS:
-        printf("reg addr: %#.4x, len: %#.4x\r\n", cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("reg addr: %#.4x, len: %#.4x\r\n", cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
         break;
     default:
-        printf("invalid cmd type: %d\r\n", cmd->type);
+        LOG_I("invalid cmd type: %d\r\n", cmd->type);
         return -5;
         break;
     }
@@ -1002,14 +1010,14 @@ static int8_t bgm_uart_modbus_cmd_send(uint8_t argc, char **argv)
 {
     int8_t ret = 0;
     struct cmd_object cmd = {0};
-    uint8_t data[10] = {0x00, 0x64, 0x00, 0x01};
+    uint8_t data[10] = {0x01, 0xF4, 0x00, 0x02};
 
     cmd.id.byte = DEVICE_ADDRESS_EPS;
     cmd.type = READ_HOLDING_REGISTERS;
     cmd.len = 4;
     cmd.data = data;
 
-    ret = uart_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_cmd_write(BGM_UART_VPS, &cmd);
     if (ret != 0)
     {
         printf("uart cmd write err: %d\r\n", ret);

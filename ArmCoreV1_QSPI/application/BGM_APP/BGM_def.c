@@ -315,6 +315,23 @@ void BGMShell_SetDoseBoardPRF(int8_t argc, uint8_t **argv)
 }
 MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseBoardPRF,DOSEPRF,"Set DoseBoard PRF");
 
+void BGM_SetDoseMode(enum uart_id uartID,uint8_t doseMode)//BGM_SetDoseBoardDose
+{
+    uint8_t doseCmd[3] = {0x40,0x00,0x000};
+    doseCmd[2] = doseMode;
+    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,doseCmd,3); 
+    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,doseCmd,3); 
+}
+void BGMShell_SetDoseMode(int8_t argc, uint8_t **argv)
+{
+    enum uart_id id;
+    uint16_t shellPara = 0;
+    id = (enum uart_id)strtol((char *)argv[1], NULL, 16);
+    shellPara =(uint8_t)strtol((char *)argv[2], NULL, 16);
+    BGM_SetDoseMode(id,shellPara);
+}
+MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseMode,DOSEModeSet,"DOSE Mode Set dummy or Normal");
+
 void BGM_SetDoseBoardDose(enum uart_id uartID,uint16_t doseVal)
 {
     uint8_t doseCmd[4] = {0x42,0x01,0x00,0x00};
