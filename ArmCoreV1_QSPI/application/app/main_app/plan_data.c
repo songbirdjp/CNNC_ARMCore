@@ -12,7 +12,7 @@ static struct beam_data *beam_data_get(uint8_t beam_id)
     return &beam_data_array[beam_id];
 }
 
-uint64_t beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t ri_idx)
+float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t ri_idx)
 {
     struct beam_data *beam_data = beam_data_get(beam_id);
 
@@ -22,7 +22,7 @@ uint64_t beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16
         return 0;
     }
 
-    uint64_t value = 0;
+    float value = 0;
 
     osMutexAcquire(beam_data->mutex, osWaitForever);
 
@@ -104,7 +104,7 @@ uint64_t beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16
     return value;
 }
 
-int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t ri_idx, uint64_t value)
+int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t ri_idx, float value)
 {
     struct beam_data *beam_data = beam_data_get(beam_id);
 

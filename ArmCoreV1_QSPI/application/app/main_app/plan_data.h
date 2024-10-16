@@ -49,8 +49,8 @@ enum beam_data_state
 };
 
 int8_t beam_data_pointer_get(uint8_t beam_id, void **ptr);
-uint64_t beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t ri_idx);
-int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t ri_idx, uint64_t value);
+float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t ri_idx);
+int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t ri_idx, float value);
 int8_t beam_data_cleanup(uint8_t beam_id);
 
 #ifdef __cplusplus

@@ -10,11 +10,49 @@
 #include "gpio_app.h"
 #include "ulog.h"
 
-#define RADIATION_SIMULATION_MODE
+// #define RADIATION_SIMULATION_MODE
+#ifdef RADIATION_SIMULATION_MODE
+static uint8_t radiation_simulation_trigger_out_flag = 0;
+uint16_t dose_simulated[BUF_LEN] = {0}, dose_simulated_1[BUF_LEN] = {0};
+static int8_t radiation_simulation_dose_deal(uint16_t *buf, uint8_t len)
+{
+    if (buf == NULL || len == 0)
+    {
+        return -1;
+    }
 
-#define USING_LPTIM3_FOR_RADIATION_TIMEOUT
-#ifdef USING_LPTIM3_FOR_RADIATION_TIMEOUT
-#include "lptim.h"
+    if (dose_simulated[0] == 0)
+    {
+        for (uint16_t i = 0; i < BUF_LEN; i++)
+        {
+            dose_simulated[i] = i * 2 + 50;
+            dose_simulated_1[i] =  (BUF_LEN - i - 1) * 2 + 50;
+        }
+    }
+
+#if 0
+    for (uint16_t i = 0; i < BUF_LEN; i++)
+    {
+        LOG_I("%d ", dose_simulated_1[i]);
+    }
+    LOG_I("\r\n");
+#endif
+
+    static uint8_t cnt = 0;
+    if (cnt < 2)
+    {
+        memcpy(buf, dose_simulated, len * 2);
+    }
+    else
+    {
+        memcpy(buf, dose_simulated_1, len * 2);
+    }
+
+    cnt++;
+    cnt %= 4;
+
+    return 0;
+}
 #endif
 
 struct radiation_index_data
@@ -356,16 +394,225 @@ uint64_t dose_value_status_get(enum pulse_state state)
     return value;
 }
 
-#ifdef USING_LPTIM3_FOR_RADIATION_TIMEOUT
-static uint8_t timer_delay_flag = 0;
-#define TIM_DELAY_ONE_PULSE_TIMEOUT_US      (1 << 0)
-#define TIM_DELAY_PULSE_INTERVAL_TIME_US    (1 << 1)
-#define TIM_DELAY_NO_PULSE_INTERVAL_TIME_US (1 << 2)
-#define TIM_DELAY_DUMMY_START_US            (1 << 3)
+struct trigger_out
+{
+    uint8_t type;
+    uint8_t flag;
+    uint32_t interval_us;
+
+    osMutexId_t mutex;
+};
+struct trigger_out trigger_out_object = {0};
+static struct trigger_out *trigger_out_obj_get(void)
+{
+    return &trigger_out_object;
+}
+enum trigger_out_state
+{
+    TRIGGER_OUT_TYPE = 0,
+    TRIGGER_OUT_FLAG,
+    TRIGGER_OUT_INTERVAL,
+    TRIGGER_OUT_MAX,
+};
+static int8_t trigger_out_info_set(enum trigger_out_state state, uint32_t value)
+{
+    int8_t ret = 0;
+    struct trigger_out *obj = trigger_out_obj_get();
+    osMutexAcquire(obj->mutex, osWaitForever);
+
+    switch (state)
+    {
+    case TRIGGER_OUT_TYPE:
+        obj->type = value;
+        break;
+    case TRIGGER_OUT_FLAG:
+        obj->flag = value;
+        break;
+    case TRIGGER_OUT_INTERVAL:
+        obj->interval_us = value;
+        break;
+    default:
+        LOG_E("invalid trigger out state: %d\r\n", state);
+        break;
+    }
+
+    osMutexRelease(obj->mutex);
+
+    return ret;
+}
+static uint32_t trigger_out_info_get(enum trigger_out_state state)
+{
+    uint32_t value = 0;
+    struct trigger_out *obj = trigger_out_obj_get();
+    osMutexAcquire(obj->mutex, osWaitForever);
+
+    switch (state)
+    {
+    case TRIGGER_OUT_TYPE:
+        value = obj->type;
+        break;
+    case TRIGGER_OUT_FLAG:
+        value = obj->flag;
+        break;
+    case TRIGGER_OUT_INTERVAL:
+        value = obj->interval_us;
+        break;
+    default:
+        LOG_E("invalid trigger out state: %d\r\n", state);
+        break;
+    }
+
+    osMutexRelease(obj->mutex);
+
+    return value;
+}
+
+#define USING_TIM5_FOR_RADIATION_TIMEOUT
+#ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
+#include "tim.h"
+#define TIM_DELAY_PULSE_INTERVAL_TIME_US    (1 << 0)
+#define TIM_DELAY_NO_PULSE_INTERVAL_TIME_US (1 << 1)
+#define TIM_DELAY_DUMMY_START_US            (1 << 2)
+#define TIM_DELAY_PULSE_LEVEL_RESET_TIME_US (1 << 3)
 #define TIM_DELAY_RUNNING_FLAG_BIT_7        (1 << 7)
+#define NORMAL_PULSE_RESET_DELAY_TIME_US    (2000)
 #define DUMMY_START_DELAY_TIME_US           (20000)
+static uint8_t timer_delay_flag = 0;
 static osEventFlagsId_t timer_delay_event = NULL;
-static void LPTIM3_Callback(LPTIM_HandleTypeDef *hlptim)
+static void PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    HAL_StatusTypeDef status = HAL_TIM_Base_Stop_IT(htim);
+    if (status != HAL_OK)
+    {
+        LOG_E("HAL_TIM_Base_Stop_IT err: %d\r\n", status);
+    }
+
+    osEventFlagsSet(timer_delay_event, timer_delay_flag & ~TIM_DELAY_RUNNING_FLAG_BIT_7);
+}
+static int8_t timer_delay_start(uint8_t type, uint32_t timeout_us)
+{
+    if (timer_delay_flag & TIM_DELAY_RUNNING_FLAG_BIT_7)
+    {
+        // LOG_I("timer delay is running\r\n");
+        return 0;
+    }
+
+    timer_delay_flag = TIM_DELAY_RUNNING_FLAG_BIT_7 | type;
+
+    __HAL_TIM_SET_AUTORELOAD(&htim5, timeout_us);
+
+    HAL_StatusTypeDef status = HAL_TIM_Base_Start_IT(&htim5);
+    if (status != HAL_OK)
+    {
+        LOG_E("HAL_TIM_Base_Start_IT err: %d\r\n", status);
+        return -1;
+    }
+
+    return 0;
+}
+static int8_t time_delay_entry(void *argument)
+{
+    int8_t ret = 0;
+    uint32_t event_flag = 0;
+
+#ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
+    MX_TIM5_Init();
+    HAL_StatusTypeDef status = HAL_TIM_RegisterCallback(&htim5, HAL_TIM_PERIOD_ELAPSED_CB_ID, PeriodElapsedCallback);
+    if (status != HAL_OK)
+    {
+        LOG_E("HAL_TIM_RegisterCallback err: %d\r\n", status);
+        return -1;
+    }
+#endif
+
+    for (;;)
+    {
+        event_flag = osEventFlagsWait(timer_delay_event, TIM_DELAY_PULSE_INTERVAL_TIME_US | TIM_DELAY_NO_PULSE_INTERVAL_TIME_US | TIM_DELAY_DUMMY_START_US | TIM_DELAY_PULSE_LEVEL_RESET_TIME_US, osFlagsWaitAny, osWaitForever);
+        timer_delay_flag = 0;
+        if (event_flag & TIM_DELAY_PULSE_INTERVAL_TIME_US)
+        {
+            ret = dose_value_status_update(ONE_PULSE_START, 0, 0);
+            if (ret != 0)
+            {
+                LOG_E("dose value status update err: %d\r\n", ret);
+            }
+            if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
+            {
+                ret = dose_trigger_out_set(0);
+                if (ret != 0)
+                {
+                    LOG_E("dose_trigger_out_set err: %d\r\n", ret);
+                }
+                /* reset trigger out level */                
+                ret = timer_delay_start(TIM_DELAY_PULSE_LEVEL_RESET_TIME_US, NORMAL_PULSE_RESET_DELAY_TIME_US);
+                if (ret != 0)
+                {
+                    LOG_E("timer delay start err: %d\r\n", ret);
+                }
+
+#ifdef RADIATION_SIMULATION_MODE
+                radiation_simulation_trigger_out_flag = 1;
+#endif
+            }
+        }
+        else if (event_flag & TIM_DELAY_PULSE_LEVEL_RESET_TIME_US)
+        {
+            if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
+            {
+                ret = dose_trigger_out_set(1);
+                if (ret != 0)
+                {
+                    LOG_E("dose_trigger_out_set err: %d\r\n", ret);
+                }
+                /* prepare for next pulse */
+                if (fsm_state_get() == FSM_STATE_RADIATION && trigger_out_info_get(TRIGGER_OUT_FLAG) == 1)
+                {
+                    ret = timer_delay_start(trigger_out_info_get(TRIGGER_OUT_TYPE), trigger_out_info_get(TRIGGER_OUT_INTERVAL) - NORMAL_PULSE_RESET_DELAY_TIME_US);
+                    if (ret != 0)
+                    {
+                        LOG_E("timer delay start err: %d\r\n", ret);
+                    }
+                }
+            }
+        }
+        else if (event_flag & TIM_DELAY_NO_PULSE_INTERVAL_TIME_US)
+        {
+            /* prepare for next pulse */
+            if (fsm_state_get() == FSM_STATE_RADIATION && trigger_out_info_get(TRIGGER_OUT_FLAG) == 1)
+            {
+                ret = timer_delay_start(trigger_out_info_get(TRIGGER_OUT_TYPE), trigger_out_info_get(TRIGGER_OUT_INTERVAL));    /* TODO: next pulse delay time can be (interval or other) */
+                if (ret != 0)
+                {
+                    LOG_E("timer delay start err: %d\r\n", ret);
+                }
+            }
+        }
+        else if (event_flag & TIM_DELAY_DUMMY_START_US)
+        {
+            ret = adcs7476_sample_enable(1);
+            if (ret != 0)
+            {
+                LOG_E("adcs7476_sample_enable err: %d\r\n", ret);
+            }
+        }
+        else
+        {
+            /* do nothing */
+        }
+    }
+
+    return 0;
+}
+#endif
+
+#define USING_LPTIM3_FOR_RADIATION_TIMEOUT
+#ifdef USING_LPTIM3_FOR_RADIATION_TIMEOUT
+#include "lptim.h"
+static uint8_t lptim3_delay_flag = 0;
+static osEventFlagsId_t lptim3_delay_event = NULL;
+#define LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US      (1 << 0)
+#define LPTIM3_DELAY_RUNNING_FLAG_BIT_7        (1 << 7)
+static void AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
 {
     HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Stop_IT(hlptim);
     if (status != HAL_OK)
@@ -373,71 +620,50 @@ static void LPTIM3_Callback(LPTIM_HandleTypeDef *hlptim)
         LOG_E("HAL_LPTIM_SetOnce_Stop_IT err: %d\r\n", status);
     }
 
-    osEventFlagsSet(timer_delay_event, timer_delay_flag & ~TIM_DELAY_RUNNING_FLAG_BIT_7);
+    osEventFlagsSet(lptim3_delay_event, lptim3_delay_flag & ~LPTIM3_DELAY_RUNNING_FLAG_BIT_7);
 }
-static int8_t adcs7476_value_dummy(uint16_t value, uint8_t channel);
-#ifdef RADIATION_SIMULATION_MODE
-static uint8_t radiation_simulation_trigger_out_flag = 0;
-uint16_t dose_simulated[BUF_LEN] = {0}, dose_simulated_1[BUF_LEN] = {0};
-static int8_t radiation_simulation_dose_deal(uint16_t *buf, uint8_t len)
+static int8_t lptim3_delay_start(uint8_t type, uint32_t timeout_us)
 {
-    if (buf == NULL || len == 0)
+    if (timeout_us * 1000 / 40 > 0xFFFF)
     {
+        LOG_E("timeout_us too large: %d\r\n", timeout_us);
         return -1;
     }
 
-    if (dose_simulated[0] == 0)
+    if (lptim3_delay_flag & LPTIM3_DELAY_RUNNING_FLAG_BIT_7)
     {
-        for (uint16_t i = 0; i < BUF_LEN; i++)
-        {
-            dose_simulated[i] = i * 2 + 50;
-            dose_simulated_1[i] =  (BUF_LEN - i - 1) * 2 + 50;
-        }
+        // LOG_I("timer delay is running\r\n");
+        return 0;
     }
 
-#if 0
-    for (uint16_t i = 0; i < BUF_LEN; i++)
-    {
-        LOG_I("%d ", dose_simulated_1[i]);
-    }
-    LOG_I("\r\n");
-#endif
+    lptim3_delay_flag = LPTIM3_DELAY_RUNNING_FLAG_BIT_7 | type;
 
-    static uint8_t cnt = 0;
-    if (cnt < 2)
+    HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Start_IT(&hlptim3, timeout_us * 1000 / 40, timeout_us * 1000 / 40);
+    if (status != HAL_OK)
     {
-        memcpy(buf, dose_simulated, len * 2);
+        LOG_E("HAL_LPTIM_SetOnce_Start_IT err: %d\r\n", status);
+        return -2;
     }
-    else
-    {
-        memcpy(buf, dose_simulated_1, len * 2);
-    }
-
-    cnt++;
-    cnt %= 4;
 
     return 0;
 }
-#endif
-static int8_t time_delay_entry(void *argument)
+static int8_t lptim3_delay_entry(void *argument)
 {
     int8_t ret = 0;
     uint32_t event_flag = 0;
 
-#ifdef USING_LPTIM3_FOR_RADIATION_TIMEOUT
     MX_LPTIM3_Init();
-    HAL_StatusTypeDef status = HAL_LPTIM_RegisterCallback(&hlptim3, HAL_LPTIM_AUTORELOAD_MATCH_CB_ID, LPTIM3_Callback);
+    HAL_StatusTypeDef status = HAL_LPTIM_RegisterCallback(&hlptim3, HAL_LPTIM_AUTORELOAD_MATCH_CB_ID, AutoReloadMatchCallback);
     if (status != HAL_OK)
     {
-        LOG_E("HAL_LPTIM_RegisterCallback err: %d\r\n", status);
+        LOG_E("HAL_TIM_RegisterCallback err: %d\r\n", status);
         return -1;
     }
-#endif
 
     for (;;)
     {
-        event_flag = osEventFlagsWait(timer_delay_event, TIM_DELAY_ONE_PULSE_TIMEOUT_US | TIM_DELAY_PULSE_INTERVAL_TIME_US | TIM_DELAY_NO_PULSE_INTERVAL_TIME_US | TIM_DELAY_DUMMY_START_US, osFlagsWaitAny, osWaitForever);
-        if (event_flag & TIM_DELAY_ONE_PULSE_TIMEOUT_US)
+        event_flag = osEventFlagsWait(lptim3_delay_event, LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US, osFlagsWaitAny, osWaitForever);
+        if (event_flag & LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US)
         {
             if (dose_value_status_get(ONE_PULSE_COMPLETE) == 0)
             {
@@ -448,67 +674,9 @@ static int8_t time_delay_entry(void *argument)
                 }
             }
         }
-        else if (event_flag & TIM_DELAY_PULSE_INTERVAL_TIME_US)
-        {
-            ret = dose_value_status_update(ONE_PULSE_START, 0, 0);
-            if (ret != 0)
-            {
-                LOG_E("dose value status update err: %d\r\n", ret);
-            }
-            if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
-            {
-                ret = dose_trigger_out_set(1);
-                if (ret != 0)
-                {
-                    LOG_E("dose_trigger_out_set err: %d\r\n", ret);
-                }
-#ifdef RADIATION_SIMULATION_MODE
-                radiation_simulation_trigger_out_flag = 1;
-#endif
-            }
-        }
-        else if (event_flag & TIM_DELAY_NO_PULSE_INTERVAL_TIME_US)
-        {
-            /* do nothing */
-        }
-        else if (event_flag & TIM_DELAY_DUMMY_START_US)
-        {
-            ret = adcs7476_sample_enable(1);
-            if (ret != 0)
-            {
-                LOG_E("adcs7476_sample_enable err: %d\r\n", ret);
-            }
-        }
 
-        timer_delay_flag = 0;
+        lptim3_delay_flag = 0;
     }
-
-    return 0;
-}
-
-static int8_t timer_delay_start(uint8_t type, uint16_t timeout_us)
-{
-    if (timeout_us * 1000 / 320 > 0xFFFF)
-    {
-        LOG_E("parameter err: %u\r\n", timeout_us);
-        return -1;
-    }
-
-    if (timer_delay_flag & TIM_DELAY_RUNNING_FLAG_BIT_7)
-    {
-        // LOG_I("timer delay is running\r\n");
-        return 0;
-    }
-
-    timer_delay_flag = TIM_DELAY_RUNNING_FLAG_BIT_7 | type;
-
-    HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Start_IT(&hlptim3, timeout_us * 1000 / 320, timeout_us * 1000 / 320);
-    if (status != HAL_OK)
-    {
-        LOG_E("HAL_LPTIM_SetOnce_Start_IT err: %d\r\n", status);
-        return -3;
-    }
-
     return 0;
 }
 #endif
@@ -523,11 +691,11 @@ static uint16_t adcs7476_value_check(uint16_t *buf, uint16_t len, uint64_t *puls
         if (buf[i] >= ADCS7476_VALUE_ACCUMULATE_LIMIT)
         {
             *pulse_val += buf[i] - ADCS7476_SERVO_VALUE;
-#ifdef USING_LPTIM3_FOR_RADIATION_TIMEOUT
-            ret = timer_delay_start(TIM_DELAY_ONE_PULSE_TIMEOUT_US, ONE_PULSE_TIMEOUT_US);
+#ifdef LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US
+            ret = lptim3_delay_start(LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US, ONE_PULSE_TIMEOUT_US);
             if (ret != 0)
             {
-                LOG_E("timer delay start err: %d\r\n", ret);
+                LOG_E("lptim3 delay start err: %d\r\n", ret);
             }
 #else
 #endif
@@ -687,19 +855,11 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
             return 0;
         }
 
-        /* 1. stop trigger out */
-        ret = dose_trigger_out_set(0);
-        if (ret != 0)
-        {
-            LOG_E("dose_trigger_out_set err: %d\r\n", ret);
-            return ret;
-        }
-
 #ifdef RADIATION_SIMULATION_MODE
         radiation_simulation_trigger_out_flag = 0;
 #endif
 
-        /* 2. update one pulse status */
+        /* 1. update one pulse status */
         ret = dose_value_status_update(ONE_PULSE_COMPLETE, 0, 0);
         if (ret != 0)
         {
@@ -712,7 +872,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
         break;
     }
 
-    /* 3. check total dose */
+    /* 2. check total dose */
     uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
     uint64_t dose_accumulated_target = radiation_data_value_get(DOSE_BEAM_METER);
 
@@ -739,6 +899,13 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
     if (dose_accumulated_cur >= dose_accumulated_target)
     {
         LOG_I("end dose accumulated: %llu, target: %llu\r\n", dose_accumulated_cur, dose_accumulated_target);
+
+        ret = trigger_out_info_set(TRIGGER_OUT_FLAG, 0);
+        if (ret != 0)
+        {
+            LOG_E("trigger out info set err: %d\r\n", ret);
+            return ret;
+        }
 
         ret = dose_value_status_update(ONE_BEAM_COMPLETE, 0, 0);
         if (ret != 0)
@@ -788,7 +955,7 @@ static int8_t detect_whether_one_pulse_repeat(void)
             return ret;
         }
 
-#ifdef USING_LPTIM3_FOR_RADIATION_TIMEOUT
+#ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
         ret = timer_delay_start(TIM_DELAY_DUMMY_START_US, DUMMY_START_DELAY_TIME_US);
         if (ret != 0)
         {
@@ -801,6 +968,12 @@ static int8_t detect_whether_one_pulse_repeat(void)
 
     if (fsm_state_get() != FSM_STATE_RADIATION)
     {
+        ret = trigger_out_info_set(TRIGGER_OUT_FLAG, 0);
+        if (ret != 0)
+        {
+            LOG_E("trigger out info set err: %d\r\n", ret);
+            return ret;
+        }
         return 0;
     }
 
@@ -808,7 +981,7 @@ static int8_t detect_whether_one_pulse_repeat(void)
     uint8_t pulse_mode = radiation_data_value_get(PULSE_GENERATION_MODE);
     uint64_t dose_radiation_index = radiation_data_value_get(DOSE_RADIATION_IDX);
     uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
-    uint16_t pulse_interval = radiation_data_value_get(PULSE_INTERVAL);
+    uint32_t pulse_interval = radiation_data_value_get(PULSE_INTERVAL);
     
     if (pulse_mode == 0)    /* PRF */
     {
@@ -848,12 +1021,34 @@ static int8_t detect_whether_one_pulse_repeat(void)
     }
 
     /* delay to prepare a new pulse */
-#ifdef USING_LPTIM3_FOR_RADIATION_TIMEOUT
-    ret = timer_delay_start(time_delay_type, pulse_interval);
+#ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
+    ret = trigger_out_info_set(TRIGGER_OUT_TYPE, time_delay_type);
     if (ret != 0)
     {
-        LOG_E("timer delay start err: %d\r\n", ret);
+        LOG_E("trigger out info set err: %d\r\n", ret);
         return ret;
+    }
+
+    if (trigger_out_info_get(TRIGGER_OUT_FLAG) == 0)
+    {
+        ret = trigger_out_info_set(TRIGGER_OUT_FLAG, 1);
+        if (ret != 0)
+        {
+            LOG_E("trigger out info set err: %d\r\n", ret);
+            return ret;
+        }
+        ret = trigger_out_info_set(TRIGGER_OUT_INTERVAL, pulse_interval);
+        if (ret != 0)
+        {
+            LOG_E("trigger out info set err: %d\r\n", ret);
+            return ret;
+        }
+        ret = timer_delay_start(time_delay_type, pulse_interval);
+        if (ret != 0)
+        {
+            LOG_E("timer delay start err: %d\r\n", ret);
+            return ret;
+        }
     }
 #endif
 
@@ -901,15 +1096,48 @@ static int8_t adcs7476_data_dump(uint8_t argc, char *argv[])
         return -1;
     }
 
-    uint8_t index = atoi(argv[1]);
+    // uint8_t index = atoi(argv[1]);
 
-    if (index >= 2)
+    // if (index >= 2)
+    // {
+    //     return -2;
+    // }
+
+    // uint16_t *buf = adcs7476_data_buf[index];
+    // uint16_t len = adcs7476_data_len[index];
+
+    // LOG_I("adcs7476 data dump: %d\r\n", len);
+    // for (uint16_t i = 0; i < len; i++)
+    // {
+    //     LOG_I("%.4d ", buf[i]);
+    // }
+    // LOG_I("\r\n");
+
+    uint16_t *buf = NULL;
+    uint16_t len = 0;
+
+    switch (atoi(argv[1]))
     {
+    case 0:
+        buf = adcs7476_data_buf[0];
+        len = adcs7476_data_len[0];
+        break;
+    case 1:
+        buf = adcs7476_data_buf[1];
+        len = adcs7476_data_len[1];
+        break;
+    case 2: /* sum of two channel */
+        for (uint16_t i = 0; i < adcs7476_data_len[0]; i++)
+        {
+            adcs7476_data_buf[0][i] += adcs7476_data_buf[1][i];
+        }
+        buf = adcs7476_data_buf[0];
+        len = adcs7476_data_len[0];
+        break;
+    default:
         return -2;
+        break;
     }
-
-    uint16_t *buf = adcs7476_data_buf[index];
-    uint16_t len = adcs7476_data_len[index];
 
     LOG_I("adcs7476 data dump: %d\r\n", len);
     for (uint16_t i = 0; i < len; i++)
@@ -968,7 +1196,7 @@ int8_t adcs7476_value_process(void)
     }
 
 #ifdef ADCS7476_DATA_DUMP
-    if (pulse_cnt != 0 && pulse_cnt < BUF_LEN)
+    if (pulse_cnt != 0 && pulse_cnt <= BUF_LEN)
     {
         ret = adcs7476_data_save(0, buf, BUF_LEN);
         ret = adcs7476_data_save(1, buf_1, BUF_LEN);
@@ -1145,9 +1373,17 @@ static int8_t radiation_thread_init(void)
 
     osThreadAttr_t time_delay_thread_attributes = {
     .name = "time_delay_thread",
-    .stack_size = 128 * 4,
+    .stack_size = 1024 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
+
+#ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
+    timer_delay_event = osEventFlagsNew(NULL);
+    if (timer_delay_event == NULL)
+    {
+        LOG_E("timer delay event create failed\r\n");
+        return -3;
+    }
 
     osThreadId_t time_delay_threadHandle = osThreadNew(time_delay_entry, NULL, &time_delay_thread_attributes);
     if (time_delay_threadHandle == NULL)
@@ -1155,13 +1391,29 @@ static int8_t radiation_thread_init(void)
         LOG_E("thread time delay create failed\r\n");
         return -2;
     }
+#endif
 
-    timer_delay_event = osEventFlagsNew(NULL);
-    if (timer_delay_event == NULL)
+#ifdef USING_LPTIM3_FOR_RADIATION_TIMEOUT
+    lptim3_delay_event = osEventFlagsNew(NULL);
+    if (lptim3_delay_event == NULL)
     {
-        LOG_E("timer delay event create failed\r\n");
+        LOG_E("lptim3 delay event create failed\r\n");
         return -3;
     }
+
+    osThreadAttr_t lptim3_delay_thread_attributes = {
+    .name = "lptim3_delay_thread",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t) osPriorityAboveNormal,
+    };
+
+    osThreadId_t lptim3_delay_threadHandle = osThreadNew(lptim3_delay_entry, NULL, &lptim3_delay_thread_attributes);
+    if (lptim3_delay_threadHandle == NULL)
+    {
+        LOG_E("thread lptim3 delay create failed\r\n");
+        return -2;
+    }
+#endif
 
     int8_t ret = radiation_data_init();
     if (ret != 0)
@@ -1204,7 +1456,7 @@ static int8_t dose_dummy_mode_test(uint8_t argc, char **argv)
     }
 
     /* 2. update dose meter value */
-    ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, 13000 * 10000);
+    ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, 100);
     if (ret != 0)
     {
         LOG_E("radiation data value set err: %d\r\n", ret);
@@ -1234,6 +1486,43 @@ static int8_t dose_dummy_mode_test(uint8_t argc, char **argv)
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(dose_dummy_mode_test, dose_dummy_mode_test, dose dummy mode test);
+
+static int8_t dose_radiation_mode_test(uint8_t argc, char **argv)
+{
+    int8_t ret = 0;
+
+    /* clear dose meter value */
+    ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
+    if (ret != 0)
+    {
+        printf("dose value status set err: %d\r\n", ret);
+        return ret;
+    }
+
+    /* 2. update dose meter value */
+    ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, 100);
+    if (ret != 0)
+    {
+        LOG_E("radiation data value set err: %d\r\n", ret);
+        return ret;
+    }
+    /* 3. update fsm state */
+    enum fsm_state state = atoi(argv[1]);   /* FSM_STATE_DUMMY: 2   FSM_STATE_RADIATION: 5 */
+
+    if (state == FSM_STATE_DUMMY)
+    {
+        ret = radiation_data_value_set(DOSE_GENERATION_MODE, 0);
+        ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);
+    }
+    else if (state == FSM_STATE_RADIATION)
+    {
+        ret = radiation_data_value_set(DOSE_GENERATION_MODE, 1);
+        ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);
+    }
+
+    return ret;
+}
+MSH_CMD_EXPORT_ALIAS(dose_radiation_mode_test, dose_radiation_mode_test, dose radiation mode test);
 
 static int8_t fsm_state_current_get(uint8_t argc, char **argv)
 {
@@ -1267,4 +1556,38 @@ static int8_t fsm_state_current_set(uint8_t argc, char **argv)
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(fsm_state_current_set, fsm_state_current_set, fsm state current set);
+
+static int8_t tim5_delay_test(uint8_t argc, char **argv)
+{
+    return timer_delay_start(TIM_DELAY_PULSE_INTERVAL_TIME_US, atoi(argv[1]));
+}
+MSH_CMD_EXPORT_ALIAS(tim5_delay_test, tim5_delay_test, tim5 delay test);
+
+static int8_t lptim3_delay_test(uint8_t argc, char **argv)
+{
+    return lptim3_delay_start(LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US, atoi(argv[1]));
+}
+MSH_CMD_EXPORT_ALIAS(lptim3_delay_test, lptim3_delay_test, lptim3 delay test);
+
+static int8_t trigger_out_stop(void)
+{
+    int8_t ret = 0;
+    ret = trigger_out_info_set(TRIGGER_OUT_FLAG, 0);
+    if (ret != 0)
+    {
+        LOG_E("trigger out info set err: %d\r\n", ret);
+        return ret;
+    }
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(trigger_out_stop, trigger_out_stop, trigger out stop);
+
+static int8_t one_pulse_dose_get(uint8_t argc, char **argv)
+{
+    
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(one_pulse_dose_get, one_pulse_dose_get, one pulse dose get);
 #endif

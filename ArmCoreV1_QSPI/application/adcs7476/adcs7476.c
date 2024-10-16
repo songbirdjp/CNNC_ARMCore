@@ -389,7 +389,7 @@ static int8_t adcs7476_sample_thread_init(void)
     osThreadAttr_t thread_attr = {
     .name = "adcs7476_sample_thread",
     .stack_size = 1024 * 4,
-    .priority = osPriorityHigh,
+    .priority = osPriorityHigh1,
     };
 
     osThreadId_t thread_id = osThreadNew(adcs7476_sample_entry, NULL, &thread_attr);

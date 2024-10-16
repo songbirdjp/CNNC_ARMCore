@@ -111,7 +111,7 @@ static int8_t ltc2632_thread_init(void)
     osThreadAttr_t thread_attr = {
     .name = "ltc2632_thread",
     .stack_size = 1024 * 4,
-    .priority = osPriorityHigh1,
+    .priority = osPriorityHigh,
     };
 
     osThreadId_t thread_id = osThreadNew(ltc2632_process_entry, NULL, &thread_attr);

@@ -13,10 +13,10 @@
 
 static struct control_para control_data = 
 {
-    .calibration = {.adc_factor = {1}, 
+    .calibration = {.adc_factor = {2376000, 2376000, 2376000, 2376000, 2376000}, 
                     .dac_factor = 30,
                     .trig_interval_min = 4000},
-    .treatment = {.prf_hz = 250},
+    .treatment = {.prf_hz = 1},
     .interlock = {.threshold_dose_rate = {10}, 
                   .threshold_dose_cp = {10}, 
                   .one_pulse = {.threshold_low = 10, .threshold_high = 10}, 
@@ -124,6 +124,7 @@ static int8_t dose_calibration_parse(struct dose_object *cmd)
         if (cmd->data[1] < sizeof(obj->calibration.adc_factor) / sizeof(obj->calibration.adc_factor[0]))
         {
             obj->calibration.adc_factor[cmd->data[1]] = cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
+            LOG_I("set adc factor [%d]: %u\r\n", cmd->data[1], obj->calibration.adc_factor[cmd->data[1]]);
         }
         else
         {
@@ -132,9 +133,11 @@ static int8_t dose_calibration_parse(struct dose_object *cmd)
         break;
     case 0x03:
         obj->calibration.dac_factor = cmd->data[3] << 8 | cmd->data[2];
+        LOG_I("set dac factor: %u\r\n", obj->calibration.dac_factor);
         break;
     case 0x04:
         obj->calibration.trig_interval_min = cmd->data[3] << 8 | cmd->data[2];
+        LOG_I("set trigger interval min: %u us\r\n", obj->calibration.trig_interval_min);
         break;
     default:
         ret = -1;
@@ -185,8 +188,8 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             obj->treatment.ri_src = (cmd->data[2] == 0) ? 0 : 1;
             break;
         case 0x01:
-            LOG_I("dose beam meter set: %d\r\n", cmd->data[3] << 8 | cmd->data[2]);
-            ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("dose beam meter set: %f\r\n", (cmd->data[3] << 8 | cmd->data[2]) / 10.0);
+            ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, (cmd->data[3] << 8 | cmd->data[2]) / 10.0);
             if (ret != 0)
             {
                 LOG_E("beam data dose meter set err: %d\r\n", ret);
@@ -535,7 +538,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             ret = fsm_state_switch_check(cmd->data[2]);
             if (ret != 0)
             {
-                LOG_E("fsm state switch check err: %d\r\n", ret);
+                LOG_E("fsm state switch [%d] check err: %d\r\n", cmd->data[2], ret);
                 break;
             }
             cmd->data[2] = ret = fsm_state_switch(cmd->data[2]);
@@ -755,7 +758,8 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
             cmd->data[4] = data->radiation.cp;              /* cp */
             cmd->data[5] = data->radiation.index;           /* radiation index */
             cmd->data[6] = data->radiation.index >> 8;      /* radiation index */
-            uint16_t dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
+            uint64_t dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
+            dose_cumulated = dose_cumulated * 10.0 / control_data_get()->calibration.adc_factor[0];
             cmd->data[7] = dose_cumulated;                  /* dose cumulated */
             cmd->data[8] = dose_cumulated >> 8;             /* dose cumulated */
             cmd->data[9] = data->treatment.prf_hz;          /* PRF */
@@ -862,7 +866,7 @@ static int8_t dose_uart_send_entry(void *argument)
     {
         osMessageQueueGet(dose_uart_send_queue, &send_buf, NULL, osWaitForever);
 
-#if 1
+#if 0
         LOG_I("send_buf len: %d\r\n", send_buf.len);
         for (uint8_t i = 0; i < send_buf.len; i++)
         {
