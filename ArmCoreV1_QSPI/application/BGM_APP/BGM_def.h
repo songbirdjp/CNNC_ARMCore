@@ -116,5 +116,6 @@ void BGM_LockDoseCaliPara(enum uart_id uartID,uint8_t _lockStatus);
 void BGM_SetDoseMode(enum uart_id uartID,uint8_t doseMode);
 void BGM_SetDoseBoardKadc(enum uart_id uartID,uint32_t kadcVal);
 void BGM_SetDoseBoardDAC(enum uart_id uartID,uint32_t dacVal);
+void BGM_RtBeamCtrl(void);
 // void ECATSendToARMQueueSend(TOBJ7010 *valueOut);
 #endif /* __BGM_DEF_H__ */

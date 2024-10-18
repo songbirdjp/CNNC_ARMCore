@@ -73,7 +73,7 @@ static int8_t dose_calibration_parse(struct cmd_object *cmd)
         case 0x02:
         case 0x03:
         case 0x04:
-            LOG_I("dose adc factor set (1MU == %u code)\r\n", cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
+            // LOG_I("dose adc factor set (1MU == %u code)\r\n", cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
             break;
         default:
             ret = -1;
@@ -106,17 +106,20 @@ static int8_t dose_treatment_parse(struct cmd_object *cmd)
     {
     case 0x40:
         cmd->data[2] == 0 ? LOG_I("dose dummy mode set\r\n") : LOG_I("dose normal mode set\r\n");
-         isDoseModeOK = 1;
+        if (cmd->data[2] == 1)
+        {
+            isDoseModeOK = 1;
+        }
         break;
     case 0x41:
         switch (cmd->data[1])
         {
         case 0x00:
-            LOG_I("pulse generation mode set %d\r\n", cmd->data[2]);
+            // LOG_I("pulse generation mode set %d\r\n", cmd->data[2]);
             // isDoseModeOK = 1;
             break;
         case 0x01:
-            LOG_I("dose prf set %u ok\r\n", cmd->data[2]);
+            // LOG_I("dose prf set %u ok\r\n", cmd->data[2]);
             isPRFOK = 1;
             break;
         default:
@@ -130,7 +133,7 @@ static int8_t dose_treatment_parse(struct cmd_object *cmd)
         case 0x00:
             break;
         case 0x01:
-            LOG_I("dose meter set %u ok\r\n", cmd->data[3] << 8 | cmd->data[2]);
+            // LOG_I("dose meter set %u ok\r\n", cmd->data[3] << 8 | cmd->data[2]);
             isDoseSetOK = 1;
             break;
         case 0x02:
@@ -338,26 +341,30 @@ static int8_t dose_realtime_frame_parse(struct cmd_object *cmd)
     case 0x00:
         if (cmd->data[3] == 0x01)
         {
-            printf("set emergency stop\r\n");
+            LOG_I("set emergency stop\r\n");
         }
         else
         {
-            printf("set radiation index: %d\r\n", cmd->data[2] << 8 | cmd->data[1]);
+            LOG_I("set radiation index: %d\r\n", cmd->data[2] << 8 | cmd->data[1]);
         }
         break;
     case 0x01:
-        printf("dose state: %#.2x\r\n", cmd->data[1]);
-        printf("dose interlock: %#.4x\r\n", cmd->data[3] << 8 | cmd->data[2]);
-        printf("dose current cp: %d\r\n", cmd->data[4]);
-        printf("dose current radiation index: %d\r\n", cmd->data[6] << 8 | cmd->data[5]);
-        printf("dose current cumulative: %d (0.1MU)\r\n", cmd->data[8] << 8 | cmd->data[7]);
-        printf("dose current prf: %d\r\n", cmd->data[9]);
-        printf("dose abnormal pulse count: %d\r\n", cmd->data[11] << 8 | cmd->data[10]);
-        printf("dose one pulse valid flag: %d\r\n", cmd->data[12]);
-        printf("dose one pulse code: %d\r\n", cmd->data[14] << 8 | cmd->data[13]);
+       // LOG_I("dose state: %#.2x\r\n", cmd->data[1]);
+        if((cmd->data[1] & 0x02) == 1)
+        {
+            ARMcurrentState = BGM_STATE_COMPLETE;
+        }
+        // LOG_I("dose interlock: %#.4x\r\n", cmd->data[3] << 8 | cmd->data[2]);
+        // LOG_I("dose current cp: %d\r\n", cmd->data[4]);
+        // LOG_I("dose current radiation index: %d\r\n", cmd->data[6] << 8 | cmd->data[5]);
+        // LOG_I("dose current cumulative: %d (0.1MU)\r\n", cmd->data[8] << 8 | cmd->data[7]);
+        // LOG_I("dose current prf: %d\r\n", cmd->data[9]);
+        // LOG_I("dose abnormal pulse count: %d\r\n", cmd->data[11] << 8 | cmd->data[10]);
+        // LOG_I("dose one pulse valid flag: %d\r\n", cmd->data[12]);
+        // LOG_I("dose one pulse code: %d\r\n", cmd->data[14] << 8 | cmd->data[13]);
         break;
     default:
-        printf("invalid realtime cmd type: %x\r\n", cmd->data[0]);
+        LOG_I("invalid realtime cmd type: %x\r\n", cmd->data[0]);
         ret = -1;
         break;
     }
@@ -738,7 +745,7 @@ static int8_t uart_cmd_process(enum uart_id id, struct bgm_uart *buf)
         return -1;
     }
 
-#if 1
+#if 0
     LOG_I("recv_buf len: %d\r\n", buf->len);
     for (uint8_t i = 0; i < buf->len; i++)
     {
@@ -832,7 +839,7 @@ static int8_t uart_send_entry(void *argument)
     {
         osMessageQueueGet(uart_send_queue[uart_id], &send_buf, NULL, osWaitForever);
 
-#if 1
+#if 0
         ("send_buf len: %d\r\n", send_buf.len);
         for (uint8_t i = 0; i < send_buf.len; i++)
         {

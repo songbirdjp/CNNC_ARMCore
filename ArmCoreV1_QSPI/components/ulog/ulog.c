@@ -342,7 +342,7 @@ static int8_t ulog_thread_init(void)
     }
 
     memset(s_subscribers, 0, sizeof(s_subscribers));
-    ulog_subscribe(ulog_output, ULOG_DEBUG_LEVEL);   /* register callback function */
+    ulog_subscribe(ulog_output, ULOG_ERROR_LEVEL);   /* register callback function */
 
     return 0;
 }

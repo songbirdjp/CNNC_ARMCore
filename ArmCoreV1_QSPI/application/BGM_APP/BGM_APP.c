@@ -165,6 +165,16 @@ static void BGMIOEfunc(void *argument)
         //osMutexRelease(dataMutex);
        // RtDataUP[11] = BGM_ReadModInterlocks();
         //ARMSendToECATQueueSend(RtDataUP);
+        if(BGM_STATE_WORK == ARMcurrentState)
+        {
+            // if(ExpandGPIOValue != 0xff) 
+            // {
+            //     BGM_ReadAllInterlocks();
+            //     ARMcurrentState = BGM_STATE_TERMINATE;
+            //     LOG_I("TERMINATE with Interlock");
+            // }
+            ;
+        }
         osDelay(1);
     }
 }
@@ -273,6 +283,11 @@ void BGMFiniteStateMachine(void)
     const uint32_t AFCTriggerTime = 5;
     uint16_t isDoseTrig = 0;
     uint8_t cmdToCheck[2] = {0xc0,0x01};
+    dataToSend.DataIn1[0] = ARMcurrentState;
+    if(BGM_STATE_BOOT == PLCcurrentState)
+    {
+        ARMcurrentState = BGM_STATE_BOOT;
+    }
     switch (ARMcurrentState)
     {
     case BGM_STATE_BOOT:
@@ -294,8 +309,8 @@ void BGMFiniteStateMachine(void)
         dataToSend.DataIn5[1] = 0;
         if(BGM_STATE_INIT == PLCcurrentState)//PLC change BOOT to INIT need 5 seconds
         {
-            dataToSend.DataIn3[0] = 1;//maintain cali para lock
-            dataToSend.DataIn3[1] = 1;//maintain beam para lock
+            dataToSend.DataIn3[0] = 0;//maintain cali para lock
+            dataToSend.DataIn3[1] = 0;//maintain beam para lock
             BGM_LockDoseCaliPara(BGM_UART_DOSE1,1);
             osDelay(1);
             BGM_LockDoseCaliPara(BGM_UART_DOSE2,1);
@@ -314,19 +329,19 @@ void BGMFiniteStateMachine(void)
             osDelay(1);
             if(0 == BGM2Dose_Handshake(BGM_UART_DOSE2))
             {
-                LOG_I("Dose 1&2 Handshake cmd sent OK!");
+                // LOG_I("Dose 1&2 Handshake cmd sent OK!");
                 ARMcurrentState = BGM_STATE_IDLE;
                 BGM_CtrlDoseBoardFSM(1);//handshake ok ,change Dose board FSM to idle
             }
         }
         else
         {
-            LOG_I("Dose 1&2 Handshake cmd sent error!");
+            // LOG_I("Dose 1&2 Handshake cmd sent error!");
         }
         //Handshake with dose board complete
         osDelay(100);
         break;
-    case BGM_STATE_IDLE:
+    case BGM_STATE_IDLE://plc change idle needs cooling & water flow
         if(0 == isdataCaliUnlock)
         {
             BGM_LockDoseCaliPara(BGM_UART_DOSE1,0);// unlock dose board cali parameter 
@@ -334,13 +349,13 @@ void BGMFiniteStateMachine(void)
             BGM_LockDoseCaliPara(BGM_UART_DOSE2,0);// unlock dose board cali parameter 
             dataToSend.DataIn3[0] = 0;
             isdataCaliUnlock = 1 ;//tell PLC ready to  set cali parameter 
-             LOG_I("BGM_STATE_IDLE\r\n");
+            LOG_I("BGM_STATE_IDLE\r\n");
         }
-        
         //waiting for adc dac parameter
         // when plc have sent the parameter,ARM will send them to dose automatically in {BGMEthercatDataParsePoint}
         //then check dose board 's FSM
         BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheckFSM,2);
+        BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown, cmdToCheckFSM,2);
         osDelay(1000);
         // if dose fsm change to pre ,arm will change to pre automatically 
         break;
@@ -354,43 +369,47 @@ void BGMFiniteStateMachine(void)
             osDelay(1);
             BGM_LockBeamData(BGM_UART_DOSE2,0);//unlock all data;
             isBeamDataSetUnlock = 1;
-             LOG_I("BGM_STATE_PREPARE\r\n");
+            // LOG_I("BGM_STATE_PREPARE\r\n");
         }
+        osDelay(1000);
         //waiting for prf &dose set & normal module set
         // when plc have sent the parameter,ARM will send them to dose automatically in {BGMEthercatDataParsePoint}
         if((isDoseSetOK)&&(isPRFOK)&&(isDoseModeOK))
         {
             dataToSend.DataIn5[0] = 1;
-        }
-        if(4 == PLCcurrentState)//PLC FSM change to prepare when HMI have sent beam parameters,then arm will lock the data
-        {
-            BGM_LockBeamData(BGM_UART_DOSE1,1);
-            osDelay(1);
-            BGM_LockBeamData(BGM_UART_DOSE2,1);//lock all data;
-            dataToSend.DataIn3[1] = 1;
             ARMcurrentState = BGM_STATE_READY;
-            //todo :add some read back logic
         }
-        printf("isDoseSetOK = %d\r\n",isDoseSetOK);
-        printf("isPRFOK = %d\r\n",isPRFOK);
-        printf("isDoseModeOK = %d\r\n",isDoseModeOK);
-        osDelay(1000);
+        // LOG_I("isDoseSetOK = %d\r\n",isDoseSetOK);
+        // LOG_I("isPRFOK = %d\r\n",isPRFOK);
+        // LOG_I("isDoseModeOK = %d\r\n",isDoseModeOK);
         break;
 
     case BGM_STATE_READY:
-     
-        if(0 == isDoseReady)
+        if(BGM_STATE_PREPARE == PLCcurrentState)//PLC FSM change to prepare when HMI have sent beam parameters,then arm will lock the data // press button 
         {
-            BGM_CtrlDoseBoardFSM((DoseFsmState_t)4);//change dose board fsm to ready
-            isDoseReady = 1;
-            LOG_I("BGM_STATE_READY\r\n");
+            osDelay(100);//waiting for ethercat write data
+            //todo :add some read back logic
+            if(0 == isDoseReady)
+            {
+                BGM_LockBeamData(BGM_UART_DOSE1,1);
+                BGM_LockBeamData(BGM_UART_DOSE2,1);//lock all data;
+                dataToSend.DataIn3[1] = 1;
+                BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_READY);//change dose board fsm to ready
+                isDoseReady = 1;
+                // LOG_I("BGM_STATE_READY\r\n");
+             }
         }
-        if(6 == PLCcurrentState) //Mod FSM change to TRIG，PLC FSM change to WORK,then change arm to work
+        if(BGM_STATE_WORK == PLCcurrentState) //Mod FSM change to TRIG，PLC FSM change to WORK,then change arm to work
         {
-            BGM_CtrlDoseBoardFSM((DoseFsmState_t)5);//change dose board fsm to radiation
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_RADIATION);//change dose board fsm to radiation
             ARMcurrentState = BGM_STATE_WORK;
         }
-        osDelay(10);
+        if(BGM_STATE_INTERRUPT == PLCcurrentState)
+        {
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_FAULT);//make dose board to fault
+            ARMcurrentState = BGM_STATE_INTERRUPT;
+        }
+        osDelay(500);
         break;
 
     case BGM_STATE_WORK:
@@ -398,14 +417,78 @@ void BGMFiniteStateMachine(void)
         {   
             osMessageQueueGet(isDoseTriggerQueueHandle,&isDoseTrig,0,0);
             TriggerOutCtrl(BGMTriggerPin, AFCTriggerTime, 4000);
-            LOG_I("TriggerOutCtrl\r\n");
-            BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheck,2); //Polling to check if dose board complete
+            // LOG_I("TriggerOutCtrl\r\n");
+            //BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheck,2); //Polling to check if dose board complete
+            BGM_RtBeamCtrl();
             //when dose board change fsm to complete,whole trig process complete
             // ARM will be changed to BGM_STATE_COMPLETE in function {dose_state_control_parse}
         }
+        if(BGM_STATE_TERMINATE == PLCcurrentState)
+        {
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_FAULT);
+            ARMcurrentState = BGM_STATE_TERMINATE;
+        }//two ways to dump out of work to terminate : 1.exIO interlock happened  2.PLC change to terminate
+        //only dose board will make FSM to complete
+        break;
+    case BGM_STATE_TERMINATE:
+        if(BGM_STATE_IDLE == PLCcurrentState)//PLC change top IDLE
+        {
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_IDLE);//make Dose change to IDLE
+            ARMcurrentState = BGM_STATE_IDLE;
+            isDoseSetOK = 0;
+            isPRFOK = 0;
+            isDoseModeOK = 0;
+            isdataCaliLock = 0;
+            isdataCaliUnlock = 0;
+            isBeamDataSetLock = 0;
+            isBeamDataSetUnlock = 0;//enable to write parameter again
+        }
+        // LOG_I("BGM_STATE_TERMINATE\r\n");
+        osDelay(1000);
         break;
     case BGM_STATE_COMPLETE:
-        printf("BGM_STATE_COMPLETE\r\n");
+        if(BGM_STATE_IDLE == PLCcurrentState)
+        {
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_IDLE);
+            ARMcurrentState = BGM_STATE_IDLE;
+        }
+        if(BGM_STATE_COMPLETE == PLCcurrentState)
+        {
+            isDoseSetOK = 0;
+            isPRFOK = 0;
+            isDoseModeOK = 0;
+            isdataCaliLock = 0;
+            isdataCaliUnlock = 0;
+            isBeamDataSetLock = 0;
+            isBeamDataSetUnlock = 0;//enable to write parameter again
+            // BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_PREPARE);
+            // ARMcurrentState = BGM_STATE_PREPARE;
+            BGM_LockBeamData(BGM_UART_DOSE1,0);
+            BGM_LockBeamData(BGM_UART_DOSE2,0);
+            
+        }
+        if(BGM_STATE_PREPARE == PLCcurrentState)
+        {
+            ARMcurrentState = BGM_STATE_PREPARE;
+            isDoseSetOK = 1;
+            isPRFOK = 1;
+            isDoseModeOK = 1;
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_PREPARE);
+        }
+        // LOG_I("BGM_STATE_COMPLETE\r\n");
+        osDelay(1000);
+        break;
+    case BGM_STATE_INTERRUPT:
+        if(BGM_STATE_READY == PLCcurrentState)
+        {
+            ARMcurrentState == BGM_STATE_READY;
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_READY);
+        }
+        if(BGM_STATE_TERMINATE == PLCcurrentState)
+        {
+            ARMcurrentState == BGM_STATE_TERMINATE;
+           
+        }
         osDelay(1000);
         break;
     default:
@@ -413,6 +496,7 @@ void BGMFiniteStateMachine(void)
         break;
     }
 }
+
 GPIOConfig TriggerPinTable[] = {
     {GPIOG, GPIO_PIN_14}, // AFCTriggerPin
     {GPIOC, GPIO_PIN_7},  // QAMTriggerPin
@@ -422,7 +506,9 @@ void TriggerOutCtrl(TriggerIO_Name TriggerPin, uint32_t _triggerHighTime_us, uin
 {
     GPIOConfig *gpioConfig = &TriggerPinTable[TriggerPin];
     HAL_GPIO_WritePin(gpioConfig->GPIOx, gpioConfig->GPIO_Pin, GPIO_PIN_SET);
-    delay_us(_triggerHighTime_us);
+    //delay_us(_triggerHighTime_us);
+    osDelay(2);
     HAL_GPIO_WritePin(gpioConfig->GPIOx, gpioConfig->GPIO_Pin, GPIO_PIN_RESET);
-    delay_us(_triggerLowTime_us);
+    BGM_RtBeamCtrl();
+    // delay_us(_triggerLowTime_us);
 }

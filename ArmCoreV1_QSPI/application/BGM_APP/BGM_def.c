@@ -21,10 +21,22 @@
 const uint8_t BGM_ARM_IO_Version[4] = {0x19,0,0,1};//Hardware version0x19 ,firmware version xx,yy,zz 
 
 extern BGMStateMachine_t ARMcurrentState;
+extern BGMStateMachine_t PLCcurrentState;
+
+void Shell_ModifyARMFSM(int8_t argc, uint8_t **argv)
+{
+    uint8_t temp;
+    temp = (uint8_t)strtol((char *)argv[1], NULL, 16); 
+    ARMcurrentState = temp;
+}
+MSH_CMD_EXPORT_ALIAS(Shell_ModifyARMFSM,MAFSM,"Modify All FSM");
+
 void Shell_CheckALLFSM(void)
 {
     uint8_t cmdToCheck[2] = {0xc0,0x01};
     BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheck,2); 
+    //PLCcurrentState
+    LOG_I("PLCcurrentState = %d\r\n",PLCcurrentState);
     LOG_I("ARM currentState = %d\r\n",ARMcurrentState);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_CheckALLFSM,ReadAllFSM,"Read All FSM");
@@ -454,3 +466,11 @@ void BGMShell_SetDoseBoardDAC(int8_t argc, uint8_t **argv)
     BGM_SetDoseBoardDAC(id,shellDosedac);
 }
 MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseBoardDAC,DOSEdac,"Set DoseBoard dac");
+
+void BGM_RtBeamCtrl(void)
+{
+    uint8_t dacCmd= 0x01;
+    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_RtDataDown,&dacCmd,1);  
+    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_RtDataDown,&dacCmd,1);  
+}
+MSH_CMD_EXPORT_ALIAS(BGM_RtBeamCtrl,DoseRT,"Get RT Parameter");
