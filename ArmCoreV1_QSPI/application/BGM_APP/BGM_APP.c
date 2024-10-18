@@ -350,6 +350,9 @@ void BGMFiniteStateMachine(void)
             dataToSend.DataIn3[0] = 0;
             isdataCaliUnlock = 1 ;//tell PLC ready to  set cali parameter 
             LOG_I("BGM_STATE_IDLE\r\n");
+            uint8_t zeroCmd[2] = {0xc1,0x02};
+            BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, zeroCmd,2);
+            BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown, zeroCmd,2);
         }
         //waiting for adc dac parameter
         // when plc have sent the parameter,ARM will send them to dose automatically in {BGMEthercatDataParsePoint}
@@ -409,6 +412,11 @@ void BGMFiniteStateMachine(void)
             BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_FAULT);//make dose board to fault
             ARMcurrentState = BGM_STATE_INTERRUPT;
         }
+        if(BGM_STATE_TERMINATE == PLCcurrentState)
+        {
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_FAULT);//make dose board to fault
+            ARMcurrentState = BGM_STATE_TERMINATE;
+        }
         osDelay(500);
         break;
 
@@ -442,6 +450,7 @@ void BGMFiniteStateMachine(void)
             isdataCaliUnlock = 0;
             isBeamDataSetLock = 0;
             isBeamDataSetUnlock = 0;//enable to write parameter again
+            isDoseReady = 0;
         }
         // LOG_I("BGM_STATE_TERMINATE\r\n");
         osDelay(1000);
@@ -453,7 +462,8 @@ void BGMFiniteStateMachine(void)
             ARMcurrentState = BGM_STATE_IDLE;
         }
         if(BGM_STATE_COMPLETE == PLCcurrentState)
-        {
+        {   
+            isDoseReady = 0;
             isDoseSetOK = 0;
             isPRFOK = 0;
             isDoseModeOK = 0;
@@ -481,13 +491,12 @@ void BGMFiniteStateMachine(void)
     case BGM_STATE_INTERRUPT:
         if(BGM_STATE_READY == PLCcurrentState)
         {
-            ARMcurrentState == BGM_STATE_READY;
+            ARMcurrentState = BGM_STATE_READY;
             BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_READY);
         }
         if(BGM_STATE_TERMINATE == PLCcurrentState)
         {
-            ARMcurrentState == BGM_STATE_TERMINATE;
-           
+            ARMcurrentState = BGM_STATE_TERMINATE;
         }
         osDelay(1000);
         break;

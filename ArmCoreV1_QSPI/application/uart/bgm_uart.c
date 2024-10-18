@@ -235,7 +235,10 @@ static int8_t dose_state_control_parse(struct cmd_object *cmd)
             }
             if(cmd->data[2] == 3)
             {
-                ARMcurrentState = BGM_STATE_PREPARE;
+                if(ARMcurrentState != BGM_STATE_READY)
+                {
+                    ARMcurrentState = BGM_STATE_PREPARE;
+                }   
             }
             if(cmd->data[2] == 6)//complete
             {
@@ -449,6 +452,10 @@ static int8_t afc_command_frame_parse(struct cmd_object *cmd)
     case 0x40:
         break;
     case 0x41:
+    if(cmd->data[0] == 0x03)
+    {
+        ;
+    }
         break;
     case 0x42:
         break;

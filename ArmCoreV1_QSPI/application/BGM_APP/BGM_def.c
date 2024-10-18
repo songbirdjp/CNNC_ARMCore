@@ -36,8 +36,8 @@ void Shell_CheckALLFSM(void)
     uint8_t cmdToCheck[2] = {0xc0,0x01};
     BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheck,2); 
     //PLCcurrentState
-    LOG_I("PLCcurrentState = %d\r\n",PLCcurrentState);
-    LOG_I("ARM currentState = %d\r\n",ARMcurrentState);
+    LOG_E("PLCcurrentState = %d\r\n",PLCcurrentState);
+    LOG_E("ARM currentState = %d\r\n",ARMcurrentState);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_CheckALLFSM,ReadAllFSM,"Read All FSM");
 int BGM2AFC_Handshake(void)
@@ -205,35 +205,35 @@ BGMInterlocksDetect_t BGM_ReadAllInterlocks(void)
 
     AllInterlocks.ModTrigONDetect  = ReadIO_PulseInhibitDetect();
 
-    LOG_I("//////////////////////BGM Interlocks Status//////////////////////// \r\n");
-    LOG_I("CoolingLv1Detect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.CoolingLv1Detect);
-    LOG_I("CoolingLv2Detect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.CoolingLv2Detect);
-    LOG_I("WaterSW1Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW1Detect);
-    LOG_I("WaterSW2Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW2Detect);
-    LOG_I("WaterSW3Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW3Detect);
-    LOG_I("WaterSW4Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW4Detect);
-    LOG_I("WaterSW5Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW5Detect);
-    LOG_I("SF6HighDetect           =   %d\r\n",AllInterlocks.exGPIODetect.bits.SF6HighDetect);
-    LOG_I("SF6LowDetect            =   %d\r\n",AllInterlocks.exGPIODetect.bits.SF6LowDetect);
-    LOG_I("EPSStateOPDetect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.EPSStateOPDetect);
-    LOG_I("nEPSStateFaultDetect    =   %d\r\n",AllInterlocks.exGPIODetect.bits.nEPSStateFaultDetect);
-    LOG_I("VPSStateFaultDetect     =   %d\r\n",AllInterlocks.exGPIODetect.bits.VPSStateFaultDetect);
-    LOG_I("VPSStateOPDetect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.VPSStateOPDetect);
-    LOG_I("GatingDetect            =   %d\r\n",AllInterlocks.exGPIODetect.bits.GatingDetect);
-    LOG_I("HVConFBDetect           =   %d\r\n",AllInterlocks.exGPIODetect.bits.HVConFBDetect);
-    LOG_I("MVTreatmentENDetect     =   %d\r\n",AllInterlocks.exGPIODetect.bits.MVTreatmentENDetect);
-    LOG_I("Dose1Detect             =   %d\r\n",AllInterlocks.Dose1Detect);
-    LOG_I("Dose2Detect             =   %d\r\n",AllInterlocks.Dose2Detect);
-    LOG_I("EmergencyDetect         =   %d\r\n",AllInterlocks.EmergencyDetect);
-    LOG_I("HvEnDetect              =   %d\r\n",AllInterlocks.HvEnDetect);
-    LOG_I("LvOKDetect              =   %d\r\n",AllInterlocks.LvOKDetect);
-    LOG_I("ModArcDetect            =   %d\r\n",AllInterlocks.ModArcDetect);
-    LOG_I("ModHvONDetect           =   %d\r\n",AllInterlocks.ModHvONDetect);
-    LOG_I("ModSumDetect            =   %d\r\n",AllInterlocks.ModSumDetect);
-    LOG_I("ModTrigONDetect         =   %d\r\n",AllInterlocks.ModTrigONDetect);
-    LOG_I("ModTriggerInhibitDetect =   %d\r\n",AllInterlocks.ModTriggerInhibitDetect);
-    LOG_I("PulseInhibitDetect      =   %d\r\n",AllInterlocks.PulseInhibitDetect);
-    LOG_I("///////////////////////////////////////////////////////////////////// \r\n");
+    LOG_E("//////////////////////BGM Interlocks Status//////////////////////// \r\n");
+    LOG_E("CoolingLv1Detect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.CoolingLv1Detect);
+    LOG_E("CoolingLv2Detect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.CoolingLv2Detect);
+    LOG_E("WaterSW1Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW1Detect);
+    LOG_E("WaterSW2Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW2Detect);
+    LOG_E("WaterSW3Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW3Detect);
+    LOG_E("WaterSW4Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW4Detect);
+    LOG_E("WaterSW5Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW5Detect);
+    LOG_E("SF6HighDetect           =   %d\r\n",AllInterlocks.exGPIODetect.bits.SF6HighDetect);
+    LOG_E("SF6LowDetect            =   %d\r\n",AllInterlocks.exGPIODetect.bits.SF6LowDetect);
+    LOG_E("EPSStateOPDetect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.EPSStateOPDetect);
+    LOG_E("nEPSStateFaultDetect    =   %d\r\n",AllInterlocks.exGPIODetect.bits.nEPSStateFaultDetect);
+    LOG_E("VPSStateFaultDetect     =   %d\r\n",AllInterlocks.exGPIODetect.bits.VPSStateFaultDetect);
+    LOG_E("VPSStateOPDetect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.VPSStateOPDetect);
+    LOG_E("GatingDetect            =   %d\r\n",AllInterlocks.exGPIODetect.bits.GatingDetect);
+    LOG_E("HVConFBDetect           =   %d\r\n",AllInterlocks.exGPIODetect.bits.HVConFBDetect);
+    LOG_E("MVTreatmentENDetect     =   %d\r\n",AllInterlocks.exGPIODetect.bits.MVTreatmentENDetect);
+    LOG_E("Dose1Detect             =   %d\r\n",AllInterlocks.Dose1Detect);
+    LOG_E("Dose2Detect             =   %d\r\n",AllInterlocks.Dose2Detect);
+    LOG_E("EmergencyDetect         =   %d\r\n",AllInterlocks.EmergencyDetect);
+    LOG_E("HvEnDetect              =   %d\r\n",AllInterlocks.HvEnDetect);
+    LOG_E("LvOKDetect              =   %d\r\n",AllInterlocks.LvOKDetect);
+    LOG_E("ModArcDetect            =   %d\r\n",AllInterlocks.ModArcDetect);
+    LOG_E("ModHvONDetect           =   %d\r\n",AllInterlocks.ModHvONDetect);
+    LOG_E("ModSumDetect            =   %d\r\n",AllInterlocks.ModSumDetect);
+    LOG_E("ModTrigONDetect         =   %d\r\n",AllInterlocks.ModTrigONDetect);
+    LOG_E("ModTriggerInhibitDetect =   %d\r\n",AllInterlocks.ModTriggerInhibitDetect);
+    LOG_E("PulseInhibitDetect      =   %d\r\n",AllInterlocks.PulseInhibitDetect);
+    LOG_E("///////////////////////////////////////////////////////////////////// \r\n");
     
 }
 MSH_CMD_EXPORT_ALIAS(BGM_ReadAllInterlocks,ReadIO,"Read IO");
