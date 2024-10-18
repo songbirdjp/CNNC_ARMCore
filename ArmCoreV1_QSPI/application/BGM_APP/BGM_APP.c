@@ -437,6 +437,11 @@ void BGMFiniteStateMachine(void)
             ARMcurrentState = BGM_STATE_TERMINATE;
         }//two ways to dump out of work to terminate : 1.exIO interlock happened  2.PLC change to terminate
         //only dose board will make FSM to complete
+        if(BGM_STATE_INTERRUPT == PLCcurrentState)
+        {
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_FAULT);
+            ARMcurrentState = BGM_STATE_INTERRUPT;
+        }
         break;
     case BGM_STATE_TERMINATE:
         if(BGM_STATE_IDLE == PLCcurrentState)//PLC change top IDLE
