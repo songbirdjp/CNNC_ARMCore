@@ -128,9 +128,15 @@ static int8_t ioe_irq_callback(void)
 uint16_t isDoseTrigger = 0;
 static int8_t DoseTrigger_irq_callback(void)
 {
-    isDoseTrigger = 1;
-    osMessageQueuePut(isDoseTriggerQueueHandle,&isDoseTrigger,0,0);  
-    isDoseTrigger = 0;  
+    //osStatus_t tmp;
+    // isDoseTrigger = 1;
+    // tmp = osMessageQueuePut(isDoseTriggerQueueHandle,&isDoseTrigger,0,0);  
+    // if(tmp != osOK)
+    // {
+    //     LOG_E("isDoseTriggerQueueHandle error = %d\r\n",tmp);
+    // }
+    // isDoseTrigger = 0;  
+    TriggerOutCtrl(BGMTriggerPin, 10, 4000);
 }
 uint16_t RtDataUP[64] = {0};
 static void BGMIOEfunc(void *argument)
@@ -186,11 +192,8 @@ static void BGMFSMfunc(void *argument)
     for (;;)
     {
         BGMFiniteStateMachine();
-        if(osMessageQueueGetCount(ethercatE2AQueueHandle) != 0)
-        {
-            BGMEthercatDataParse(ECATSendToARMQueueRecv());// parse data from bus and send to 422
-        }
-        osDelay(1);
+        // if(osMessageQueueGetCount(ethercatE2AQueueHandle) != 0)
+        //BGMEthercatDataParse(ECATSendToARMQueueRecv());// parse data from bus and send to 422
     }
 }
 
@@ -252,9 +255,8 @@ void BGMEthercatDataParse(uint16_t * EcatDataOut)
 uint16_t* ECATSendToARMQueueRecv(void)
 {
     static uint16_t received_value[64];
-    if(osMessageQueueGetCount(ethercatE2AQueueHandle) != 0)
-    {
-        osStatus_t status = osMessageQueueGet(ethercatE2AQueueHandle, received_value,0, 0);
+    
+        osStatus_t status = osMessageQueueGet(ethercatE2AQueueHandle, received_value,0, osWaitForever);
         // for(uint8_t i=0;i<63;i++)
         // {
         //     LOG_I("received_value = %d\r\n",received_value[i]); 
@@ -263,7 +265,7 @@ uint16_t* ECATSendToARMQueueRecv(void)
         {
             printf("1Queue status = %d \r\n",status);
         }
-    }
+
     return received_value;
 }
 
@@ -418,21 +420,26 @@ void BGMFiniteStateMachine(void)
         osDelay(500);
         break;
     case BGM_STATE_WORK:
-        if(osMessageQueueGetCount(isDoseTriggerQueueHandle) != 0)
-        {   
-            osMessageQueueGet(isDoseTriggerQueueHandle,&isDoseTrig,0,0);
-            TriggerOutCtrl(BGMTriggerPin, AFCTriggerTime, 4000);
+        // if(osMessageQueueGetCount(isDoseTriggerQueueHandle) != 0)
+        // {   
+        //     osStatus_t tmp;
+        //     tmp = osMessageQueueGet(isDoseTriggerQueueHandle,&isDoseTrig,0,0);
+        //     if( tmp != osOK)
+        //     {
+        //         LOG_E("QueueGetisDoseTrig = %d\r\n",tmp);
+        //     }
+            // TriggerOutCtrl(BGMTriggerPin, AFCTriggerTime, 4000);
             // LOG_I("TriggerOutCtrl\r\n");
             //BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheck,2); //Polling to check if dose board complete
-            BGM_RtBeamCtrl();
+            //BGM_RtBeamCtrl();
             //when dose board change fsm to complete,whole trig process complete
             // ARM will be changed to BGM_STATE_COMPLETE in function {dose_state_control_parse}
-        }
-        else
-        {
+        // }
+        // else
+        // {
             BGM_RtBeamCtrl();
             osDelay(100);
-        }
+        // }
         if(BGM_STATE_TERMINATE == PLCcurrentState)
         {
             BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_FAULT);
@@ -522,8 +529,8 @@ void TriggerOutCtrl(TriggerIO_Name TriggerPin, uint32_t _triggerHighTime_us, uin
 {
     GPIOConfig *gpioConfig = &TriggerPinTable[TriggerPin];
     HAL_GPIO_WritePin(gpioConfig->GPIOx, gpioConfig->GPIO_Pin, GPIO_PIN_SET);
-    //delay_us(_triggerHighTime_us);
-    osDelay(2);
+    delay_us(10);
+   // osDelay(2);
     HAL_GPIO_WritePin(gpioConfig->GPIOx, gpioConfig->GPIO_Pin, GPIO_PIN_RESET);
     // BGM_RtBeamCtrl();
     // delay_us(_triggerLowTime_us);

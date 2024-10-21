@@ -7,13 +7,9 @@ void delay_us(uint32_t _timeToDelay)
 {
     uint32_t tim5CounterStart = 0;
     uint32_t tim5CounterEnd;
-    // __disable_irq();
-    vTaskSuspendAll();
     __HAL_TIM_SetCounter(&htim5,0);
     while ((__HAL_TIM_GET_COUNTER(&htim5) - tim5CounterStart) < _timeToDelay);
     tim5CounterEnd = __HAL_TIM_GET_COUNTER(&htim5);
-    xTaskResumeAll();
-    // __enable_irq();
     //printf("tim5CounterEnd = %ld\r\n",tim5CounterEnd);
 }
 
