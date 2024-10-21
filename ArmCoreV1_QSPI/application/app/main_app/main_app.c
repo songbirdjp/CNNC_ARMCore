@@ -34,7 +34,7 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
             //BGM_CtrlDoseBoardFSM((DoseFsmState_t)EcatDataOut->DataOut1[0]);
             EcatDataOutPrev.DataOut1[0] =  EcatDataOut->DataOut1[0];
         }
-            if((ARMcurrentState  ==  BGM_STATE_IDLE)|((ARMcurrentState  ==  BGM_STATE_COMPLETE)))
+            if(ARMcurrentState  ==  BGM_STATE_IDLE)
             {
             //prf set to dose by plc
                     if(EcatDataOut->DataOut3[0] != EcatDataOutPrev.DataOut3[0])  

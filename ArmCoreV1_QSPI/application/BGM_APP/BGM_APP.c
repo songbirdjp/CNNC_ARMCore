@@ -428,6 +428,11 @@ void BGMFiniteStateMachine(void)
             //when dose board change fsm to complete,whole trig process complete
             // ARM will be changed to BGM_STATE_COMPLETE in function {dose_state_control_parse}
         }
+        else
+        {
+            BGM_RtBeamCtrl();
+            osDelay(100);
+        }
         if(BGM_STATE_TERMINATE == PLCcurrentState)
         {
             BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_FAULT);
@@ -520,6 +525,6 @@ void TriggerOutCtrl(TriggerIO_Name TriggerPin, uint32_t _triggerHighTime_us, uin
     //delay_us(_triggerHighTime_us);
     osDelay(2);
     HAL_GPIO_WritePin(gpioConfig->GPIOx, gpioConfig->GPIO_Pin, GPIO_PIN_RESET);
-    BGM_RtBeamCtrl();
+    // BGM_RtBeamCtrl();
     // delay_us(_triggerLowTime_us);
 }
