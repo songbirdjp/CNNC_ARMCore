@@ -34,11 +34,9 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
             //BGM_CtrlDoseBoardFSM((DoseFsmState_t)EcatDataOut->DataOut1[0]);
             EcatDataOutPrev.DataOut1[0] =  EcatDataOut->DataOut1[0];
         }
-            if((ARMcurrentState  ==  BGM_STATE_PREPARE)|((ARMcurrentState  ==  BGM_STATE_COMPLETE)))
+            if((ARMcurrentState  ==  BGM_STATE_IDLE)|((ARMcurrentState  ==  BGM_STATE_COMPLETE)))
             {
             //prf set to dose by plc
-                if(dataToSend.DataIn3[1] == 0)//  para write enable
-                {
                     if(EcatDataOut->DataOut3[0] != EcatDataOutPrev.DataOut3[0])  
                     {
                         BGM_SetDoseBoardPRF(BGM_UART_DOSE1,EcatDataOut->DataOut3[0]);
@@ -62,12 +60,6 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
                         LOG_I("Set Dose Mode to %d\r\n",EcatDataOut->DataOut3[7]);
                         EcatDataOutPrev.DataOut3[7] =  EcatDataOut->DataOut3[7];
                     }
-                }
-            }
-            if(ARMcurrentState  ==  BGM_STATE_IDLE)
-            {
-                if(dataToSend.DataIn3[0] == 0)// cali para write enable
-                {
                     //DAC set to Dose Board by plc
                     if(EcatDataOut->DataOut3[2] != EcatDataOutPrev.DataOut3[2])  
                     {
@@ -75,17 +67,15 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
                         LOG_I("Set DAC to %d\r\n",EcatDataOut->DataOut3[2]);
                         EcatDataOutPrev.DataOut3[2] =  EcatDataOut->DataOut3[2];
                     }
-                
-
                     //ADC1 set to Dose Board 1 by plc
                     if(_ecatADCUART1Val != _ecatADCUART1ValPrev)  
                     {
                         BGM_SetDoseBoardKadc(BGM_UART_DOSE1,_ecatADCUART1Val);
                         LOG_I("Set ADC1 to %ld\r\n",_ecatADCUART1Val);
                         _ecatADCUART1ValPrev = _ecatADCUART1Val;
-                        BGM_LockDoseCaliPara(BGM_UART_DOSE1,1);
-                        BGM_LockDoseCaliPara(BGM_UART_DOSE2,1);
-                        BGM_CtrlDoseBoardFSM((DoseFsmState_t)3);//change Dose FSM to Prepare
+                        //BGM_LockDoseCaliPara(BGM_UART_DOSE1,1);
+                        //BGM_LockDoseCaliPara(BGM_UART_DOSE2,1);
+                        //BGM_CtrlDoseBoardFSM((DoseFsmState_t)3);//change Dose FSM to Prepare
                     }
                     //ADC2 set to Dose Board 2 by plc
                     if(_ecatADCUART2Val != _ecatADCUART2ValPrev)  
@@ -94,7 +84,7 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
                         LOG_I("Set ADC2 to %ld\r\n",_ecatADCUART2Val);
                         _ecatADCUART2ValPrev = _ecatADCUART2Val;
                     }
-                }
+                
             }
               //AFC POS set to AFC by plc
             if(EcatDataOut->DataOut4[2] != EcatDataOutPrev.DataOut4[2])  

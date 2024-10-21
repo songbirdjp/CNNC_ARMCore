@@ -344,64 +344,62 @@ void BGMFiniteStateMachine(void)
     case BGM_STATE_IDLE://plc change idle needs cooling & water flow
         if(0 == isdataCaliUnlock)
         {
-            BGM_LockDoseCaliPara(BGM_UART_DOSE1,0);// unlock dose board cali parameter 
-            osDelay(1);
-            BGM_LockDoseCaliPara(BGM_UART_DOSE2,0);// unlock dose board cali parameter 
-            dataToSend.DataIn3[0] = 0;
-            isdataCaliUnlock = 1 ;//tell PLC ready to  set cali parameter 
-            LOG_I("BGM_STATE_IDLE\r\n");
             uint8_t zeroCmd[2] = {0xc1,0x02};
             BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, zeroCmd,2);
             BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown, zeroCmd,2);
+            BGM_LockDoseCaliPara(BGM_UART_DOSE1,0);// unlock dose board cali parameter 
+            BGM_LockDoseCaliPara(BGM_UART_DOSE2,0);// unlock dose board cali parameter 
+            isdataCaliUnlock = 1 ;//tell PLC ready to  set cali parameter 
+            LOG_I("BGM_STATE_IDLE\r\n");
         }
-        //waiting for adc dac parameter
-        // when plc have sent the parameter,ARM will send them to dose automatically in {BGMEthercatDataParsePoint}
-        //then check dose board 's FSM
-        BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheckFSM,2);
-        BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown, cmdToCheckFSM,2);
-        osDelay(1000);
-        // if dose fsm change to pre ,arm will change to pre automatically 
-        break;
-    case BGM_STATE_PREPARE:
         if(0 == isBeamDataSetUnlock)
         {
-            dataToSend.DataIn5[1] = 1;//cali para set ok
-            dataToSend.DataIn3[0] = 1;// tell PLC do not write cali para
-            dataToSend.DataIn3[1] = 0;//tell PLC beam parameter unlock
             BGM_LockBeamData(BGM_UART_DOSE1,0);
-            osDelay(1);
             BGM_LockBeamData(BGM_UART_DOSE2,0);//unlock all data;
             isBeamDataSetUnlock = 1;
             // LOG_I("BGM_STATE_PREPARE\r\n");
         }
-        osDelay(1000);
-        //waiting for prf &dose set & normal module set
+        //waiting for adc dac parameter
         // when plc have sent the parameter,ARM will send them to dose automatically in {BGMEthercatDataParsePoint}
+        //then check dose board 's FSM
+        // BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheckFSM,2);
+        // BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown, cmdToCheckFSM,2);
         if((isDoseSetOK)&&(isPRFOK)&&(isDoseModeOK))
         {
-            dataToSend.DataIn5[0] = 1;
-            ARMcurrentState = BGM_STATE_READY;
-        }
-        // LOG_I("isDoseSetOK = %d\r\n",isDoseSetOK);
-        // LOG_I("isPRFOK = %d\r\n",isPRFOK);
-        // LOG_I("isDoseModeOK = %d\r\n",isDoseModeOK);
-        break;
-
-    case BGM_STATE_READY:
-        if(BGM_STATE_PREPARE == PLCcurrentState)//PLC FSM change to prepare when HMI have sent beam parameters,then arm will lock the data // press button 
-        {
-            osDelay(100);//waiting for ethercat write data
-            //todo :add some read back logic
-            if(0 == isDoseReady)
+            if(BGM_STATE_PREPARE == PLCcurrentState)//PLC FSM change to prepare when HMI have sent beam parameters,then arm will lock the data // press button 
             {
-                BGM_LockBeamData(BGM_UART_DOSE1,1);
-                BGM_LockBeamData(BGM_UART_DOSE2,1);//lock all data;
-                dataToSend.DataIn3[1] = 1;
-                BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_READY);//change dose board fsm to ready
-                isDoseReady = 1;
-                // LOG_I("BGM_STATE_READY\r\n");
-             }
+                osDelay(100);//waiting for ethercat write data
+                //todo :add some read back logic
+                if(0 == isDoseReady)
+                {
+                    BGM_LockDoseCaliPara(BGM_UART_DOSE1,1);
+                    BGM_LockDoseCaliPara(BGM_UART_DOSE2,1);
+                    BGM_LockBeamData(BGM_UART_DOSE1,1);
+                    BGM_LockBeamData(BGM_UART_DOSE2,1);//lock all data;
+                    BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_PREPARE);//change dose board fsm to ready
+                    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown, cmdToCheckFSM,2);
+                    isDoseReady = 1;
+                    // LOG_I("BGM_STATE_READY\r\n");
+                   // ARMcurrentState = BGM_STATE_PREPARE;
+                }
+            }
         }
+        osDelay(1000);
+        break;
+    case BGM_STATE_PREPARE:
+        if(BGM_STATE_READY == PLCcurrentState)
+        {
+            ARMcurrentState = BGM_STATE_READY;
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_READY);
+        }
+        if(BGM_STATE_TERMINATE == PLCcurrentState)
+        {
+            BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_FAULT);//make dose board to fault
+            ARMcurrentState = BGM_STATE_TERMINATE;
+        }
+        osDelay(1000);
+        break;
+    case BGM_STATE_READY:
         if(BGM_STATE_WORK == PLCcurrentState) //Mod FSM change to TRIG，PLC FSM change to WORK,then change arm to work
         {
             BGM_CtrlDoseBoardFSM(Dose_FSM_STATE_RADIATION);//change dose board fsm to radiation
@@ -419,7 +417,6 @@ void BGMFiniteStateMachine(void)
         }
         osDelay(500);
         break;
-
     case BGM_STATE_WORK:
         if(osMessageQueueGetCount(isDoseTriggerQueueHandle) != 0)
         {   

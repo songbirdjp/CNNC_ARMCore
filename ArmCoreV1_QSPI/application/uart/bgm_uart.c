@@ -233,7 +233,7 @@ static int8_t dose_state_control_parse(struct cmd_object *cmd)
             {
                 ARMcurrentState = BGM_STATE_IDLE;
             }
-            if(cmd->data[2] == 3)
+            if(cmd->data[2] == Dose_FSM_STATE_PREPARE)
             {
                 if(ARMcurrentState != BGM_STATE_READY)
                 {
@@ -361,6 +361,7 @@ static int8_t dose_realtime_frame_parse(struct cmd_object *cmd)
         // LOG_I("dose current cp: %d\r\n", cmd->data[4]);
         // LOG_I("dose current radiation index: %d\r\n", cmd->data[6] << 8 | cmd->data[5]);
         // LOG_I("dose current cumulative: %d (0.1MU)\r\n", cmd->data[8] << 8 | cmd->data[7]);
+        
         // LOG_I("dose current prf: %d\r\n", cmd->data[9]);
         // LOG_I("dose abnormal pulse count: %d\r\n", cmd->data[11] << 8 | cmd->data[10]);
         // LOG_I("dose one pulse valid flag: %d\r\n", cmd->data[12]);
