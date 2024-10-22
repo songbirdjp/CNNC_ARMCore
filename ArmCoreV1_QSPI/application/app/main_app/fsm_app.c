@@ -4,7 +4,7 @@
 #include "gpio_app.h"
 
 static osMutexId_t fsm_mutex = NULL;
-static enum fsm_state fsm_state_current = FSM_STATE_INIT;
+static enum fsm_state fsm_state_current = FSM_STATE_IDLE;
 static osEventFlagsId_t fsm_event = NULL;
 #define FSM_CHANGE_EVENT   (1 << 0)
 static int8_t fsm_state_set(enum fsm_state state)

@@ -23,6 +23,7 @@
 
 #include "frame_format.h"
 #include "hw_crc.h"
+#include "ulog.h"
 
 #define FRAME_HEADER_OFFSET     0
 #define FRAME_HEADER_LEN        2
@@ -69,7 +70,7 @@ int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t
 {
     if (stats == NULL || buf == NULL || size < FRAME_EXTRA_LEN)
     {
-        printf("args error\r\n");
+        LOG_E("args error\r\n");
         return -1;
     }
 
@@ -78,7 +79,7 @@ int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t
     /* 1. check header */
     if (buf[FRAME_HEADER_OFFSET] != 0x55 || buf[FRAME_HEADER_OFFSET + 1] != 0xAA)
     {
-        printf("header error\r\n");
+        LOG_E("header error\r\n");
         ret = -2;
     }
 
@@ -86,14 +87,14 @@ int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t
     HAL_StatusTypeDef stat = hardware_crc_config(CRC32);
     if (stat != HAL_OK)
     {
-        printf("hw crc32 config error\r\n");
+        LOG_E("hw crc32 config error\r\n");
         return -3;
     }
 
     uint16_t len = buf[FRAME_DATA_LEN_OFFSET] | buf[FRAME_DATA_LEN_OFFSET + 1] << 8;
     if (size < len + FRAME_EXTRA_LEN)
     {
-        printf("size error: %d, %d\r\n", size, len);
+        LOG_E("size error: %d, %d\r\n", size, len);
         ret = -4;
     }
 
@@ -101,13 +102,13 @@ int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t
     uint32_t crc_recv = buf[len + FRAME_DATA_OFFSET] | buf[len + FRAME_DATA_OFFSET + 1] << 8 | buf[len + FRAME_DATA_OFFSET + 2] << 16 | buf[len + FRAME_DATA_OFFSET + 3] << 24;
     if (crc_cal != crc_recv)
     {
-        printf("crc32 check error\r\n");
+        LOG_E("crc32 check error\r\n");
 #if 1
         for (int i = 0; i < size; i++)
         {
-            printf("%02x ", buf[i]);
+            LOG_I("%02x ", buf[i]);
         }
-        printf("\r\n");
+        LOG_I("\r\n");
 #endif
         ret = -5;
     }
@@ -126,19 +127,19 @@ int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t
     ret = frame_stats_recv_update(stats, FRAME_UPDATE_CNT, 1);
     if (ret != 0)
     {
-        printf("frame stats update cnt error: %d\r\n", ret);
+        LOG_E("frame stats update cnt error: %d\r\n", ret);
     }
 
     ret = frame_stats_recv_update(stats, FRAME_UPDATE_CRC, ret);
     if (ret != 0)
     {
-        printf("frame stats update crc error: %d\r\n", ret);
+        LOG_E("frame stats update crc error: %d\r\n", ret);
     }
 
     ret = frame_stats_recv_update(stats, FRAME_UPDATE_LOST, buf[FRAME_COUNT_OFFSET] | buf[FRAME_COUNT_OFFSET + 1] << 8);
     if (ret != 0)
     {
-        printf("frame stats update lost error: %d\r\n", ret);
+        LOG_E("frame stats update lost error: %d\r\n", ret);
     }
 #endif
 
@@ -150,7 +151,7 @@ int8_t frame_format_pack_and_send(struct frame_statistics *stats, uint8_t *buf, 
 {
     if (buf == NULL || len == 0)
     {
-        printf("args error\r\n");
+        LOG_E("args error\r\n");
         return -1;
     }
 
@@ -178,7 +179,7 @@ int8_t frame_format_pack_and_send(struct frame_statistics *stats, uint8_t *buf, 
     HAL_StatusTypeDef stat = hardware_crc_config(CRC32);
     if (stat != HAL_OK)
     {
-        printf("hw crc32 config error\r\n");
+        LOG_E("hw crc32 config error\r\n");
         return -2;
     }
 
@@ -219,21 +220,21 @@ static int8_t frame_statistics_init(void)
     frame_stats_get()->mutex = osMutexNew(&mutex_attributes);
     if (frame_stats_get()->mutex == NULL)
     {
-        printf("frame_stats_mutex create failed\r\n");
+        LOG_E("frame_stats_mutex create failed\r\n");
         return -1;
     }
 
     osTimerId_t timer_stats = osTimerNew(frame_stats_polling, osTimerPeriodic, frame_stats_get(), NULL);
     if (timer_stats == NULL)
     {
-        printf("timer_stats create failed\r\n");
+        LOG_E("timer_stats create failed\r\n");
         return -2;
     }
 
     osStatus_t stat = osTimerStart(timer_stats, 1);
     if (stat != osOK)
     {
-        printf("timer_stats start failed\r\n");
+        LOG_E("timer_stats start failed\r\n");
         return -3;
     }
 

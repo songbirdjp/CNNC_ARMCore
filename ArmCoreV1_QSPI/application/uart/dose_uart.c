@@ -13,6 +13,7 @@
 
 static struct control_para control_data = 
 {
+    .board_id = DOSE_BOARD_TRIGGER_OUT,
     .calibration = {.adc_factor = {2376000, 2376000, 2376000, 2376000, 2376000}, 
                     .dac_factor = 30,
                     .trig_interval_min = 4000},
@@ -463,10 +464,12 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
             osMutexAcquire(obj->mutex, osWaitForever);
             if (obj->calibration.status.bits.lock == 0 || obj->treatment.status.bits.lock == 0)
             {
+                LOG_I("lock: %d, %d\r\n", obj->calibration.status.bits.lock, obj->treatment.status.bits.lock);
                 ret = -1;
             }
             if (obj->treatment.dose_mode != 1)
             {
+                LOG_I("dose mode: %d\r\n", obj->treatment.dose_mode);
                 ret = -1;
             }
             osMutexRelease(obj->mutex);
@@ -512,7 +515,7 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
         }
         break;
     case FSM_STATE_FAULT:
-        if (new_state != FSM_STATE_IDLE)
+        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_READY)
         {
             ret = -1;
         }
@@ -583,6 +586,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             {
                 LOG_E("dose value status set err: %d\r\n", ret);
             }
+            LOG_I("dose uart accumulated reset\r\n");
             break;
         case 0x03:
             ret = interlock_status_cleanup();
@@ -960,13 +964,13 @@ static int8_t dose_uart_recv_entry(void *argument)
 
 static int8_t dose_uart_thread_init(void)
 {
-    osThreadAttr_t thread_attr = {
-    .name = "dose_uart_thread",
+    osThreadAttr_t thread_recv_attr = {
+    .name = "dose_uart_recv_thread",
     .stack_size = 1024 * 4,
-    .priority = osPriorityAboveNormal7,
+    .priority = osPriorityAboveNormal,
     };
 
-    osThreadId_t thread_id = osThreadNew(dose_uart_recv_entry, NULL, &thread_attr);
+    osThreadId_t thread_id = osThreadNew(dose_uart_recv_entry, NULL, &thread_recv_attr);
     if (thread_id == NULL)
     {
         LOG_E("thread dose uart create failed\r\n");
@@ -980,7 +984,13 @@ static int8_t dose_uart_thread_init(void)
         return -2;
     }
 
-    thread_id = osThreadNew(dose_uart_send_entry, NULL, &thread_attr);
+    osThreadAttr_t thread_send_attr = {
+    .name = "dose_uart_send_thread",
+    .stack_size = 1024 * 4,
+    .priority = osPriorityAboveNormal,
+    };
+
+    thread_id = osThreadNew(dose_uart_send_entry, NULL, &thread_send_attr);
     if (thread_id == NULL)
     {
         LOG_E("thread dose uart create failed\r\n");

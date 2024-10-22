@@ -467,6 +467,19 @@ static uint32_t trigger_out_info_get(enum trigger_out_state state)
     return value;
 }
 
+// #define DETECT_RADIATION_TIME_FROM_TRIGGER_OUT
+#ifdef DETECT_RADIATION_TIME_FROM_TRIGGER_OUT
+#include "utilities.h"
+static struct system_time begin_time = {0}, end_time = {0};
+#endif
+
+#define TRIGGER_OUT_COUNT_STATISTIC
+#ifdef TRIGGER_OUT_COUNT_STATISTIC
+uint32_t trigger_out_count = 0;
+uint32_t trigger_out_cnt = 0;
+#endif
+
+
 #define USING_TIM5_FOR_RADIATION_TIMEOUT
 #ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
 #include "tim.h"
@@ -531,6 +544,11 @@ static int8_t time_delay_entry(void *argument)
         timer_delay_flag = 0;
         if (event_flag & TIM_DELAY_PULSE_INTERVAL_TIME_US)
         {
+            if (fsm_state_get() != FSM_STATE_RADIATION || trigger_out_info_get(TRIGGER_OUT_FLAG) == 0)
+            {
+                continue;
+            }
+
             ret = dose_value_status_update(ONE_PULSE_START, 0, 0);
             if (ret != 0)
             {
@@ -543,6 +561,13 @@ static int8_t time_delay_entry(void *argument)
                 {
                     LOG_E("dose_trigger_out_set err: %d\r\n", ret);
                 }
+#ifdef TRIGGER_OUT_COUNT_STATISTIC
+                trigger_out_count++;
+#endif
+
+#ifdef DETECT_RADIATION_TIME_FROM_TRIGGER_OUT
+                system_time_get(&begin_time);
+#endif
                 /* reset trigger out level */                
                 ret = timer_delay_start(TIM_DELAY_PULSE_LEVEL_RESET_TIME_US, NORMAL_PULSE_RESET_DELAY_TIME_US);
                 if (ret != 0)
@@ -672,6 +697,7 @@ static int8_t lptim3_delay_entry(void *argument)
                 {
                     LOG_E("dose value status update err: %d\r\n", ret);
                 }
+                LOG_I("one pulse timeout\r\n");
             }
         }
 
@@ -691,14 +717,20 @@ static uint16_t adcs7476_value_check(uint16_t *buf, uint16_t len, uint64_t *puls
         if (buf[i] >= ADCS7476_VALUE_ACCUMULATE_LIMIT)
         {
             *pulse_val += buf[i] - ADCS7476_SERVO_VALUE;
-#ifdef LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US
-            ret = lptim3_delay_start(LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US, ONE_PULSE_TIMEOUT_US);
-            if (ret != 0)
+
+            if(buf[i] >= 4096)
             {
-                LOG_E("lptim3 delay start err: %d\r\n", ret);
+                LOG_I("adcs7476 value err: %d\r\n", buf[i]);
             }
-#else
-#endif
+
+// #ifdef LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US
+//             ret = lptim3_delay_start(LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US, ONE_PULSE_TIMEOUT_US);
+//             if (ret != 0)
+//             {
+//                 LOG_E("lptim3 delay start err: %d\r\n", ret);
+//             }
+// #else
+// #endif
             valid_cnt++;
         }
         else
@@ -831,7 +863,7 @@ static int8_t adcs7476_value_dose(uint32_t value, uint32_t value_1, uint16_t pul
 
     if (value_diff > value_max * percentage / 100)
     {
-        LOG_I("dose symmetry fault, value_diff: %d, value_max: %d, percentage: %d\r\n", value_diff, value_max, percentage);
+        // LOG_I("dose symmetry fault, value_diff: %d, value_max: %d, percentage: %d\r\n", value_diff, value_max, percentage);
     }
 
     interlock_status_set(INTERLOCK_DOSE_SYMMETRY_FAULT, value_diff > value_max * percentage / 100);
@@ -866,6 +898,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
             LOG_E("dose value status update err: %d\r\n", ret);
             return ret;
         }
+        // LOG_I("one pulse complete, pulse dose: %llu\r\n", dose_value_status_get(ONE_PULSE_DOSE));
         break;
     default:
         ret = -1;
@@ -878,7 +911,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
 
     uint64_t board_id = radiation_data_value_get(DOSE_BOARD_ID);
 
-    #define DOSE_BOARD_NO_TRIGGER_OUT_SCALE 1.1
+    #define DOSE_BOARD_NO_TRIGGER_OUT_SCALE 2
     if (board_id == DOSE_BOARD_NO_TRIGGER_OUT)
     {
         dose_accumulated_target *= DOSE_BOARD_NO_TRIGGER_OUT_SCALE;
@@ -887,13 +920,17 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
 #if 0
     static uint32_t cnt = 0;
 #ifndef RADIATION_SIMULATION_MODE
-    if (cnt++ % 1000 == 0)
+    if (cnt++ % 100 == 0)
 #else
     if (radiation_simulation_trigger_out_flag == 0)
 #endif
     {
         LOG_I("dose accumulated: %llu, target: %llu\r\n", dose_accumulated_cur, dose_accumulated_target);
     }
+#endif
+
+#ifdef NONE_DOSE_ACCELERATION_MODE
+    return 0;
 #endif
 
     if (dose_accumulated_cur >= dose_accumulated_target)
@@ -968,6 +1005,17 @@ static int8_t detect_whether_one_pulse_repeat(void)
 
     if (fsm_state_get() != FSM_STATE_RADIATION)
     {
+#if 0
+        timer_delay_flag = 0;
+        lptim3_delay_flag = 0;
+
+        ret = trigger_out_info_set(TRIGGER_OUT_FLAG, 0);
+        if (ret != 0)
+        {
+            LOG_E("trigger out info set err: %d\r\n", ret);
+            return ret;
+        }
+#endif
         ret = trigger_out_info_set(TRIGGER_OUT_FLAG, 0);
         if (ret != 0)
         {
@@ -1055,7 +1103,7 @@ static int8_t detect_whether_one_pulse_repeat(void)
     return 0;
 }
 
-// #define ADCS7476_DATA_DUMP
+#define ADCS7476_DATA_DUMP
 #ifdef ADCS7476_DATA_DUMP
 #include "shell.h"
 static uint16_t adcs7476_data_buf[2][BUF_LEN * 10] = {0};
@@ -1186,7 +1234,7 @@ int8_t adcs7476_value_process(void)
     pulse_cnt_1 = adcs7476_value_check(buf_1, BUF_LEN, &pulse_value_1, &servo_value_1);
     if (pulse_cnt != pulse_cnt_1 && pulse_cnt != 0 && pulse_cnt_1 != 0)
     {
-        LOG_E("adcs7476 value pulse count not match: %d, %d\r\n", pulse_cnt, pulse_cnt_1);
+        // LOG_E("adcs7476 value pulse count not match: %d, %d\r\n", pulse_cnt, pulse_cnt_1);
 #if 0
         LOG_I("pulse_cnt: %d, pulse_cnt_1: %d\r\n", pulse_cnt, pulse_cnt_1);
         LOG_I("pulse_value: %d  pulse_value_1: %d\r\n", pulse_value, pulse_value_1);
@@ -1219,6 +1267,14 @@ int8_t adcs7476_value_process(void)
 
     uint16_t one_pulse_cnt = dose_value_status_get(ONE_PULSE_COUNT);
 
+#ifdef DETECT_RADIATION_TIME_FROM_TRIGGER_OUT
+    if (one_pulse_cnt == 0 && pulse_cnt != 0)
+    {
+        system_time_get(&end_time);
+        // LOG_I("radiation delayed from trigger out: %u us\r\n", time_diff_us(&begin_time, &end_time));
+    }
+#endif
+
     if (one_pulse_cnt == 0)
     {
         if (pulse_cnt == 0 && pulse_cnt_1 == 0)
@@ -1244,6 +1300,10 @@ int8_t adcs7476_value_process(void)
         }
         else
         {
+            // LOG_I("---one pulse begin---\r\n");
+#ifdef TRIGGER_OUT_COUNT_STATISTIC
+            trigger_out_cnt++;
+#endif
             /* pulse mode begin */
             ret = adcs7476_value_dose(pulse_value, pulse_value_1, pulse_cnt);
             if (ret != 0)
@@ -1256,6 +1316,7 @@ int8_t adcs7476_value_process(void)
     {
         if (pulse_cnt < BUF_LEN || pulse_cnt_1 < BUF_LEN)
         {
+            // LOG_I("---one pulse end---\r\n");
             /* pulse mode end, servo mode begin */
             ret = adcs7476_value_dose(pulse_value, pulse_value_1, pulse_cnt);
             if (ret != 0)
@@ -1374,7 +1435,7 @@ static int8_t radiation_thread_init(void)
     osThreadAttr_t time_delay_thread_attributes = {
     .name = "time_delay_thread",
     .stack_size = 1024 * 4,
-    .priority = (osPriority_t) osPriorityAboveNormal,
+    .priority = (osPriority_t) osPriorityHigh7,
     };
 
 #ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
@@ -1491,7 +1552,7 @@ static int8_t dose_radiation_mode_test(uint8_t argc, char **argv)
 {
     int8_t ret = 0;
 
-    /* clear dose meter value */
+    /* 1. clear dose meter value */
     ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
     if (ret != 0)
     {
@@ -1506,6 +1567,7 @@ static int8_t dose_radiation_mode_test(uint8_t argc, char **argv)
         LOG_E("radiation data value set err: %d\r\n", ret);
         return ret;
     }
+
     /* 3. update fsm state */
     enum fsm_state state = atoi(argv[1]);   /* FSM_STATE_DUMMY: 2   FSM_STATE_RADIATION: 5 */
 
@@ -1583,11 +1645,59 @@ static int8_t trigger_out_stop(void)
 }
 MSH_CMD_EXPORT_ALIAS(trigger_out_stop, trigger_out_stop, trigger out stop);
 
+static int8_t beam_data_info_get(uint8_t argc, char **argv)
+{
+    LOG_I("dose meter target: %llu\r\n", radiation_data_value_get(DOSE_BEAM_METER));
+    LOG_I("dose radiation index: %llu\r\n", radiation_data_value_get(DOSE_RADIATION_IDX));
+    LOG_I("dose rate radiation index: %llu\r\n", radiation_data_value_get(DOSE_RATE_RADIATION_IDX));
+    LOG_I("dose time radiation index: %llu\r\n", radiation_data_value_get(DOSE_TIME_RADIATION_IDX));
+    LOG_I("dose interpolated radiation index: %llu\r\n", radiation_data_value_get(DOSE_INTERPOLATED_RADIATION_IDX));
+    LOG_I("dose rate interpolated radiation index: %llu\r\n", radiation_data_value_get(DOSE_RATE_INTERPOLATED_RADIATION_IDX));
+    LOG_I("dose generation mode: %llu\r\n", radiation_data_value_get(DOSE_GENERATION_MODE));
+    LOG_I("pulse generation mode: %llu\r\n", radiation_data_value_get(PULSE_GENERATION_MODE));
+    LOG_I("pulse interval: %llu us\r\n", radiation_data_value_get(PULSE_INTERVAL));
+    LOG_I("pulse interval min: %llu us\r\n", radiation_data_value_get(PULSE_INTERVAL_MIN));
+    LOG_I("pulse symmetry: %llu\r\n", radiation_data_value_get(PULSE_SYMMETRY));
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(beam_data_info_get, beam_data_info_get, beam data info get);
+
 static int8_t one_pulse_dose_get(uint8_t argc, char **argv)
 {
-    
+    LOG_I("one pulse timeout: %llu\r\n", dose_value_status_get(ONE_PULSE_COUNT));
+    LOG_I("one pulse flag: %llu\r\n", dose_value_status_get(ONE_PULSE_COMPLETE));
+    LOG_I("one pulse dose: %llu\r\n", dose_value_status_get(ONE_PULSE_DOSE));
+    LOG_I("dose cumulated: %llu\r\n", dose_value_status_get(DOSE_ACCUMULATED));
 
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(one_pulse_dose_get, one_pulse_dose_get, one pulse dose get);
+
+static int8_t radiation_data_info_get(uint8_t argc, char **argv)
+{
+    LOG_I("timer_delay_flag: %d\r\n", timer_delay_flag);
+    LOG_I("lptim3_delay_flag: %d\r\n", lptim3_delay_flag);
+    LOG_I("trigger_out_flag: %d\r\n", trigger_out_info_get(TRIGGER_OUT_FLAG));
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(radiation_data_info_get, radiation_data_info_get, radiation data info get);
+
+static int8_t radiation_trigger_out_time_get(uint8_t argc, char **argv)
+{
+    LOG_I("trigger_out_time: %u %u\r\n", trigger_out_cnt, trigger_out_count);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(radiation_trigger_out_time_get, radiation_trigger_out_time_get, radiation trigger out time get);
+
+static int8_t radiation_trigger_out_time_clear(uint8_t argc, char **argv)
+{
+    trigger_out_cnt = 0;
+    trigger_out_count = 0;
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(radiation_trigger_out_time_clear, radiation_trigger_out_time_clear, radiation trigger out time clear);
 #endif
