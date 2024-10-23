@@ -204,22 +204,11 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-    osDelay(1000);//delay 1s
-    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_9, GPIO_PIN_SET);//watchdog signal 2
-    /* Infinite loop */
-
-    uint8_t count = 0;
-    for(;;)
-    {
-        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_7);//watchdog signal 1
-
-        osDelay(100);
-
-        if (count++ % 5 == 0)
-        {
-            HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
-        }
-    }
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
   /* USER CODE END StartDefaultTask */
 }
 
