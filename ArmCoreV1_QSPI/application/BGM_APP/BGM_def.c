@@ -471,6 +471,6 @@ void BGM_RtBeamCtrl(void)
 {
     uint8_t dacCmd= 0x01;
     BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_RtDataDown,&dacCmd,1);  
-    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_RtDataDown,&dacCmd,1);  
+   // BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_RtDataDown,&dacCmd,1);  
 }
 MSH_CMD_EXPORT_ALIAS(BGM_RtBeamCtrl,DoseRT,"Get RT Parameter");

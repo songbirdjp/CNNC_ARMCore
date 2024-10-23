@@ -334,11 +334,12 @@ static int8_t dose_command_frame_parse(struct cmd_object *cmd)
 
     return ret;
 }
-
+#include "lan9252_app.h"
+extern TOBJ6000 dataToSend;
 static int8_t dose_realtime_frame_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
-
+    uint16_t cumDose = 0;//cjh test
     switch (cmd->data[0])
     {
     case 0x00:
@@ -360,8 +361,8 @@ static int8_t dose_realtime_frame_parse(struct cmd_object *cmd)
         // LOG_I("dose interlock: %#.4x\r\n", cmd->data[3] << 8 | cmd->data[2]);
         // LOG_I("dose current cp: %d\r\n", cmd->data[4]);
         // LOG_I("dose current radiation index: %d\r\n", cmd->data[6] << 8 | cmd->data[5]);
-        // LOG_I("dose current cumulative: %d (0.1MU)\r\n", cmd->data[8] << 8 | cmd->data[7]);
-
+        //LOG_E("dose current cumulative: %d (0.1MU)\r\n", cmd->data[8] << 8 | cmd->data[7]);
+        dataToSend.DataIn6[0] = (cmd->data[8] << 8 | cmd->data[7]);
         // LOG_I("dose current prf: %d\r\n", cmd->data[9]);
         // LOG_I("dose abnormal pulse count: %d\r\n", cmd->data[11] << 8 | cmd->data[10]);
         // LOG_I("dose one pulse valid flag: %d\r\n", cmd->data[12]);

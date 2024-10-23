@@ -477,6 +477,7 @@ void BGMFiniteStateMachine(void)
         }
         if(BGM_STATE_COMPLETE == PLCcurrentState)
         {   
+            BGM_RtBeamCtrl();
             isDoseReady = 0;
             isDoseSetOK = 0;
             isPRFOK = 0;
