@@ -122,7 +122,8 @@ struct ulog_write_func_info
 {
     int8_t (*func_init)(void);
     int8_t (*func_callback)(const uint8_t *buf, uint32_t len);
-    uint8_t index
+    uint8_t index;
+    ulog_level_t level
 };
 
 /**

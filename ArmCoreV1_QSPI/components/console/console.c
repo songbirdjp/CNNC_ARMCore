@@ -159,7 +159,8 @@ static int8_t console_log_init(void)
     struct ulog_write_func_info info = {
     .func_init = NULL,
     .func_callback = device_console_write,
-    .index = 0};
+    .index = 0,
+    .level = ULOG_INFO_LEVEL};
 
     int8_t ret = ulog_write_func_register(&info);
     if (ret != 0)
