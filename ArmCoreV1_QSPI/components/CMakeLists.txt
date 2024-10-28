@@ -2,7 +2,7 @@ set(current_path ${CMAKE_CURRENT_LIST_DIR})
 
 set(include_path ${include_path}
     "${current_path}/cjson" 
-    "${current_path}/cm_backtrace" 
+    # "${current_path}/cm_backtrace" 
     "${current_path}/common" 
     "${current_path}/console" 
     "${current_path}/crypto" 
@@ -21,7 +21,7 @@ set(include_path ${include_path}
 
 set(src_path ${src_path}
     "${current_path}/cjson/*.*" 
-    "${current_path}/cm_backtrace/*.*" 
+    # "${current_path}/cm_backtrace/*.*" 
     "${current_path}/common/*.*" 
     "${current_path}/console/*.*" 
     "${current_path}/crypto/*.*" 

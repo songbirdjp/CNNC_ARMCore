@@ -2,13 +2,7 @@
 #include "uart_port.h"
 #include "init_call.h"
 #include "sys_cfg.h"
-#include "fsm_app.h"
-#include "plan_data.h"
 #include "mcu_adc.h"
-#include "ltc2632.h"
-#include "gpio_app.h"
-#include "interlock_app.h"
-#include "radiation_app.h"
 #include "ulog.h"
 
 static struct control_para control_data = 
@@ -190,19 +184,19 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             break;
         case 0x01:
             LOG_I("dose beam meter set: %f\r\n", (cmd->data[3] << 8 | cmd->data[2]) / 10.0);
-            ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, (cmd->data[3] << 8 | cmd->data[2]) / 10.0);
+            // ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, (cmd->data[3] << 8 | cmd->data[2]) / 10.0);
             if (ret != 0)
             {
                 LOG_E("beam data dose meter set err: %d\r\n", ret);
             }
             break;
         case 0x02:
-            ret = beam_data_value_set(0, BEAM_TOTAL_CP, 0, cmd->data[2]);
+            // ret = beam_data_value_set(0, BEAM_TOTAL_CP, 0, cmd->data[2]);
             if (ret != 0)
             {
                 LOG_E("beam data total cp set err: %d\r\n", ret);
             }
-            ret |= beam_data_value_set(0, BEAM_TOTAL_RI, 0, cmd->data[4] << 8 | cmd->data[3]);
+            // ret |= beam_data_value_set(0, BEAM_TOTAL_RI, 0, cmd->data[4] << 8 | cmd->data[3]);
             if (ret != 0)
             {
                 LOG_E("beam data total ri set err: %d\r\n", ret);
@@ -211,24 +205,24 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
         case 0x03:
             break;
         case 0x04:
-            ret = beam_data_value_set(0, BEAM_CP_RI_MAP, cmd->data[2], cmd->data[4] << 8 | cmd->data[3]);
+            // ret = beam_data_value_set(0, BEAM_CP_RI_MAP, cmd->data[2], cmd->data[4] << 8 | cmd->data[3]);
             if (ret != 0)
             {
                 LOG_E("beam data cp ri map set err: %d\r\n", ret);
             }
             break;
         case 0x05:
-            ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4]);
+            // ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4]);
             if (ret != 0)
             {
                 LOG_E("beam data ri cumulative set err: %d\r\n", ret);
             }
-            ret = beam_data_value_set(0, BEAM_RI_DOSE_RATE, cmd->data[3] << 8 | cmd->data[2], cmd->data[7] << 8 | cmd->data[6]);
+            // ret = beam_data_value_set(0, BEAM_RI_DOSE_RATE, cmd->data[3] << 8 | cmd->data[2], cmd->data[7] << 8 | cmd->data[6]);
             if (ret != 0)
             {
                 LOG_E("beam data ri dose rate set err: %d\r\n", ret);
             }
-            ret = beam_data_value_set(0, BEAM_RI_TIME_EXPECTED, cmd->data[3] << 8 | cmd->data[2], cmd->data[9] << 8 | cmd->data[8]);
+            // ret = beam_data_value_set(0, BEAM_RI_TIME_EXPECTED, cmd->data[3] << 8 | cmd->data[2], cmd->data[9] << 8 | cmd->data[8]);
             if (ret != 0)
             {
                 LOG_E("beam data ri time expected set err: %d\r\n", ret);
@@ -353,13 +347,13 @@ static int8_t dose_interlock_parse(struct dose_object *cmd)
             cmd->len = 4;
             break;
         case 0x03:
-            value = ltc2632_data_value_get(LTC2632_CHANNEL_OUTA);
+            // value = ltc2632_data_value_get(LTC2632_CHANNEL_OUTA);
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
             cmd->len = 4;
             break;
         case 0x04:
-            value = ltc2632_data_value_get(LTC2632_CHANNEL_OUTB);
+            // value = ltc2632_data_value_get(LTC2632_CHANNEL_OUTB);
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
             cmd->len = 4;
@@ -370,7 +364,7 @@ static int8_t dose_interlock_parse(struct dose_object *cmd)
         }
         break;
     case 0xB0:
-        value = interlock_status_get();
+        // value = interlock_status_get();
         cmd->data[2] = value;
         cmd->data[3] = value >> 8;
         cmd->len = 4;
@@ -397,136 +391,136 @@ static int8_t dose_interlock_parse(struct dose_object *cmd)
     return ret;
 }
 
-static int8_t fsm_state_switch_check(enum fsm_state new_state)
-{
-    if (new_state >= FSM_STATE_MAX)
-    {
-        LOG_E("invalid fsm state: %d\r\n", new_state);
-        return -1;
-    }
+// static int8_t fsm_state_switch_check(enum fsm_state new_state)
+// {
+    // if (new_state >= FSM_STATE_MAX)
+    // {
+    //     LOG_E("invalid fsm state: %d\r\n", new_state);
+    //     return -1;
+    // }
 
-    enum fsm_state state = fsm_state_get();
-    if (new_state == state)
-    {
-        return 0;
-    }
+    // enum fsm_state state = fsm_state_get();
+    // if (new_state == state)
+    // {
+    //     return 0;
+    // }
 
-    int8_t ret = 0;
+    // int8_t ret = 0;
     
-    switch (state)
-    {
-    case FSM_STATE_INIT:
-        if (new_state != FSM_STATE_IDLE)
-        {
-            ret = -1;
-        }
-        break;
-    case FSM_STATE_IDLE:
-        if (new_state == FSM_STATE_INIT || new_state == FSM_STATE_PREPARE)
-        {
-            /* do nothing */
-        }
-        else if (new_state == FSM_STATE_DUMMY)
-        {
-            /* check lock status */
-            struct control_para *obj = control_data_get();
-            osMutexAcquire(obj->mutex, osWaitForever);
-            if (obj->calibration.status.bits.lock == 0 || obj->treatment.status.bits.lock == 0)
-            {
-                ret = -1;
-            }
-            if (obj->treatment.dose_mode != 0)
-            {
-                ret = -1;
-            }
-            osMutexRelease(obj->mutex);
-        }
-        else
-        {
-            ret = -1;
-        }
-        break;
-    case FSM_STATE_DUMMY:
-        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_FAULT)
-        {
-            ret = -1;
-        }
-        break;
-    case FSM_STATE_PREPARE:
-        if (new_state == FSM_STATE_IDLE || new_state == FSM_STATE_FAULT)
-        {
+    // switch (state)
+    // {
+    // case FSM_STATE_INIT:
+    //     if (new_state != FSM_STATE_IDLE)
+    //     {
+    //         ret = -1;
+    //     }
+    //     break;
+    // case FSM_STATE_IDLE:
+    //     if (new_state == FSM_STATE_INIT || new_state == FSM_STATE_PREPARE)
+    //     {
+    //         /* do nothing */
+    //     }
+    //     else if (new_state == FSM_STATE_DUMMY)
+    //     {
+    //         /* check lock status */
+    //         struct control_para *obj = control_data_get();
+    //         osMutexAcquire(obj->mutex, osWaitForever);
+    //         if (obj->calibration.status.bits.lock == 0 || obj->treatment.status.bits.lock == 0)
+    //         {
+    //             ret = -1;
+    //         }
+    //         if (obj->treatment.dose_mode != 0)
+    //         {
+    //             ret = -1;
+    //         }
+    //         osMutexRelease(obj->mutex);
+    //     }
+    //     else
+    //     {
+    //         ret = -1;
+    //     }
+    //     break;
+    // case FSM_STATE_DUMMY:
+    //     if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_FAULT)
+    //     {
+    //         ret = -1;
+    //     }
+    //     break;
+    // case FSM_STATE_PREPARE:
+    //     if (new_state == FSM_STATE_IDLE || new_state == FSM_STATE_FAULT)
+    //     {
 
-        }
-        else if (new_state == FSM_STATE_READY)
-        {
-            /* check lock status */
-            struct control_para *obj = control_data_get();
-            osMutexAcquire(obj->mutex, osWaitForever);
-            if (obj->calibration.status.bits.lock == 0 || obj->treatment.status.bits.lock == 0)
-            {
-                LOG_I("lock: %d, %d\r\n", obj->calibration.status.bits.lock, obj->treatment.status.bits.lock);
-                ret = -1;
-            }
-            if (obj->treatment.dose_mode != 1)
-            {
-                LOG_I("dose mode: %d\r\n", obj->treatment.dose_mode);
-                ret = -1;
-            }
-            osMutexRelease(obj->mutex);
-        }
-        else
-        {
-            ret = -1;
-        }
-        break;
-    case FSM_STATE_READY:
-        if (new_state != FSM_STATE_RADIATION && new_state != FSM_STATE_FAULT)
-        {
-            ret = -1;
-        }
-        break;
-    case FSM_STATE_RADIATION:
-        struct control_para *obj = control_data_get();
-        osMutexAcquire(obj->mutex, osWaitForever);
-        enum dose_board board = obj->board_id;
-        osMutexRelease(obj->mutex);
-        switch (board)
-        {
-        case DOSE_BOARD_TRIGGER_OUT:
-            if (new_state != FSM_STATE_FAULT)
-            {
-                ret = -1;
-            }
-            break;
-        case DOSE_BOARD_NO_TRIGGER_OUT:
-            if (new_state != FSM_STATE_FAULT && new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE)
-            {
-                ret = -1;
-            }
-            break;
-        default:
-            break;
-        }
-        break;
-    case FSM_STATE_COMPLETE:
-        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE)
-        {
-            ret = -1;
-        }
-        break;
-    case FSM_STATE_FAULT:
-        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_READY)
-        {
-            ret = -1;
-        }
-        break;
-    default:
-        ret = -1;
-        break;
-    }
+    //     }
+    //     else if (new_state == FSM_STATE_READY)
+    //     {
+    //         /* check lock status */
+    //         struct control_para *obj = control_data_get();
+    //         osMutexAcquire(obj->mutex, osWaitForever);
+    //         if (obj->calibration.status.bits.lock == 0 || obj->treatment.status.bits.lock == 0)
+    //         {
+    //             LOG_I("lock: %d, %d\r\n", obj->calibration.status.bits.lock, obj->treatment.status.bits.lock);
+    //             ret = -1;
+    //         }
+    //         if (obj->treatment.dose_mode != 1)
+    //         {
+    //             LOG_I("dose mode: %d\r\n", obj->treatment.dose_mode);
+    //             ret = -1;
+    //         }
+    //         osMutexRelease(obj->mutex);
+    //     }
+    //     else
+    //     {
+    //         ret = -1;
+    //     }
+    //     break;
+    // case FSM_STATE_READY:
+    //     if (new_state != FSM_STATE_RADIATION && new_state != FSM_STATE_FAULT)
+    //     {
+    //         ret = -1;
+    //     }
+    //     break;
+    // case FSM_STATE_RADIATION:
+    //     struct control_para *obj = control_data_get();
+    //     osMutexAcquire(obj->mutex, osWaitForever);
+    //     enum dose_board board = obj->board_id;
+    //     osMutexRelease(obj->mutex);
+    //     switch (board)
+    //     {
+    //     case DOSE_BOARD_TRIGGER_OUT:
+    //         if (new_state != FSM_STATE_FAULT)
+    //         {
+    //             ret = -1;
+    //         }
+    //         break;
+    //     case DOSE_BOARD_NO_TRIGGER_OUT:
+    //         if (new_state != FSM_STATE_FAULT && new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE)
+    //         {
+    //             ret = -1;
+    //         }
+    //         break;
+    //     default:
+    //         break;
+    //     }
+    //     break;
+    // case FSM_STATE_COMPLETE:
+    //     if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE)
+    //     {
+    //         ret = -1;
+    //     }
+    //     break;
+    // case FSM_STATE_FAULT:
+    //     if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_READY)
+    //     {
+    //         ret = -1;
+    //     }
+    //     break;
+    // default:
+    //     ret = -1;
+    //     break;
+    // }
 
-    return ret;
-}
+    // return ret;
+// }
 
 static int8_t dose_state_control_parse(struct dose_object *cmd)
 {
@@ -538,13 +532,13 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            ret = fsm_state_switch_check(cmd->data[2]);
+            // ret = fsm_state_switch_check(cmd->data[2]);
             if (ret != 0)
             {
                 LOG_E("fsm state switch [%d] check err: %d\r\n", cmd->data[2], ret);
                 break;
             }
-            cmd->data[2] = ret = fsm_state_switch(cmd->data[2]);
+            // cmd->data[2] = ret = fsm_state_switch(cmd->data[2]);
             if (ret != 0)
             {
                 LOG_E("fsm state switch err: %d\r\n", ret);
@@ -553,7 +547,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             cmd->len = 3;
             break;
         case 0x01:
-            cmd->data[2] = fsm_state_get();
+            // cmd->data[2] = fsm_state_get();
             cmd->len = 3;
             break;
         default:
@@ -574,14 +568,14 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             }
             break;
         case 0x01:
-            ret = beam_data_cleanup(0);
+            // ret = beam_data_cleanup(0);
             if (ret != 0)
             {
                 LOG_E("beam data clean err: %d\r\n", ret);
             }
             break;
         case 0x02:
-            ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
+            // ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
             if (ret != 0)
             {
                 LOG_E("dose value status set err: %d\r\n", ret);
@@ -589,14 +583,14 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             LOG_I("dose uart accumulated reset\r\n");
             break;
         case 0x03:
-            ret = interlock_status_cleanup();
+            // ret = interlock_status_cleanup();
             if (ret != 0)
             {
                 LOG_E("interlock status cleanup err: %d\r\n", ret);
             }
             break;
         case 0x04:
-            ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0);
+            // ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0);
             if (ret != 0)
             {
                 LOG_E("dose value status set err: %d\r\n", ret);
@@ -611,8 +605,8 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            ret = wdt_reset_set(1);
-            ret |= wdt_reset_set(0);
+            // ret = wdt_reset_set(1);
+            // ret |= wdt_reset_set(0);
             break;
         case 0x01:
             if (cmd->id.bits.cmd_ack != 0)  /* need ack */
@@ -698,7 +692,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
         {
             /* emergency stop, just change machine state */
             LOG_I("emergency stop\r\n");
-            ret = fsm_state_switch(FSM_STATE_FAULT);
+            // ret = fsm_state_switch(FSM_STATE_FAULT);
             if (ret != 0)
             {
                 LOG_E("fsm state switch err: %d\r\n", ret);
@@ -715,8 +709,8 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
 
             osMutexAcquire(obj->mutex, osWaitForever);
             obj->radiation.index = cmd->data[2] << 8 | cmd->data[1];
-            obj->radiation.cp = beam_data_value_get(0, BEAM_RI_IN_CP, obj->radiation.index);
-            obj->radiation.index_max_in_cp = beam_data_value_get(0, BEAM_RI_IN_CP_MAX, obj->radiation.index);
+            // obj->radiation.cp = beam_data_value_get(0, BEAM_RI_IN_CP, obj->radiation.index);
+            // obj->radiation.index_max_in_cp = beam_data_value_get(0, BEAM_RI_IN_CP_MAX, obj->radiation.index);
             osMutexRelease(obj->mutex);
 
             if (callback != NULL)
@@ -732,7 +726,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
         break;
     case 0x01:  /* get radiation status */
         {
-            uint16_t value = interlock_status_get();
+            // uint16_t value = interlock_status_get();
             struct control_para *data = control_data_get();
             struct expo_stat
             {
@@ -747,42 +741,42 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
             }stat;
 
             osMutexAcquire(data->mutex, osWaitForever);
-            stat.interlock = (value == 0) ? 0 : 1;
-            stat.complete = dose_value_status_get(ONE_BEAM_COMPLETE);
-            stat.radiation = fsm_state_get() == FSM_STATE_RADIATION;
-            stat.ready = fsm_state_get() == FSM_STATE_READY;
+            // stat.interlock = (value == 0) ? 0 : 1;
+            // stat.complete = dose_value_status_get(ONE_BEAM_COMPLETE);
+            // stat.radiation = fsm_state_get() == FSM_STATE_RADIATION;
+            // stat.ready = fsm_state_get() == FSM_STATE_READY;
             stat.local_ri = data->treatment.ri_src == 1;
             stat.beam_lock = data->treatment.status.bits.lock;
             stat.cali_lock = data->calibration.status.bits.lock;
             stat.normal = data->treatment.dose_mode == 1;
 
-            cmd->data[1] = *(uint8_t *)&stat;               /* status */
-            cmd->data[2] = value;                           /* interlock */
-            cmd->data[3] = value >> 8;                      /* interlock */
-            cmd->data[4] = data->radiation.cp;              /* cp */
-            cmd->data[5] = data->radiation.index;           /* radiation index */
-            cmd->data[6] = data->radiation.index >> 8;      /* radiation index */
-            uint64_t dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
-            dose_cumulated = dose_cumulated * 10.0 / control_data_get()->calibration.adc_factor[0];
-            cmd->data[7] = dose_cumulated;                  /* dose cumulated */
-            cmd->data[8] = dose_cumulated >> 8;             /* dose cumulated */
-            cmd->data[9] = data->treatment.prf_hz;          /* PRF */
-            cmd->data[10] = 0x00;                           /* pulse abnormal */
-            cmd->data[11] = 0x00;                           /* pulse abnormal */
-            uint8_t one_pulse_valid = dose_value_status_get(ONE_PULSE_COMPLETE);
-            uint16_t one_pulse_dose = dose_value_status_get(ONE_PULSE_DOSE);
-            ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0);
-            if (ret != 0)
-            {
-                LOG_E("dose value status set err: %d\r\n", ret);
-            }
-            cmd->data[12] = one_pulse_valid;                /* one pulse valid */
-            cmd->data[13] = one_pulse_dose;                 /* dose one pulse */
-            cmd->data[14] = one_pulse_dose >> 8;            /* dose one pulse */
+            // cmd->data[1] = *(uint8_t *)&stat;               /* status */
+            // cmd->data[2] = value;                           /* interlock */
+            // cmd->data[3] = value >> 8;                      /* interlock */
+            // cmd->data[4] = data->radiation.cp;              /* cp */
+            // cmd->data[5] = data->radiation.index;           /* radiation index */
+            // cmd->data[6] = data->radiation.index >> 8;      /* radiation index */
+            // // uint64_t dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
+            // // dose_cumulated = dose_cumulated * 10.0 / control_data_get()->calibration.adc_factor[0];
+            // cmd->data[7] = dose_cumulated;                  /* dose cumulated */
+            // cmd->data[8] = dose_cumulated >> 8;             /* dose cumulated */
+            // cmd->data[9] = data->treatment.prf_hz;          /* PRF */
+            // cmd->data[10] = 0x00;                           /* pulse abnormal */
+            // cmd->data[11] = 0x00;                           /* pulse abnormal */
+            // uint8_t one_pulse_valid = dose_value_status_get(ONE_PULSE_COMPLETE);
+            // uint16_t one_pulse_dose = dose_value_status_get(ONE_PULSE_DOSE);
+            // ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0);
+            // if (ret != 0)
+            // {
+            //     LOG_E("dose value status set err: %d\r\n", ret);
+            // }
+            // cmd->data[12] = one_pulse_valid;                /* one pulse valid */
+            // cmd->data[13] = one_pulse_dose;                 /* dose one pulse */
+            // cmd->data[14] = one_pulse_dose >> 8;            /* dose one pulse */
 
-            osMutexRelease(data->mutex);
+            // osMutexRelease(data->mutex);
 
-            cmd->len = 15;
+            // cmd->len = 15;
         }
         break;
     default:

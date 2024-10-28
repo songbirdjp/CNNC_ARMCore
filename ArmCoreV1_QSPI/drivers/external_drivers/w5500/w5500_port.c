@@ -32,9 +32,7 @@ static void w5500_irq_callback(void)
     {
         osEventFlagsSet(info.node->node_data->irq_event, info.node->node_data->irq_event_flag);
     }
-    
 }
-
 
 static void w5500_select(void)
 {
