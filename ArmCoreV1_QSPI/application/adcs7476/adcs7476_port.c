@@ -18,7 +18,7 @@ static DEVICE_SPI *device_adcs7476_slave_get(void)
     return &device_adcs7476_slave;
 }
 
-void SPI2_IRQHandler(void)
+void SPI2_IRQHandler(void) 
 {
   /* USER CODE BEGIN SPI2_IRQn 0 */
 

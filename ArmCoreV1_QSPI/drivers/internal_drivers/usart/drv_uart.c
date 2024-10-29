@@ -335,14 +335,14 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
         hdma_usart1_tx.Parent = (void *)uart;
         hdma_usart1_rx.Parent = (void *)uart;
     }
-    else if (!memcmp(device_name, DEVICE_NAME_UART5, sizeof(DEVICE_NAME_UART5)))
+    else if (!memcmp(device_name, DEVICE_NAME_UART9, sizeof(DEVICE_NAME_UART9)))
     {
-        MX_UART5_Init();
-        memcpy(uart, &huart5, sizeof(UART_HandleTypeDef));
-        extern DMA_HandleTypeDef hdma_uart5_tx;
-        extern DMA_HandleTypeDef hdma_uart5_rx;
-        hdma_uart5_tx.Parent = (void *)uart;
-        hdma_uart5_rx.Parent = (void *)uart;
+        MX_UART9_Init();
+        memcpy(uart, &huart9, sizeof(UART_HandleTypeDef));
+        extern DMA_HandleTypeDef hdma_uart9_tx;
+        extern DMA_HandleTypeDef hdma_uart9_rx;
+        hdma_uart9_tx.Parent = (void *)uart;
+        hdma_uart9_rx.Parent = (void *)uart;
     }
     else
     {
