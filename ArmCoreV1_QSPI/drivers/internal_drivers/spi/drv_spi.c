@@ -796,10 +796,10 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     /* 1. init hardware */
     __disable_irq();
 
-    if (!memcmp(device_name, DEVICE_NAME_SPI1, sizeof(DEVICE_NAME_SPI1)))
+    if (!memcmp(device_name, DEVICE_NAME_SPI3, sizeof(DEVICE_NAME_SPI3)))
     {
-        MX_SPI1_Init();
-        memcpy(spi, &hspi1, sizeof(SPI_HandleTypeDef));
+        MX_SPI3_Init();
+        memcpy(spi, &hspi3, sizeof(SPI_HandleTypeDef));
         // if (hspi1.hdmarx->Init.Mode == DMA_CIRCULAR)
         // {
         //     extern DMA_HandleTypeDef hdma_spi1_rx;
