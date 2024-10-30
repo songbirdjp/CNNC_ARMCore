@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Shell Console with Command List</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            height: 90vh;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* 左侧控制台区域 */
+        .console-container {
+            display: flex;
+            flex-direction: column;
+            width: 60%; /* 减少左侧区域宽度以增加右侧空间 */
+            height: 100%;
+        }
+
+        /* 顶部连接区域 */
+        .connection-bar {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .connection-bar input, .connection-bar button {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .connection-bar input {
+            flex: 1;
+        }
+
+        .connection-bar button {
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* 控制台输出区域 */
+        .console-output {
+            flex: 1;
+            padding: 10px;
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 18px;
+            overflow-y: auto;
+            word-break: break-word;
+        }
+
+        /* 控制台输入区域 */
+        .console-input {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-top: 1px solid #ccc;
+        }
+
+        .console-input input, .console-input button {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .console-input input {
+            flex: 1;
+        }
+
+        .console-input button {
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* 右侧命令保存区域 */
+        .command-save {
+            width: 40%; /* 增加右侧区域宽度 */
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-left: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .command-save input, .command-save button {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .command-save button {
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* 命令列表样式 */
+        .command-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .command-list-item span {
+            flex: 2;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .command-list-item button {
+            font-size: 12px;
+            width: 25%; /* 减少按钮宽度 */
+            padding: 4px; /* 减小按钮内边距 */
+            margin-left: 2px;
+        }
+
+        .send-button {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .delete-button {
+            background-color: #ff4d4d;
+            color: white;
+        }
+
+        /* 底部版权信息 */
+        .footer {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- 左侧控制台区域 -->
+        <div class="console-container">
+            <!-- 顶部连接区域 -->
+            <div class="connection-bar">
+                <input type="text" id="ipInput" placeholder="Enter IP Address" style="width: 40%;">
+                <input type="text" id="portInput" placeholder="Enter Port" style="width: 20%;">
+                <button id="connectButton">Connect</button>
+            </div>
+
+            <!-- 控制台输出区域 -->
+            <div class="console-output" id="consoleOutput"></div>
+
+            <!-- 底部控制台输入区域 -->
+            <div class="console-input">
+                <input type="text" id="consoleInput" placeholder="Type a command...">
+                <button id="sendButton" disabled>Send</button>
+                <button id="clearButton" disabled>Clear</button>
+                <button id="disconnectButton" disabled>Disconnect</button>
+            </div>
+        </div>
+
+        <!-- 右侧命令保存区域 -->
+        <div class="command-save">
+            <input type="text" id="commandNameInput" placeholder="Command Name">
+            <input type="text" id="commandTextInput" placeholder="Command Text">
+            <input type="text" id="intervalInput" placeholder="Interval (ms)">
+            <button id="saveCommandButton">Save Command</button>
+            <div id="commandList"></div>
+        </div>
+    </div>
+
+    <!-- 底部版权信息 -->
+    <div class="footer">
+        Designed by Songbird@CNNC     Version 1.0.1
+    </div>
+
+    <script>
+        let websocket = null;
+
+        // 加载页面时获取 IP、端口和上次输入的命令
+        window.onload = () => {
+            const ip = localStorage.getItem("lastIP");
+            const port = localStorage.getItem("lastPort");
+            const lastCommand = localStorage.getItem("lastCommand");
+
+            if (ip && port) {
+                document.getElementById("ipInput").value = ip;
+                document.getElementById("portInput").value = port;
+                connectWebSocket();
+            }
+
+            if (lastCommand) {
+                document.getElementById("consoleInput").value = lastCommand;
+            }
+
+            loadCommandList();
+        };
+
+        document.getElementById("connectButton").addEventListener("click", connectWebSocket);
+        document.getElementById("disconnectButton").addEventListener("click", disconnectWebSocket);
+        document.getElementById("sendButton").addEventListener("click", sendCommand);
+        document.getElementById("clearButton").addEventListener("click", clearConsole);
+        document.getElementById("consoleInput").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") sendCommand();
+        });
+        document.getElementById("consoleInput").addEventListener("input", saveLastCommand);
+        document.getElementById("saveCommandButton").addEventListener("click", saveCommand);
+
+        function connectWebSocket() {
+            const ip = document.getElementById("ipInput").value.trim();
+            const port = document.getElementById("portInput").value.trim();
+
+            if (!ip || !port) {
+                logMessage("Please enter a valid IP address and port.");
+                return;
+            }
+
+            localStorage.setItem("lastIP", ip);
+            localStorage.setItem("lastPort", port);
+
+            const url = `ws://${ip}:${port}`;
+            websocket = new WebSocket(url);
+
+            websocket.onopen = () => {
+                logMessage(`Connected to WebSocket server at ${url}`);
+                toggleConnectionButtons(true);
+            };
+
+            websocket.onmessage = (event) => {
+                logMessage(event.data);
+            };
+
+            websocket.onerror = (error) => {
+                logMessage("WebSocket error: " + error);
+            };
+
+            websocket.onclose = () => {
+                logMessage("Disconnected from the WebSocket server");
+                toggleConnectionButtons(false);
+            };
+        }
+
+        function disconnectWebSocket() {
+            if (websocket) {
+                websocket.close();
+                websocket = null;
+            }
+        }
+
+        function sendCommand() {
+            const input = document.getElementById("consoleInput");
+            const message = "[shell]" + input.value.trim();
+            if (websocket && message) {
+                websocket.send(message);
+                logMessage(`Sent command: ${input.value.trim()}`);
+            }
+        }
+
+        function saveLastCommand() {
+            const command = document.getElementById("consoleInput").value.trim();
+            if (command) {
+                localStorage.setItem("lastCommand", command);
+            } else {
+                localStorage.removeItem("lastCommand");
+            }
+        }
+
+        function clearConsole() {
+            document.getElementById("consoleOutput").innerHTML = "";
+        }
+
+        function logMessage(message) {
+            const consoleOutput = document.getElementById("consoleOutput");
+            consoleOutput.innerHTML += message + "<br>";
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+        function toggleConnectionButtons(isConnected) {
+            document.getElementById("connectButton").disabled = isConnected;
+            document.getElementById("disconnectButton").disabled = !isConnected;
+            document.getElementById("sendButton").disabled = !isConnected;
+            document.getElementById("clearButton").disabled = !isConnected;
+        }
+
+        function saveCommand() {
+            const commandName = document.getElementById("commandNameInput").value.trim();
+            const commandText = document.getElementById("commandTextInput").value.trim();
+            const interval = document.getElementById("intervalInput").value.trim();
+            const command = { commandName, commandText, interval };
+
+            if (commandName || commandText) {
+                const commandList = JSON.parse(localStorage.getItem("commandList") || "[]");
+                commandList.push(command);
+                localStorage.setItem("commandList", JSON.stringify(commandList));
+                loadCommandList();
+            }
+        }
+
+        function loadCommandList() {
+            const commandList = JSON.parse(localStorage.getItem("commandList") || "[]");
+            const commandListContainer = document.getElementById("commandList");
+            commandListContainer.innerHTML = "";
+
+            commandList.forEach((command, index) => {
+                const item = document.createElement("div");
+                item.className = "command-list-item";
+                item.innerHTML = `
+                    <span>${command.commandName} - ${command.commandText}</span>
+                    <button class="send-button" onclick="executeCommand(${index})">Send</button>
+                    <button class="delete-button" onclick="deleteCommand(${index})">Delete</button>
+                `;
+                commandListContainer.appendChild(item);
+            });
+        }
+
+        function executeCommand(index) {
+            const commandList = JSON.parse(localStorage.getItem("commandList") || "[]");
+            const command = commandList[index];
+            if (command && websocket) {
+                const message = `[shell]${command.commandName} ${command.commandText}`;
+                websocket.send(message);
+                logMessage(`Sent command: ${command.commandName}`);
+            }
+        }
+
+        function deleteCommand(index) {
+            const commandList = JSON.parse(localStorage.getItem("commandList") || "[]");
+            commandList.splice(index, 1);
+            localStorage.setItem("commandList", JSON.stringify(commandList));
+            loadCommandList();
+        }
+    </script>
+</body>
+</html>
