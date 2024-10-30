@@ -209,4 +209,4 @@ static int8_t ethercat_thread_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(ethercat_thread_init);
+// INIT_APP_EXPORT(ethercat_thread_init);

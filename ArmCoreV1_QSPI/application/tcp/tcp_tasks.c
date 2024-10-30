@@ -1,24 +1,20 @@
 #include "w5500_port.h"
 #include "socket.h"
-#include "tcp_client.h"
+#include "tcp_tasks.h"
 #include "stdbool.h"
 #include "init_call.h"
 #include "main.h"
-#include "tcp_server.h"
 
 #define SOCK_TCPS   0
 
-static uint8_t remote_ip[4] = {192, 168, 10, 100};
+#ifndef IS_TCP_SERVER
+static uint8_t remote_ip[4] = {192, 168, 10, 110};
 static uint16_t remote_port = 8000;
+#endif
 
 static wiz_NetInfo local_net_info = {
-#ifdef BANKA
         .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x72},
         .ip =  {192, 168, 10, 71},
-#else
-        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x71},
-        .ip =  {192, 168, 10, 72},
-#endif
         .sn =  {255, 255, 255, 0},
         .gw =  {192, 168, 0, 1},
         .dns = {180, 76, 76, 76},
@@ -29,20 +25,18 @@ static wiz_NetInfo *local_netinfo_get(void)
 {
     return &local_net_info;
 }
-
+#ifndef IS_TCP_SERVER
 static uint8_t *remote_ip_get(void)
 {
     return remote_ip;
 }
 
-static uint16_t *remote_port_get(void)
+static uint16_t remote_port_get(void)
 {
-    return &remote_port;
+    return remote_port;
 }
-
-
+#endif
 static TCP_DATA_t recvInfo = {0};
-
 static volatile uint8_t tcp_link_state = false;
 static uint8_t tcp_link_status_get(void)
 {
@@ -71,6 +65,33 @@ int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg))
     return device_w5500_rx_callback_register(fun_cb);
 }
 
+#ifdef IS_TCP_SERVER
+static int8_t do_tcp_server_send(uint8_t sn)
+{
+    int8_t ret = 0;
+
+    switch (getSn_SR(sn))
+    {
+    case SOCK_INIT:
+        listen(sn);
+        //    if(s==1) printf("SERVER_SOCK_INIT\r\n");
+        break;
+    case SOCK_ESTABLISHED:
+        tcp_establish_cb(sn); // period feedback here
+        break;
+    case SOCK_CLOSE_WAIT:
+        osDelay(500);
+        close(sn);
+        break;
+    case SOCK_CLOSED:
+        ret = socket(sn, Sn_MR_TCP, 80, 0);
+        break;
+    default:    break;
+    }
+
+    return ret;
+}
+#else 
 static int8_t do_tcp_client(uint8_t sn)
 {
     int8_t ret = 0;
@@ -105,6 +126,7 @@ static int8_t do_tcp_client(uint8_t sn)
 
     return ret;
 }
+#endif
 
 static uint8_t socket_num_get(void)
 {
@@ -122,13 +144,11 @@ static int8_t tcp_init(osMessageQueueId_t queue)
         return ret;
     }
 
-    device_w5500_interrupt_init(socket_num_get());
+    device_w5500_interrupt_init(MAX_CLIENT_NUM);
 
     device_w5500_rx_buffer_init(recvInfo.gDATABUF, sizeof(recvInfo.gDATABUF));
 
     device_w5500_rx_queue_init(queue);
-
-    tcp_app_init();
 
     return 0;
 }
@@ -151,15 +171,16 @@ static int8_t tcp_data_recv_with_block(void)
 }
 
 /*
- * tcp client init
+ * tcp init
 */
 
 static osMessageQueueId_t tcp_rx_queueHandle = NULL;
+static osMessageQueueId_t tcp_tx_queueHandle = NULL;
 static osMutexId_t tcp_access_mutexHandle = NULL;
 
-static void TCPClientTask(void *argument)
+static void TCPSendTask(void *argument)
 {
-  /* USER CODE BEGIN TCPClientTask */
+  /* USER CODE BEGIN TCPSendTask */
 
     int8_t ret = 0;
 
@@ -182,26 +203,29 @@ static void TCPClientTask(void *argument)
 
             osDelay(100);
         }
-
-      //  ret = do_tcp_client(socket_num_get());
-        for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++){
+ 
+    #ifdef IS_TCP_SERVER
+        for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
+        {
             ret = do_tcp_server_send(i);
             if (ret != 0)
             {
-                printf("do_tcp_client err:%d sn = %d\r\n", ret, i);
+                printf("do_tcp_server_send err:%d sn = %d\r\n", ret, i);
             }
         }
-
+    #else
+        ret = do_tcp_client(socket_num_get());
+    #endif
         osMutexRelease(tcp_access_mutexHandle);
 
-        osDelay(100);
+        osDelay(10);
     }
-  /* USER CODE END TCPClientTask */
+  /* USER CODE END TCPSendTask */
 }
 
-static void tcp_client_entry(void *argument)
+static void tcp_recv_entry(void *argument)
 {
-  /* USER CODE BEGIN tcp_client_entry */
+  /* USER CODE BEGIN tcp_recv_entry */
   /* Infinite loop */
   int32_t ret = 0;
 
@@ -229,22 +253,21 @@ static void tcp_client_entry(void *argument)
         osMutexRelease(tcp_access_mutexHandle);
 
   }
-  /* USER CODE END tcp_client_entry */
+  /* USER CODE END tcp_recv_entry */
 }
 
-static int8_t tcp_client_thread_init(void)
+static int8_t tcp_thread_init(void)
 {
     osThreadAttr_t tcp_irq_thread_attributes = {
     .name = "tcp_irq_thread",
     .stack_size = 1024 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
-    osThreadAttr_t TCPClient_attributes = {
-    .name = "TCPClient",
+     osThreadAttr_t tcp_send_attributes = {
+    .name = "tcp_send_thread",
     .stack_size = 2048 * 4,
     .priority = (osPriority_t) osPriorityNormal,
     };
-
     osMutexAttr_t tcp_access_mutex_attributes = {
     .name = "tcp_access_mutex",
     .attr_bits = osMutexRecursive | osMutexPrioInherit
@@ -267,37 +290,36 @@ static int8_t tcp_client_thread_init(void)
         return -1;
     }
 
-    osThreadId_t tcp_irq_threadHandle = osThreadNew(tcp_client_entry, NULL, &tcp_irq_thread_attributes);
+    osThreadId_t tcp_irq_threadHandle = osThreadNew(tcp_recv_entry, NULL, &tcp_irq_thread_attributes);
     if (tcp_irq_threadHandle == NULL)
     {
         printf("thread tcp irq create failed\r\n");
         return -1;
     }
-
-    osThreadId_t TCPClientHandle = osThreadNew(TCPClientTask, NULL, &TCPClient_attributes);
-    if (TCPClientHandle == NULL)
+    osThreadId_t tcp_sendHandle = osThreadNew(TCPSendTask, NULL, &tcp_send_attributes);
+    if (tcp_sendHandle == NULL)
     {
-        printf("thread tcp client create failed\r\n");
+        printf("thread tcp create failed\r\n");
         return -1;
     }
 
     return 0;
 }
-INIT_APP_EXPORT(tcp_client_thread_init);
+INIT_APP_EXPORT(tcp_thread_init);
 
-osStatus_t tcp_client_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
+osStatus_t tcp_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
 {
     return osMessageQueueGet(tcp_rx_queueHandle, buf, 0, timeout);
 }
 
-int32_t tcp_client_data_send(uint8_t s, uint8_t *buf, uint16_t len)
+int32_t tcp_data_send(uint8_t s, uint8_t *buf, uint16_t len)
 {
     osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
 
     int32_t ret = send(s, buf, len);
     if (ret <= SOCK_BUSY)
     {
-        printf("tcp client send err:%d\r\n", ret);
+        printf("tcp send err:%d\r\n", ret);
     }
 
     osMutexRelease(tcp_access_mutexHandle);

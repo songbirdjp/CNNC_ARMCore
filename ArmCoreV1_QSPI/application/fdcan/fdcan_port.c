@@ -183,7 +183,7 @@ static int8_t fdcan1_init(void)
 {
     return device_fdcan_init(device_fdcan1_get(), DEVICE_NAME_FDCAN1);
 }
-INIT_APP_EXPORT(fdcan1_init);
+// INIT_APP_EXPORT(fdcan1_init);
 
 
 int8_t fdcan1_data_write(uint32_t id, uint8_t *buf, uint8_t len)

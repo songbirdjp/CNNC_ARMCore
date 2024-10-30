@@ -401,7 +401,7 @@ static int8_t adcs7476_sample_thread_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(adcs7476_sample_thread_init);
+// INIT_APP_EXPORT(adcs7476_sample_thread_init);
 
 #ifdef ADCS7476_SAMPLE_TEST
 #include "shell.h"

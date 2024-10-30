@@ -235,7 +235,7 @@ static int8_t mcu_adc_thread_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(mcu_adc_thread_init);
+// INIT_APP_EXPORT(mcu_adc_thread_init);
 
 #ifdef MCU_ADC_TEST
 #include "shell.h"

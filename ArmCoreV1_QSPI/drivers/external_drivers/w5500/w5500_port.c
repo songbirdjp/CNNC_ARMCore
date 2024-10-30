@@ -9,7 +9,18 @@ DEVICE_SPI *device_w5500_get(void)
     return &device_w5500;
 }
 
-void SPI1_IRQHandler(void)
+// void SPI1_IRQHandler(void)
+// {
+//   /* USER CODE BEGIN SPI1_IRQn 0 */
+
+//   /* USER CODE END SPI1_IRQn 0 */
+//   HAL_SPI_IRQHandler((SPI_HandleTypeDef *)device_w5500_get());
+//   /* USER CODE BEGIN SPI1_IRQn 1 */
+
+//   /* USER CODE END SPI1_IRQn 1 */
+// }
+
+void SPI3_IRQHandler(void)
 {
   /* USER CODE BEGIN SPI1_IRQn 0 */
 
@@ -36,11 +47,11 @@ static void w5500_irq_callback(void)
 
 static void w5500_select(void)
 {
-    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_10, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
 }
 static void w5500_deselect(void)
 {
-    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_10, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 }
 static void w5500_reset_ctrl(uint8_t flag)
 {
@@ -154,7 +165,7 @@ static void W5500_interrupt_status_print(uint8_t sn)
     //     printf("---W5500 INTn pin reset---\r\n");
     // }
 }
-#include "tcp_client.h"
+#include "tcp_tasks.h"
 static int32_t w5500_irq_process(void)
 {
     uint16_t interrupt_type = 0; // SIR << 8 | IR

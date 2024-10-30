@@ -1004,7 +1004,7 @@ static int8_t dose_uart_thread_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(dose_uart_thread_init);
+// INIT_APP_EXPORT(dose_uart_thread_init);
 
 
 #ifdef dose_uart_TEST
