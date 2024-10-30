@@ -2,6 +2,6 @@
 #define __CONFIG_H__
 
 #define GIT_BRANCH  "bgm_afc_develop"
-#define GIT_HASH    "567d69f7608a51f49a42c360f3ec1f2609ab8a4a"
+#define GIT_HASH    "bc8664b6e1be8f18bcafa58312eda28ae74029b7"
 
 #endif

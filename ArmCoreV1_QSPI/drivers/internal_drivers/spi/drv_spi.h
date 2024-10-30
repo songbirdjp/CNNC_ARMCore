@@ -11,10 +11,10 @@ extern "C" {
 #define DEVICE_NAME_LENGTH      16
 
 #define DEVICE_NAME_SPI1       "spi1"
-#define DEVICE_NAME_SPI2       "spi2"
+// #define DEVICE_NAME_SPI2       "spi2"
 #define DEVICE_NAME_SPI3       "spi3"
-#define DEVICE_NAME_SPI4       "spi4"
-
+// #define DEVICE_NAME_SPI4       "spi4"
+#define DEVICE_NAME_SPI6       "spi6"
 #define USING_SPI_OPTION_FUNCTION
 
 #ifdef USING_SPI_OPTION_FUNCTION
