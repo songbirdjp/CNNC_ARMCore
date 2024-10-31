@@ -317,7 +317,6 @@ static int32_t w5500_irq_process(void)
     {
         printf("W5500 get interrupt err\r\n");
     }
-
     reg_ir = interrupt_type & 0xFF;
     reg_sir = interrupt_type >> 8;
 

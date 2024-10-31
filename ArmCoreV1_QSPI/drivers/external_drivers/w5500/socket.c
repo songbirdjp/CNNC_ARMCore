@@ -253,7 +253,7 @@ int8_t listen(uint8_t sn)
     {
         close(sn);
         return SOCKERR_SOCKCLOSED;
-    }
+    } 
     return SOCK_OK;
 }
 
@@ -430,6 +430,7 @@ int32_t recv(uint8_t sn, uint8_t * buf, uint16_t len)
             else
             {
                 close(sn);
+                // printf("Socket %d closing, called from %s, state: 0x%02X\n", sn, caller_name, getSn_SR(sn));
                 return SOCKERR_SOCKSTATUS;
             }
         }

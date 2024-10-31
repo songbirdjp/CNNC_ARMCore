@@ -800,11 +800,11 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     {
         MX_SPI3_Init();
         memcpy(spi, &hspi3, sizeof(SPI_HandleTypeDef));
-        // if (hspi1.hdmarx->Init.Mode == DMA_CIRCULAR)
-        // {
-        //     extern DMA_HandleTypeDef hdma_spi1_rx;
-        //     hdma_spi1_rx.Parent = (void *)spi;
-        // }
+        if (hspi3.hdmarx->Init.Mode == DMA_CIRCULAR)
+        {
+            extern DMA_HandleTypeDef hdma_spi3_rx;
+            hdma_spi3_rx.Parent = (void *)spi;
+        }
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI1, sizeof(DEVICE_NAME_SPI1)))
     {

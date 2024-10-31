@@ -88,7 +88,7 @@ static int8_t do_tcp_server_send(uint8_t sn)
         break;
     default:    break;
     }
-
+    // printf("getSn_SR(sn) = %d ret = %d\r\n", getSn_SR(sn),ret);
     return ret;
 }
 #else 
