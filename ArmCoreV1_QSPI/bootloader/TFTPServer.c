@@ -99,5 +99,4 @@ static int8_t TFTPServer_thread_init(void)
     }
     return 0;
 }
-// 在系统初始化时启用TFTP服务器
-INIT_APP_EXPORT(TFTPServer_thread_init);
+// INIT_APP_EXPORT(TFTPServer_thread_init);
