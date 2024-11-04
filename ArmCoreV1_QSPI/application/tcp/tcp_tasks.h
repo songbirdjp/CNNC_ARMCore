@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define MAX_CLIENT_NUM  2
+#define MAX_CLIENT_NUM  4
 #define DATA_BUF_SIZE   2048
 #define IS_TCP_SERVER
 

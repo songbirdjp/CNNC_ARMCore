@@ -583,7 +583,7 @@ static int32_t ws_replyClient(uint8_t s, char *buff, char *path)
     ws_buildHttpRespond(recvShakeKey, ret, respondPackage);
   //    printf("response %s\r\n",respondPackage);
     tcp_data_send(s, (uint8_t *)respondPackage, strlen(respondPackage));
-    printf("Handshake Success!\r\n");
+    //printf("Handshake Success!\r\n");
 
     return 1;
 }

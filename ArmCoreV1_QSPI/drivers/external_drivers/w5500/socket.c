@@ -107,6 +107,7 @@ uint8_t sock_remained_byte[_WIZCHIP_SOCK_NUM_] = {0,}; // set by wiz_recv_data()
 int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
 {
     CHECK_SOCKNUM();
+    //printf("socket\n");
     switch(protocol)
     {
         case Sn_MR_TCP :
@@ -173,7 +174,7 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
 #if _WIZCHIP_ == 5300
     setSn_MR(sn, ((uint16_t)(protocol | (flag & 0xF0))) | (((uint16_t)(flag & 0x02)) << 7) );
 #else
-    setSn_MR(sn, (protocol | (flag & 0xF0)));
+        setSn_MR(sn, (protocol | (flag & 0xF0)));
 #endif
     if(!port)
     {
@@ -185,7 +186,6 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
     while(getSn_CR(sn));
     //A20150401 : For release the previous sock_io_mode
     sock_io_mode &= ~(1 <<sn);
-    //
     sock_io_mode |= ((flag & SF_IO_NONBLOCK) << sn);
     sock_is_sending &= ~(1<<sn);
     sock_in_use |= (1<<sn);    
@@ -193,7 +193,6 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
     //M20150601 : repalce 0 with PACK_COMPLETED
     //sock_pack_info[sn] = 0;
     sock_pack_info[sn] = PACK_COMPLETED;
-    //
     while(getSn_SR(sn) == SOCK_CLOSED);
     return (int8_t)sn;
 }
@@ -601,6 +600,10 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
 int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t *port)
 {
 //M20150601 : For W5300
+// if (sn == 4)
+// {
+//     printf("recvfrom sn = %d\n", sn);
+// }
 #if _WIZCHIP_ == 5300
     uint16_t mr;
    uint16_t mr1;
@@ -620,6 +623,7 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
 
     switch((mr=getSn_MR(sn)) & 0x0F)
     {
+        
         case Sn_MR_UDP:
         case Sn_MR_IPRAW:
         case Sn_MR_MACRAW:
@@ -629,6 +633,7 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
          break;
 #endif
         default:
+        //printf("SOCKERR_SOCKMODE\r\n");
             return SOCKERR_SOCKMODE;
     }
     CHECK_SOCKDATA();
@@ -637,6 +642,10 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
         while(1)
         {
             pack_len = getSn_RX_RSR(sn);
+            // if (sn == 4)
+            // {
+            //     printf("pack_len: 0x%x\n", pack_len);
+            // }
             if(getSn_SR(sn) == SOCK_CLOSED) return SOCKERR_SOCKCLOSED;
             if( (sock_io_mode & (1<<sn)) && (pack_len == 0) ) return SOCK_BUSY;
             if(pack_len != 0) break;
@@ -673,6 +682,10 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
                 addr[1] = head[1];
                 addr[2] = head[2];
                 addr[3] = head[3];
+                for (int i = 0; i < 8; i++ )
+                {
+                    printf("head[%d] = %x\n", i, head[i]);
+                }
                 *port = head[4];
                 *port = (*port << 8) + head[5];
                 sock_remained_size[sn] = head[6];

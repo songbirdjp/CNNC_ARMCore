@@ -32,7 +32,7 @@ static int8_t device_flash_init(void)
 
     return 0;
 }
-// INIT_DEVICE_EXPORT(device_flash_init);
+INIT_DEVICE_EXPORT(device_flash_init);
 
 
 int8_t device_flash_erase(uint8_t *device_name, uint32_t offset, uint32_t size)
