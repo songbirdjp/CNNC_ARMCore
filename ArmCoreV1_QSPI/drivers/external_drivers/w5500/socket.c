@@ -131,6 +131,7 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
          break;
 #endif
         default :
+         printf("socket recvfrom SOCKERR_SOCKMODE\r\n");
             return SOCKERR_SOCKMODE;
     }
     //M20150601 : For SF_TCP_ALIGN & W5300
@@ -510,6 +511,7 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
             break;
 //   #endif
         default:
+            printf("sendto SOCKERR_SOCKMODE\r\n");
             return SOCKERR_SOCKMODE;
     }
     CHECK_SOCKDATA();
@@ -633,7 +635,7 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
          break;
 #endif
         default:
-        //printf("SOCKERR_SOCKMODE\r\n");
+            printf("recvfrom SOCKERR_SOCKMODE\r\n");
             return SOCKERR_SOCKMODE;
     }
     CHECK_SOCKDATA();
@@ -949,7 +951,10 @@ int8_t  getsockopt(uint8_t sn, sockopt_type sotype, void* arg)
             //CHECK_SOCKMODE(Sn_MR_TCP);
 #if _WIZCHIP_ != 5300
             if((getSn_MR(sn) == Sn_MR_TCP))
+            {
+                printf("getsockopt socketSOCKERR_SOCKMODE\r\n");
                 return SOCKERR_SOCKMODE;
+            }
 #endif
             *(uint8_t*)arg = sock_pack_info[sn];
             break;

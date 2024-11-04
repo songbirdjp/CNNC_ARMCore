@@ -601,7 +601,7 @@ int8_t device_w5500_link_state_recover(uint8_t sn)
     if (sock_open_status == true)
     {
         close(sn);
-        printf("close socket:%d\r\n", sn);
+        // printf("close socket:%d\r\n", sn);
     }
 
     return 0;

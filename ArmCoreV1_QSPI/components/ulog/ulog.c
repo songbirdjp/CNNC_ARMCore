@@ -323,8 +323,8 @@ static int8_t ulog_thread_init(void)
 {
     osThreadAttr_t ulog_output_thread_attributes = {
     .name = "ulog_output_thread",
-    .stack_size = 1024 * 4,
-    .priority = (osPriority_t) osPriorityBelowNormal,
+    .stack_size = 2048 * 4,
+    .priority = (osPriority_t) osPriorityAboveNormal,
     };
 
     osThreadId_t ulog_output_threadHandle = osThreadNew(ulog_output_entry, NULL, &ulog_output_thread_attributes);

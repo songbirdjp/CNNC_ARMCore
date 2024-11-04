@@ -265,7 +265,7 @@ static int8_t tcp_thread_init(void)
     };
      osThreadAttr_t tcp_send_attributes = {
     .name = "tcp_send_thread",
-    .stack_size = 2048 * 4,
+    .stack_size = 4096 * 4,
     .priority = (osPriority_t) osPriorityNormal,
     };
     osMutexAttr_t tcp_access_mutex_attributes = {

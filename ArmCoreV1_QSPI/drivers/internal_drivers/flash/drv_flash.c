@@ -1,7 +1,7 @@
 #include "drv_flash.h"
 #include "stm32h7xx_hal.h"
 #include "init_call.h"
-
+#include "ulog.h"
 #define FLASH_OPERATION_SUCCEED_EVENT    (1 << 0)
 
 #ifdef OS_FREERTOS
@@ -46,12 +46,12 @@ void HAL_FLASH_OperationErrorCallback(uint32_t ReturnValue)
 }
 #endif
 
-static uint32_t flash_sector_get(uint32_t address)
+uint32_t flash_sector_get(uint32_t address)
 {
     return (address - FLASH_BASE) / FLASH_SECTOR_SIZE;
 }
 
-static int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, uint32_t address_end, uint32_t timeout)   /* 不包含address_end地址所在的扇区 */
+int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, uint32_t address_end, uint32_t timeout)   /* 不包含address_end地址所在的扇区 */
 {
     if (flash == NULL)
     {
@@ -142,7 +142,7 @@ out:
     return ret;
 }
 
-static int8_t flash_open(DEVICE_FLASH *flash)
+int8_t flash_open(DEVICE_FLASH *flash)
 {
     if (flash->open_state)
     {
@@ -157,7 +157,7 @@ static int8_t flash_open(DEVICE_FLASH *flash)
     return 0;
 }
 
-static int8_t flash_close(DEVICE_FLASH *flash)
+int8_t flash_close(DEVICE_FLASH *flash)
 {
     if (flash->open_state)
     {
@@ -186,7 +186,7 @@ static int8_t flash_close(DEVICE_FLASH *flash)
     return 0;
 }
 
-static int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
+int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
 {
     if (flash == NULL || buf == NULL || size == 0)
     {
@@ -277,7 +277,7 @@ out:
     return ret;
 }
 
-static int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
+int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
 {
     if (flash == NULL || buf == NULL || size == 0 || offset & 0x3 != 0)
     {
@@ -323,7 +323,7 @@ static int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uin
     return 0;
 }
 
-static int8_t flash_ioctl(DEVICE_FLASH *flash, uint8_t cmd, void *arg)
+int8_t flash_ioctl(DEVICE_FLASH *flash, uint8_t cmd, void *arg)
 {
     if (flash == NULL || arg == NULL)
     {
@@ -508,7 +508,7 @@ int8_t flash_test(uint8_t argc, char *argv[])
             printf("%08x: ", FLASH_ADDRESS_BASE + i);
             for (uint32_t j = 0; j < 16; j++)
             {
-                printf("%02x ", data[i + j]);
+                LOG_E("%02x ", data[i + j]);
             }
             printf("\r\n");
         }
