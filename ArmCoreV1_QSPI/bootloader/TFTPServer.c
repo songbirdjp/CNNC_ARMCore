@@ -171,56 +171,5 @@ static int8_t TFTPServer_thread_init(void)
     }
     return 0;
 }
-INIT_APP_EXPORT(TFTPServer_thread_init);
+// INIT_APP_EXPORT(TFTPServer_thread_init);
 
-
-//     uint32_t len = 10;
-//     uint8_t test_buffer[10] = {1,2,3,4,5,6,7,8,9,0};
-
-
-//     while (1) 
-//     {  
-//         // 读取十个数并打印出来
-//         flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
-//         flash->read(flash, 0, test_buffer, len, 1000);
-//         printf("Read data: ");
-//         for (int i = 0; i < len; i++) {
-//             printf("%d ", test_buffer[i]);
-//         }
-//         printf("\r\n");
-//         // 延迟1秒
-//         osDelay(1000);
-
-//         // 写入1234567890
-//         uint8_t write_buffer[10] = {2, 1, 4, 4, 5, 6, 7, 8, 9, 0};
-//         flash->write(flash, 0, write_buffer, len, 1000);
-
-//         // 再读一下并打印出来
-//         flash->read(flash, 0, test_buffer, len, 1000);
-//         printf("Read data after write: ");
-//         for (int i = 0; i < len; i++) {
-//             printf("%d ", test_buffer[i]);
-//         }
-//         printf("\r\n");
-//         // 延迟2秒
-//         osDelay(2000);
-//     }
-// }
-
-// // TFTP服务器线程初始化
-// static int8_t FlashTest_thread_init(void) 
-// {
-//     osThreadAttr_t FlashTest_thread_attributes = {
-//         .name = "FlashTest",
-//         .stack_size = 2048 * 4,
-//         .priority = (osPriority_t) osPriorityNormal,
-//     };
-
-//     osThreadId_t TFTPServer_threadHandle = osThreadNew(FlashTest_thread_entry, NULL, &FlashTest_thread_attributes);
-//     if (TFTPServer_threadHandle == NULL) {
-//         printf("thread flash est create failed\r\n");
-//         return -1;
-//     }
-//     return 0;
-// }
-// // INIT_APP_EXPORT(FlashTest_thread_init);

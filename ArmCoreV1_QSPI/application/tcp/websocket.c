@@ -2,7 +2,7 @@
 #include "tcp_tasks.h"
 #include "crypto_sha.h"
 #include <stdio.h>
-
+#include "ulog.h"
 #ifdef TCP_WEBSOCKET
 
 typedef enum
@@ -706,13 +706,13 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
                 itemRecv.sn = s;
                 itemRecv.clientType = client[s].clientType;
                 itemRecv.tcpData = data;
-#if 0
-                printf("recv data from client %d, length %d, type %d\r\n", s, ret, retPkgType);
+#if 1
+                LOG_E("recv data from client %d, length %d, type %d\r\n", s, ret, retPkgType);
                 for (i = 0; i < ret; i++)
                 {
-                    printf("%x ", data[i]);
+                    LOG_E("%x ", data[i]);
                 }
-                printf("\r\n");
+                LOG_E("\r\n");
 #endif
                 if (DataProcessCallback != NULL)
                 {
