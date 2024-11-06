@@ -7,7 +7,7 @@
 #include "flash_port.h"
 #include <stdbool.h>
 #include "stm32h7xx_hal.h"
-
+//for testing tftp server 
 #define TFTP_PORT 69
 #define BUFFER_SIZE 512
 #define APP_START_ADDRESS 0x08040000

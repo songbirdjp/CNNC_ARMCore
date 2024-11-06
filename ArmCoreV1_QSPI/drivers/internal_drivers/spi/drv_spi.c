@@ -798,6 +798,7 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
 
     if (!memcmp(device_name, DEVICE_NAME_SPI3, sizeof(DEVICE_NAME_SPI3)))
     {
+        
         MX_SPI3_Init();
         memcpy(spi, &hspi3, sizeof(SPI_HandleTypeDef));
         if (hspi3.hdmarx->Init.Mode == DMA_CIRCULAR)
@@ -808,23 +809,31 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI1, sizeof(DEVICE_NAME_SPI1)))
     {
+        //printf("111 spi1\r\n");
         MX_SPI1_Init();
+         //printf("222 spi1\r\n");
         memcpy(spi, &hspi1, sizeof(SPI_HandleTypeDef));
         if (hspi1.hdmarx->Init.Mode == DMA_CIRCULAR)
         {
+            //printf("333\r\n");
             extern DMA_HandleTypeDef hdma_spi1_rx;
             hdma_spi1_rx.Parent = (void *)spi;
         }
+        //printf("444\r\n");
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI6, sizeof(DEVICE_NAME_SPI6)))
     {
+        printf("111 spi6\r\n");
         MX_SPI6_Init();
+        printf("222 spi6\r\n");
         memcpy(spi, &hspi6, sizeof(SPI_HandleTypeDef));
         if (hspi6.hdmarx->Init.Mode == DMA_CIRCULAR)
         {
             extern DMA_HandleTypeDef hdma_spi6_rx;
             hdma_spi6_rx.Parent = (void *)spi;
+            printf("333 DMA_CIRCULAR: %s\r\n", device_name);
         }
+        printf("444 DMA_CIRCULAR: %s\r\n", device_name);
     }
     else
     {

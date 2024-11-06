@@ -238,7 +238,7 @@ int main(void)
   // MX_IWDG1_Init();
   MX_RTC_Init();
   MX_TIM6_Init();
-  /* USER CODE BEGIN 2 */
+
 #ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);
 #endif

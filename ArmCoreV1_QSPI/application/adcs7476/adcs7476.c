@@ -1,13 +1,13 @@
 #include "adcs7476.h"
 #include "drv_spi.h"
 #include "init_call.h"
-
+#include "ulog.h"
 #define ADC7476_MASTER_FLAG (1 << 0)
 #define ADC7476_SLAVE_FLAG  (1 << 1)
 
 
 static uint16_t master_data[BUF_LEN] = {0};
-static uint16_t slave_data[BUF_LEN] = {0};
+static uint16_t slave_data[BUF_LEN] __attribute__((section(".ram_d3"))) = {0};//modif
 
 struct adcs7476_object
 {
@@ -31,10 +31,12 @@ struct adcs7476_object *adcs7476_object_get(uint8_t *device_name)
 {
     if (!memcmp(device_name, DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT, sizeof(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT)))
     {
+        //printf("object_getspi1\r\n");
         return &adcs7476_object_master;
     }
     else if (!memcmp(device_name, DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT, sizeof(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT)))
     {
+       // printf("object_getspi6\r\n");
         return &adcs7476_object_slave;
     }
     else
@@ -82,13 +84,15 @@ static int8_t adcs7476_object_init(uint8_t *device_name, osEventFlagsId_t event)
     }
 
     int8_t ret = device_adcs7476_init(device_name);
+    // printf("initobject %s ret: %d\r\n", device_name, ret);
     if (ret != 0)
-    {
+    {   
         printf("adcs7476 %s init failed\r\n", device_name);
         return -2;
     }
 
     ret = device_adcs7476_buffer_init(device_name, obj->buf, obj->buf_len);
+    printf("bufferect %s ret: %d\r\n", device_name, ret);
     if (ret != 0)
     {
         printf("adcs7476 %s buffer init failed\r\n", device_name);
@@ -335,11 +339,11 @@ static int8_t adcs7476_sample_data_recv_process(void)
         callback();
     }
 
-#if 0
+#if 1
     for (uint8_t i = 0; i < obj_master->buf_len; i++)
     {
-        printf("recv_tmp[%d] = %d\r\n", i, recv_tmp[i]);
-        printf("recv_tmp_1[%d] = %d\r\n", i, recv_tmp_1[i]);
+        LOG_E("ADC7476_MASTER: recv_tmp[%d] = %d\r\n", i, recv_tmp[i]);
+        LOG_E("ADC7476_SLAVE: recv_tmp_1[%d] = %d\r\n", i, recv_tmp_1[i]);
     }
 #endif
 
@@ -401,8 +405,8 @@ static int8_t adcs7476_sample_thread_init(void)
 
     return 0;
 }
-// INIT_APP_EXPORT(adcs7476_sample_thread_init);
-
+INIT_APP_EXPORT(adcs7476_sample_thread_init);
+#define ADCS7476_SAMPLE_TEST    
 #ifdef ADCS7476_SAMPLE_TEST
 #include "shell.h"
 

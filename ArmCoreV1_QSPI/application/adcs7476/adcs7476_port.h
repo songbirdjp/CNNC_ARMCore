@@ -8,8 +8,8 @@
 extern "C" {
 #endif
 
-#define DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT   "spi4"
-#define DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT    "spi2"
+#define DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT   "spi1"
+#define DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT    "spi6"
 
 
 int8_t device_adcs7476_init(uint8_t *device_name);

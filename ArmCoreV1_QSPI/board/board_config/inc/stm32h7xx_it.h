@@ -70,6 +70,7 @@ void DMA2_Stream3_IRQHandler(void);
 void DMA2_Stream4_IRQHandler(void);
 void FPU_IRQHandler(void);
 void SPI6_IRQHandler(void);
+void DMAMUX1_OVR_IRQHandler(void);
 void MDMA_IRQHandler(void);
 void HSEM1_IRQHandler(void);
 void BDMA_Channel0_IRQHandler(void);
