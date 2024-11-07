@@ -8,8 +8,7 @@
 static void ErrorCallback(SPI_HandleTypeDef *hspi)
 {
     DEVICE_SPI *spi = (DEVICE_SPI *)hspi;
-    
-    printf("%s err\r\n", spi->name);
+    printf("SPI error on %s: ErrorCode = %lu\r\n", spi->name, hspi->ErrorCode);
 }
 static void TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
@@ -31,7 +30,7 @@ static void RxCpltCallback(SPI_HandleTypeDef *hspi)
         {
             ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
             if (ret != osOK)
-            {
+            {   
                 printf("%s queue put err:%d\r\n", spi->name, ret);
             }
         }
@@ -50,7 +49,8 @@ static void TxRxCpltCallback(SPI_HandleTypeDef *hspi)
     if (spi->master_or_slave == SPI_MASTER)
     {
         osEventFlagsSet(spi->rx_event, SPI_RECV_SUCCEED_EVENT);
-
+        // uint32_t messages_waiting = osMessageQueueGetCount(spi->rx_queue);
+        // printf("Queue %s has %lu messages waiting\r\n", spi->name, messages_waiting);
         if (spi->rx_queue != NULL)
         {
             ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
@@ -823,17 +823,13 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI6, sizeof(DEVICE_NAME_SPI6)))
     {
-        printf("111 spi6\r\n");
         MX_SPI6_Init();
-        printf("222 spi6\r\n");
         memcpy(spi, &hspi6, sizeof(SPI_HandleTypeDef));
         if (hspi6.hdmarx->Init.Mode == DMA_CIRCULAR)
         {
             extern DMA_HandleTypeDef hdma_spi6_rx;
             hdma_spi6_rx.Parent = (void *)spi;
-            printf("333 DMA_CIRCULAR: %s\r\n", device_name);
         }
-        printf("444 DMA_CIRCULAR: %s\r\n", device_name);
     }
     else
     {

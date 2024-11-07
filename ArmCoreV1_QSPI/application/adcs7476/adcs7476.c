@@ -92,7 +92,6 @@ static int8_t adcs7476_object_init(uint8_t *device_name, osEventFlagsId_t event)
     }
 
     ret = device_adcs7476_buffer_init(device_name, obj->buf, obj->buf_len);
-    printf("bufferect %s ret: %d\r\n", device_name, ret);
     if (ret != 0)
     {
         printf("adcs7476 %s buffer init failed\r\n", device_name);
@@ -317,12 +316,10 @@ static int8_t adcs7476_sample_data_recv_process(void)
     uint32_t event_flag = 0;
     static uint16_t recv_tmp[BUF_LEN] = {0};
     static uint16_t recv_tmp_1[BUF_LEN] = {0};
-
     struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
 
     event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, osWaitForever);
-
     osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
     osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
 
@@ -368,12 +365,12 @@ static int8_t adcs7476_sample_entry(void *argument)
         return -2;
     }
 
-    ret = adcs7476_sample_enable(1);
-    if (ret != 0)
-    {
-        printf("adcs7476 sample enable err: %d\r\n", ret);
-        return -3;
-    }
+    // ret = adcs7476_sample_enable(1);
+    // if (ret != 0)
+    // {
+    //     printf("adcs7476 sample enable err: %d\r\n", ret);
+    //     return -3;
+    // }
 
     for (;;)
     {

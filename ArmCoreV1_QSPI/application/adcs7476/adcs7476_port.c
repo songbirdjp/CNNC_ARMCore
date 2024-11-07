@@ -1,7 +1,7 @@
 #include "adcs7476_port.h"
 #include "drv_spi.h"
 #include "lptim.h"
-
+#include "ulog.h"
 #undef USING_SPI_OPTION_FUNCTION
 #undef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
 
@@ -176,8 +176,6 @@ int8_t device_adcs7476_buffer_init(uint8_t *device_name, uint8_t *buf, uint16_t 
         printf("device %s buffer init err: %d\r\n", device_name, ret);
         return -4;
     }
-    printf("device %s buffer initialized successfully\r\n", device_name);
-
     return device_adcs7476_data_buf_init(device_name, buf, len);
 }
 
@@ -243,7 +241,7 @@ int8_t device_adcs7476_callback_register(uint8_t *device_name, int8_t (*cb)(void
 
 static void AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
 {
-#if 0
+#if 1
     // HAL_LPTIM_Counter_Stop_IT(hlptim);
 
     HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Stop_IT(hlptim);
@@ -319,7 +317,7 @@ int8_t device_adcs7476_sample_enable(uint8_t en)
     return 0;
 }
 
-
+#define ADCS7476_TEST
 #ifdef ADCS7476_TEST
 #include "shell.h"
 static osMessageQueueId_t queue_master = NULL, queue_slave = NULL;
@@ -331,13 +329,29 @@ static uint16_t recv_buf_master[BUF_LEN] = {0xA5};
 static uint16_t recv_buf_slave[BUF_LEN] = {0x5A};
 static int8_t adcs7476_master_callback(SPI_HandleTypeDef *hspi)
 {
-    osEventFlagsSet(adcs7476_event_flag, ADC7476_MASTER_FLAG);
+    osStatus_t status = osEventFlagsSet(adcs7476_event_flag, ADC7476_MASTER_FLAG);
+    if (status != osOK)
+    {
+        printf("osEventFlagsSet failed: %d\r\n", status);
+    }
+    else
+    {
+        printf("osEventFlagsSet succeeded\r\n");
+    }
     return 0;
 }
 
 static int8_t adcs7476_slave_callback(SPI_HandleTypeDef *hspi)
 {
-    osEventFlagsSet(adcs7476_event_flag, ADC7476_SLAVE_FLAG);
+    osStatus_t status = osEventFlagsSet(adcs7476_event_flag, ADC7476_SLAVE_FLAG);
+    if (status != osOK)
+    {
+        printf("osEventFlagsSet failed: %d\r\n", status);
+    }
+    else
+    {
+        printf("osEventFlagsSet succeeded\r\n");
+    }
     return 0;
 }
 
@@ -457,6 +471,7 @@ static int8_t adcs7476_test(int8_t argc, char **argv)
         return -1;
     }
 
+
     ret = adcs7476_test_cfg(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     if (ret != 0)
     {
@@ -479,14 +494,14 @@ static int8_t adcs7476_test(int8_t argc, char **argv)
     // HAL_DMA_Start_IT(&hdma_dma_generator0, (uint32_t)&SPI4->RXDR, (uint32_t)recv_buf_master, BUF_LEN);
 
 
-    extern SPI_HandleTypeDef hspi4;
+    extern SPI_HandleTypeDef hspi1;
 
     device_adcs7476_sample_interval_set(10000);
 
     device_adcs7476_sample_enable(1);   /* 1us * 100 = 10kHz */
 
     static uint16_t recv_tmp[BUF_LEN] = {0};
-
+    
     for (;;)
     {
 
@@ -494,7 +509,7 @@ static int8_t adcs7476_test(int8_t argc, char **argv)
 
         osMessageQueueGet(queue_master, recv_tmp, NULL, 0);
 
-        // recv_buf_printf(recv_tmp);
+        recv_buf_printf(recv_tmp);
 
         // printf("RXDR: %#.2x\r\n", hspi4.Instance->RXDR);
 
@@ -506,3 +521,4 @@ static int8_t adcs7476_test(int8_t argc, char **argv)
 }
 MSH_CMD_EXPORT_ALIAS(adcs7476_test, adcs7476_test, test adcs7476);
 #endif
+

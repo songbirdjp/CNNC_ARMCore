@@ -219,16 +219,6 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
       Error_Handler();
     }
 
-    pSyncConfig.SyncSignalID = HAL_DMAMUX1_SYNC_LPTIM2_OUT;
-    pSyncConfig.SyncPolarity = HAL_DMAMUX_SYNC_RISING;
-    pSyncConfig.SyncEnable = ENABLE;
-    pSyncConfig.EventEnable = DISABLE;
-    pSyncConfig.RequestNumber = 1;
-    if (HAL_DMAEx_ConfigMuxSync(&hdma_spi1_rx, &pSyncConfig) != HAL_OK)
-    {
-      Error_Handler();
-    }
-
     __HAL_LINKDMA(spiHandle,hdmarx,hdma_spi1_rx);
 
     /* SPI1_TX Init */
@@ -243,6 +233,16 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     hdma_spi1_tx.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_spi1_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
     if (HAL_DMA_Init(&hdma_spi1_tx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    pSyncConfig.SyncSignalID = HAL_DMAMUX1_SYNC_LPTIM2_OUT;
+    pSyncConfig.SyncPolarity = HAL_DMAMUX_SYNC_RISING;
+    pSyncConfig.SyncEnable = ENABLE;
+    pSyncConfig.EventEnable = DISABLE;
+    pSyncConfig.RequestNumber = 1;
+    if (HAL_DMAEx_ConfigMuxSync(&hdma_spi1_tx, &pSyncConfig) != HAL_OK)
     {
       Error_Handler();
     }
