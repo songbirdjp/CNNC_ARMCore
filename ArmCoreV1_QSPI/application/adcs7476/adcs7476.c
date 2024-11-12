@@ -2,12 +2,16 @@
 #include "drv_spi.h"
 #include "init_call.h"
 #include "ulog.h"
+#include "drv_flash.h"
+#include "flash_port.h"
+#include <stdbool.h>
+#include "stm32h7xx_hal.h"
+
 #define ADC7476_MASTER_FLAG (1 << 0)
 #define ADC7476_SLAVE_FLAG  (1 << 1)
 
-
 static uint16_t master_data[BUF_LEN] = {0};
-static uint16_t slave_data[BUF_LEN] __attribute__((section(".ram_d3"))) = {0};//modif
+static uint16_t slave_data[BUF_LEN] __attribute__((section(".ram_d3"))) = {0};//modify
 
 struct adcs7476_object
 {
@@ -110,7 +114,7 @@ static int8_t adcs7476_object_init(uint8_t *device_name, osEventFlagsId_t event)
         return -4;
     }
 
-    obj->queue = osMessageQueueNew(15, sizeof(uint16_t) * obj->buf_len, NULL);
+    obj->queue = osMessageQueueNew(64, sizeof(uint16_t) * obj->buf_len, NULL);
     if (obj->queue == NULL)
     {
         printf("queue create failed\r\n");
@@ -310,12 +314,28 @@ int8_t adcs7476_sample_enable(uint8_t enable)
     return device_adcs7476_sample_enable(enable);
 }
 
-static int8_t adcs7476_sample_data_recv_process(void)
+// #define FLASH_ADDRESS_BASE                  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
+// #define FLASH_VALID_SIZE                    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
+// #define FLASH_AFC_SLAVE_OFFSET              (FLASH_SECTOR_SIZE*3)//0x00020000UL * 3 = 0x00060000UL
+
+
+// int32_t len;  
+// uint32_t flash_addr = FLASH_ADDRESS_BASE;
+// uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
+// static DEVICE_FLASH flash_bank1 = {0};
+// static DEVICE_FLASH *device_flash_get(void)
+// {
+//     return &flash_bank1;
+// }
+// extern DEVICE_FLASH *flash;
+int8_t adcs7476_sample_data_recv_process(void)
 {
     int8_t ret = 0;
     uint32_t event_flag = 0;
+
+   // flash = device_flash_get();
     static uint16_t recv_tmp[BUF_LEN] = {0};
-    static uint16_t recv_tmp_1[BUF_LEN] = {0};
+    static uint16_t recv_tmp_1[BUF_LEN] = {0}; 
     struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
 
@@ -339,10 +359,24 @@ static int8_t adcs7476_sample_data_recv_process(void)
 #if 1
     for (uint8_t i = 0; i < obj_master->buf_len; i++)
     {
-        LOG_E("ADC7476_MASTER: recv_tmp[%d] = %d\r\n", i, recv_tmp[i]);
-        LOG_E("ADC7476_SLAVE: recv_tmp_1[%d] = %d\r\n", i, recv_tmp_1[i]);
+        LOG_E("ADC7476_MASTER: obj_master->data[%d] = %d\r\n", i, obj_master->data[i]);
+        LOG_E("ADC7476_SLAVE: obj_slave->data[%d] = %d\r\n", i, obj_slave->data[i]);
     }
 #endif
+
+    // ret = flash->write(flash, 0, (uint8_t *)recv_tmp, obj_master->buf_len * sizeof(uint16_t), 1000);
+    // if (ret != 0)
+    // {
+    //     printf("flash write err:%d\r\n", ret);
+    //     return -1;
+    // }
+
+    // ret = flash->write(flash,FLASH_AFC_SLAVE_OFFSET, (uint8_t *)recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t), 1000);
+    // if (ret != 0)
+    // {
+    //     printf("flash write err:%d\r\n", ret);
+    //     return -2;
+    // }
 
     return 0;
 }
@@ -374,12 +408,13 @@ static int8_t adcs7476_sample_entry(void *argument)
 
     for (;;)
     {
-        ret = adcs7476_sample_data_recv_process();
-        if (ret != 0)
-        {
-            printf("adcs7476 sample data recv process err: %d\r\n", ret);
-            return -4;
-        }
+        // ret = adcs7476_sample_data_recv_process();
+        // if (ret != 0)
+        // {
+        //     printf("adcs7476 sample data recv process err: %d\r\n", ret);
+        //     return -4;
+        // }
+        osDelay(1000);
     }
 
     return 0;
@@ -416,10 +451,48 @@ static int adcs7476_sample_test(int argc, char **argv)
     }
 
     adcs7476_sample_interval_set(atoi(argv[1]));
-
     adcs7476_sample_enable(1);
 
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(adcs7476_sample_test, adcs7476_sample_test, adcs7476 sample test);
+static int adcs7476_sample_read_by_count(int argc, char **argv)
+{
+    LOG_E("adcs7476_sample_read_by_count\r\n");
+    adcs7476_sample_interval_set(atoi(argv[1]));
+    
+    if (argc != 2)
+    {
+        LOG_E("adcs7476_sample_read_by_count: invalid parameter\r\n");
+        return -1;
+    }
+
+    if (device_adcs7476_sample_enable(1) != 0)
+    {
+        LOG_E("Failed to enable LPTIM counter\r\n");
+        return -3;
+    }
+    int8_t ret = adcs7476_sample_data_recv_process();
+
+    if (ret != 0)
+    {
+        LOG_E("adcs7476 sample data recv process err: %d\r\n", ret);
+        device_adcs7476_sample_enable(0);
+        return -4;
+    }
+    
+    if (device_adcs7476_sample_enable(0) != 0)
+    {
+        LOG_E("Failed to disable LPTIM counter\r\n");
+        return -5;
+    }
+    else
+    {
+        LOG_E("LPTIM counter disabled\r\n");
+    }   
+
+    return 0;
+    
+}
+MSH_CMD_EXPORT_ALIAS(adcs7476_sample_read_by_count, adc_by_count, adcs7476 sample read by count);
 #endif

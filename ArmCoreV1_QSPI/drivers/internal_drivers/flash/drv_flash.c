@@ -355,7 +355,7 @@ int8_t flash_init(DEVICE_FLASH *flash, uint8_t *device_name)
 {
     if (flash == NULL || device_name == NULL)
     {
-        printf("ptr is null\r\n");
+        printf("cjh1ptr is null\r\n");
         return -1;
     }
 
@@ -414,7 +414,7 @@ int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t addr_base, uint
 {
     if (flash == NULL)
     {
-        printf("ptr is null\r\n");
+        printf("cjh222ptr is null\r\n");
         return -1;
     }
 

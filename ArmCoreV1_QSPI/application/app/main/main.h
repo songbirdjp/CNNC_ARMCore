@@ -67,6 +67,9 @@ void Error_Handler(void);
 #define WDT_OK_LED_GPIO_Port GPIOE
 #define SPI3_NSS_Pin GPIO_PIN_4
 #define SPI3_NSS_GPIO_Port GPIOA
+#define BGM_Trigger_Pin GPIO_PIN_2
+#define BGM_Trigger_GPIO_Port GPIOG
+#define BGM_Trigger_EXTI_IRQn EXTI2_IRQn
 #define WDT_RESET_Pin GPIO_PIN_1
 #define WDT_RESET_GPIO_Port GPIOD
 #define W5500_RSTn_Pin GPIO_PIN_3
