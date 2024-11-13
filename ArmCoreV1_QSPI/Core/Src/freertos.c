@@ -25,6 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "iwdg.h"
 
 /* USER CODE END Includes */
 
@@ -57,6 +58,23 @@ const osThreadAttr_t defaultTask_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+#ifdef configGENERATE_RUN_TIME_STATS
+static uint32_t run_time_count = 0;
+void run_time_count_increase(void)
+{
+    run_time_count++;
+}
+
+uint32_t run_time_count_get(void)
+{
+    return run_time_count;
+}
+
+void run_time_count_set(uint32_t val)
+{
+    run_time_count = val;
+}
+#endif
 
 /* USER CODE END FunctionPrototypes */
 
@@ -75,13 +93,14 @@ void vApplicationMallocFailedHook(void);
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
 __weak void configureTimerForRunTimeStats(void)
 {
-
+    run_time_count_set(0);
 }
 
 __weak unsigned long getRunTimeCounterValue(void)
 {
-return 0;
+    return run_time_count_get();
 }
+
 /* USER CODE END 1 */
 
 /* USER CODE BEGIN 2 */
@@ -96,6 +115,13 @@ void vApplicationIdleHook( void )
    important that vApplicationIdleHook() is permitted to return to its calling
    function, because it is the responsibility of the idle task to clean up
    memory allocated by the kernel to any task that has since been deleted. */
+
+    /*****************************
+     * add watchdog feed function here
+    *****************************/
+
+   HAL_IWDG_Refresh(&hiwdg1);
+
 }
 /* USER CODE END 2 */
 
@@ -105,6 +131,8 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
    /* Run time stack overflow checking is performed if
    configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
    called if a stack overflow is detected. */
+
+   printf("%s stack over flow\r\n", pcTaskName);
 }
 /* USER CODE END 4 */
 
@@ -121,6 +149,8 @@ void vApplicationMallocFailedHook(void)
    FreeRTOSConfig.h, and the xPortGetFreeHeapSize() API function can be used
    to query the size of free heap space that remains (although it does not
    provide information on how the remaining heap might be fragmented). */
+
+   printf("malloc failed, thread name: %s\r\n", osThreadGetName(osThreadGetId()));
 }
 /* USER CODE END 5 */
 

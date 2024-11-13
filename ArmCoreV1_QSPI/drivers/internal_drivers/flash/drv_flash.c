@@ -193,7 +193,6 @@ int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t 
         printf("ptr is null or size is 0\r\n");
         return -1;
     }
-
     if (offset + size > flash->size || offset % 32 != 0)
     {
         return -2;
@@ -414,7 +413,7 @@ int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t addr_base, uint
 {
     if (flash == NULL)
     {
-        printf("cjh222ptr is null\r\n");
+        printf("ptr is null\r\n");
         return -1;
     }
 
@@ -467,7 +466,7 @@ uint32_t SW_crc32_Calcul(const uint32_t *buf, size_t len, uint32_t BurstSize)
     /* Return CRC value */
     return crc;
 }
-
+#define FLASH_AFC_SLAVE_OFFSET              (FLASH_SECTOR_SIZE )
 int8_t flash_test(uint8_t argc, char *argv[])
 {
     int8_t ret = 0;
@@ -476,7 +475,6 @@ int8_t flash_test(uint8_t argc, char *argv[])
     uint32_t CRC_Result = 0;
     uint8_t data[1024] = {0};
     uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
-
     switch (atoi(argv[1]))
     {
     case 0:

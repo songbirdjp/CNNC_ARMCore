@@ -33,6 +33,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "shell.h"
+#include "console.h"
+#include "sys_cfg.h"
+#include "init_call.h"
 
 /* USER CODE END Includes */
 
@@ -67,6 +71,12 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void vector_table_init(void)
+{
+    extern uint32_t __isr_vector_start;
+
+    SCB->VTOR = (uint32_t)&__isr_vector_start;
+}
 
 /* USER CODE END 0 */
 
@@ -78,6 +88,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+  vector_table_init();
 
   /* USER CODE END 1 */
 
@@ -120,6 +131,19 @@ int main(void)
   MX_SPI6_Init();
   MX_LPTIM4_Init();
   /* USER CODE BEGIN 2 */
+#ifdef configGENERATE_RUN_TIME_STATS
+  HAL_TIM_Base_Start_IT(&htim6);
+#endif
+
+  bank1_sdram_init();
+
+  device_console_init(CONSOLE_NAME_DEFAULT);
+
+  system_info_print();
+
+  system_fun_init();
+
+  printf("Init ok\r\n");
 
   /* USER CODE END 2 */
 

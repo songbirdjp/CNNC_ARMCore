@@ -70,6 +70,14 @@ void Error_Handler(void);
 #define BGM_Trigger_Pin GPIO_PIN_2
 #define BGM_Trigger_GPIO_Port GPIOG
 #define BGM_Trigger_EXTI_IRQn EXTI2_IRQn
+#define LED1PG4_Pin GPIO_PIN_4
+#define LED1PG4_GPIO_Port GPIOG
+#define LED2PG5_Pin GPIO_PIN_5
+#define LED2PG5_GPIO_Port GPIOG
+#define LED3PG6_Pin GPIO_PIN_6
+#define LED3PG6_GPIO_Port GPIOG
+#define LED4PG7_Pin GPIO_PIN_7
+#define LED4PG7_GPIO_Port GPIOG
 #define WDT_RESET_Pin GPIO_PIN_1
 #define WDT_RESET_GPIO_Port GPIOD
 #define W5500_RSTn_Pin GPIO_PIN_3
