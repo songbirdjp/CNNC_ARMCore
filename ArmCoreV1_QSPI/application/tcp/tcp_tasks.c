@@ -4,6 +4,7 @@
 #include "stdbool.h"
 #include "init_call.h"
 #include "main.h"
+#include "websocket.h"
 
 #define SOCK_TCPS   0
 
@@ -149,7 +150,9 @@ static int8_t tcp_init(osMessageQueueId_t queue)
     device_w5500_rx_buffer_init(recvInfo.gDATABUF, sizeof(recvInfo.gDATABUF));
 
     device_w5500_rx_queue_init(queue);
-
+#ifdef IS_TCP_SERVER
+    tcp_server_init();
+#endif
     return 0;
 }
 
@@ -175,7 +178,6 @@ static int8_t tcp_data_recv_with_block(void)
 */
 
 static osMessageQueueId_t tcp_rx_queueHandle = NULL;
-static osMessageQueueId_t tcp_tx_queueHandle = NULL;
 static osMutexId_t tcp_access_mutexHandle = NULL;
 
 static void TCPSendTask(void *argument)
@@ -218,7 +220,7 @@ static void TCPSendTask(void *argument)
     #endif
         osMutexRelease(tcp_access_mutexHandle);
 
-        osDelay(10);
+        osDelay(1);
     }
   /* USER CODE END TCPSendTask */
 }

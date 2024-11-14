@@ -3,14 +3,14 @@
 
 #include <stdint.h>
 #include "cmsis_os2.h"
+#include "main_app.h"
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define MAX_CLIENT_NUM  2
-#define DATA_BUF_SIZE   2048
-#define IS_TCP_SERVER
+#define DATA_BUF_SIZE  2048
 
 typedef struct {
     uint8_t sn;
