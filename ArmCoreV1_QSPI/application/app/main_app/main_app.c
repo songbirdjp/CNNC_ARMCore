@@ -235,4 +235,4 @@ static int8_t main_app_thread_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(main_app_thread_init);
+// INIT_APP_EXPORT(main_app_thread_init);

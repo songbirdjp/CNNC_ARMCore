@@ -305,7 +305,7 @@ static int8_t tcp_thread_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(tcp_thread_init);
+// INIT_APP_EXPORT(tcp_thread_init);
 
 osStatus_t tcp_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
 {
