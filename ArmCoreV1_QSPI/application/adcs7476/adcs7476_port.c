@@ -262,26 +262,26 @@ int8_t device_adcs7476_sample_interval_set(uint16_t sample_interval_10ns)
     //LOG_E("sample_interval_10ns: %d\r\n", sample_interval_10ns);
     HAL_StatusTypeDef status = HAL_OK;
 
-    if (HAL_LPTIM_GetState(&hlptim2) == HAL_LPTIM_STATE_RESET)
+    if (HAL_LPTIM_GetState(&hlptim3) == HAL_LPTIM_STATE_RESET)
     {
-        MX_LPTIM2_Init();
+        MX_LPTIM3_Init();
     }
     
-    status = HAL_LPTIM_RegisterCallback(&hlptim2, HAL_LPTIM_AUTORELOAD_MATCH_CB_ID, AutoReloadMatchCallback);
+    status = HAL_LPTIM_RegisterCallback(&hlptim3, HAL_LPTIM_AUTORELOAD_MATCH_CB_ID, AutoReloadMatchCallback);
     if (status != HAL_OK)
     {
         printf("HAL_LPTIM_RegisterCallback err: %d\r\n", status);
         return -2;
     }
 
-    status = HAL_LPTIM_Counter_Stop(&hlptim2);
+    status = HAL_LPTIM_Counter_Stop(&hlptim3);
     if (status != HAL_OK)
     {
         printf("HAL_LPTIM_Counter_Stop err: %d\r\n", status);
         return -3;
     }
 
-    __HAL_LPTIM_AUTORELOAD_SET(&hlptim2, sample_interval_10ns);
+    __HAL_LPTIM_AUTORELOAD_SET(&hlptim3, sample_interval_10ns);
 
     return 0;
 }
@@ -290,9 +290,9 @@ int8_t device_adcs7476_sample_enable(uint8_t en)
 {
     HAL_StatusTypeDef status = HAL_OK;
 
-    uint32_t period = HAL_LPTIM_ReadAutoReload(&hlptim2);
+    uint32_t period = HAL_LPTIM_ReadAutoReload(&hlptim3);
 
-   status = (en == 0) ? HAL_LPTIM_Counter_Stop(&hlptim2) : HAL_LPTIM_Counter_Start(&hlptim2, period);
+   status = (en == 0) ? HAL_LPTIM_Counter_Stop(&hlptim3) : HAL_LPTIM_Counter_Start(&hlptim3, period);
     if (status != HAL_OK)
     {
         printf("HAL_LPTIM_Counter_Start/Stop err: %d\r\n", status);

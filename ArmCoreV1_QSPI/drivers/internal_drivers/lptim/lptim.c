@@ -25,7 +25,6 @@
 /* USER CODE END 0 */
 
 LPTIM_HandleTypeDef hlptim1;
-LPTIM_HandleTypeDef hlptim2;
 LPTIM_HandleTypeDef hlptim3;
 LPTIM_HandleTypeDef hlptim4;
 
@@ -58,35 +57,6 @@ void MX_LPTIM1_Init(void)
   /* USER CODE END LPTIM1_Init 2 */
 
 }
-/* LPTIM2 init function */
-void MX_LPTIM2_Init(void)
-{
-
-  /* USER CODE BEGIN LPTIM2_Init 0 */
-
-  /* USER CODE END LPTIM2_Init 0 */
-
-  /* USER CODE BEGIN LPTIM2_Init 1 */
-
-  /* USER CODE END LPTIM2_Init 1 */
-  hlptim2.Instance = LPTIM2;
-  hlptim2.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
-  hlptim2.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV1;
-  hlptim2.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
-  hlptim2.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
-  hlptim2.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
-  hlptim2.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
-  hlptim2.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
-  hlptim2.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
-  if (HAL_LPTIM_Init(&hlptim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN LPTIM2_Init 2 */
-
-  /* USER CODE END LPTIM2_Init 2 */
-
-}
 /* LPTIM3 init function */
 void MX_LPTIM3_Init(void)
 {
@@ -100,7 +70,7 @@ void MX_LPTIM3_Init(void)
   /* USER CODE END LPTIM3_Init 1 */
   hlptim3.Instance = LPTIM3;
   hlptim3.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
-  hlptim3.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV4;
+  hlptim3.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV1;
   hlptim3.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
   hlptim3.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
   hlptim3.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
@@ -129,7 +99,9 @@ void MX_LPTIM4_Init(void)
   hlptim4.Instance = LPTIM4;
   hlptim4.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
   hlptim4.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV1;
-  hlptim4.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
+  hlptim4.Init.Trigger.Source = LPTIM_TRIGSOURCE_1;
+  hlptim4.Init.Trigger.ActiveEdge = LPTIM_ACTIVEEDGE_RISING;
+  hlptim4.Init.Trigger.SampleTime = LPTIM_TRIGSAMPLETIME_DIRECTTRANSITION;
   hlptim4.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
   hlptim4.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
   hlptim4.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
@@ -157,21 +129,6 @@ void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef* lptimHandle)
 
   /* USER CODE END LPTIM1_MspInit 1 */
   }
-  else if(lptimHandle->Instance==LPTIM2)
-  {
-  /* USER CODE BEGIN LPTIM2_MspInit 0 */
-
-  /* USER CODE END LPTIM2_MspInit 0 */
-    /* LPTIM2 clock enable */
-    __HAL_RCC_LPTIM2_CLK_ENABLE();
-
-    /* LPTIM2 interrupt Init */
-    HAL_NVIC_SetPriority(LPTIM2_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(LPTIM2_IRQn);
-  /* USER CODE BEGIN LPTIM2_MspInit 1 */
-
-  /* USER CODE END LPTIM2_MspInit 1 */
-  }
   else if(lptimHandle->Instance==LPTIM3)
   {
   /* USER CODE BEGIN LPTIM3_MspInit 0 */
@@ -179,10 +136,6 @@ void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef* lptimHandle)
   /* USER CODE END LPTIM3_MspInit 0 */
     /* LPTIM3 clock enable */
     __HAL_RCC_LPTIM3_CLK_ENABLE();
-
-    /* LPTIM3 interrupt Init */
-    HAL_NVIC_SetPriority(LPTIM3_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(LPTIM3_IRQn);
   /* USER CODE BEGIN LPTIM3_MspInit 1 */
 
   /* USER CODE END LPTIM3_MspInit 1 */
@@ -194,6 +147,10 @@ void HAL_LPTIM_MspInit(LPTIM_HandleTypeDef* lptimHandle)
   /* USER CODE END LPTIM4_MspInit 0 */
     /* LPTIM4 clock enable */
     __HAL_RCC_LPTIM4_CLK_ENABLE();
+
+    /* LPTIM4 interrupt Init */
+    HAL_NVIC_SetPriority(LPTIM4_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(LPTIM4_IRQn);
   /* USER CODE BEGIN LPTIM4_MspInit 1 */
 
   /* USER CODE END LPTIM4_MspInit 1 */
@@ -214,20 +171,6 @@ void HAL_LPTIM_MspDeInit(LPTIM_HandleTypeDef* lptimHandle)
 
   /* USER CODE END LPTIM1_MspDeInit 1 */
   }
-  else if(lptimHandle->Instance==LPTIM2)
-  {
-  /* USER CODE BEGIN LPTIM2_MspDeInit 0 */
-
-  /* USER CODE END LPTIM2_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_LPTIM2_CLK_DISABLE();
-
-    /* LPTIM2 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(LPTIM2_IRQn);
-  /* USER CODE BEGIN LPTIM2_MspDeInit 1 */
-
-  /* USER CODE END LPTIM2_MspDeInit 1 */
-  }
   else if(lptimHandle->Instance==LPTIM3)
   {
   /* USER CODE BEGIN LPTIM3_MspDeInit 0 */
@@ -235,9 +178,6 @@ void HAL_LPTIM_MspDeInit(LPTIM_HandleTypeDef* lptimHandle)
   /* USER CODE END LPTIM3_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_LPTIM3_CLK_DISABLE();
-
-    /* LPTIM3 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(LPTIM3_IRQn);
   /* USER CODE BEGIN LPTIM3_MspDeInit 1 */
 
   /* USER CODE END LPTIM3_MspDeInit 1 */
@@ -249,6 +189,9 @@ void HAL_LPTIM_MspDeInit(LPTIM_HandleTypeDef* lptimHandle)
   /* USER CODE END LPTIM4_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_LPTIM4_CLK_DISABLE();
+
+    /* LPTIM4 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(LPTIM4_IRQn);
   /* USER CODE BEGIN LPTIM4_MspDeInit 1 */
 
   /* USER CODE END LPTIM4_MspDeInit 1 */

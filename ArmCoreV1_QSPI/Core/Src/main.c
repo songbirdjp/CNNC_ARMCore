@@ -130,6 +130,7 @@ int main(void)
   MX_SPI1_Init();
   MX_SPI6_Init();
   MX_LPTIM4_Init();
+  MX_LPTIM3_Init();
   /* USER CODE BEGIN 2 */
 #ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);
@@ -246,10 +247,10 @@ void PeriphCommonClock_Config(void)
   /** Initializes the peripherals clock
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI6|RCC_PERIPHCLK_ADC
-                              |RCC_PERIPHCLK_LPTIM1|RCC_PERIPHCLK_LPTIM2
-                              |RCC_PERIPHCLK_LPTIM3|RCC_PERIPHCLK_LPTIM4
-                              |RCC_PERIPHCLK_SPI3|RCC_PERIPHCLK_SPI1
-                              |RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_UART9;
+                              |RCC_PERIPHCLK_LPTIM1|RCC_PERIPHCLK_LPTIM3
+                              |RCC_PERIPHCLK_LPTIM4|RCC_PERIPHCLK_SPI3
+                              |RCC_PERIPHCLK_SPI1|RCC_PERIPHCLK_USART1
+                              |RCC_PERIPHCLK_UART9;
   PeriphClkInitStruct.PLL2.PLL2M = 5;
   PeriphClkInitStruct.PLL2.PLL2N = 100;
   PeriphClkInitStruct.PLL2.PLL2P = 5;
@@ -269,7 +270,6 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL3;
   PeriphClkInitStruct.Usart16ClockSelection = RCC_USART16910CLKSOURCE_PLL2;
   PeriphClkInitStruct.Lptim1ClockSelection = RCC_LPTIM1CLKSOURCE_PLL2;
-  PeriphClkInitStruct.Lptim2ClockSelection = RCC_LPTIM2CLKSOURCE_PLL2;
   PeriphClkInitStruct.Lptim345ClockSelection = RCC_LPTIM345CLKSOURCE_PLL2;
   PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
   PeriphClkInitStruct.Spi6ClockSelection = RCC_SPI6CLKSOURCE_PLL2;

@@ -501,7 +501,7 @@ int8_t flash_test(uint8_t argc, char *argv[])
             return -3;
         }
 
-        for (uint32_t i = 0; i < sizeof(data); i += 16)
+        for (uint32_t i = 0; i < 64; i += 16) 
         {
             printf("%08x: ", FLASH_ADDRESS_BASE + i);
             for (uint32_t j = 0; j < 16; j++)
