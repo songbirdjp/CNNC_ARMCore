@@ -4,6 +4,8 @@
 #include "stdbool.h"
 #include "init_call.h"
 #include "main.h"
+#include "websocket.h"
+#include "gpio_port.h"
 
 #define SOCK_TCPS   0
 
@@ -13,8 +15,13 @@ static uint16_t remote_port = 8000;
 #endif
 
 static wiz_NetInfo local_net_info = {
+#ifdef BANKA
         .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x72},
         .ip =  {192, 168, 10, 71},
+#else
+        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x71},
+        .ip =  {192, 168, 10, 72},
+#endif
         .sn =  {255, 255, 255, 0},
         .gw =  {192, 168, 0, 1},
         .dns = {180, 76, 76, 76},
@@ -25,13 +32,14 @@ static wiz_NetInfo *local_netinfo_get(void)
 {
     return &local_net_info;
 }
+
 #ifndef IS_TCP_SERVER
-static uint8_t *remote_ip_get(void)
+uint8_t *remote_ip_get(void)
 {
     return remote_ip;
 }
 
-static uint16_t remote_port_get(void)
+uint16_t remote_port_get(void)
 {
     return remote_port;
 }
@@ -73,10 +81,11 @@ static int8_t do_tcp_server_send(uint8_t sn)
     switch (getSn_SR(sn))
     {
     case SOCK_INIT:
+       // printf("SOCK_INIT\r\n");
         listen(sn);
-        //    if(s==1) printf("SERVER_SOCK_INIT\r\n");
         break;
     case SOCK_ESTABLISHED:
+       // printf("SOCK_ESTABLISHED\r\n");
         tcp_establish_cb(sn); // period feedback here
         break;
     case SOCK_CLOSE_WAIT:
@@ -84,6 +93,7 @@ static int8_t do_tcp_server_send(uint8_t sn)
         close(sn);
         break;
     case SOCK_CLOSED:
+      //  printf("SOCK_CLOSED\r\n");
         ret = socket(sn, Sn_MR_TCP, 80, 0);
         break;
     default:    break;
@@ -145,11 +155,14 @@ static int8_t tcp_init(osMessageQueueId_t queue)
     }
 
     device_w5500_interrupt_init(MAX_CLIENT_NUM);
+   // W5500_interrupt_status_print(0);
 
     device_w5500_rx_buffer_init(recvInfo.gDATABUF, sizeof(recvInfo.gDATABUF));
 
     device_w5500_rx_queue_init(queue);
-
+#ifdef IS_TCP_SERVER
+    tcp_server_init();
+#endif
     return 0;
 }
 
@@ -175,12 +188,11 @@ static int8_t tcp_data_recv_with_block(void)
 */
 
 static osMessageQueueId_t tcp_rx_queueHandle = NULL;
-static osMessageQueueId_t tcp_tx_queueHandle = NULL;
 static osMutexId_t tcp_access_mutexHandle = NULL;
 
 static void TCPSendTask(void *argument)
 {
-  /* USER CODE BEGIN TCPSendTask */
+  /* USER CODE BEGIN TCPClientTask */
 
     int8_t ret = 0;
 
@@ -194,7 +206,6 @@ static void TCPSendTask(void *argument)
     for(;;)
     {
         osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
-
         while(tcp_link_detect() == false)
         {
             // printf("tcp link off\r\n");
@@ -210,7 +221,7 @@ static void TCPSendTask(void *argument)
             ret = do_tcp_server_send(i);
             if (ret != 0)
             {
-                printf("do_tcp_server_send err:%d sn = %d\r\n", ret, i);
+                printf("do_tcp_client err:%d sn = %d\r\n", ret, i);
             }
         }
     #else
@@ -218,14 +229,14 @@ static void TCPSendTask(void *argument)
     #endif
         osMutexRelease(tcp_access_mutexHandle);
 
-        osDelay(10);
+        osDelay(1);
     }
-  /* USER CODE END TCPSendTask */
+  /* USER CODE END TCPClientTask */
 }
 
 static void tcp_recv_entry(void *argument)
 {
-  /* USER CODE BEGIN tcp_recv_entry */
+  /* USER CODE BEGIN tcp_client_entry */
   /* Infinite loop */
   int32_t ret = 0;
 
@@ -236,10 +247,17 @@ static void tcp_recv_entry(void *argument)
             osDelay(100);
         }
 
-        ret = tcp_data_recv_with_block();
-        if (ret < 0)
+        // ret = tcp_data_recv_with_block();
+        // if (ret < 0)
+        // {
+        //     printf("tcp recv data err:%d\r\n", ret);
+        // }
+
+        osDelay(1);
+
+        if (gpio_common_get()->read("GPIOD_4") == 1)
         {
-            printf("tcp recv data err:%d\r\n", ret);
+            continue;
         }
 
         osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
@@ -251,9 +269,8 @@ static void tcp_recv_entry(void *argument)
         }
 
         osMutexRelease(tcp_access_mutexHandle);
-
   }
-  /* USER CODE END tcp_recv_entry */
+  /* USER CODE END tcp_client_entry */
 }
 
 static int8_t tcp_thread_init(void)
@@ -307,12 +324,12 @@ static int8_t tcp_thread_init(void)
 }
 INIT_APP_EXPORT(tcp_thread_init);
 
-osStatus_t tcp_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
+osStatus_t tcp_client_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
 {
     return osMessageQueueGet(tcp_rx_queueHandle, buf, 0, timeout);
 }
 
-int32_t tcp_data_send(uint8_t s, uint8_t *buf, uint16_t len)
+int32_t tcp_client_data_send(uint8_t s, uint8_t *buf, uint16_t len)
 {
     osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
 

@@ -19,6 +19,7 @@ uint8_t device_w5500_phy_link_status_get(void);
 int8_t device_w5500_link_state_recover(uint8_t sn);
 int8_t device_w5500_data_recv_with_block(void);
 int32_t device_w5500_irq_process(void);
+int32_t w5500_polling_recv_process(uint8_t sn);
 
 #ifdef __cplusplus
 }

@@ -159,8 +159,7 @@ static int8_t console_log_init(void)
     struct ulog_write_func_info info = {
     .func_init = NULL,
     .func_callback = device_console_write,
-    .index = 0,
-    .level = ULOG_INFO_LEVEL};
+    .index = 0};
 
     int8_t ret = ulog_write_func_register(&info);
     if (ret != 0)
@@ -182,7 +181,7 @@ static int8_t console_cmd_process(void)
 
     if (msg.len <= 2)
     {
-        LOG_E("cmd len must more than 2\r\n");
+        printf("cmd len must more than 2\r\n");
         return -1;
     }
 
@@ -291,14 +290,14 @@ static int8_t cmd_help(uint8_t argc, uint8_t **argv)
 
     const struct shell_cmd_desc *desc;
 
-    LOG_I("shell commands:\r\n");
+    printf("shell commands:\r\n");
 
     for (desc = &__shell_cmd_start; desc < &__shell_cmd_end; desc++)
     {
-        LOG_I("%-32s - %s\r\n", desc->name, desc->desc);
+        printf("%-32s - %s\r\n", desc->name, desc->desc);
     }
 
-    LOG_I("\r\n");
+    printf("\r\n");
 
     return 0;
 }

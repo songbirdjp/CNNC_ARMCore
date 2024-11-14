@@ -43,6 +43,12 @@ void MX_BDMA_Init(void)
   __HAL_RCC_BDMA_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* BDMA_Channel0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(BDMA_Channel0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(BDMA_Channel0_IRQn);
+  /* BDMA_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(BDMA_Channel1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(BDMA_Channel1_IRQn);
   /* BDMA_Channel2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(BDMA_Channel2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(BDMA_Channel2_IRQn);

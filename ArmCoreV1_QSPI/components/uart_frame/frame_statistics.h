@@ -11,7 +11,7 @@ extern "C" {
 #define USING_FRAME_STATISTICS
 
 #ifdef USING_FRAME_STATISTICS
-#define DEVICE_IS_MASTER    0
+#define DEVICE_IS_MASTER    1
 #define DEVICE_IS_SLAVE_PERIODIC    0
 #define FRAME_IS_ACK_MODE   1
 // #define FRAME_TIMEOUT_THREAD_DETECT
@@ -48,7 +48,6 @@ struct frame_statistics
 
     uint64_t send_cnt;
     uint64_t recv_cnt;
-    uint64_t ack_cnt;
 
 #ifdef FRAME_TIMEOUT_THREAD_DETECT
     osMutexId_t mutex

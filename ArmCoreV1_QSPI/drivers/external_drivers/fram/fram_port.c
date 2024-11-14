@@ -631,8 +631,7 @@ static int8_t fram_log_init(void)
     struct ulog_write_func_info info = {
         .func_init = NULL,//fram_log_info_self_detect,
         .func_callback = fram_log_write,
-        .index = 1,
-        .level = ULOG_INFO_LEVEL};
+        .index = 1};
     
     int8_t ret = ulog_write_func_register(&info);
     if (ret != 0)

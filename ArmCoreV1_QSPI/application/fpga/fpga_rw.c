@@ -2,6 +2,7 @@
 #include "stm32h7xx_hal.h"
 #include "fpga_port.h"
 #include "init_call.h"
+#include "spi.h"
 
 bool DMATransmitting = 0;
 SEND_CONTROL sndCtrl;
@@ -96,7 +97,7 @@ void makeSingleSendAry(uint8_t index, uint8_t * pData, uint8_t size, bool isFirs
        // else memset(sndCtrl.cmdSendBuf,0,sndCtrl.singleSize[index]);
     }
 }
-
+#if 0
 void makeParamSendAry(uint8_t * pData)
 {
     sndCtrl.pCrt = sndCtrl.paramSendBuf;
@@ -150,7 +151,7 @@ void FPGA_ReadByteArray(uint8_t *pRxData, uint16_t size)
    // uint8_t pTxData[size];
    // memset(pTxData, 0, size);
 
-    // HAL_SPI_Receive_DMA(&hspi2,  pRxData , size);
+ // HAL_SPI_Receive_DMA(&hspi2,  pRxData , size);
   //  printf("read: ");
   //  for(uint16_t i = 0; i < size; i++)  printf("0x%x ",pRxData[i]);
   //  printf("\r\n");
@@ -168,7 +169,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
 {
-    // if(hspi == &hspi2)
+  //   if(hspi == &hspi2)
     {
         // ringb_push(&ringbufCtrl, dmaBuf);
         // FPGA_ReadByteArray(&ringbufCtrl.array[ringbufCtrl.tail*RECV_BUF_LEN], RECV_BUF_LEN);
@@ -181,7 +182,7 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
      //   printf("\r\n");
     }
 }
-
+#endif
 
 /************************************************************************************************************/
 static uint8_t recv_buf[RECV_BUF_LEN];
@@ -325,6 +326,11 @@ int8_t recv_from_fpga_data_start(void)
     return device_recv_from_fpga_open();
 }
 
+int8_t send_to_fpga_data_start(void)
+{
+    return device_send_to_fpga_open();
+}
+
 osStatus_t recv_from_fpga_data_get(uint8_t *buf)
 {
     return osMessageQueueGet(recv_from_fpga_queueHandle, buf, 0, 0);
@@ -387,16 +393,14 @@ void make_para_for_fpga(uint8_t *pData)
     // make_cmd_to_fpga(12, &pData[418], 164,1);//0x19
     // make_cmd_to_fpga(12, &pData[52], 2,0);//0x19
 
-    memcpy(&pData[418 + 164], &pData[52], 2);
-    make_cmd_to_fpga(12, &pData[418], 166);//0x19
-
+    memcpy(&pData[440 + 164], &pData[52], 2);
+    make_cmd_to_fpga(12, &pData[440], 166);//0x19
 
     make_cmd_to_fpga(14, &pData[8], sendCmd[14].TxLen);//0x20
-    make_cmd_to_fpga(17, &pData[90],sendCmd[17].TxLen);//0x24
-    make_cmd_to_fpga(18, &pData[254], sendCmd[18].TxLen);//0x25
+    make_cmd_to_fpga(17, &pData[112],sendCmd[17].TxLen);//0x24
+    make_cmd_to_fpga(18, &pData[276], sendCmd[18].TxLen);//0x25
     make_cmd_to_fpga(19, &pData[30], sendCmd[19].TxLen);//0x26
     make_cmd_to_fpga(20, &pData[60], sendCmd[20].TxLen);//0x27
-
 
     uint16_t initPos[87];
     for(uint8_t i = 0; i < 82; i++)
@@ -404,7 +408,7 @@ void make_para_for_fpga(uint8_t *pData)
         initPos[i] = 3250;
     }
     
-    initPos[82] = pData[57] << 8 | pData[56];
+    initPos[82] = (pData[57] << 8) + pData[56];
     initPos[83] = initPos[85] = 35100;
     initPos[84] = initPos[86] = 5687;
 

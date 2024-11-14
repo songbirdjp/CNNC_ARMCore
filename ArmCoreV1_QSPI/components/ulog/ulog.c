@@ -204,12 +204,6 @@ int8_t ulog_write_func_register(struct ulog_write_func_info *func)
 static osMessageQueueId_t ulog_output_queueHandle = NULL;
 #endif
 
-struct msg_info
-{
-    uint8_t level;
-    uint8_t buf[ULOG_MAX_MESSAGE_LENGTH]
-};
-
 static void ulog_output(ulog_level_t severity, char *msg)
 {
     uint32_t tick_pre_second = osKernelGetTickFreq();
@@ -217,25 +211,25 @@ static void ulog_output(ulog_level_t severity, char *msg)
     time_t time_s_cur =  ostick / tick_pre_second;
     uint32_t time_ms_left = ostick % tick_pre_second;
 
-    struct msg_info msg_info = {.level = severity};
+    uint8_t msg_buf[ULOG_MAX_MESSAGE_LENGTH] = {0};
 
 #ifdef USING_ULOG_TIMESTAMP
     struct tm tm_temp, *tm;
     
     tm = localtime_r(&time_s_cur, &tm_temp);
 
-    sprintf(msg_info.buf, "[%04u-%02u-%02u %02u:%02u:%02u.%03u] ",
+    sprintf(msg_buf, "[%04u-%02u-%02u %02u:%02u:%02u.%03u] ",
             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, time_ms_left);
 #endif
 
 #ifdef USING_ULOG_LEVEL_TAG
-    sprintf(msg_info.buf + strlen(msg_info.buf), "[%s] %s", ulog_level_name(severity), msg);
+    sprintf(msg_buf + strlen(msg_buf), "[%s] %s", ulog_level_name(severity), msg);
 #else
-    sprintf(msg_info.buf + strlen(msg_info.buf), "%s", msg);
+    sprintf(msg_buf + strlen(msg_buf), "%s", msg);
 #endif
 
 #ifdef USING_ULOG_THREAD
-    osStatus_t stat = osMessageQueuePut (ulog_output_queueHandle, &msg_info, 0, 1000);
+    osStatus_t stat = osMessageQueuePut (ulog_output_queueHandle, msg_buf, 0, 1000);
     if (stat != osOK)
     {
         printf("ulog output queue put err:%d\r\n", stat);
@@ -252,17 +246,11 @@ static void ulog_output(ulog_level_t severity, char *msg)
         switch (func_info[i].index)
         {
         case 0: /* Console */
-            if (msg_info.level >= func_info[i].level)
-            {
-                func_info[i].func_callback(msg_info.buf, strlen(msg_info.buf));
-            }
+            func_info[i].func_callback(msg_buf, strlen(msg_buf));
             break;
         
         default:
-            if (msg_info.level >= func_info[i].level)
-            {
-                func_info[i].func_callback(msg_info.buf, strlen(msg_info.buf) + 1);  /* add '\0' at the end, to separate with other log */
-            }
+            func_info[i].func_callback(msg_buf, strlen(msg_buf) + 1);  /* add '\0' at the end, to separate with other log */
             break;
         }
     }
@@ -294,7 +282,7 @@ INIT_COMPONENT_EXPORT(ulog_component_init);
 #else
 static void ulog_output_entry(void *argument)
 {
-    struct msg_info msg = {0};
+    uint8_t log_buf[ULOG_MAX_MESSAGE_LENGTH] = {0};
 
     /* 1. callback function init */
     for (uint8_t i = 0; i < sizeof(func_info)/sizeof(func_info[0]); i++)
@@ -307,7 +295,7 @@ static void ulog_output_entry(void *argument)
 
     while (1)
     {
-        osMessageQueueGet (ulog_output_queueHandle, &msg, 0, osWaitForever);
+        osMessageQueueGet (ulog_output_queueHandle, log_buf, 0, osWaitForever);
 
         /* 2. callback function process */
         for (uint8_t i = 0; i < sizeof(func_info)/sizeof(func_info[0]); i++)
@@ -320,17 +308,11 @@ static void ulog_output_entry(void *argument)
             switch (func_info[i].index)
             {
             case 0: /* Console */
-                if (msg.level >= func_info[i].level)
-                {
-                    func_info[i].func_callback(msg.buf, strlen(msg.buf));
-                }                
+                func_info[i].func_callback(log_buf, strlen(log_buf));
                 break;
             
             default:
-                if (msg.level >= func_info[i].level)
-                {
-                    func_info[i].func_callback(msg.buf, strlen(msg.buf) + 1);  /* add '\0' at the end, to separate with other log */
-                }
+                func_info[i].func_callback(log_buf, strlen(log_buf) + 1);  /* add '\0' at the end, to separate with other log */
                 break;
             }
         }
@@ -341,7 +323,7 @@ static int8_t ulog_thread_init(void)
 {
     osThreadAttr_t ulog_output_thread_attributes = {
     .name = "ulog_output_thread",
-    .stack_size = 1024 * 4,
+    .stack_size = 512 * 4,
     .priority = (osPriority_t) osPriorityBelowNormal,
     };
 
@@ -352,7 +334,7 @@ static int8_t ulog_thread_init(void)
         return -1;
     }
 
-    ulog_output_queueHandle = osMessageQueueNew (16, sizeof(struct msg_info), NULL);
+    ulog_output_queueHandle = osMessageQueueNew (16, ULOG_MAX_MESSAGE_LENGTH, NULL);
     if (ulog_output_queueHandle == NULL)
     {
         printf("queue ulog output create failed\r\n");

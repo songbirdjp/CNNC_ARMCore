@@ -22,7 +22,7 @@
 ------
 -----------------------------------------------------------------------------------------*/
 #include "ecat_def.h"
-
+#include <stdio.h>
 #include "applInterface.h"
 
 #define _LAN9252_APP_ 1

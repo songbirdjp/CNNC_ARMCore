@@ -55,7 +55,7 @@
 #define	SPIDRIVER_H
 
 #include "ecat_def.h"
-#include <stdint.h>
+#include "stdint.h"
 
 #ifdef	__cplusplus
 extern "C" {

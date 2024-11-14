@@ -9,7 +9,7 @@ static void ErrorCallback(UART_HandleTypeDef *huart)
 {
     DEVICE_UART *uart = (DEVICE_UART *)huart;
 
-    printf("%s err\r\n", uart->name);
+    printf("%s err", uart->name);
 }
 
 static void RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
@@ -25,14 +25,7 @@ static void RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
         printf("%s queue put err:%d\r\n", uart->name, ret);
     }
 
-    __disable_irq();
-
     HAL_UARTEx_ReceiveToIdle_DMA((UART_HandleTypeDef *)uart, (uint8_t *)uart->rx_buf, uart->rx_buf_len);
-
-    __HAL_UART_DISABLE_IT(&uart->huart, UART_IT_ERR);
-
-    __enable_irq();
-
 }
 
 static void TxCpltCallback(UART_HandleTypeDef *huart)
@@ -55,8 +48,6 @@ static int8_t uart_open(DEVICE_UART *uart)
         uart->open_state = 1;
     }
 
-    __disable_irq();
-
     HAL_StatusTypeDef status = HAL_UARTEx_ReceiveToIdle_DMA((UART_HandleTypeDef *)uart, (uint8_t *)uart->rx_buf, uart->rx_buf_len);
     if (status != HAL_OK)
     {
@@ -64,11 +55,7 @@ static int8_t uart_open(DEVICE_UART *uart)
         return -2;
     }
 
-    __HAL_UART_DISABLE_IT(&uart->huart, UART_IT_ERR);
-
     __HAL_UART_ENABLE(&uart->huart);
-
-    __enable_irq();
 
     return 0;
 }
@@ -157,7 +144,7 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
     uint32_t ret_val = osEventFlagsWait(uart->tx_event, UART_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
     if (ret_val != UART_SEND_SUCCEED_EVENT)
     {
-        printf("device %s wait event flag err: %#.8x\r\n", uart->name, ret_val);
+        printf("device %s  wait event flag err: %#.8x\r\n", uart->name, ret_val);
         ret = -4;
         goto err;
     }
@@ -330,10 +317,6 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     {
         MX_USART1_UART_Init();
         memcpy(uart, &huart1, sizeof(UART_HandleTypeDef));
-        extern DMA_HandleTypeDef hdma_usart1_tx;
-        extern DMA_HandleTypeDef hdma_usart1_rx;
-        hdma_usart1_tx.Parent = (void *)uart;
-        hdma_usart1_rx.Parent = (void *)uart;
     }
     else
     {
@@ -341,13 +324,6 @@ int8_t uart_init(DEVICE_UART *uart, uint8_t *device_name)
     }
 
     __HAL_UART_DISABLE(&uart->huart);
-
-    __HAL_UART_DISABLE_IT(&uart->huart, UART_IT_ERR);
-
-    __HAL_UART_CLEAR_FLAG((UART_HandleTypeDef *)uart, UART_CLEAR_PEF | UART_CLEAR_FEF | UART_CLEAR_NEF 
-                            | UART_CLEAR_OREF | UART_CLEAR_IDLEF | UART_CLEAR_TXFECF 
-                            | UART_CLEAR_TCF | UART_CLEAR_LBDF | UART_CLEAR_CTSF 
-                            | UART_CLEAR_CMF | UART_CLEAR_WUF | UART_CLEAR_RTOF);
 
     __enable_irq();
 

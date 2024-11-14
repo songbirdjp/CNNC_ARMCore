@@ -11,13 +11,13 @@ DEVICE_SPI *device_w5500_get(void)
 
 void SPI1_IRQHandler(void)
 {
-  /* USER CODE BEGIN SPI1_IRQn 0 */
+    /* USER CODE BEGIN SPI1_IRQn 0 */
 
-  /* USER CODE END SPI1_IRQn 0 */
-  HAL_SPI_IRQHandler((SPI_HandleTypeDef *)device_w5500_get());
-  /* USER CODE BEGIN SPI1_IRQn 1 */
+    /* USER CODE END SPI1_IRQn 0 */
+    HAL_SPI_IRQHandler((SPI_HandleTypeDef *)device_w5500_get());
+    /* USER CODE BEGIN SPI1_IRQn 1 */
 
-  /* USER CODE END SPI1_IRQn 1 */
+    /* USER CODE END SPI1_IRQn 1 */
 }
 
 static void w5500_irq_callback(void)
@@ -26,15 +26,13 @@ static void w5500_irq_callback(void)
     {
         uint8_t *name;
         DEVICE_IRQ_LIST *node
-    }info = {"irq_line_4", NULL};
+    } info = {"irq_line_4", NULL};
 
     if (device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_IRQ_NODE_FIND, (void *)&info) == 0)
     {
         osEventFlagsSet(info.node->node_data->irq_event, info.node->node_data->irq_event_flag);
     }
-    
 }
-
 
 static void w5500_select(void)
 {
@@ -55,11 +53,11 @@ static void w5500_reset_ctrl(uint8_t flag)
         HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
     }
 }
-static void w5500_write_dma(uint8_t* buf, uint16_t len)
+static void w5500_write_dma(uint8_t *buf, uint16_t len)
 {
     device_w5500_get()->write(device_w5500_get(), buf, len, 5000);
 }
-static void w5500_read_dma(uint8_t* buf, uint16_t len)
+static void w5500_read_dma(uint8_t *buf, uint16_t len)
 {
     device_w5500_get()->read(device_w5500_get(), buf, len, 5000);
 }
@@ -100,7 +98,7 @@ static int8_t w5500_chip_init(wiz_NetInfo *net_info)
     /* 3. set tx and rx buffer size */
     uint8_t memsize[2][8] = {{2, 2, 2, 2, 2, 2, 2, 2},
                              {2, 2, 2, 2, 2, 2, 2, 2}};
-    if (ctlwizchip(CW_INIT_WIZCHIP, (void *) memsize) == -1)
+    if (ctlwizchip(CW_INIT_WIZCHIP, (void *)memsize) == -1)
     {
         printf("w5500 chip init err\r\n");
         return -2;
@@ -108,7 +106,7 @@ static int8_t w5500_chip_init(wiz_NetInfo *net_info)
 
     /* 4. network init */
     ctlnetwork(CN_SET_NETINFO, (void *)net_info);
-    
+
     uint8_t tmpstr[6];
     wiz_NetInfo tempINFO;
     ctlwizchip(CW_GET_ID, (void *)tmpstr);
@@ -125,10 +123,11 @@ static void W5500_interrupt_init(uint8_t max_interrupt)
 {
     uint8_t sn;
 
-    intr_kind int_mask = IK_WOL | IK_PPPOE_TERMINATED | IK_DEST_UNREACH | IK_IP_CONFLICT ;
-    for(sn = 0; sn < max_interrupt; sn++)  int_mask |= (1 << (8 + sn));
+    intr_kind int_mask = IK_WOL | IK_PPPOE_TERMINATED | IK_DEST_UNREACH | IK_IP_CONFLICT;
+    for (sn = 0; sn < max_interrupt; sn++)
+        int_mask |= (1 << (8 + sn));
     ctlwizchip(CW_SET_INTRMASK, (void *)&int_mask);
-    
+
 #ifdef USING_SENDOK_INTERRUPT
     setSn_IMR(sn, Sn_IR_SENDOK | Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
 #else
@@ -142,18 +141,19 @@ static void W5500_interrupt_init(uint8_t max_interrupt)
     wiz_NetTimeout net_timeout = {1, 16384};
     wizchip_settimeout(&net_timeout);
 
-    for(sn = 0; sn < max_interrupt; sn++)   setSn_KPALVTR(sn, 1);
+    for (sn = 0; sn < max_interrupt; sn++)
+        setSn_KPALVTR(sn, 1);
 }
 
 static void W5500_interrupt_status_print(uint8_t sn)
 {
     printf("getIMR:%x\r\n", getIMR());
     printf("getSIMR:%x\r\n", getSIMR());
-    printf("getSn_IMR:%x\r\n", getSn_IMR(sn));   
+    printf("getSn_IMR:%x\r\n", getSn_IMR(sn));
     printf("getIR:%x\r\n", getIR());
     printf("getSIR:%x\r\n", getSIR());
     printf("getSn_IR:%x\r\n", getSn_IR(sn));
-    
+
     // if (HAL_GPIO_ReadPin(W5500_INTn_GPIO_Port, W5500_INTn_Pin) == GPIO_PIN_RESET)
     // {
     //     printf("---W5500 INTn pin reset---\r\n");
@@ -167,7 +167,7 @@ static int32_t w5500_irq_process(void)
     uint8_t sn = 0;
     uint32_t clr_cnt = 0;
     int32_t recv_ret = 0;
-   
+
     if (ctlwizchip(CW_GET_INTERRUPT, &interrupt_type) != 0)
     {
         printf("W5500 get interrupt err\r\n");
@@ -180,7 +180,8 @@ static int32_t w5500_irq_process(void)
     {
         printf("IR interrupt:%x\r\n", reg_ir);
         setIR(reg_ir);
-        while(getIR() & reg_ir);
+        while (getIR() & reg_ir)
+            ;
     }
 
     for (uint8_t i = 0; i < _WIZCHIP_SOCK_NUM_; i++)
@@ -192,14 +193,14 @@ static int32_t w5500_irq_process(void)
         }
     }
 
-    reg_sn_ir = getSn_IR(sn);  
+    reg_sn_ir = getSn_IR(sn);
 
     if (reg_sn_ir) // 清除中断标志位
     {
         // printf("reg_sn_ir:%x\r\n", reg_sn_ir);
         (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: Connected to peer succeed\r\n", sn) : NULL;
         (reg_sn_ir & Sn_IR_DISCON) ? printf("disconnect to peer\r\n") : NULL;
-        // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp recv interrupt\r\n") : NULL;
+        // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp client recv interrupt\r\n") : NULL;
         (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("tcp timeout interrupt\r\n") : NULL;
         // (reg_sn_ir & Sn_IR_SENDOK) ? socket_sending_status_set(socket_sending_status_get() & (~(1<<sn))) : NULL;
 
@@ -207,13 +208,13 @@ static int32_t w5500_irq_process(void)
         {
             uint8_t sending_state = 0;
             ctlsocket(sn, CS_GET_SENDING_STATE, &sending_state);
-            sending_state &= ~(1<<sn);
+            sending_state &= ~(1 << sn);
             ctlsocket(sn, CS_SET_SENDING_STATE, &sending_state);
         }
 
         setSn_IR(sn, reg_sn_ir); // 清除中断标志位
 
-        while(getSn_IR(sn))
+        while (getSn_IR(sn))
         {
             if (++clr_cnt % 5 == 0)
             {
@@ -222,7 +223,6 @@ static int32_t w5500_irq_process(void)
             }
         }
         (clr_cnt != 0) ? printf("clr_cnt: %u\r\n", clr_cnt) : NULL;
-        
     }
 
     DEVICE_SPI *dev = device_w5500_get();
@@ -230,48 +230,48 @@ static int32_t w5500_irq_process(void)
 
     // printf("sn:%d\r\n", sn);
 
-    switch (getSn_SR(sn))                  /*获取socket的状态*/
+    switch (getSn_SR(sn)) /*获取socket的状态*/
     {
-        case SOCK_CLOSED:/*socket处于关闭状态*/
-            break;
+    case SOCK_CLOSED: /*socket处于关闭状态*/
+        break;
 
-        case SOCK_INIT:                      /*socket处于初始化状态*/
-            break;
+    case SOCK_INIT: /*socket处于初始化状态*/
+        break;
 
-        case SOCK_ESTABLISHED:               /*socket处于连接建立状态*/
-            recv_len = getSn_RX_RSR(sn);            /*获取接收的数据长度*/
-            if (recv_len > 0)  //接收到数据
+    case SOCK_ESTABLISHED:           /*socket处于连接建立状态*/
+        recv_len = getSn_RX_RSR(sn); /*获取接收的数据长度*/
+        if (recv_len > 0)            // 接收到数据
+        {
+            recv_ret = recv(sn, dev->rx_buf, recv_len); /*接收来自对端的数据*/
+            if (recv_ret <= SOCK_BUSY)
             {
-                recv_ret = recv(sn, dev->rx_buf, recv_len);     /*接收来自对端的数据*/
-                if (recv_ret <= SOCK_BUSY)
-                {
-                    printf("tcp receive err:%d\r\n", recv_ret);
-                    return recv_ret;
-                }
-               // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* NOTE: must according to static TCP_DATA_t */
-                TCP_DATA_t rxBufTmp = {0};
-                rxBufTmp.sn = sn;
-                rxBufTmp.Len = recv_len;
-                memcpy(rxBufTmp.gDATABUF, dev->rx_buf, recv_len);
-                recv_ret = osMessageQueuePut(dev->rx_queue, &rxBufTmp, 0, 100);
-                if (recv_ret != osOK)
-                {
-                    printf("w5500 queue put err:%d\r\n", recv_ret);
-                    return recv_ret;
-                }
-                
-                if (dev->rx_cb != NULL)
-                {
-                    dev->rx_cb(dev);
-                }
+                printf("tcp receive err:%d\r\n", recv_ret);
+                return recv_ret;
             }
-            break;
+            // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* TODO: must according to static TCP_DATA_t */
+            TCP_DATA_t rxBufTmp = {0};
+            rxBufTmp.sn = sn;
+            rxBufTmp.Len = recv_len;
+            memcpy(rxBufTmp.gDATABUF, dev->rx_buf, recv_len);
+            recv_ret = osMessageQueuePut(dev->rx_queue, &rxBufTmp, 0, 100);
+            if (recv_ret != osOK)
+            {
+                printf("w5500 queue put err:%d\r\n", recv_ret);
+                return recv_ret;
+            }
 
-        case SOCK_CLOSE_WAIT:        /*socket处于等待关闭状态*/
-            break;
+            if (dev->rx_cb != NULL)
+            {
+                dev->rx_cb(dev);
+            }
+        }
+        break;
 
-        default:
-            break;
+    case SOCK_CLOSE_WAIT: /*socket处于等待关闭状态*/
+        break;
+
+    default:
+        break;
     }
 
     return recv_len;
@@ -279,7 +279,7 @@ static int32_t w5500_irq_process(void)
 
 /*
  * device relate functions below
-*/
+ */
 
 #ifdef USING_SPI_OPTION_FUNCTION
 static DEVICE_SPI_OPT device_w5500_opt = {0};
@@ -332,9 +332,10 @@ static int8_t device_w5500_opt_init(DEVICE_SPI *spi, DEVICE_SPI_OPT *spi_opt)
 }
 #endif
 
+#undef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
 #ifdef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
 #define W5500_INTn_Pin GPIO_PIN_4
-#define W5500_IRQ_EVENT      (1<<0)
+#define W5500_IRQ_EVENT (1 << 0)
 
 static int8_t device_w5500_irq_init(DEVICE_SPI *spi, uint8_t *node_name)
 {
@@ -344,10 +345,9 @@ static int8_t device_w5500_irq_init(DEVICE_SPI *spi, uint8_t *node_name)
         printf("device irq node %s malloc err\r\n", node_name);
         return -1;
     }
-    
+
     const osEventFlagsAttr_t w5500_irq_event_attributes = {
-    .name = "w5500_irq_event"
-    };
+        .name = "w5500_irq_event"};
     memcpy(node->node_name, node_name, NODE_NAME_LENGTH);
     node->irq_pin = W5500_INTn_Pin;
     node->irq_event = osEventFlagsNew(&w5500_irq_event_attributes);
@@ -390,7 +390,8 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
         return ret;
     }
 
-    return w5500_chip_init(net_info);;
+    return w5500_chip_init(net_info);
+    ;
 }
 
 int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len)
@@ -399,7 +400,7 @@ int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len)
     {
         uint8_t *buf;
         uint16_t len;
-    }info = {buf, len};
+    } info = {buf, len};
 
     return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_SET_DMA_RX_BUF, (void *)&info);
 }
@@ -450,6 +451,7 @@ int8_t device_w5500_link_state_recover(uint8_t sn)
 
     return 0;
 }
+#if 1
 int8_t device_w5500_data_recv_with_block(void)
 {
     struct wait_info
@@ -457,7 +459,7 @@ int8_t device_w5500_data_recv_with_block(void)
         uint8_t *name;
         char splitter;
         uint32_t timeout
-    }info = {"irq_line_4", ' ', osWaitForever};
+    } info = {"irq_line_4", ' ', osWaitForever};
 
     return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_IRQ_WAIT_WITH_BLOCK, (void *)&info);
 }
@@ -466,3 +468,4 @@ int32_t device_w5500_irq_process(void)
 {
     return w5500_irq_process();
 }
+#endif

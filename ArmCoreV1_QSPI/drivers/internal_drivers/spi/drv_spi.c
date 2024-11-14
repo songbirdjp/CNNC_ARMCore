@@ -30,7 +30,7 @@ static void RxCpltCallback(SPI_HandleTypeDef *hspi)
         ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
         if (ret != osOK)
         {
-            printf("%s queue put err:%d\r\n", spi->name, ret);
+           // printf("%s queue put err:%d\r\n", spi->name, ret);
         }
 
         if (spi->rx_cb != NULL)
@@ -791,23 +791,23 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI2, sizeof(DEVICE_NAME_SPI2)))
     {
-        // MX_SPI2_Init();
-        // memcpy(spi, &hspi2, sizeof(SPI_HandleTypeDef));
-        // if (hspi2.hdmarx->Init.Mode == DMA_CIRCULAR)
-        // {
-        //     extern DMA_HandleTypeDef hdma_spi2_rx;
-        //     hdma_spi2_rx.Parent = (void *)spi;
-        // }
+        MX_SPI2_Init();
+        memcpy(spi, &hspi2, sizeof(SPI_HandleTypeDef));
+        if (hspi2.hdmarx->Init.Mode == DMA_CIRCULAR)
+        {
+            extern DMA_HandleTypeDef hdma_spi2_rx;
+            hdma_spi2_rx.Parent = (void *)spi;
+        }
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI3, sizeof(DEVICE_NAME_SPI3)))
     {
-        // MX_SPI3_Init();
-        // memcpy(spi, &hspi3, sizeof(SPI_HandleTypeDef));
-        // if (hspi3.hdmarx->Init.Mode == DMA_CIRCULAR)
-        // {
-        //     extern DMA_HandleTypeDef hdma_spi3_rx;
-        //     hdma_spi3_rx.Parent = (void *)spi;
-        // }
+        MX_SPI3_Init();
+        memcpy(spi, &hspi3, sizeof(SPI_HandleTypeDef));
+        if (hspi3.hdmarx->Init.Mode == DMA_CIRCULAR)
+        {
+            extern DMA_HandleTypeDef hdma_spi3_rx;
+            hdma_spi3_rx.Parent = (void *)spi;
+        }
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI6, sizeof(DEVICE_NAME_SPI6)))
     {

@@ -1,7 +1,7 @@
 #ifndef __FRAM_PORT_H__
 #define __FRAM_PORT_H__
 
-#include <stdint.h>
+#include "stdint.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "iwdg.h"
+#include "jaw_drv.h"
 
 /* USER CODE END Includes */
 
@@ -204,11 +205,27 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+    osDelay(1000);//delay 1s
+    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_9, GPIO_PIN_SET);//watchdog signal 2
+    /* Infinite loop */
+    //  motorEnable(1);
+    //  motorCtrlByPWM(100, 1);
+
+    uint8_t count = 0;
+    // uint16_t crtPos;
+    for(;;)
+    {
+        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_7);//watchdog signal 1
+
+        osDelay(100);
+
+        if (count++ % 5 == 0)
+        {
+            HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
+            // crtPos = getEncodeValue(1);
+            // printf("crt pos: %ld\r\n", crtPos);
+        }
+    }
   /* USER CODE END StartDefaultTask */
 }
 

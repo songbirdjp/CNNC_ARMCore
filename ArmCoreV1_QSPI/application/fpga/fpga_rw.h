@@ -87,7 +87,7 @@ typedef struct {
     uint8_t singleSize[TOTAL_FPGA_CMD_NUM];
     uint8_t writeIndex[TOTAL_FPGA_CMD_NUM];
   //  uint8_t paramSendBuf[CURRENT_USE_PARAM_LEN];
-    uint8_t* paramSendBuf;
+  //  uint8_t* paramSendBuf;
     uint8_t* pCrt;
     uint16_t totalSize;
 }SEND_CONTROL;

@@ -58,9 +58,8 @@ ArmCoreV1_QSPI
 │     ├─ tcp_tasks.c
 │     ├─ tcp_tasks.h
 │     ├─ websocket.c
-│     ├─ websocket.h
-│     ├─ websocket_console.c
-│     └─ websocket_console.h
+│     └─ websocket.h
+├─ ARM_core.pdf
 ├─ board
 │  ├─ board_config
 │  │  ├─ inc
@@ -81,6 +80,7 @@ ArmCoreV1_QSPI
 │  ├─ bootloader.h
 │  └─ CMakeLists.txt
 ├─ CMakeLists.txt
+├─ CMakeLists_template.txt
 ├─ components
 │  ├─ cjson
 │  │  ├─ cJSON.c
@@ -149,6 +149,9 @@ ArmCoreV1_QSPI
 │     └─ ymodem.h
 ├─ config.cmake
 ├─ config.h.in
+├─ Core
+│  ├─ Inc
+│  └─ Src
 ├─ drivers
 │  ├─ CMakeLists.txt
 │  ├─ external_drivers
@@ -333,12 +336,16 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_iwdg.h
 │     │  ├─ stm32h7xx_hal_lptim.h
 │     │  ├─ stm32h7xx_hal_mdma.h
+│     │  ├─ stm32h7xx_hal_ospi.h
 │     │  ├─ stm32h7xx_hal_pwr.h
 │     │  ├─ stm32h7xx_hal_pwr_ex.h
 │     │  ├─ stm32h7xx_hal_rcc.h
 │     │  ├─ stm32h7xx_hal_rcc_ex.h
 │     │  ├─ stm32h7xx_hal_rtc.h
 │     │  ├─ stm32h7xx_hal_rtc_ex.h
+│     │  ├─ stm32h7xx_hal_sdram.h
+│     │  ├─ stm32h7xx_hal_spi.h
+│     │  ├─ stm32h7xx_hal_spi_ex.h
 │     │  ├─ stm32h7xx_hal_tim.h
 │     │  ├─ stm32h7xx_hal_tim_ex.h
 │     │  ├─ stm32h7xx_hal_uart.h
@@ -352,6 +359,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_ll_dma.h
 │     │  ├─ stm32h7xx_ll_dmamux.h
 │     │  ├─ stm32h7xx_ll_exti.h
+│     │  ├─ stm32h7xx_ll_fmc.h
 │     │  ├─ stm32h7xx_ll_gpio.h
 │     │  ├─ stm32h7xx_ll_hsem.h
 │     │  ├─ stm32h7xx_ll_iwdg.h
@@ -360,6 +368,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_ll_pwr.h
 │     │  ├─ stm32h7xx_ll_rcc.h
 │     │  ├─ stm32h7xx_ll_rtc.h
+│     │  ├─ stm32h7xx_ll_spi.h
 │     │  ├─ stm32h7xx_ll_system.h
 │     │  ├─ stm32h7xx_ll_tim.h
 │     │  ├─ stm32h7xx_ll_usart.h
@@ -385,17 +394,22 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_iwdg.c
 │        ├─ stm32h7xx_hal_lptim.c
 │        ├─ stm32h7xx_hal_mdma.c
+│        ├─ stm32h7xx_hal_ospi.c
 │        ├─ stm32h7xx_hal_pwr.c
 │        ├─ stm32h7xx_hal_pwr_ex.c
 │        ├─ stm32h7xx_hal_rcc.c
 │        ├─ stm32h7xx_hal_rcc_ex.c
 │        ├─ stm32h7xx_hal_rtc.c
 │        ├─ stm32h7xx_hal_rtc_ex.c
+│        ├─ stm32h7xx_hal_sdram.c
+│        ├─ stm32h7xx_hal_spi.c
+│        ├─ stm32h7xx_hal_spi_ex.c
 │        ├─ stm32h7xx_hal_tim.c
 │        ├─ stm32h7xx_hal_tim_ex.c
 │        ├─ stm32h7xx_hal_uart.c
 │        ├─ stm32h7xx_hal_uart_ex.c
-│        └─ stm32h7xx_hal_wwdg.c
+│        ├─ stm32h7xx_hal_wwdg.c
+│        └─ stm32h7xx_ll_fmc.c
 ├─ makefile_update.exe
 ├─ Middlewares
 │  ├─ CMakeLists.txt

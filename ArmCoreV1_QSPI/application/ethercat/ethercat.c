@@ -189,7 +189,7 @@ static int8_t ethercat_thread_init(void)
 
     osThreadAttr_t lan9252_irq_thread_attributes = {
     .name = "lan9252_irq_thread",
-    .stack_size = 512 * 4,
+    .stack_size = 1024 * 4,
     .priority = (osPriority_t) osPriorityHigh,
     };
 
