@@ -67,9 +67,6 @@ void Error_Handler(void);
 #define WDT_OK_LED_GPIO_Port GPIOE
 #define SPI3_NSS_Pin GPIO_PIN_4
 #define SPI3_NSS_GPIO_Port GPIOA
-#define BGM_Trigger_Pin GPIO_PIN_2
-#define BGM_Trigger_GPIO_Port GPIOG
-#define BGM_Trigger_EXTI_IRQn EXTI2_IRQn
 #define LED1PG4_Pin GPIO_PIN_4
 #define LED1PG4_GPIO_Port GPIOG
 #define LED2PG5_Pin GPIO_PIN_5
@@ -84,7 +81,6 @@ void Error_Handler(void);
 #define W5500_RSTn_GPIO_Port GPIOD
 #define W5500_INTn_Pin GPIO_PIN_4
 #define W5500_INTn_GPIO_Port GPIOD
-#define W5500_INTn_EXTI_IRQn EXTI4_IRQn
 #define DOSE_EN_Pin GPIO_PIN_8
 #define DOSE_EN_GPIO_Port GPIOB
 #define TRIGGER_OUT_Pin GPIO_PIN_9

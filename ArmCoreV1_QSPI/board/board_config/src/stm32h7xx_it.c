@@ -60,7 +60,7 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_adc3;
-
+extern LPTIM_HandleTypeDef hlptim4;
 extern LPTIM_HandleTypeDef hlptim3;
 extern MDMA_HandleTypeDef hmdma_mdma_channel1_dma1_stream2_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel2_dma1_stream5_tc_0;
@@ -321,16 +321,7 @@ void DMA1_Stream6_IRQHandler(void)
 /**
   * @brief This function handles EXTI line2 interrupt.
   */
-void EXTI2_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI2_IRQn 0 */
 
-  /* USER CODE END EXTI2_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(BGM_Trigger_Pin);
-  /* USER CODE BEGIN EXTI2_IRQn 1 */
-
-  /* USER CODE END EXTI2_IRQn 1 */
-}
 /**
   * @brief This function handles EXTI line[9:5] interrupts.
   */

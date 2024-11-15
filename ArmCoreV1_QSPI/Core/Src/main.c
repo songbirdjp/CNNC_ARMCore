@@ -129,8 +129,10 @@ int main(void)
   MX_UART9_Init();
   MX_SPI1_Init();
   MX_SPI6_Init();
-  MX_LPTIM4_Init();
   MX_LPTIM3_Init();
+  MX_TIM12_Init();
+  MX_TIM4_Init();
+  MX_TIM24_Init();
   /* USER CODE BEGIN 2 */
 #ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);
@@ -185,7 +187,7 @@ void SystemClock_Config(void)
 
   /** Configure the main internal regulator output voltage
   */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
@@ -205,7 +207,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 5;
-  RCC_OscInitStruct.PLL.PLLN = 110;
+  RCC_OscInitStruct.PLL.PLLN = 80;
   RCC_OscInitStruct.PLL.PLLP = 1;
   RCC_OscInitStruct.PLL.PLLQ = 4;
   RCC_OscInitStruct.PLL.PLLR = 2;
@@ -230,7 +232,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
   RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -248,9 +250,7 @@ void PeriphCommonClock_Config(void)
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI6|RCC_PERIPHCLK_ADC
                               |RCC_PERIPHCLK_LPTIM1|RCC_PERIPHCLK_LPTIM3
-                              |RCC_PERIPHCLK_LPTIM4|RCC_PERIPHCLK_SPI3
-                              |RCC_PERIPHCLK_SPI1|RCC_PERIPHCLK_USART1
-                              |RCC_PERIPHCLK_UART9;
+                              |RCC_PERIPHCLK_SPI3|RCC_PERIPHCLK_SPI1;
   PeriphClkInitStruct.PLL2.PLL2M = 5;
   PeriphClkInitStruct.PLL2.PLL2N = 100;
   PeriphClkInitStruct.PLL2.PLL2P = 5;
@@ -268,7 +268,6 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
   PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL3;
-  PeriphClkInitStruct.Usart16ClockSelection = RCC_USART16910CLKSOURCE_PLL2;
   PeriphClkInitStruct.Lptim1ClockSelection = RCC_LPTIM1CLKSOURCE_PLL2;
   PeriphClkInitStruct.Lptim345ClockSelection = RCC_LPTIM345CLKSOURCE_PLL2;
   PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;

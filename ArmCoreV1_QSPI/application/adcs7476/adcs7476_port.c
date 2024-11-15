@@ -243,7 +243,7 @@ static void AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
 {
 #if 1
    // HAL_LPTIM_Counter_Stop_IT(hlptim);
-
+    //LOG_E("AutoReloadMatchCallback\r\n");
     HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Stop_IT(hlptim);
     if (status != HAL_OK)
     {

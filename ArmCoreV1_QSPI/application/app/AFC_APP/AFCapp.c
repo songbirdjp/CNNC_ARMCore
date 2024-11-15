@@ -7,14 +7,22 @@
 #include <stdbool.h>
 #include "stm32h7xx_hal.h"
 #include "drv_gpio.h"
-
+#include "lptim.h"
+#include "tim.h"
 #define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
 #define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
-
-void bgm_trig_callback(void)
+void LPTIMTriggerCallback(LPTIM_HandleTypeDef *hlptim)
 {
-    HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_4);
+    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_5, GPIO_PIN_RESET);
+
+ 
 }
+// void bgm_trig_callback(void)
+// {
+//     HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_4);
+    
+
+// }
 static DEVICE_FLASH flash_bank1 = {0};
 static DEVICE_FLASH *device_flash_get(void)
 {
@@ -22,10 +30,16 @@ static DEVICE_FLASH *device_flash_get(void)
 }
 static void Mag_MotorCtrl_thread_entry(void *argument)
 {
+    MX_TIM4_Init();
+    MX_TIM12_Init();
+    // 启动 TIM12
+    HAL_TIM_Base_Start(&htim12);
+    HAL_TIM_Base_Start(&htim4);
+    
     int8_t ret = 0;
     DEVICE_FLASH *flash = device_flash_get(); 
     uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
-    gpio_pin_irq_callback_register("GPIOG_2",bgm_trig_callback);
+    // gpio_pin_irq_callback_register("GPIOG_2",bgm_trig_callback);
     ret = flash_init(device_flash_get(), "DEVICE_NAME_FLASH_BANK1");
     if (ret != 0)
     {
@@ -38,9 +52,14 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
         printf("flash operation address set err:%d\r\n", ret);
         return -2;
     }
+    
     for (;;)
     {
-        HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_5);
+        uint32_t tim4_counter;
+       // HAL_TIM_Base_Start(&htim4);
+        tim4_counter = TIM4->CNT;
+        printf("TIM4 Counter Value: %lu\r\n", tim4_counter);
+        //HAL_TIM_Base_Stop(&htim4);
         osDelay(1000);
     }
 }
@@ -67,7 +86,6 @@ static void AFC_DataTransmit_thread_entry(void *argument)
 {
     for (;;)
     {
-        HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_6);
         osDelay(1000);
     }
 }

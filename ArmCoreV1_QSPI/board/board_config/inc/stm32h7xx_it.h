@@ -54,8 +54,6 @@ void DebugMon_Handler(void);
 void SysTick_Handler(void);
 void WWDG_IRQHandler(void);
 void FLASH_IRQHandler(void);
-void EXTI2_IRQHandler(void);
-void EXTI4_IRQHandler(void);
 void DMA1_Stream0_IRQHandler(void);
 void DMA1_Stream1_IRQHandler(void);
 void DMA1_Stream5_IRQHandler(void);
@@ -76,7 +74,7 @@ void MDMA_IRQHandler(void);
 void HSEM1_IRQHandler(void);
 void BDMA_Channel0_IRQHandler(void);
 void BDMA_Channel1_IRQHandler(void);
-void LPTIM4_IRQHandler(void);
+void LPTIM3_IRQHandler(void);
 void UART9_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 

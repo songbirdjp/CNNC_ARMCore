@@ -237,7 +237,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
       Error_Handler();
     }
 
-    pSyncConfig.SyncSignalID = HAL_DMAMUX1_SYNC_LPTIM3_OUT;
+    pSyncConfig.SyncSignalID = HAL_DMAMUX1_SYNC_TIM12_TRGO;
     pSyncConfig.SyncPolarity = HAL_DMAMUX_SYNC_RISING;
     pSyncConfig.SyncEnable = ENABLE;
     pSyncConfig.EventEnable = DISABLE;

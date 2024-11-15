@@ -515,7 +515,7 @@ int8_t flash_test(uint8_t argc, char *argv[])
     case 2:
         for (uint32_t i = 0; i < sizeof(data); i++)
         {
-            data[i] = i;
+            data[i] = i; 
         }
 
         ret = flash->write(flash, 0, data, sizeof(data), 1000);

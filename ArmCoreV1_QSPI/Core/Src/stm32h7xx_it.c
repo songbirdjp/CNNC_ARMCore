@@ -60,7 +60,7 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_adc3;
-extern LPTIM_HandleTypeDef hlptim4;
+extern LPTIM_HandleTypeDef hlptim3;
 extern MDMA_HandleTypeDef hmdma_mdma_channel1_dma1_stream2_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel2_dma1_stream5_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel3_sw_0;
@@ -216,34 +216,6 @@ void FLASH_IRQHandler(void)
   /* USER CODE BEGIN FLASH_IRQn 1 */
 
   /* USER CODE END FLASH_IRQn 1 */
-}
-
-/**
-  * @brief This function handles EXTI line2 interrupt.
-  */
-void EXTI2_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI2_IRQn 0 */
-
-  /* USER CODE END EXTI2_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(BGM_Trigger_Pin);
-  /* USER CODE BEGIN EXTI2_IRQn 1 */
-
-  /* USER CODE END EXTI2_IRQn 1 */
-}
-
-/**
-  * @brief This function handles EXTI line4 interrupt.
-  */
-void EXTI4_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI4_IRQn 0 */
-
-  /* USER CODE END EXTI4_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(W5500_INTn_Pin);
-  /* USER CODE BEGIN EXTI4_IRQn 1 */
-
-  /* USER CODE END EXTI4_IRQn 1 */
 }
 
 /**
@@ -533,17 +505,17 @@ void BDMA_Channel1_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles LPTIM4 global interrupt.
+  * @brief This function handles LPTIM3 global interrupt.
   */
-void LPTIM4_IRQHandler(void)
+void LPTIM3_IRQHandler(void)
 {
-  /* USER CODE BEGIN LPTIM4_IRQn 0 */
+  /* USER CODE BEGIN LPTIM3_IRQn 0 */
 
-  /* USER CODE END LPTIM4_IRQn 0 */
-  HAL_LPTIM_IRQHandler(&hlptim4);
-  /* USER CODE BEGIN LPTIM4_IRQn 1 */
+  /* USER CODE END LPTIM3_IRQn 0 */
+  HAL_LPTIM_IRQHandler(&hlptim3);
+  /* USER CODE BEGIN LPTIM3_IRQn 1 */
 
-  /* USER CODE END LPTIM4_IRQn 1 */
+  /* USER CODE END LPTIM3_IRQn 1 */
 }
 
 /**
