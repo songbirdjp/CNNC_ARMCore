@@ -11,56 +11,49 @@
 #include "tim.h"
 #define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
 #define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
-void LPTIMTriggerCallback(LPTIM_HandleTypeDef *hlptim)
-{
-    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_5, GPIO_PIN_RESET);
 
- 
-}
-// void bgm_trig_callback(void)
-// {
-//     HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_4);
-    
-
-// }
 static DEVICE_FLASH flash_bank1 = {0};
 static DEVICE_FLASH *device_flash_get(void)
 {
     return &flash_bank1;
 }
+// void TIM12PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+// {
+//     if (htim->Instance == TIM12)
+//     {
+        
+//         printf("TIM12 Period Elapsed\r\n");
+//     }
+// }
+// void TIM4PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+// {
+//     if (htim->Instance == TIM4)
+//     {
+//         HAL_TIM_Base_Stop_IT(&htim4);
+//         printf("TIM4 Period Elapsed\r\n");
+//     }
+// }
+
 static void Mag_MotorCtrl_thread_entry(void *argument)
 {
     MX_TIM4_Init();
     MX_TIM12_Init();
-    // 启动 TIM12
-    HAL_TIM_Base_Start(&htim12);
-    HAL_TIM_Base_Start(&htim4);
+    // HAL_TIM_RegisterCallback(&htim12, HAL_TIM_PERIOD_ELAPSED_CB_ID, TIM12PeriodElapsedCallback);
+    //HAL_TIM_RegisterCallback(&htim4, HAL_TIM_TRIGGER_CB_ID, TIM4PeriodElapsedCallback);
+    __HAL_TIM_SET_AUTORELOAD(&htim12, 100);
+    __HAL_TIM_SET_COUNTER(&htim12, 0);
+    __HAL_TIM_CLEAR_FLAG(&htim12, TIM_FLAG_UPDATE);
+    HAL_TIM_Base_Start_IT(&htim4);
+    HAL_TIM_Base_Start_IT(&htim12);
     
     int8_t ret = 0;
     DEVICE_FLASH *flash = device_flash_get(); 
     uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
-    // gpio_pin_irq_callback_register("GPIOG_2",bgm_trig_callback);
-    ret = flash_init(device_flash_get(), "DEVICE_NAME_FLASH_BANK1");
-    if (ret != 0)
-    {
-        printf("flash init err:%d\r\n", ret);
-        return -1;
-    }
-    ret = flash_operation_address_set(device_flash_get(), flash_cfg[0], flash_cfg[1]);
-    if (ret != 0)
-    {
-        printf("flash operation address set err:%d\r\n", ret);
-        return -2;
-    }
-    
+    flash_init(device_flash_get(), "DEVICE_NAME_FLASH_BANK1");
+    flash_operation_address_set(device_flash_get(), flash_cfg[0], flash_cfg[1]);
     for (;;)
-    {
-        uint32_t tim4_counter;
-       // HAL_TIM_Base_Start(&htim4);
-        tim4_counter = TIM4->CNT;
-        printf("TIM4 Counter Value: %lu\r\n", tim4_counter);
-        //HAL_TIM_Base_Stop(&htim4);
-        osDelay(1000);
+    {   
+        adcs7476_sample_data_recv_process();
     }
 }
 

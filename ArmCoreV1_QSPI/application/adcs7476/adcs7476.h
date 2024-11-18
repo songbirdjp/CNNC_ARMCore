@@ -11,7 +11,7 @@ extern "C" {
 #define ADCS7476_ID1_NAME   DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT
 #define ADCS7476_ID2_NAME   DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT
 
-#define BUF_LEN 40   /* sample buffer length, which indicates the number of samples to be read at a time */
+#define BUF_LEN 4  /* sample buffer length, which indicates the number of samples to be read at a time */
 
 int8_t adcs7476_sample_enable(uint8_t enable);
 int8_t adcs7476_object_data_read(uint8_t *device_name, uint16_t *data, uint8_t len, uint32_t timeout);

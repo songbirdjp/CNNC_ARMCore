@@ -42,8 +42,6 @@ extern TIM_HandleTypeDef htim7;
 
 extern TIM_HandleTypeDef htim12;
 
-extern TIM_HandleTypeDef htim24;
-
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -53,7 +51,6 @@ void MX_TIM5_Init(void);
 void MX_TIM6_Init(void);
 void MX_TIM7_Init(void);
 void MX_TIM12_Init(void);
-void MX_TIM24_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 

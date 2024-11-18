@@ -1,7 +1,7 @@
 #include "drv_spi.h"
 #include "utilities.h"
 #include "spi.h"
-
+#include "tim.h"
 #define SPI_SEND_SUCCEED_EVENT      (1<<0)
 #define SPI_RECV_SUCCEED_EVENT      (1<<1)
 
@@ -31,7 +31,7 @@ static void RxCpltCallback(SPI_HandleTypeDef *hspi)
             ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
             if (ret != osOK)
             {   
-                printf("%s queue put err:%d\r\n", spi->name, ret);
+                printf("%s 111queue put err:%d\r\n", spi->name, ret);
             }
         }
 
@@ -49,14 +49,12 @@ static void TxRxCpltCallback(SPI_HandleTypeDef *hspi)
     if (spi->master_or_slave == SPI_MASTER)
     {
         osEventFlagsSet(spi->rx_event, SPI_RECV_SUCCEED_EVENT);
-        // uint32_t messages_waiting = osMessageQueueGetCount(spi->rx_queue);
-        // printf("Queue %s has %lu messages waiting\r\n", spi->name, messages_waiting);
         if (spi->rx_queue != NULL)
         {
             ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
             if (ret != osOK)
             {
-                printf("%s queue put err:%d\r\n", spi->name, ret);
+                printf("%s 222queue put err:%d\r\n", spi->name, ret);
             }
         }
 
@@ -69,6 +67,7 @@ static void TxRxCpltCallback(SPI_HandleTypeDef *hspi)
     {
         /* do nothing */
     }
+    HAL_TIM_Base_Stop_IT(&htim12);
 }
 
 static int8_t spi_open(DEVICE_SPI *spi)

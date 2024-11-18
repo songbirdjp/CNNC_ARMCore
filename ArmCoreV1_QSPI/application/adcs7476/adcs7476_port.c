@@ -238,7 +238,6 @@ int8_t device_adcs7476_callback_register(uint8_t *device_name, int8_t (*cb)(void
 
     return 0;
 }
-static int callback_counter = 0;
 static void AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
 {
 #if 1

@@ -132,7 +132,6 @@ int main(void)
   MX_LPTIM3_Init();
   MX_TIM12_Init();
   MX_TIM4_Init();
-  MX_TIM24_Init();
   /* USER CODE BEGIN 2 */
 #ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);

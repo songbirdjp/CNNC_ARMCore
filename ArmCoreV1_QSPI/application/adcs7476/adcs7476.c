@@ -327,7 +327,7 @@ static DEVICE_FLASH *device_flash_get(void)
 {
     return &flash_bank1;
 }
-
+#include "tim.h"
 int8_t adcs7476_sample_data_recv_process(void)
 {
     // LOG_E("adcs7476_sample\r\n");
@@ -335,34 +335,30 @@ int8_t adcs7476_sample_data_recv_process(void)
     uint32_t event_flag = 0;
     DEVICE_FLASH *flash = device_flash_get();
     static uint16_t recv_tmp[BUF_LEN] = {0};
-    static uint16_t recv_tmp_test[10] = {1,2,3,4,5,6,7,8,9,0};
     static uint16_t recv_tmp_1[BUF_LEN] = {0}; 
     struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
-    flash_init(device_flash_get(), "DEVICE_NAME_FLASH_BANK1");
-    flash_operation_address_set(device_flash_get(), flash_cfg[0], flash_cfg[1]);
-    uint32_t flash_addr = FLASH_ADDRESS_BASE;
+    // flash_init(device_flash_get(), "DEVICE_NAME_FLASH_BANK1");
+    // flash_operation_address_set(device_flash_get(), flash_cfg[0], flash_cfg[1]);
+    // uint32_t flash_addr = FLASH_ADDRESS_BASE;
     uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
-    
-    //flash_init(flash, "DEVICE_NAME_FLASH_BANK1");
     event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, osWaitForever);
     osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
     osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
 
+    uint32_t master_queue_count = osMessageQueueGetCount(obj_master->queue);
+    uint32_t slave_queue_count = osMessageQueueGetCount(obj_slave->queue);
     osMutexAcquire(obj_master->mutex, osWaitForever);
     memcpy(obj_master->data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
     osMutexRelease(obj_master->mutex);
-
     osMutexAcquire(obj_slave->mutex, osWaitForever);
     memcpy(obj_slave->data, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
     osMutexRelease(obj_slave->mutex);
-
     if (callback != NULL)
     {
         callback();
     }
-
-#if 0
+#if 1
     for (uint8_t i = 0; i < obj_master->buf_len; i++)
     {
         LOG_E("ADC7476_MASTER: obj_master->data[%d] = %d\r\n", i, obj_master->data[i]);
@@ -370,21 +366,21 @@ int8_t adcs7476_sample_data_recv_process(void)
     }
 #endif
 
-    ret = flash->write(flash, 0, recv_tmp, sizeof(recv_tmp), 1000);
-    //ret = device_flash_write(DEVICE_NAME_FLASH_BANK1,0,recv_tmp_test,10,1000);
-    if (ret != 0)
-    {
-        LOG_E("1flash write err:%d\r\n", ret);
-        return -1;
-    }
+    // ret = flash->write(flash, 0, recv_tmp, sizeof(recv_tmp), 1000);
+    // //ret = device_flash_write(DEVICE_NAME_FLASH_BANK1,0,recv_tmp_test,10,1000);
+    // if (ret != 0)
+    // {
+    //     LOG_E("1flash write err:%d\r\n", ret);
+    //     return -1;
+    // }
 
-    ret = flash->write(flash,FLASH_AFC_SLAVE_OFFSET,obj_slave->data,sizeof(obj_slave->data),1000);
-    if (ret != 0)
-    {
-        LOG_E("2lash write err:%d\r\n", ret);
-        return -2;
-    }
-
+    // ret = flash->write(flash,FLASH_AFC_SLAVE_OFFSET,obj_slave->data,sizeof(obj_slave->data),1000);
+    // if (ret != 0)
+    // {
+    //     LOG_E("2lash write err:%d\r\n", ret);
+    //     return -2;
+    // }
+    //HAL_TIM_Base_Start_IT(&htim12);
     return 0;
 }
 
@@ -399,12 +395,12 @@ static int8_t adcs7476_sample_entry(void *argument)
         return -1;
     }
 
-    ret = adcs7476_sample_interval_set(100);
-    if (ret != 0)
-    {
-        printf("adcs7476 sample interval set err: %d\r\n", ret);
-        return -2;
-    }
+    // ret = adcs7476_sample_interval_set(100);
+    // if (ret != 0)
+    // {
+    //     printf("adcs7476 sample interval set err: %d\r\n", ret);
+    //     return -2;
+    // }
 
     // ret = adcs7476_sample_enable(1);
     // if (ret != 0)
