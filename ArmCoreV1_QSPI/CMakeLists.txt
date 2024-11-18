@@ -102,21 +102,34 @@ set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
 set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
 set(INFO_BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_INFO.bin)
 set(MAKE_FILE ${PROJECT_BINARY_DIR}/Makefile)
+set(EC_FILE ${CMAKE_SOURCE_DIR}/drivers/external_drivers/lan9252/lan9252_appObjects.h)
+
+cmake_host_system_information(RESULT OS_NAME QUERY OS_NAME)
+message(STATUS "os: ${OS_NAME}")
+
+if(OS_NAME MATCHES "Linux")
+    message(STATUS "Running on Linux")
+elseif(OS_NAME MATCHES "Windows")
+    message(STATUS "Running on Windows")
+elseif(OS_NAME MATCHES "Darwin")
+    message(STATUS "Running on macOS")
+else()
+    message(STATUS "Running on another OS: ${OS_NAME}")
+endif()
 
 set(CMAKE_USER ${CMAKE_SOURCE_DIR}/info_generation)
 set(CMAKE_USER_MAKEFILE ${CMAKE_SOURCE_DIR}/makefile_update)
 set(CMAKE_USER_EC ${CMAKE_SOURCE_DIR}/EcScript)
 
 add_custom_command(TARGET ${PROJECT_NAME}.elf PRE_BUILD
-        COMMAND ${CMAKE_USER_EC}
+        COMMAND ${CMAKE_USER_EC} -input_file_path ${EC_FILE} -output_file_path ${EC_FILE}
         COMMAND ${CMAKE_USER_MAKEFILE} -input_file_path ${MAKE_FILE} -output_file_path ${MAKE_FILE} -name ${PROJECT_NAME}
         COMMENT "Updating ${MAKE_FILE}")
-
 
 add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:${PROJECT_NAME}.elf> ${HEX_FILE}
         COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}.elf> ${BIN_FILE}
-        COMMAND ${CMAKE_USER} -o ${INFO_BIN_FILE} -k ${BIN_FILE} -n mlc_arm_code
+        COMMAND ${CMAKE_USER} -o ${INFO_BIN_FILE} -k ${BIN_FILE} -n arm_code_base
         COMMENT "Building ${HEX_FILE} 
 Building ${BIN_FILE}
 Building ${INFO_BIN_FILE}")
