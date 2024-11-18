@@ -7,7 +7,6 @@ extern "C" {
 #endif
 
 
-#define IS_TCP_SERVER
 
 #ifdef __cplusplus
 }

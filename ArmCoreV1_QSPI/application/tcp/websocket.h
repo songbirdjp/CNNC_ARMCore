@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cmsis_os2.h"
-#define MAX_CLIENT_NUM   2
+
 
 #define TCP_WEBSOCKET
 
@@ -61,21 +61,11 @@ typedef struct
     uint16_t sendItemNum;
 }SEND_INFO;
 
-typedef struct
-{
-    int8_t socketNum;
-    uint8_t clientType; //0 - controller, data come from program  1 - service, data come from browser. distinguish by IP and PORT
-    int32_t connectStatus;// -1 - fail  1 - success
-    uint32_t loopCnt;
-}CLIENT_INFO;
-
 extern SEND_INFO sendStructInfo;
 
 int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type);
-void tcp_server_init(void);
-int32_t tcp_send_process(uint8_t s);
 bool operateSendMutex(bool opType, uint8_t itemIndex, uint32_t timeout);
 bool isSendPeriod(uint8_t sn, uint8_t itemIndex);// to inquire if current loop is sending loop for  a group of period send data
 uint8_t isClientTypeMatch(uint8_t sn, uint8_t itemIndex);
 int8_t ws_data_process_callback_register(void (*cb)(APP_DATA_RECV *info));
-#endif //F407_W5500_HTTPSERVER_H
+#endif //__WEBSOCKET_H__

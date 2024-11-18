@@ -7,7 +7,7 @@
 
 SEND_INFO sendStructInfo = {0};
 
-static CLIENT_INFO client[MAX_CLIENT_NUM] = {-1};
+
 static const char ws_base64char[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -721,7 +721,7 @@ int8_t ws_send_data_process(uint8_t s)
     uint8_t i;
     int32_t ret = 0;
 
-    if ((s > MAX_CLIENT_NUM) || (s < 0))
+    if ((s >= MAX_CLIENT_NUM) || (s < 0))
     {
         printf("Invalid socket number %d!\r\n", s);
         return -1;
@@ -770,14 +770,4 @@ int8_t ws_send_data_process(uint8_t s)
    
     return ret;
 }
-
-void tcp_server_init(void)
-{
-    for (uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
-    {
-        client[i].socketNum = -1;
-        client[i].clientType = -1;
-    }
-}
-
 #endif
