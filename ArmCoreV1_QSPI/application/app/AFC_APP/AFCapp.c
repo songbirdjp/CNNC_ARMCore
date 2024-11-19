@@ -40,15 +40,16 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     MX_TIM12_Init();
     // HAL_TIM_RegisterCallback(&htim12, HAL_TIM_PERIOD_ELAPSED_CB_ID, TIM12PeriodElapsedCallback);
     //HAL_TIM_RegisterCallback(&htim4, HAL_TIM_TRIGGER_CB_ID, TIM4PeriodElapsedCallback);
-    __HAL_TIM_SET_AUTORELOAD(&htim12, 100);
-    __HAL_TIM_SET_COUNTER(&htim12, 0);
-    __HAL_TIM_CLEAR_FLAG(&htim12, TIM_FLAG_UPDATE);
-    HAL_TIM_Base_Start_IT(&htim4);
-    HAL_TIM_Base_Start_IT(&htim12);
+    __HAL_TIM_SET_AUTORELOAD(&htim12, 99);
+    __HAL_TIM_SET_AUTORELOAD(&htim4, 9);
+    __HAL_TIM_SET_COUNTER(&htim12, 98);
+    // __HAL_TIM_CLEAR_FLAG(&htim12, TIM_FLAG_UPDATE);
+    HAL_TIM_Base_Start(&htim4);
+    HAL_TIM_Base_Start(&htim12);
     
     int8_t ret = 0;
     DEVICE_FLASH *flash = device_flash_get(); 
-    uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
+    uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE}; 
     flash_init(device_flash_get(), "DEVICE_NAME_FLASH_BANK1");
     flash_operation_address_set(device_flash_get(), flash_cfg[0], flash_cfg[1]);
     for (;;)
