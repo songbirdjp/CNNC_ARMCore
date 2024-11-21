@@ -6,7 +6,7 @@
 #ifdef TCP_WEBSOCKET
 
 SEND_INFO sendStructInfo = {0};
-
+static uint8_t serviceNumber = 0;
 
 static const char ws_base64char[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -565,6 +565,7 @@ int8_t getClientType(uint8_t s, uint8_t *pString)
         else if( strstr(p, SERVICE_AUTHORIZATION) )
         {
             client[s].clientType = SERVICE;//this client is service
+            serviceNumber++;
             printf("client %d is service\r\n", s);
         }
         else    return -1;
@@ -686,6 +687,7 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
                 client[s].clientType = 0;
                 client[s].socketNum = -1;
 				client[s].loopCnt = 0;	
+                if(client[s].clientType == SERVICE) serviceNumber--;
                 break;		 
             case WDT_TXTDATA:
               //  printf("recv:%s\r\n",data);
@@ -758,7 +760,17 @@ int8_t ws_send_data_process(uint8_t s)
             } 
             
             if(ret > 0){    //send success
-                if(sendStructInfo.pActiveSend[i].controlSignal == TO_SEND)    sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;
+                if(sendStructInfo.pActiveSend[i].controlSignal == TO_SEND)
+                {
+                    if(client[s].clientType == CONTROLLER)  sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;//only one controller
+                    else if(client[s].clientType == SERVICE)//wait for all service send once finish, then clean flag
+                    {
+                        if(++sendStructInfo.pActiveSend[i].onceSendCnt >= serviceNumber){
+                            sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;
+                            sendStructInfo.pActiveSend[i].onceSendCnt = 0;
+                        }
+                    }    
+                }
             }  
             else{
                 printf("ws send failed!\r\n");

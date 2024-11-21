@@ -44,6 +44,7 @@ typedef struct
     uint8_t assignedClientType;//0 - program  1 - service. In active send, to assign the data receiver
     void* tcpData;
     osMutexId_t sendUpdateMutexHandle;
+    uint8_t onceSendCnt;
 }APP_DATA_SEND;
 
 typedef struct
