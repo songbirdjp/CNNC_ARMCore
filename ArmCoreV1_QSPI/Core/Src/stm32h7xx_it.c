@@ -60,7 +60,6 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_adc3;
-extern LPTIM_HandleTypeDef hlptim3;
 extern MDMA_HandleTypeDef hmdma_mdma_channel1_dma1_stream2_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel2_dma1_stream5_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel3_sw_0;
@@ -77,7 +76,6 @@ extern TIM_HandleTypeDef htim4;
 extern TIM_HandleTypeDef htim5;
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim8;
-extern TIM_HandleTypeDef htim12;
 extern DMA_HandleTypeDef hdma_uart9_rx;
 extern DMA_HandleTypeDef hdma_uart9_tx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
@@ -329,7 +327,6 @@ void TIM8_BRK_TIM12_IRQHandler(void)
 
   /* USER CODE END TIM8_BRK_TIM12_IRQn 0 */
   HAL_TIM_IRQHandler(&htim8);
-  HAL_TIM_IRQHandler(&htim12);
   /* USER CODE BEGIN TIM8_BRK_TIM12_IRQn 1 */
 
   /* USER CODE END TIM8_BRK_TIM12_IRQn 1 */
@@ -548,20 +545,6 @@ void BDMA_Channel1_IRQHandler(void)
   /* USER CODE BEGIN BDMA_Channel1_IRQn 1 */
 
   /* USER CODE END BDMA_Channel1_IRQn 1 */
-}
-
-/**
-  * @brief This function handles LPTIM3 global interrupt.
-  */
-void LPTIM3_IRQHandler(void)
-{
-  /* USER CODE BEGIN LPTIM3_IRQn 0 */
-
-  /* USER CODE END LPTIM3_IRQn 0 */
-  HAL_LPTIM_IRQHandler(&hlptim3);
-  /* USER CODE BEGIN LPTIM3_IRQn 1 */
-
-  /* USER CODE END LPTIM3_IRQn 1 */
 }
 
 /**

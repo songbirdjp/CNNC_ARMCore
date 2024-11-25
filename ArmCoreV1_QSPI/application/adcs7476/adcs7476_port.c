@@ -238,83 +238,83 @@ int8_t device_adcs7476_callback_register(uint8_t *device_name, int8_t (*cb)(void
 
     return 0;
 }
-static void AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
-{
-#if 1
-   // HAL_LPTIM_Counter_Stop_IT(hlptim);
-    //LOG_E("AutoReloadMatchCallback\r\n");
-    HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Stop_IT(hlptim);
-    if (status != HAL_OK)
-    {
-    LOG_E("HAL_LPTIM_SetOnce_Stop_IT err: %d\r\n", status);
-    }
-#endif
-}
+// static void AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
+// {
+// #if 1
+//    // HAL_LPTIM_Counter_Stop_IT(hlptim);
+//     //LOG_E("AutoReloadMatchCallback\r\n");
+//     HAL_StatusTypeDef status = HAL_LPTIM_SetOnce_Stop_IT(hlptim);
+//     if (status != HAL_OK)
+//     {
+//     LOG_E("HAL_LPTIM_SetOnce_Stop_IT err: %d\r\n", status);
+//     }
+// #endif
+// }
 
-int8_t device_adcs7476_sample_interval_set(uint16_t sample_interval_10ns)
-{
-    if (sample_interval_10ns > 0xFFFF)
-    {
-        printf("sample interval is too large: (sample_interval_10ns <= 0xFFFF)\r\n");
-        return -1;
-    }
-    //LOG_E("sample_interval_10ns: %d\r\n", sample_interval_10ns);
-    HAL_StatusTypeDef status = HAL_OK;
+// int8_t device_adcs7476_sample_interval_set(uint16_t sample_interval_10ns)
+// {
+//     if (sample_interval_10ns > 0xFFFF)
+//     {
+//         printf("sample interval is too large: (sample_interval_10ns <= 0xFFFF)\r\n");
+//         return -1;
+//     }
+//     //LOG_E("sample_interval_10ns: %d\r\n", sample_interval_10ns);
+//     HAL_StatusTypeDef status = HAL_OK;
 
-    if (HAL_LPTIM_GetState(&hlptim3) == HAL_LPTIM_STATE_RESET)
-    {
-        MX_LPTIM3_Init();
-    }
+//     if (HAL_LPTIM_GetState(&hlptim3) == HAL_LPTIM_STATE_RESET)
+//     {
+//         MX_LPTIM3_Init();
+//     }
     
-    status = HAL_LPTIM_RegisterCallback(&hlptim3, HAL_LPTIM_AUTORELOAD_MATCH_CB_ID, AutoReloadMatchCallback);
-    if (status != HAL_OK)
-    {
-        printf("HAL_LPTIM_RegisterCallback err: %d\r\n", status);
-        return -2;
-    }
+//     status = HAL_LPTIM_RegisterCallback(&hlptim3, HAL_LPTIM_AUTORELOAD_MATCH_CB_ID, AutoReloadMatchCallback);
+//     if (status != HAL_OK)
+//     {
+//         printf("HAL_LPTIM_RegisterCallback err: %d\r\n", status);
+//         return -2;
+//     }
 
-    status = HAL_LPTIM_Counter_Stop(&hlptim3);
-    if (status != HAL_OK)
-    {
-        printf("HAL_LPTIM_Counter_Stop err: %d\r\n", status);
-        return -3;
-    }
+//     status = HAL_LPTIM_Counter_Stop(&hlptim3);
+//     if (status != HAL_OK)
+//     {
+//         printf("HAL_LPTIM_Counter_Stop err: %d\r\n", status);
+//         return -3;
+//     }
 
-    __HAL_LPTIM_AUTORELOAD_SET(&hlptim3, sample_interval_10ns);
+//     __HAL_LPTIM_AUTORELOAD_SET(&hlptim3, sample_interval_10ns);
 
-    return 0;
-}
+//     return 0;
+// }
 
-int8_t device_adcs7476_sample_enable(uint8_t en)
-{
-    HAL_StatusTypeDef status = HAL_OK;
+// int8_t device_adcs7476_sample_enable(uint8_t en)
+// {
+//     HAL_StatusTypeDef status = HAL_OK;
 
-    uint32_t period = HAL_LPTIM_ReadAutoReload(&hlptim3);
+//     uint32_t period = HAL_LPTIM_ReadAutoReload(&hlptim3);
 
-   status = (en == 0) ? HAL_LPTIM_Counter_Stop(&hlptim3) : HAL_LPTIM_Counter_Start(&hlptim3, period);
-    if (status != HAL_OK)
-    {
-        printf("HAL_LPTIM_Counter_Start/Stop err: %d\r\n", status);
-        return -1; 
-    }
+//    status = (en == 0) ? HAL_LPTIM_Counter_Stop(&hlptim3) : HAL_LPTIM_Counter_Start(&hlptim3, period);
+//     if (status != HAL_OK)
+//     {
+//         printf("HAL_LPTIM_Counter_Start/Stop err: %d\r\n", status);
+//         return -1; 
+//     }
 
-#if 0
-    // status = HAL_LPTIM_Counter_Start(&hlptim2, period);   /* 100M / 1分频 */
-    // if (status != HAL_OK)
-    // {
-    //     printf("HAL_LPTIM_Counter_Start err: %d\r\n", status);
-    //     return -1;
-    // }
+// #if 0
+//     // status = HAL_LPTIM_Counter_Start(&hlptim2, period);   /* 100M / 1分频 */
+//     // if (status != HAL_OK)
+//     // {
+//     //     printf("HAL_LPTIM_Counter_Start err: %d\r\n", status);
+//     //     return -1;
+//     // }
 
-    status = HAL_LPTIM_SetOnce_Start_IT(&hlptim2, period, period);   /* 100M / 1分频 */
-    if (status != HAL_OK)
-    {
-        printf("HAL_LPTIM_SetOnce_Start_IT err: %d\r\n", status);
-        return -1;
-    }
-#endif
-    return 0;
-}
+//     status = HAL_LPTIM_SetOnce_Start_IT(&hlptim2, period, period);   /* 100M / 1分频 */
+//     if (status != HAL_OK)
+//     {
+//         printf("HAL_LPTIM_SetOnce_Start_IT err: %d\r\n", status);
+//         return -1;
+//     }
+// #endif
+//     return 0;
+// }
 
 
 #ifdef ADCS7476_TEST

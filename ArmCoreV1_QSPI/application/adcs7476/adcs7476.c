@@ -304,15 +304,9 @@ static int8_t adcs7476_sample_init(void)
     return 0;
 }
 
-static int8_t adcs7476_sample_interval_set(uint16_t time_interval_10ns)
-{
-    return device_adcs7476_sample_interval_set(time_interval_10ns);
-}
 
-int8_t adcs7476_sample_enable(uint8_t enable)
-{
-    return device_adcs7476_sample_enable(enable);
-}
+
+
 
 #define FLASH_ADDRESS_BASE                  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
 #define FLASH_VALID_SIZE                    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
@@ -441,7 +435,7 @@ static int8_t adcs7476_sample_thread_init(void)
     return 0;
 }
 INIT_APP_EXPORT(adcs7476_sample_thread_init);
-#define ADCS7476_SAMPLE_TEST    
+   
 #ifdef ADCS7476_SAMPLE_TEST
 #include "shell.h"
 

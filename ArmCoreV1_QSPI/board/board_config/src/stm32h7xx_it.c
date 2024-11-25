@@ -484,51 +484,8 @@ void HSEM1_IRQHandler(void)
 //   /* USER CODE END BDMA_Channel0_IRQn 1 */
 // }
 
-/**
-  * @brief This function handles LPTIM2 global interrupt.
-  */
-// void LPTIM2_IRQHandler(void)
-// {
-//   /* USER CODE BEGIN LPTIM2_IRQn 0 */
-
-//   /* USER CODE END LPTIM2_IRQn 0 */
-//   HAL_LPTIM_IRQHandler(&hlptim2);
-//   /* USER CODE BEGIN LPTIM2_IRQn 1 */
-
-//   /* USER CODE END LPTIM2_IRQn 1 */
-// }
-
-/**
-  * @brief This function handles LPTIM3 global interrupt.
-  */
-void LPTIM3_IRQHandler(void)
-{
-  /* USER CODE BEGIN LPTIM3_IRQn 0 */
-
-  /* USER CODE END LPTIM3_IRQn 0 */
-  HAL_LPTIM_IRQHandler(&hlptim3);
-  /* USER CODE BEGIN LPTIM3_IRQn 1 */
-
-  /* USER CODE END LPTIM3_IRQn 1 */
-}
-
 /* USER CODE BEGIN 1 */
 
-/* USER CODE END 1 */
-/**
-  * @brief This function handles TIM8 break interrupt and TIM12 global interrupt.
-  */
-void TIM8_BRK_TIM12_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM8_BRK_TIM12_IRQn 0 */
-
-  /* USER CODE END TIM8_BRK_TIM12_IRQn 0 */
-  //HAL_TIM_IRQHandler(&htim8);
-  HAL_TIM_IRQHandler(&htim12);
-  /* USER CODE BEGIN TIM8_BRK_TIM12_IRQn 1 */
-
-  /* USER CODE END TIM8_BRK_TIM12_IRQn 1 */
-}
 void EXTI0_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI0_IRQn 0 */
