@@ -130,8 +130,11 @@ int main(void)
   MX_SPI1_Init();
   MX_SPI6_Init();
   MX_LPTIM3_Init();
-  MX_TIM12_Init();
   MX_TIM4_Init();
+  MX_TIM8_Init();
+  MX_TIM12_Init();
+  MX_TIM23_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 #ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);
@@ -260,7 +263,7 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
   PeriphClkInitStruct.PLL3.PLL3M = 5;
   PeriphClkInitStruct.PLL3.PLL3N = 96;
-  PeriphClkInitStruct.PLL3.PLL3P = 3;
+  PeriphClkInitStruct.PLL3.PLL3P = 12;
   PeriphClkInitStruct.PLL3.PLL3Q = 3;
   PeriphClkInitStruct.PLL3.PLL3R = 3;
   PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_2;

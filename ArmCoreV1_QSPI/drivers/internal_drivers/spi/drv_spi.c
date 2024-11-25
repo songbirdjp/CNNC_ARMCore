@@ -67,7 +67,6 @@ static void TxRxCpltCallback(SPI_HandleTypeDef *hspi)
     {
         /* do nothing */
     }
-    HAL_TIM_Base_Stop_IT(&htim12);
 }
 
 static int8_t spi_open(DEVICE_SPI *spi)

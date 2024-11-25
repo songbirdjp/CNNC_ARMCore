@@ -54,6 +54,7 @@ void DebugMon_Handler(void);
 void SysTick_Handler(void);
 void WWDG_IRQHandler(void);
 void FLASH_IRQHandler(void);
+void EXTI0_IRQHandler(void);
 void DMA1_Stream0_IRQHandler(void);
 void DMA1_Stream1_IRQHandler(void);
 void DMA1_Stream5_IRQHandler(void);
