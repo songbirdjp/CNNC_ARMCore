@@ -18,7 +18,32 @@ static DEVICE_FLASH *device_flash_get(void)
 {
     return &flash_bank1;
 }
+int8_t Shell_ReadFlash(uint8_t argc, char *argv[])
+{
+    int8_t ret = 0;
+    DEVICE_FLASH *flash = device_flash_get();
+    uint8_t data[1024] = {0};
+    uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
+    ret = flash->read(flash, 0, data, sizeof(data), 1000);
+    if (ret != 0)
+    {
+        printf("flash read err:%d\r\n", ret);
+        return -3;
+    }
 
+    for (uint32_t i = 0; i < 256; i += 16) 
+    {
+        LOG_E("0x%08x: ", FLASH_ADDRESS_BASE + i);
+        for (uint32_t j = 0; j < 32; j++)
+        {
+            LOG_E("%02x ", data[i + j]);
+        }
+        LOG_E("\r\n");
+    }
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(Shell_ReadFlash, ReadFlash, flash test);
+DEVICE_FLASH *flash;
 static void Mag_MotorCtrl_thread_entry(void *argument)
 {
     MX_TIM1_Init();
@@ -33,13 +58,14 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     HAL_TIM_Base_Start(&htim8);
     HAL_TIM_Base_Start(&htim23);
     int8_t ret = 0;
-    DEVICE_FLASH *flash = device_flash_get(); 
+    flash = device_flash_get();
     uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE}; 
-    flash_init(device_flash_get(), "DEVICE_NAME_FLASH_BANK1");
-    flash_operation_address_set(device_flash_get(), flash_cfg[0], flash_cfg[1]);
+    flash_init(flash, "DEVICE_NAME_FLASH_BANK1");
+    flash_operation_address_set(flash, flash_cfg[0], flash_cfg[1]);
+    flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
     for (;;)
     {   
-        adcs7476_sample_data_recv_process();
+        AFC_ADCSampleRecvProcess();
     }
 }
 

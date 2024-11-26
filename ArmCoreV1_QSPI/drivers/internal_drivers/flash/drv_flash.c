@@ -427,8 +427,12 @@ int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t addr_base, uint
 #ifndef FLASH_TEST
 #include "shell.h"
 
-#define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)
-#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2)
+#define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
+#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
+
+#define FLASH_AFC_ADC1_BASE                 FLASH_ADDRESS_BASE// 0x080C0000UL
+#define FLASH_AFC_ADC1_OFFSET               FLASH_SECTOR_SIZE * 6
+#define FLASH_AFC_ADC2_OFFSET                 FLASH_SECTOR_SIZE * 7// 0x080E0000UL 
 
 static DEVICE_FLASH flash_bank1 = {0};
 static DEVICE_FLASH *device_flash_get(void)
@@ -466,7 +470,7 @@ uint32_t SW_crc32_Calcul(const uint32_t *buf, size_t len, uint32_t BurstSize)
     /* Return CRC value */
     return crc;
 }
-#define FLASH_AFC_SLAVE_OFFSET              (FLASH_SECTOR_SIZE )
+
 int8_t flash_test(uint8_t argc, char *argv[])
 {
     int8_t ret = 0;
@@ -501,14 +505,14 @@ int8_t flash_test(uint8_t argc, char *argv[])
             return -3;
         }
 
-        for (uint32_t i = 0; i < 64; i += 16) 
+        for (uint32_t i = 0; i < 256; i += 16) 
         {
-            printf("%08x: ", FLASH_ADDRESS_BASE + i);
-            for (uint32_t j = 0; j < 16; j++)
+            LOG_E("%08x: ", FLASH_ADDRESS_BASE + i);
+            for (uint32_t j = 0; j < 256; j++)
             {
                 LOG_E("%02x ", data[i + j]);
             }
-            printf("\r\n");
+            LOG_E("\r\n");
         }
         break;
 

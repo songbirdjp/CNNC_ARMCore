@@ -55,7 +55,7 @@ void MX_TIM1_Init(void)
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 99;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim1.Init.RepetitionCounter = 4;
+  htim1.Init.RepetitionCounter = 7;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
   {
@@ -305,7 +305,7 @@ void MX_TIM8_Init(void)
   htim8.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim8.Init.Period = 99;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim8.Init.RepetitionCounter = 4;
+  htim8.Init.RepetitionCounter = 7;
   htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim8) != HAL_OK)
   {
