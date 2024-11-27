@@ -20,7 +20,7 @@ int8_t adcs7476_object_data_limit_get(uint8_t *device_name, uint16_t *limit_h, u
 int8_t adcs7476_object_data_limit_fault_get(uint8_t *device_name);
 int8_t adcs7476_object_data_callback_register(void (*callback)(void *arg));
 int8_t adcs7476_sample_data_recv_process(void);
-int8_t AFC_ADCSampleRecvProcess(void);
+uint16_t* AFC_ADCSampleRecvProcess(void);
 #ifdef __cplusplus
 }
 #endif

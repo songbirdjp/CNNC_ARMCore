@@ -313,8 +313,17 @@ static int8_t adcs7476_sample_init(void)
 
 #define FLASH_AFC_ADC1_BASE                 FLASH_ADDRESS_BASE// 0x080C0000UL
 #define FLASH_AFC_ADC2_BASE                 FLASH_ADDRESS_BASE + FLASH_SECTOR_SIZE// 0x080E0000UL 
-
-
+/*
+* bank1:
+* sector 0: 0x08000000 - 0x0801FFFF (128k)  -> bootloader 1
+* sector 1: 0x08020000 - 0x0803FFFF (128k)  -> bootloader 2
+* sector 2: 0x08040000 - 0x0805FFFF (128k)  -> application
+* sector 3: 0x08060000 - 0x0807FFFF (128k)  -> reserved
+* sector 4: 0x08080000 - 0x0809FFFF (128k)  -> reserved
+* sector 5: 0x080A0000 - 0x080BFFFF (128k)  -> config data, such as log info, etc.
+* sector 6: 0x080C0000 - 0x080DFFFF (128k)  -> log 1
+* sector 7: 0x080E0000 - 0x080FFFFF (128k)  -> log 2
+*/
 int32_t len;  
 uint32_t flash_addr = FLASH_ADDRESS_BASE;
 uint32_t flash_AFC_Offset = 0;
@@ -379,13 +388,14 @@ int8_t adcs7476_sample_data_recv_process(void)
     return 0;
 }
 
-int8_t AFC_ADCSampleRecvProcess(void)
+uint16_t* AFC_ADCSampleRecvProcess(void)
 {
-    int8_t ret = 0;
+    //excuse time about 200ns with testing
+
     uint32_t event_flag = 0;
     uint16_t recv_tmp[BUF_LEN] = {0};
     uint16_t recv_tmp_1[BUF_LEN] = {0}; 
-    uint16_t combined_data[BUF_LEN * 2] = {0}; 
+    static uint16_t combined_data[BUF_LEN * 2] = {0}; 
     struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
     
@@ -393,18 +403,8 @@ int8_t AFC_ADCSampleRecvProcess(void)
     osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
     osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
 
-    // osMutexAcquire(obj_master->mutex, osWaitForever);
-    // memcpy(obj_master->data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
-    // osMutexRelease(obj_master->mutex);
-    // osMutexAcquire(obj_slave->mutex, osWaitForever);
-    // memcpy(obj_slave->data, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
-    // osMutexRelease(obj_slave->mutex);
-
-    // memcpy(combined_data, obj_master->data, obj_master->buf_len * sizeof(uint16_t));
-    // memcpy(combined_data + obj_master->buf_len, obj_slave->data, obj_slave->buf_len * sizeof(uint16_t));
-
     memcpy(combined_data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
-    memcpy(combined_data + obj_master->buf_len,recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
+    memcpy(combined_data + obj_master->buf_len, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
 
     flash->write(flash, flash_AFC_Offset, combined_data, 16 * sizeof(uint16_t), 1000);
     flash_AFC_Offset += 16 * sizeof(uint16_t);
@@ -413,8 +413,8 @@ int8_t AFC_ADCSampleRecvProcess(void)
     {
         callback();
     }
-
-    return 0;
+  
+    return combined_data;
 }
 
 

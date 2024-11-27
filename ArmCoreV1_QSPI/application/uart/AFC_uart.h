@@ -1,5 +1,5 @@
-#ifndef __DOSE_UART_H__
-#define __DOSE_UART_H__
+#ifndef __AFC_UART_H__
+#define __AFC_UART_H__
 
 #include <stdint.h>
 #include "cmsis_os2.h"
@@ -8,9 +8,9 @@
 extern "C" {
 #endif
 
-#define DOSE_UART_ID    0
+#define AFC_UART_ID   0
 
-struct dose_object
+struct AFC_object
 {
     union
     {
@@ -25,13 +25,6 @@ struct dose_object
     uint8_t type;   /* cmd type */
     uint16_t len;   /* data length */
     uint8_t *data;  /* data pointer */
-};
-
-enum dose_board
-{
-    DOSE_BOARD_TRIGGER_OUT = 1,
-    DOSE_BOARD_NO_TRIGGER_OUT,
-    DOSE_BOARD_MAX
 };
 
 struct calibration_para
@@ -117,7 +110,6 @@ struct radiation_point_para
 
 struct control_para
 {
-    enum dose_board board_id;    
     struct calibration_para calibration;
     struct treatment_para treatment;
     struct interlock_para interlock;

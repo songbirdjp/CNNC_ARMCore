@@ -43,6 +43,24 @@ int8_t Shell_ReadFlash(uint8_t argc, char *argv[])
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(Shell_ReadFlash, ReadFlash, flash test);
+
+int8_t WriteArrayToFlash(uint16_t *data, uint32_t len)
+{
+    int8_t ret = 0;
+    DEVICE_FLASH *flash = device_flash_get();
+    uint32_t flash_AFC_Offset = 0;
+
+    ret = flash->write(flash, flash_AFC_Offset, data, len * sizeof(uint16_t), 1000);
+    flash_AFC_Offset += 16 * sizeof(uint16_t);
+    if (ret != 0)
+    {
+        printf("flash write err:%d\r\n", ret);
+        return -1;
+    }
+
+    return 0;
+}
+
 DEVICE_FLASH *flash;
 static void Mag_MotorCtrl_thread_entry(void *argument)
 {
@@ -52,12 +70,10 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     MX_TIM23_Init();
     HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-    __HAL_TIM_SET_AUTORELOAD(&htim4, 9);
     HAL_TIM_Base_Start(&htim1);
     HAL_TIM_Base_Start(&htim4);
     HAL_TIM_Base_Start(&htim8);
     HAL_TIM_Base_Start(&htim23);
-    int8_t ret = 0;
     flash = device_flash_get();
     uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE}; 
     flash_init(flash, "DEVICE_NAME_FLASH_BANK1");
@@ -66,6 +82,7 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     for (;;)
     {   
         AFC_ADCSampleRecvProcess();
+        
     }
 }
 
@@ -91,6 +108,7 @@ static void AFC_DataTransmit_thread_entry(void *argument)
 {
     for (;;)
     {
+       
         osDelay(1000);
     }
 }

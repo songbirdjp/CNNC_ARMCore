@@ -11,8 +11,7 @@ extern "C" {
 #define DEVICE_NAME_LENGTH      16
 
 #define DEVICE_NAME_UART1       "uart1"
-#define DEVICE_NAME_UART2       "uart2"
-#define DEVICE_NAME_UART5       "uart5"
+
 #define DEVICE_NAME_UART9       "uart9"
 
 #define USING_UART_OPTION_FUNCTION
