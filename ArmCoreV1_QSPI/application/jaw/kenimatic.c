@@ -60,8 +60,8 @@ void initSVG(struct SVG_Type* inst, uint8_t axes)
 
     inst->DynamicValues.AccelerationNeg = 100;//mm/s^2
     inst->DynamicValues.AccelerationPos = 100;
-    inst->DynamicValues.VelocityNeg = 17;//mm/s
-    inst->DynamicValues.VelocityPos = 17;
+    inst->DynamicValues.VelocityNeg = 17.5;//mm/s
+    inst->DynamicValues.VelocityPos = 17.5;
     inst->DynamicValues.JerkNeg = 500;//mm/s^3
     inst->DynamicValues.JerkPos = 500;
     inst->DynamicLimits.AccelerationNeg = 175;
@@ -69,15 +69,15 @@ void initSVG(struct SVG_Type* inst, uint8_t axes)
     inst->DynamicLimits.JerkNeg = 1000;
     inst->DynamicLimits.JerkPos = 1000;
     if(axes){   //Y Jaw 
-        inst->DynamicLimits.PositionNeg = 6.0;
-        inst->DynamicLimits.PositionPos = 117.2;// = 120mm @ISO
+        inst->DynamicLimits.PositionNeg = 0.0;
+        inst->DynamicLimits.PositionPos = 117.2;// = 120mm @ISO enc:24002
     }    
     else{   //X Jaw 
-        inst->DynamicLimits.PositionNeg = 8.0;
-        inst->DynamicLimits.PositionPos = 90.5;// = 50mm @ISO
+        inst->DynamicLimits.PositionNeg = 0.0;
+        inst->DynamicLimits.PositionPos = 90.5;// = 50mm @ISO 18534
     }
-    inst->DynamicLimits.VelocityNeg = 17.5;
-    inst->DynamicLimits.VelocityPos = 17.5;
+    inst->DynamicLimits.VelocityNeg = 26.25;
+    inst->DynamicLimits.VelocityPos = 26.25;
     inst->StartPosition = 0;//ENC: 2000
     inst->TargetPosition = 0;
     inst->Cycletime = 0.004;//s

@@ -19,7 +19,8 @@ static uint16_t lastPackIndex = 0;
 static __IO uint8_t* pSDRAM;
 static __IO uint8_t* pSDRAMCAL;
 static uint16_t *feedback, feedback16Len;
-RT_BEAM_DATA rtBeamData;
+BEAM_DATA rtBeamData;
+REALTIME_FEEDBACK rtFeedback;
 INTERLOCK_FEEDBACK interlockFeedback;
 SECOND_POS_FEEDBACK secondPosFeedback;
 static FRAME_HEAD frameHead;
@@ -53,14 +54,12 @@ bool InitCrc32Table(void)
 uint32_t Crc32Buffer(uint32_t crc, uint8_t *buf, uint32_t size)
 {
     uint32_t i;
-   // uint32_t crc = 0xffffffff;
-  //  printf("crc %u \r\n", crc);
+ 
     for (i = 0; i < size; i++)
     {
         crc = CrcTable[(crc^buf[i]) & 0xff] ^ (crc >> 8);
-     //   printf(" %d ", buf[i]);
     }
-    return crc/*^0xffffffff*/;
+    return crc;
 }
 
 void updateNRTFeedback(void)
@@ -69,7 +68,7 @@ void updateNRTFeedback(void)
 
     *pFDAry++ = 102;
     *pFDAry++ = 2;
-    typeLen = sizeof(secondPosFeedback)/2 +1;
+    typeLen = sizeof(secondPosFeedback)/2;
     *pFDAry++ = typeLen;        //payload length 
     memcpy(pFDAry, &secondPosFeedback, typeLen*2);
     pFDAry += typeLen;
@@ -87,7 +86,6 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
     uint32_t crcInData;
     uint16_t last, payloadLength;
     uint8_t *data = (uint8_t *)info->tcpData;
-    int8_t ret;
 
     if (info->length > 0) u8LenTotal = info->length;
     else return -1;
@@ -97,13 +95,13 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
     frameHead.frmType = (data[3] << 8) + data[2];
     frameHead.frmLength = (data[5] << 8) + data[4];
     frameHead.bankNo = (data[7] << 8) + data[6];
-    printf("head1: %d %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength,frameHead.bankNo);
+   // printf("head1: %d %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength,frameHead.bankNo);
 
     if(frameHead.frmTag == PLAN_DATA_SETTING_TAG)
     {
         frameHead.totalPackInOneBeam = (data[9] << 8) + data[8];
         frameHead.packIndexInOneBeam = (data[11] << 8) + data[10];
-        printf("head2: %d %d\r\n",frameHead.totalPackInOneBeam, frameHead.packIndexInOneBeam);
+      //  printf("head2: %d %d\r\n",frameHead.totalPackInOneBeam, frameHead.packIndexInOneBeam);
 
         if(frameHead.packIndexInOneBeam == 1)   lastPackIndex = 0;
         payloadLength = u8LenTotal - 20;
@@ -233,8 +231,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         }
         secondPosFeedback.packIndexInOneBeam = frameHead.packIndexInOneBeam;
         secondPosFeedback.errorCode = 0; //ok
-        printf("recv success #0!!! \r\n");
-        ret = 1;
+      //  printf("recv success #0!!! \r\n");
     }
     else if(frameHead.frmTag == PARAM_SETTING_TAG)
     {
@@ -266,28 +263,25 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         printf("crc:%u\r\n", crcInData);
 #ifndef TEST
         make_para_for_fpga(data);
-        setJawParam(data);
+        plcSetJawParam(data);
 #endif
-        ret = 0;
     }
     else{
         printf("error data pack!\r\n");
-        ret = -1;
     }    
 
     memset(&info, 0, sizeof(info));
     memset(&frameHead, 0, sizeof(frameHead));
     memset(&frameEnd, 0, sizeof(frameEnd));
 
-    return ret;
+    return 1;
 }
 
 void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType JawPos)
 {
-   // uint8_t i;
     __IO uint8_t *pBeamData;
     uint8_t send_buf[174] = {0};
-    memset(&JawPos, 0 , sizeof(struct JawFlagType));
+  //  memset(&JawPos, 0 , sizeof(struct JawFlagType));
 
     pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     pBeamData = pSDRAM;
@@ -314,15 +308,15 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
     pBeamData += RT_SDRAM_PAYLOAD_LEN*(RIIndex - 1);//skip front RIs
     pBeamData += 2; //skip current RI head (ControlPoint index)
 #ifdef TEST
-    rtBeamData.faultInfo2 = 0;
-    for(uint8_t i = 0; i < RT_ARM_UPLOAD_POS_LEN; i+=2){
-        rtBeamData.rtPosUpload[i/2] = (pBeamData[i+1] <<8) + pBeamData[i];
+    rtFeedback.faultInfo2 = 0;
+    for(uint8_t i = 0; i < RT_FPGA_UPLOAD_POS_LEN; i+=2){
+        rtFeedback.rtPosUpload[i/2] = (pBeamData[i+1] <<8) + pBeamData[i];
         //printf("**** 0x%x 0x%x 0x%x====", recvBuf[i], recvBuf[i+1], rtDataUpload[i/2]);
         //  rtDataUpload[i/2] = 1;
     }
-    memcpy(secondPosFeedback.leafSecondPos,  rtBeamData.rtPosUpload, 82*2);
-    secondPosFeedback.carrierSecondPos = rtBeamData.rtPosUpload[82];
-    memcpy(secondPosFeedback.jawSecondPos,  &rtBeamData.rtPosUpload[83], 2*2);
+    memcpy(secondPosFeedback.leafSecondPos,  rtFeedback.rtPosUpload, 82*2);
+    secondPosFeedback.carrierSecondPos = rtFeedback.rtPosUpload[82];
+    memcpy(secondPosFeedback.jawSecondPos,  &rtFeedback.jawRTPos, 2*2);
 
   /*  makeSingleSendAry(24, pBeamData, 166, 1,1);
     pBeamData += 166;
@@ -335,16 +329,16 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
     // makeSingleSendAry(24, pBeamData, 166, 1,1);
     memmove(send_buf, pBeamData, 166);
     pBeamData += 166;
-    JawPos.axes = XY;
-    JawPos.masterCmd[X] = (pBeamData[1] << 8) + pBeamData[0];
-    JawPos.masterCmd[Y] = (pBeamData[3] << 8) + pBeamData[2];
-    osMessageQueuePut(motor_signal_queueHandle, &JawPos, 0, 0);//Jaw pos in plan send to jaw fsm
+
+    uint16_t pos[2];
+    pos[X] = (pBeamData[1] << 8) + pBeamData[0];
+    pos[Y] = (pBeamData[3] << 8) + pBeamData[2];
+    messageToJawTask(JawPos, COMMAND, XY, pos);
+    
     pBeamData += 4;//skip X/Y Jaw pos
     // makeSingleSendAry(24, pBeamData, 8, 0,1);//CP limit pos
    // for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  printf("%x ",sndCtrl.cmdSendBuf[i]);
    // printf("\r\n");
-
-    // FPGA_WriteByteArray(sndCtrl.cmdSendBuf, MAX_CMD_DATA_SIZE);
 
     memmove(&send_buf[166], pBeamData, 8);
     make_cmd_to_fpga(24, send_buf, 174);
@@ -353,11 +347,9 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
 
 void nrtRecvDataProcess(APP_DATA_RECV* info)
 {
-    if(nrtRecvParamAndPlan(info) > 0)//only recv plan need immediate feedback
-    {
-        updateNRTFeedback();
-        ws_send(info->sn,  feedback, feedback16Len*2, true, false, WDT_BINDATA);
-    }
+    nrtRecvParamAndPlan(info);
+    updateNRTFeedback();
+    ws_send(info->sn,  feedback, feedback16Len*2, true, false, WDT_BINDATA);
 }
 
 void setTCPSendControlSignal(uint8_t itemIndex, int32_t setVal)
@@ -398,9 +390,7 @@ void planDataInit(void)
         sndCtrl.singleSize[i] = sendCmd[i].TxLen+6;
         if(sendCmd[i].useAsParam)  sndCtrl.totalSize += sndCtrl.singleSize[i];//calculate parameter buf size
     }
-  //  sndCtrl.paramSendBuf = (uint8_t*)pvPortMalloc(sndCtrl.totalSize);
-  //  memset(sndCtrl.paramSendBuf, 0, sndCtrl.totalSize);
-   // for(uint16_t i=0; i < sndCtrl.totalSize; i++) printf("0x%x ", sndCtrl.paramSendBuf[i]);
+ 
     interlockFeedback.versionARM = 2;
     secondPosFeedback.bankNo = BANK_NO;
 

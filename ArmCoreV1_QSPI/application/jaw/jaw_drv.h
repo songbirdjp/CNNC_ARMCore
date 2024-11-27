@@ -33,10 +33,6 @@ void startEncodeTim(uint8_t axesType);
 void stopEncodeTim(uint8_t axesType);
 void yjaw_nfault_callback(void);
 void xjaw_nfault_callback(void);
-void yjaw_EncZ_callback(void);
-void xjaw_EncZ_callback(void);
-void yjaw_limitSwitch_callback(void);
-void xjaw_limitSwitch_callback(void);
 
 #ifdef __cplusplus
 }

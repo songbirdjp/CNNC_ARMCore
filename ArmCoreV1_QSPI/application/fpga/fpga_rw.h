@@ -13,7 +13,7 @@
 #define RT_FPGA_UPLOAD_PAYLOAD_LEN  168 //it is the same as nrt payload from fpga
 #define NRT_FPGA_UPLOAD_PAYLOAD_LEN  168
 #define FPGA_NRT_UPLOAD_START   (HEAD_LEN+RT_FPGA_UPLOAD_PAYLOAD_LEN)
-#define RT_ARM_UPLOAD_POS_LEN  170  //arm upload to plc all pos(leaf, carrier, jaw)
+#define RT_FPGA_UPLOAD_POS_LEN  166  //FPGA upload to plc all pos(leaf, carrier)
 #define RT_DOWNLOAD_PAYLOAD_LEN  174 //plan data from plc
 #define RT_SAVE_PAYLOAD_LEN  (RT_DOWNLOAD_PAYLOAD_LEN+2)    //+ RI
 #define RT_SDRAM_PAYLOAD_LEN  (RT_SAVE_PAYLOAD_LEN+4)       //+ 2 leaf pos, because get 80 leafs pos from PLC, but fpga need 82 leafs pos

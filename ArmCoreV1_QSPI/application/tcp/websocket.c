@@ -7,7 +7,7 @@
 #ifdef IS_TCP_SERVER
 
 SEND_INFO sendStructInfo;
-
+static uint8_t serviceNumber = 0;
 static CLIENT_INFO client[MAX_CLIENT_NUM];
 static const char ws_base64char[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -563,6 +563,7 @@ int8_t getClientType(uint8_t s, uint8_t *pString)
         {
             client[s].clientType = SERVICE;//this client is service
             printf("client %d is service\r\n", s);
+            serviceNumber++;
         }
         else    return -1;
     }
@@ -605,8 +606,8 @@ uint8_t isClientTypeMatch(uint8_t sn, uint8_t itemIndex)// to inquire if assigne
 int32_t tcp_recv_process(TCP_DATA_t *recvData)
 {
     uint8_t s = recvData->sn;
-    uint8_t *data = recvData->gDATABUF, *controllerIP;
-    uint16_t len = recvData->Len, i, controllerPORT;
+    uint8_t *data = recvData->gDATABUF;
+    uint16_t len = recvData->Len, i;
     Ws_DataType retPkgType = WDT_NULL;
     int32_t ret = 0;
     APP_DATA_RECV itemRecv;
@@ -676,6 +677,7 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
                 client[s].clientType = 0;
                 client[s].socketNum = -1;
 				client[s].loopCnt = 0;	
+                if(client[s].clientType == SERVICE) serviceNumber--;
                 break;		 
             case WDT_TXTDATA:
                // printf("recv data: %s\r\n",data);s
@@ -738,7 +740,17 @@ int32_t tcp_send_process(uint8_t s)
             } 
 
             if(ret > 0){    //send success
-                if(sendStructInfo.pActiveSend[i].controlSignal == TO_SEND)    sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;
+                if(sendStructInfo.pActiveSend[i].controlSignal == TO_SEND)
+                {
+                    if(client[s].clientType == CONTROLLER)  sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;//only one controller
+                    else if(client[s].clientType == SERVICE)//wait for all service send once finish, then clean flag
+                    {
+                        if( ++sendStructInfo.pActiveSend[i].onceSendCnt >= serviceNumber ){
+                            sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;
+                            sendStructInfo.pActiveSend[i].onceSendCnt = 0;
+                        }
+                    }    
+                }    
             }  
             else{
                 printf("ws send failed!\r\n");

@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 typedef enum {
-    INIT_MOVE_FORWARD = 10,
+    INIT_MOVE_FORWARD = 100,
     INIT_MOVE_BACKWARD,
     INIT_END,
     IDLE,
@@ -18,7 +18,7 @@ typedef enum {
     SERVO,
     LIMSWITCH_FALLING,
     LIMSWITCH_RISING,
-    ZERO_CONFIRMED,
+    UART_DEBUG,
     ERROR_STATE
 } JawCtlFsm;
 
@@ -35,14 +35,15 @@ typedef enum {
     CMD_POWER_MODE,  
     CMD_DISPLAY_MODE,  
     CMD_ENCODE_MODE,
-    CMD_CLEAR_STATUS
+    CMD_FSM_STATUS,
+    CMD_SECOND_POS
 } UARTCmd;
 
-typedef struct
-{
-    uint16_t jawCurrentPos;
-    uint16_t jawStatusInfo;
-}JawFeedbackInfo;
+typedef enum {
+    COMMAND,    //state or pos changed
+    LIMIT_SWITCH,   //limit switch is triggered
+    ENC_Z  //encoder Z signal
+} JawSignalType;
 
 typedef struct
 {
@@ -55,16 +56,15 @@ typedef struct
     SVG_Type fSVG;
     PIDAdjType uartPIDCmd;
     uint32_t location_timer;
-    uint16_t LastEncoderFindZero;
+   // uint16_t LastEncoderFindZero;
 }JawControlInfo;
 
 struct JawFlagType
 {
     uint8_t axes;
-    uint8_t JawEncZ[2];
-    uint8_t JawLimit[2];
+    uint16_t JawEncZ[2];
+    uint16_t JawLimit[2];
     uint16_t masterCmd[2];
-  //  float tmp;
 };
 
 typedef struct
@@ -77,10 +77,10 @@ typedef struct
 } JAW_SET_PARAM;
 
 extern osMessageQueueId_t motor_signal_queueHandle;
-extern JawFeedbackInfo jawFeedbackByAxes[2];
 extern JAW_SET_PARAM jawParameterByAxes[2];
 
-void setJawParam(uint8_t *pData);
+void plcSetJawParam(uint8_t *pData);
+void messageToJawTask(struct JawFlagType source, uint16_t signalType, uint8_t axes, uint16_t* value);
 
 #ifdef __cplusplus
 }

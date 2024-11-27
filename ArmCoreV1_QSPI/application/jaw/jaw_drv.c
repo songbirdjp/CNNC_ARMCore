@@ -1,4 +1,3 @@
-#include "jaw_drv.h"
 #include "tim.h"
 #include "jaw_control.h"
 
@@ -141,11 +140,11 @@ void setEncodeValue(uint16_t setValue, uint8_t axesType)
 {
     if(axesType == X){
         __HAL_TIM_SET_COUNTER(&htim8, setValue);
-        printf("set encX: %u\r\n", setValue);
+      //  printf("set encX: %u\r\n", setValue);
     }
     else if(axesType == Y) {
         __HAL_TIM_SET_COUNTER(&htim5, setValue);
-        printf("set encY: %u\r\n", setValue);
+       // printf("set encY: %u\r\n", setValue);
     }
 }
 
@@ -201,9 +200,9 @@ void motorEnable(uint8_t axesType)
 
 void motorDisable(uint8_t axesType)
 {
+    motorCtrlByPWM(0, axesType);
     stopEncodeTim(axesType);
     stopPWMOutput(axesType);
-    motorCtrlByPWM(0, axesType);
     motorPowerCtrl(0, axesType);//close motor power supply
     BrakeCtrl(0, axesType);//tight brake
 }
@@ -273,48 +272,4 @@ void xjaw_nfault_callback(void)
             SetMotorXIO(jawCtrlByAxes[X].MotorDir, jawCtrlByAxes[X].MotorMoveEn);
         }
     }
-}
-
-void yjaw_EncZ_callback(void)
-{
-    struct JawFlagType Jawflag;
-    memset(&Jawflag, 0 , sizeof(struct JawFlagType));
-    
-    Jawflag.axes = Y;
-    Jawflag.JawEncZ[Y] = 1;
-    osMessageQueuePut(motor_signal_queueHandle, &Jawflag, 0, 0);
-}
-
-void xjaw_EncZ_callback(void)
-{
-    struct JawFlagType Jawflag;
-    memset(&Jawflag, 0 , sizeof(struct JawFlagType));
-
-    Jawflag.axes = X;
-    Jawflag.JawEncZ[X] = 1;
-    osMessageQueuePut(motor_signal_queueHandle, &Jawflag, 0, 0);
-}
-
-void yjaw_limitSwitch_callback(void)
-{
-    struct JawFlagType Jawflag;
-    memset(&Jawflag, 0 , sizeof(struct JawFlagType));
-
-    Jawflag.axes = Y;
-    if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11) == GPIO_PIN_RESET)
-        Jawflag.JawLimit[Y] = 1;//falling
-    else     Jawflag.JawLimit[Y] = 2;//rising
-    osMessageQueuePut(motor_signal_queueHandle, &Jawflag, 0, 0);
-}
-
-void xjaw_limitSwitch_callback(void)
-{
-    struct JawFlagType Jawflag;
-    memset(&Jawflag, 0 , sizeof(struct JawFlagType));
-
-    Jawflag.axes = X;
-    if (HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_14) == GPIO_PIN_RESET)
-        Jawflag.JawLimit[X] = 1;//falling
-    else     Jawflag.JawLimit[X] = 2;//rising
-    osMessageQueuePut(motor_signal_queueHandle, &Jawflag, 0, 0);
 }

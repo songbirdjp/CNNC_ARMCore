@@ -54,7 +54,7 @@ void calculateDualChannelDiff(uint8_t ch)
             convertEnc = jawParameterByAxes[Y].jaw2ndEncCalibrationPK*adcResult
                             +jawParameterByAxes[Y].jaw2ndEncCalibrationPB;
             
-            if(abs(convertEnc - jawFeedbackByAxes[Y].jawCurrentPos) > jawParameterByAxes[Y].jawDualChTolerance){
+            if(abs(convertEnc - rtFeedback.jawRTPos[Y]) > jawParameterByAxes[Y].jawDualChTolerance){
             //    printf("Y Jaw Encoder untrue\r\n");
                 interlockFeedback.jawInterlock[Y] |= 0x40;
             }
@@ -65,7 +65,7 @@ void calculateDualChannelDiff(uint8_t ch)
             if(adcResult > MAX_ADC_VALUE)   interlockFeedback.jawInterlock[X] |= 0x20;
             convertEnc = jawParameterByAxes[X].jaw2ndEncCalibrationPK*adcResult
                          +jawParameterByAxes[X].jaw2ndEncCalibrationPB;
-            if(abs(convertEnc - jawFeedbackByAxes[X].jawCurrentPos) > jawParameterByAxes[X].jawDualChTolerance){
+            if(abs(convertEnc - rtFeedback.jawRTPos[X]) > jawParameterByAxes[X].jawDualChTolerance){
              //   printf("X Jaw Encoder untrue\r\n");
                 interlockFeedback.jawInterlock[X] |= 0x40;
             }

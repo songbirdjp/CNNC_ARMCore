@@ -3,6 +3,7 @@
 #include "shell.h"
 #include "planData.h"
 #include <stdlib.h>
+#include "ad7927_app.h"
 
 #define ENCODE_INIT_VAL 2000
 #define PERMIT_FOLLOWING_ERR  250  //when PWM = 100, speed is 10count/4ms
@@ -17,24 +18,67 @@
 
 #define SAMP_BUF_SIZE    400
 
-JawFeedbackInfo jawFeedbackByAxes[2];
+//JawFeedbackInfo jawFeedbackByAxes[2];
 JAW_SET_PARAM jawParameterByAxes[2];
 osMessageQueueId_t motor_signal_queueHandle = NULL;
 static JawControlInfo jawControlByAxes[2];
 static float prtBufCmd[SAMP_BUF_SIZE]; // sample command position
-static float prtBufAct[SAMP_BUF_SIZE]; // sample actual encoder value
+static float prtBufAct[SAMP_BUF_SIZE]; // sample actual value
 
-PID_TypeDef motor_pid_pos = {.Kp = 3, .Ki = 0, .Kd = 0.0, .Setpoint = 15000, .IntegralLimit = 50, .OutputLimit = 999, .deadZone = 20, .integralStartErr = 200};
-PID_TypeDef motor_pid_spd = {.Kp = .8, .Ki = 0.8, .Kd = 0.0, .Setpoint = 0, .IntegralLimit = 50, .OutputLimit = 100, .deadZone = 3, .integralStartErr = 50};
-PID_TypeDef motor_pid_double = {.Kp = 0.1, .Ki = 0.1, .Kd = 0, .Setpoint = 10000, .IntegralLimit = 50, .OutputLimit = 100};
+PID_TypeDef motor_pid_pos[2];
+PID_TypeDef motor_pid_spd[2];
 
-void jawDeviceInit(void)
+void yjaw_EncZ_callback(void);
+void xjaw_EncZ_callback(void);
+void yjaw_limitSwitch_callback(void);
+void xjaw_limitSwitch_callback(void);
+
+#define SECOND_PERMIT_ERROR    8 // 0.244mm
+static uint16_t jawHomePos[2] = {2765,2355};
+#ifdef BANKA
+    static uint16_t jawEncZero[2] = {2258,1845};
+    static uint16_t initSecondPosCheck[2] = {873,848};
+    double paraK[2] = {6.527, 6.5444};
+    double paraB[2] = {-2929.3, -3204.6};
+#else
+    static uint16_t jawEncZero[2] = {2254,1843};
+    static uint16_t initSecondPosCheck[2] = {908,754};
+    double paraK[2] = {6.5323, 6.4959};
+    double paraB[2] = {-3229.2, -2886.9};
+#endif
+
+static void motorParamInit(uint8_t axes)
+{
+    memset(&motor_pid_pos[axes], 0, sizeof(PID_TypeDef));
+    memset(&motor_pid_spd[axes], 0, sizeof(PID_TypeDef));
+
+    motor_pid_pos[axes].Kp = 3;
+    motor_pid_pos[axes].Ki = 0;
+    motor_pid_pos[axes].Kd = 0;
+    motor_pid_pos[axes].Setpoint = 15000;
+    motor_pid_pos[axes].IntegralLimit =50;
+    motor_pid_pos[axes].OutputLimit = 999;
+    motor_pid_pos[axes].deadZone = 20;
+    motor_pid_pos[axes].integralStartErr = 200;
+
+    motor_pid_spd[axes].Kp = .8;
+    motor_pid_spd[axes].Ki = .8;
+    motor_pid_spd[axes].Kd = 0;
+    motor_pid_spd[axes].Setpoint = 0;
+    motor_pid_spd[axes].IntegralLimit =50;
+    motor_pid_spd[axes].OutputLimit = 100;
+    motor_pid_spd[axes].deadZone = 3;
+    motor_pid_spd[axes].integralStartErr = 50;
+
+    initSVG(&jawControlByAxes[axes].fSVG, axes);
+}
+
+static void jawDeviceInit(void)
 {
     memset(&jawControlByAxes, 0, sizeof(JawControlInfo) * 2);
-    memset(&jawFeedbackByAxes, 0, sizeof(JawFeedbackInfo) * 2);
+  //  memset(&jawFeedbackByAxes, 0, sizeof(JawFeedbackInfo) * 2);
     memset(prtBufAct, 0, SAMP_BUF_SIZE * sizeof(float));
     memset(prtBufCmd, 0, SAMP_BUF_SIZE * sizeof(float));
-    for(uint8_t i = 0; i < XY; i++) initSVG(&jawControlByAxes[i].fSVG, i);
 
     gpio_pin_irq_callback_register(JAWX_NFAULT_NAME, xjaw_nfault_callback);
     gpio_pin_irq_callback_register(JAWY_NFAULT_NAME, yjaw_nfault_callback);
@@ -42,9 +86,86 @@ void jawDeviceInit(void)
     gpio_pin_irq_callback_register(JAWY_ENCZ_NAME, yjaw_EncZ_callback);
     gpio_pin_irq_callback_register(JAWX_LIMIT_NAME, xjaw_limitSwitch_callback);
     gpio_pin_irq_callback_register(JAWY_LIMIT_NAME, yjaw_limitSwitch_callback);
+
+    motorParamInit(X);
+    motorParamInit(Y);
+   // jawControlByAxes[X].homeEncodeValue = jawHomePos[0];
+   // jawControlByAxes[Y].homeEncodeValue = jawHomePos[1];
 }
 
-void setJawParam(uint8_t *pData)
+void messageToJawTask(struct JawFlagType source, uint16_t signalType, uint8_t axes, uint16_t* value)
+{
+    memset(&source, 0 , sizeof(struct JawFlagType));
+    source.axes = axes;
+   
+    switch(signalType)
+    {
+        case COMMAND:
+            if(axes == XY)
+            {
+                source.masterCmd[X] = value[X];
+                source.masterCmd[Y] = value[Y];
+            }
+            else source.masterCmd[axes] = *value;
+        break;
+        case LIMIT_SWITCH:
+            source.JawLimit[axes] = *value;
+        break;
+        case ENC_Z:
+            source.JawEncZ[axes] = *value;
+        break;
+        default: break;
+    }  
+    osMessageQueuePut(motor_signal_queueHandle, &source, 0, 0);
+}
+
+void yjaw_EncZ_callback(void)
+{
+    struct JawFlagType Jawflag;
+    uint16_t value = 1;
+    uint8_t axes = Y;
+
+    if(jawControlByAxes[axes].MotorState == INIT_END)
+        messageToJawTask(Jawflag, ENC_Z, axes, &value);
+    else if(jawControlByAxes[axes].MotorState == UART_DEBUG)
+        printf("Y:%d %d\r\n",getEncodeValue(axes),ADCgetValue(&hspi4, 5));
+}
+
+void xjaw_EncZ_callback(void)
+{
+    struct JawFlagType Jawflag;
+    uint16_t value = 1;
+    uint8_t axes = X;
+
+    if(jawControlByAxes[axes].MotorState == INIT_END)
+        messageToJawTask(Jawflag, ENC_Z, axes, &value);
+    else if(jawControlByAxes[axes].MotorState == UART_DEBUG)
+        printf("X:%d %d\r\n",getEncodeValue(axes),ADCgetValue(&hspi4, 6));
+}
+
+void yjaw_limitSwitch_callback(void)
+{
+    struct JawFlagType Jawflag;
+    uint16_t value = 0;
+   
+    if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11) == GPIO_PIN_RESET) value = 1;//falling
+    else value = 2;//rising 
+
+     messageToJawTask(Jawflag, LIMIT_SWITCH, Y, &value);    
+}
+
+void xjaw_limitSwitch_callback(void)
+{
+    struct JawFlagType Jawflag;
+    uint16_t value = 0;
+
+    if(HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_14) == GPIO_PIN_RESET)   value = 1;//falling
+    else value = 2;//rising 
+
+     messageToJawTask(Jawflag, LIMIT_SWITCH, X, &value);
+ }
+
+void plcSetJawParam(uint8_t *pData)
 {
     jawParameterByAxes[X].jawMinADSetting = (pData[69] << 8) + pData[68];//fetch jaw parameter
     jawParameterByAxes[X].jawMaxADSetting = (pData[71] << 8) + pData[70];
@@ -58,8 +179,32 @@ void setJawParam(uint8_t *pData)
     jawParameterByAxes[Y].jaw2ndEncCalibrationPB = (pData[105] << 8) + pData[104];
 }
 
+static int8_t planCheck(uint16_t planPos, uint8_t axes)
+{
+    uint16_t actualPlanPos = (uint16_t)(planPos/2.5);
+
+    if(planPos == jawControlByAxes[axes].oldPlanCmd) return 0;//pos no change 
+    if((actualPlanPos < jawControlByAxes[axes].homeEncodeValue - ENCODER_PULSES_PER_REVOLUTION) || (actualPlanPos > MAX_ENCODE_VAL))   
+        return -1; //pos error
+
+    return 1;//normal
+}
+
+static bool initSecPosCheck(uint8_t axes)
+{
+    if((secondPosFeedback.jawSecondPos[axes] < (initSecondPosCheck[axes]+SECOND_PERMIT_ERROR)) &&
+        (secondPosFeedback.jawSecondPos[axes] > (initSecondPosCheck[axes]-SECOND_PERMIT_ERROR)))
+        return 1;
+    else  return 0;
+}
+
+//static uint16_t initSecondPos[2] = {0,1833};
 void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axesType)
 {
+    int8_t planPosCheck = 0;
+    uint16_t jawEncInitVal = 0;
+    bool findZero = 0;
+
     //   if(axesType)    printf("jaw Y ");
     //   else    printf("jaw X ");
     //   if(pFlag->JawLimit[axesType])   printf("limit %d ", pFlag->JawLimit[axesType]);
@@ -103,15 +248,42 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axesType)
                 printf("level low!\r\n");
             }
 #endif
-        printf("%d jaw init move backward\r\n", axesType);
 #if 1
-        motorEnable(axesType);
-        jawControlByAxes[axesType].uartPIDCmd = SPEED_ADJ;
-        motor_pid_spd.Setpoint = 
-      //  motorCtrlByPWM(-10, axesType);
-        jawControlByAxes[axesType].MotorState = INIT_MOVE_FORWARD;
-        if(!jawControlByAxes[axesType].startMovingFlag) jawControlByAxes[axesType].location_timer = 0;
-        jawControlByAxes[axesType].startMovingFlag = 1;
+        if( initSecPosCheck(axesType) ) jawControlByAxes[axesType].MotorState = INIT_END;
+        else
+        {
+            motorEnable(axesType);
+            jawEncInitVal = (uint16_t)(secondPosFeedback.jawSecondPos[axesType]*paraK[axesType]+paraB[axesType]+0.5);
+            if((jawEncInitVal > 0)&&(jawEncInitVal < MAX_ENCODE_VAL)) setEncodeValue(jawEncInitVal, axesType);
+            else
+            {
+                printf("ENC%d initVal is invalid %d!\r\n", axesType, jawEncInitVal);
+                return;
+            }
+        
+            if(abs(jawEncInitVal - jawEncZero[axesType]) < ENCODER_PULSES_PER_REVOLUTION/2){
+                findZero = 1;
+                printf("jaw%d too close, directly find zero\r\n",axesType);
+            }   
+            jawControlByAxes[axesType].fSVG.StartPosition = (double)(jawEncInitVal / ENCODER_CNT_PER_MM);
+            if(findZero) jawControlByAxes[axesType].fSVG.TargetPosition = (double)(jawEncInitVal/ENCODER_CNT_PER_MM + ENCODER_PULSES_PER_REVOLUTION/ENCODER_CNT_PER_MM);
+            else jawControlByAxes[axesType].fSVG.TargetPosition = (double)(jawEncZero[axesType] / ENCODER_CNT_PER_MM);
+            jawControlByAxes[axesType].fSVG.Start = 1;
+            jawControlByAxes[axesType].fSVG.Enable = 1;
+            jawControlByAxes[axesType].uartPIDCmd = DOUBLE_ADJ;
+            
+            if(!jawControlByAxes[axesType].startMovingFlag)
+            {
+                jawControlByAxes[axesType].location_timer = 0;
+                jawControlByAxes[axesType].startMovingFlag = 1;
+            } 
+            if(findZero) jawControlByAxes[axesType].MotorState = INIT_END;
+            else jawControlByAxes[axesType].MotorState = INIT_MOVE_FORWARD;
+
+            printf("jaw%d init move backward %lf(%d) -> %lf(%d)\r\n", 
+            axesType, jawControlByAxes[axesType].fSVG.StartPosition, jawEncInitVal,
+            jawControlByAxes[axesType].fSVG.TargetPosition, jawEncZero[axesType]);
+        }
 #else
         jawFeedbackByAxes[axesType].jawStatusInfo |= 0x01;
 #endif
@@ -119,32 +291,34 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axesType)
     case INIT_MOVE_FORWARD:
         if (pFlag->masterCmd[axesType] == INIT_MOVE_FORWARD)
         {
-            printf("%d jaw init move forward\r\n", axesType);
-            motorCtrlByPWM(10, axesType);
+            uint16_t enc = getEncodeValue(axesType);
+            jawControlByAxes[axesType].fSVG.StartPosition = (double)enc/ENCODER_CNT_PER_MM;
+            jawControlByAxes[axesType].fSVG.TargetPosition = (double)(jawControlByAxes[axesType].fSVG.StartPosition + ENCODER_PULSES_PER_REVOLUTION/ENCODER_CNT_PER_MM);//forward move 1 turn to find Z*
+            jawControlByAxes[axesType].fSVG.Start = 1;
+            jawControlByAxes[axesType].fSVG.Enable = 1;
             jawControlByAxes[axesType].MotorState = INIT_END;
+            jawControlByAxes[axesType].location_timer = 0;
+            printf("jaw%d init move forward %lf(%d) -> %lf(%d)\r\n", 
+                axesType, jawControlByAxes[axesType].fSVG.StartPosition, enc, 
+                jawControlByAxes[axesType].fSVG.TargetPosition, enc+ENCODER_PULSES_PER_REVOLUTION);
         }
         break;    
     case INIT_END:
         if (pFlag->JawEncZ[axesType])
         {
-            setEncodeValue(jawControlByAxes[axesType].homeEncodeValue, axesType);
-            motorCtrlByPWM(0, axesType);
-           // jawControlByAxes[axesType].timer7Flag = 0;//stop moving
-            jawFeedbackByAxes[axesType].jawStatusInfo |= 0x01;                    // jaw init done
-            jawFeedbackByAxes[axesType].jawCurrentPos = getEncodeValue(axesType); // init end feedback init pos
-            printf("%d jaw init finished %u\r\n", axesType, jawFeedbackByAxes[axesType].jawCurrentPos);
+           // printf("ENC%d trigger Z!\r\n", axesType);
+            jawControlByAxes[axesType].startMovingFlag = 0;
         }
         break;
     case IDLE:
-        jawFeedbackByAxes[axesType].jawStatusInfo = 0;
-        motorDisable(axesType);
-        jawControlByAxes[X].startMovingFlag = jawControlByAxes[Y].startMovingFlag = 0;
-        if ((pFlag->masterCmd[axesType] > jawControlByAxes[axesType].homeEncodeValue) && (pFlag->masterCmd[axesType] != jawControlByAxes[axesType].oldPlanCmd))
-        { // get new plan cmd
-            printf("%c Jaw %d: \r\n", axesType ? 'Y' : 'X', pFlag->masterCmd[axesType]);
-            jawControlByAxes[axesType].posInPlan = pFlag->masterCmd[axesType]; // get 1st RI for prepare
-            jawControlByAxes[axesType].oldPlanCmd = jawControlByAxes[axesType].posInPlan;
-        }
+      //  jawControlByAxes[axesType].posInPlan = 31893; // only for test
+      //  jawControlByAxes[axesType].oldPlanCmd = jawControlByAxes[axesType].posInPlan;
+        rtFeedback.jawInfo[axesType] = 0;
+        jawControlByAxes[axesType].startMovingFlag = 0;
+
+        // get new plan pos
+        printf("Jaw%d prepare pos %d\r\n", axesType, pFlag->masterCmd[axesType]);
+        jawControlByAxes[axesType].posInPlan = pFlag->masterCmd[axesType]; // get 1st RI for prepare
         break;
 #if 0
         case LIMSWITCH_FALLING:
@@ -179,53 +353,59 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axesType)
             break;
 #endif
     case PREPARE_START:
-#if 1
-        motorEnable(axesType);
-        if (jawControlByAxes[axesType].posInPlan >= jawControlByAxes[axesType].homeEncodeValue)
+        planPosCheck = planCheck(jawControlByAxes[axesType].posInPlan, axesType);
+        if(planPosCheck > 0)//normal case
         {
+            motorEnable(axesType);
             jawControlByAxes[axesType].fSVG.StartPosition = (double)getEncodeValue(axesType) / ENCODER_CNT_PER_MM; 
             jawControlByAxes[axesType].fSVG.TargetPosition = jawControlByAxes[axesType].posInPlan/(ENCODER_CNT_PER_MM*2.5);//posInPlan*2.5 before send for precision
-           // jawControlByAxes[axesType].fSVG.TargetPosition = jawControlByAxes[axesType].posInPlan / ENCODER_CNT_PER_MM;
             jawControlByAxes[axesType].fSVG.Start = 1;
             jawControlByAxes[axesType].fSVG.Enable = 1;
             jawControlByAxes[axesType].uartPIDCmd = DOUBLE_ADJ;
-            printf("%d start %lf end %lf\r\n", axesType, jawControlByAxes[axesType].fSVG.StartPosition, jawControlByAxes[axesType].fSVG.TargetPosition);
 
-         /*   if (!jawControlByAxes[X].timer7Flag && !jawControlByAxes[Y].timer7Flag)
-            {
-                location_timer = 0;
-                //  HAL_TIM_Base_Start_IT(&htim7);
-            }*/
-            if(!jawControlByAxes[axesType].startMovingFlag) jawControlByAxes[axesType].location_timer = 0;
+            jawControlByAxes[axesType].location_timer = 0;
             jawControlByAxes[axesType].startMovingFlag = 1;
             jawControlByAxes[axesType].MotorState = PREPARE_END;
+            printf("Jaw%d start %lf end %lf\r\n", axesType, jawControlByAxes[axesType].fSVG.StartPosition, jawControlByAxes[axesType].fSVG.TargetPosition);
         }
-#endif
+        else if(planPosCheck == 0)//plan pos no change, power on but not move
+        {
+            motorEnable(axesType);
+            rtFeedback.jawInfo[axesType] |= 0x04; // jaw prepare done
+            jawControlByAxes[axesType].MotorState = SERVO;
+            printf("no move, prepare done %d\r\n", axesType);
+        }
+        else printf("jaw%d plan pos is error %d\r\n", axesType, jawControlByAxes[axesType].posInPlan);
         break;
     case PREPARE_END:
         if (pFlag->masterCmd[axesType] == PREPARE_END)
         {
-            jawFeedbackByAxes[axesType].jawStatusInfo |= 0x04; // jaw prepare done
+            //jawControlByAxes[axesType].startMovingFlag = 0;
+            rtFeedback.jawInfo[axesType] |= 0x04; // jaw prepare done
             jawControlByAxes[axesType].MotorState = SERVO;
             printf("prepare done %d\r\n", axesType);
         }
         break;
     case SERVO:
-        if ((pFlag->masterCmd[axesType] > jawControlByAxes[axesType].homeEncodeValue) && (pFlag->masterCmd[axesType] != jawControlByAxes[axesType].oldPlanCmd))
+        planPosCheck = planCheck(pFlag->masterCmd[axesType], axesType);
+        if(planPosCheck > 0)  //new pos
         { // get new plan cmd
-            printf("%c Jaw %d\r\n", axesType ? 'Y' : 'X', pFlag->masterCmd[axesType]);
-            jawFeedbackByAxes[axesType].jawStatusInfo &= ~0x04;
+           // printf("%c Jaw %d\r\n", axesType ? 'Y' : 'X', pFlag->masterCmd[axesType]);
+            rtFeedback.jawInfo[axesType] &= ~0x04;
             jawControlByAxes[axesType].posInPlan = pFlag->masterCmd[axesType]; // get RI for servo
             jawControlByAxes[axesType].oldPlanCmd = jawControlByAxes[axesType].posInPlan;
 
             jawControlByAxes[axesType].fSVG.StartPosition = (double)getEncodeValue(axesType) / ENCODER_CNT_PER_MM; // ENC: 2000
             jawControlByAxes[axesType].fSVG.TargetPosition = jawControlByAxes[axesType].posInPlan/(ENCODER_CNT_PER_MM*2.5);//posInPlan*2.5 before send for precision
-          //  jawControlByAxes[axesType].fSVG.TargetPosition = jawControlByAxes[axesType].posInPlan / ENCODER_CNT_PER_MM;
             jawControlByAxes[axesType].fSVG.Start = 1;
             jawControlByAxes[axesType].fSVG.Enable = 1;
             jawControlByAxes[axesType].uartPIDCmd = DOUBLE_ADJ;
+            jawControlByAxes[axesType].location_timer = 0;
+            jawControlByAxes[axesType].startMovingFlag = 1;
             printf("start %lf end %lf\r\n", jawControlByAxes[axesType].fSVG.StartPosition, jawControlByAxes[axesType].fSVG.TargetPosition);
         }
+        else if(planPosCheck == 0)  printf("servo no move\r\n");
+        else printf("jaw%d plan pos is error %d", axesType, pFlag->masterCmd[axesType]);
         break;
     case ERROR_STATE:
         osDelay(1);
@@ -235,180 +415,11 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axesType)
     }
 }
 
-int8_t ExecuteConsoleCmd(uint16_t _consoleCmd, uint16_t _consolePara, double _consoleFloat)
-{
-    bool axes = _consolePara;
-    printf("recv cmd:%d axes:%c | ", _consoleCmd, axes ? 'Y' : 'X');
-
-    switch (_consoleCmd)
-    {
-    case CMD_POS_KP_MODE:
-        motor_pid_pos.Kp = _consoleFloat;
-        printf(" pkp: %lf\r\n", motor_pid_pos.Kp);
-        break;
-    case CMD_POS_KI_MODE:
-        motor_pid_pos.Ki = _consoleFloat;
-        printf(" pki: %lf\r\n", motor_pid_pos.Ki);
-        break;
-    case CMD_POS_KD_MODE:
-        motor_pid_pos.Kd = _consoleFloat;
-        printf(" pkd: %lf\r\n", motor_pid_pos.Kd);
-        break;
-    case CMD_SPD_KP_MODE:
-        motor_pid_spd.Kp = _consoleFloat;
-        printf(" skp: %lf\r\n", motor_pid_spd.Kp);
-        break;
-    case CMD_SPD_KI_MODE:
-        motor_pid_spd.Ki = _consoleFloat;
-        printf(" ski: %lf\r\n", motor_pid_spd.Ki);
-        break;
-    case CMD_SPD_KD_MODE:
-        motor_pid_spd.Kd = _consoleFloat;
-        printf(" skd: %lf\r\n", motor_pid_spd.Kd);
-        break;
-    case CMD_POSITION_MODE:
-        initSVG(&jawControlByAxes[axes].fSVG, axes);
-        uint16_t tmpStart = getEncodeValue(axes);
-        jawControlByAxes[axes].fSVG.StartPosition = (double)tmpStart / ENCODER_CNT_PER_MM;      
-        jawControlByAxes[axes].fSVG.TargetPosition = jawControlByAxes[axes].fSVG.StartPosition + _consoleFloat; // 1 turn = 1024cnt = 5mm
-        jawControlByAxes[axes].fSVG.Start = 1;
-        jawControlByAxes[axes].fSVG.Enable = 1;
-        jawControlByAxes[axes].uartPIDCmd = DOUBLE_ADJ;
-        jawControlByAxes[axes].location_timer = 0;
-        //    if(!jawControlByAxes[X].timer7Flag && !jawControlByAxes[Y].timer7Flag)    HAL_TIM_Base_Start_IT(&htim7);
-        jawControlByAxes[axes].startMovingFlag = 1;
-        jawControlByAxes[!axes].startMovingFlag = 0;
-        jawControlByAxes[axes].posInPlan = (uint16_t)(jawControlByAxes[axes].fSVG.TargetPosition*ENCODER_CNT_PER_MM);
-        printf(" pos: %lf(%d) %lf(%d)\r\n", jawControlByAxes[axes].fSVG.StartPosition,tmpStart, 
-            jawControlByAxes[axes].fSVG.TargetPosition,jawControlByAxes[axes].posInPlan);
-        jawControlByAxes[axes].posInPlan = (uint16_t)(jawControlByAxes[axes].fSVG.TargetPosition*ENCODER_CNT_PER_MM * 2.5);//to keep the same as plan
-        break;
-    case CMD_SPEED_MODE:
-        motor_pid_spd.Setpoint = _consoleFloat;
-        motor_pid_spd.Integral = 0;
-        motor_pid_spd.PreviousError = 0;
-        jawControlByAxes[axes].uartPIDCmd = SPEED_ADJ;
-        jawControlByAxes[axes].location_timer = 0;
-        //      if(!jawControlByAxes[X].timer7Flag && !jawControlByAxes[Y].timer7Flag)    HAL_TIM_Base_Start_IT(&htim7);
-        jawControlByAxes[axes].startMovingFlag = 1;
-        jawControlByAxes[!axes].startMovingFlag = 0;
-        printf(" speed: %lf %d %d\r\n", motor_pid_spd.Setpoint, jawControlByAxes[X].startMovingFlag, jawControlByAxes[Y].startMovingFlag);
-        break;
-    case CMD_POWER_MODE:
-        if (_consoleFloat > 0)
-        {
-            printf("enable motor\r\n");
-            motorPowerCtrl(1, axes); // open motor power supply
-            BrakeCtrl(1, axes);      // loose brake
-            startPWMOutput(axes);
-            startEncodeTim(axes);
-        }
-        else
-        {
-            printf("disable motor\r\n");
-            //   HAL_TIM_Base_Stop_IT(&htim7);
-            jawControlByAxes[axes].startMovingFlag = 0;
-            jawControlByAxes[axes].uartPIDCmd = 0;
-            jawControlByAxes[axes].location_timer = 0;
-            stopEncodeTim(axes);
-            stopPWMOutput(axes);
-            motorCtrlByPWM(0, axes);
-            motorPowerCtrl(0, axes); // close motor power supply
-            BrakeCtrl(0, axes);      // tight brake
-        }
-        break;
-    case CMD_PWM_MODE:
-        //  printf("pwm duty %lf\r\n",_consoleFloat);
-        motorCtrlByPWM(_consoleFloat, axes);
-        break;
-    case CMD_DISPLAY_MODE:
-        // printf("%lu\r\n",location_timer);
-        for (int i = 0; i < SAMP_BUF_SIZE; i++)
-        {
-            // prtBuf[i] = i;
-            printf("%f,%f\r\n", prtBufCmd[i],prtBufAct[i]);
-        }
-     /*   printf("======\r\n");
-        for (int i = 0; i < SAMP_BUF_SIZE; i++)
-        {
-            // prtBuf[i] = i;
-            printf("%f\r\n", prtBufAct[i]);
-            //  printf("%f\r\n", prtBuf0[i]);
-        }*/
-        jawControlByAxes[axes].startMovingFlag = 0;
-        memset(prtBufCmd, 0, SAMP_BUF_SIZE);
-        memset(prtBufAct, 0, SAMP_BUF_SIZE);
-        break;
-    case CMD_ENCODE_MODE:
-        if (_consoleFloat > 0)
-        { // set encoder
-            if (_consoleFloat < 65535)
-                setEncodeValue((uint16_t)_consoleFloat, axes);
-            else
-                setEncodeValue(65535, axes);
-        }
-        else
-        { // get current encoder
-            printf("ENC:%u\r\n", getEncodeValue(axes));
-        }
-        break;
-    case CMD_CLEAR_STATUS:
-        printf("clear jaw fsm state\r\n");
-        jawControlByAxes[axes].MotorState = 0;
-        break;
-    default:
-        break;
-    }
-
-    return 0;
-}
-
-static int8_t cmd_motor_debug(uint8_t argc, uint8_t **argv) //uart cmd example: motor_debug pow Y 0 = disable Y Jaw
-{                                                           //motor_debug pos Y 10 = Y Jaw move 10mm
-    uint16_t type, axes;                                    //motor_debug dsp Y XX = print data in CmdBuf and ActBuf(XX can be any value)
-    double value;
-    char *validCmd[] = {"pkp", "pki", "pkd", "skp", "ski", "skd", "pwm", "spd", "pos", "pow", "dsp", "enc", "sta"};
-    uint8_t cmdNum = sizeof(validCmd) / sizeof(char *);
-
-    if (argc < 3)
-    {
-        printf("argv too few\r\n");
-        return -1;
-    }
-    // printf("%s %s %s\r\n", argv[1],argv[2],argv[3]);
-
-    for (uint8_t i = 0; i < cmdNum; i++)
-    {
-        if (strstr(argv[1], validCmd[i]) != NULL)
-        {
-            type = i;
-            break;
-        }
-    }
-    if (type >= cmdNum)
-    {
-        printf("Invalid cmd type %s!\r\n", argv[1]);
-        return -1;
-    }
-    if (strcmp("X", argv[2]) == 0)
-        axes = 0;
-    else if (strcmp("Y", argv[2]) == 0)
-        axes = 1;
-    else
-    {
-        printf("Invalid axes %s!\r\n", argv[2]);
-        return -1;
-    }
-
-    return ExecuteConsoleCmd(type, axes, strtod(argv[3], NULL));
-}
-MSH_CMD_EXPORT_ALIAS(cmd_motor_debug, motor_debug, motor debug);
-
-void doubleLoopPID(uint8_t axesType)
+bool doubleLoopPID(uint8_t axesType)
 {
     uint16_t crtPos = getEncodeValue(axesType);
     int32_t encoderDelta = crtPos - jawControlByAxes[axesType].encoderLast;
-    jawFeedbackByAxes[axesType].jawCurrentPos = jawControlByAxes[axesType].encoderLast = crtPos; // update encode feedback 
+    rtFeedback.jawRTPos[axesType] = jawControlByAxes[axesType].encoderLast = crtPos; // update encode feedback 
     int8_t ret =  SVG(&jawControlByAxes[axesType].fSVG);
     if(ret < 0)
     {
@@ -429,6 +440,7 @@ void doubleLoopPID(uint8_t axesType)
     //printf("pos:%d %lf\r\n",ret, jawControlByAxes[axesType].fSVG.Position);
     uint16_t pulse = (uint16_t)(jawControlByAxes[axesType].fSVG.Position * ENCODER_CNT_PER_MM + 
         0.5 * jawControlByAxes[axesType].fSVG.moveDirection);
+    #if 0
     if(abs(pulse - crtPos) > PERMIT_FOLLOWING_ERR){
         motorDisable(axesType);
         jawControlByAxes[axesType].startMovingFlag = 0;
@@ -437,107 +449,97 @@ void doubleLoopPID(uint8_t axesType)
         printf("following error(%d - %d = %d)!\r\n", pulse, crtPos, pulse - crtPos);
         return;
     }  
-    float posLoopOutput = PositionPIDCtrl(crtPos, pulse, &motor_pid_pos);
+    #endif
+    float posLoopOutput = PositionPIDCtrl(crtPos, pulse, &motor_pid_pos[axesType]);
     
     float actSpeed = (float)encoderDelta / ENCODER_PULSES_PER_REVOLUTION * 250 * 60; // rpm
     // printf("dlt %f ", (float)encoderDelta);
     float speedLoopOutput;
     if (jawControlByAxes[axesType].location_timer > 2)
     {
-        speedLoopOutput = SpeedPIDCtrl(actSpeed, posLoopOutput, &motor_pid_spd);
+        speedLoopOutput = SpeedPIDCtrl(actSpeed, posLoopOutput, &motor_pid_spd[axesType]);
         motorCtrlByPWM(speedLoopOutput, axesType);
      //   printf("%lf\r\n",speedLoopOutput);
     }
-   // printf("pos %d %d\r\n",abs(jawControlByAxes[axesType].posInPlan - crtPos), motor_pid_pos.deadZone);
-    uint16_t actualPlanPos = (uint16_t)(jawControlByAxes[axesType].posInPlan/2.5);
-    if ((jawControlByAxes[axesType].MotorState == PREPARE_END) && (abs(actualPlanPos - crtPos) < motor_pid_pos.deadZone))
+
+    bool reachFlag = 0;
+    if((jawControlByAxes[axesType].fSVG.State == STATE_STANDSTILL)&&(posLoopOutput < 1e-6)&&(speedLoopOutput < 1e-6))
     {
-        struct JawFlagType JawPrepareFinish;
-        memset(&JawPrepareFinish, 0, sizeof(struct JawFlagType));
-        JawPrepareFinish.axes = axesType;
-        JawPrepareFinish.masterCmd[axesType] = PREPARE_END;
-        osMessageQueuePut(motor_signal_queueHandle, &JawPrepareFinish, 0, 0);
+        uint16_t targetEnc = (uint16_t)(jawControlByAxes[axesType].fSVG.TargetPosition*ENCODER_CNT_PER_MM);
+        if(abs(targetEnc - crtPos) < motor_pid_pos[axesType].deadZone)    reachFlag = 1;
     }
     #if 0
     if (jawControlByAxes[axesType].location_timer < SAMP_BUF_SIZE)
     {
-        prtBufCmd[jawControlByAxes[axesType].location_timer] = abs(actualPlanPos - crtPos);
-        prtBufAct[jawControlByAxes[axesType].location_timer] = motor_pid_pos.deadZone;
+        prtBufCmd[jawControlByAxes[axesType].location_timer] = posLoopOutput;
+        prtBufAct[jawControlByAxes[axesType].location_timer] = speedLoopOutput;
     }
     #endif
-    #if 0
-    if(jawControlByAxes[axesType].location_timer < SAMP_BUF_SIZE){
-        prtBufCmd[jawControlByAxes[axesType].location_timer] = jawControlByAxes[axesType].fSVG.Speed*60*ENCODER_CNT_PER_MM/ENCODER_PULSES_PER_REVOLUTION;//mm/s->rpm
-        prtBufAct[jawControlByAxes[axesType].location_timer] = actSpeed;
-    }
-    #endif
+
+    return reachFlag;
 }
 
-void PID(uint8_t axesType)
+bool PID(uint8_t axesType)
 {
     static float actSpeed;
     __IO uint16_t crtPos;
     int32_t encoderDelta;
+    bool reachFlag = 0;
 
     switch (jawControlByAxes[axesType].uartPIDCmd)
     {
     case SPEED_ADJ:
-        // if((location_timer % 20) == 0){
         crtPos = getEncodeValue(axesType);
         encoderDelta = crtPos - jawControlByAxes[axesType].encoderLast;
         jawControlByAxes[axesType].encoderLast = crtPos;
         actSpeed = (float)encoderDelta / ENCODER_PULSES_PER_REVOLUTION * 250 * 60; // rpm
-        //if ((jawControlByAxes[axesType].location_timer % 50) == 0)
-            // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
-        float speedLoopOutput = SpeedPIDCtrl(actSpeed, motor_pid_spd.Setpoint, &motor_pid_spd);
+       
+        float speedLoopOutput = SpeedPIDCtrl(actSpeed, motor_pid_spd[axesType].Setpoint, &motor_pid_spd[axesType]);
         motorCtrlByPWM(speedLoopOutput, axesType);
-        //  }
 
+        if(fabs(motor_pid_spd[axesType].Setpoint - actSpeed) < motor_pid_spd[axesType].deadZone)    reachFlag = 1;
+#if 0
         if (jawControlByAxes[axesType].location_timer < SAMP_BUF_SIZE){
             prtBufCmd[jawControlByAxes[axesType].location_timer] = speedLoopOutput;
             prtBufAct[jawControlByAxes[axesType].location_timer] = actSpeed;//crtPos;
         }  
+#endif
         break;
     case DOUBLE_ADJ:
-        // if ((location_timer % 500) == 0) HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
-        doubleLoopPID(axesType);
+        reachFlag = doubleLoopPID(axesType);
         break;
     default:
         break;
     }
+
+    return reachFlag;
 }
-#if 1
+
 void JAWCtrlTask(void *argument)
 {
     /* USER CODE BEGIN JAWCtrlTask */
-    struct JawFlagType JawflagInitial;
-    //    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_6, GPIO_PIN_RESET);//X power
-    //    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_7, GPIO_PIN_SET);//Y power
-    //    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);//X break
-    //    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);//Y break
-    //    HAL_TIM_Base_Start_IT(&htim15);
-    //    HAL_TIM_PWM_Start_IT(&htim15, TIM_CHANNEL_1);
-    //    motorCtrlByPWM(5, Y);
-    memset(&JawflagInitial, 0, sizeof(struct JawFlagType));
-    osMessageQueuePut(motor_signal_queueHandle, &JawflagInitial, 0, 0);
+    struct JawFlagType JawRecvCmd;
+   
+    memset(&JawRecvCmd, 0, sizeof(struct JawFlagType));
+    osMessageQueuePut(motor_signal_queueHandle, &JawRecvCmd, 0, 0);
     jawDeviceInit();
 
     /* Infinite loop */
     for (;;)
     {
-        osMessageQueueGet(motor_signal_queueHandle, &JawflagInitial, 0, osWaitForever);
-        //  printf("%u\r\n",getEncodeValue(Y));
-        switch(JawflagInitial.axes)
+        osMessageQueueGet(motor_signal_queueHandle, &JawRecvCmd, 0, osWaitForever);
+      
+        switch(JawRecvCmd.axes)
         {
             case X:
-                JawCtrlLoop(&JawflagInitial, X);
+                JawCtrlLoop(&JawRecvCmd, X);
             break;
             case Y:
-                JawCtrlLoop(&JawflagInitial, Y);
+                JawCtrlLoop(&JawRecvCmd, Y);
             break;
             case XY:
-                JawCtrlLoop(&JawflagInitial, X);
-                JawCtrlLoop(&JawflagInitial, Y);
+                JawCtrlLoop(&JawRecvCmd, X);
+                JawCtrlLoop(&JawRecvCmd, Y);
             break;
             default: break;
         }
@@ -548,66 +550,83 @@ void JAWCtrlTask(void *argument)
 
 void movement_calculation_task(void)
 {
+    uint16_t cmd;
+    struct JawFlagType JawFinishStep;
+    bool reachFlag = 0;
+    static JawCtlFsm oldMotorState[XY] = {0};
+
     for (;;)
     {
-        for (uint8_t axes = 0; axes < 2; axes++)
+        for (uint8_t axes = 0; axes < XY; axes++)
         {
             if (jawControlByAxes[axes].startMovingFlag)
             {
-                if (jawControlByAxes[axes].MotorState == INIT_MOVE_FORWARD)
+                reachFlag = PID(axes); 
+                switch (jawControlByAxes[axes].MotorState)
                 {
-                   // printf("time: %d %d\r\n", axes,jawControlByAxes[axes].location_timer);
-                    #if 1
-                    if (jawControlByAxes[axes].location_timer > 500)
+                case INIT_MOVE_FORWARD:
+                    if(reachFlag)
                     {
-                          //  motorCtrlByPWM(0, axes);
-                        jawControlByAxes[axes].startMovingFlag = 0; // stop moving
-                        struct JawFlagType JawInitFinish;
-                        memset(&JawInitFinish, 0, sizeof(struct JawFlagType));
-                        JawInitFinish.axes = axes;
-                        JawInitFinish.masterCmd[axes] = INIT_MOVE_FORWARD;
-                        osMessageQueuePut(motor_signal_queueHandle, &JawInitFinish, 0, 0);
+                        cmd = INIT_MOVE_FORWARD;
+                        messageToJawTask(JawFinishStep, COMMAND, axes, &cmd);
                     }
-                    #else
-                    if ((jawControlByAxes[axes].location_timer % 5) == 0)
+                    // else{
+                    //     if(jawControlByAxes[axes].location_timer > 15000) //wait for 1 minute
+                    //     {
+                    //         rtFeedback.jawInfo[axes] |= 0x02;
+                    //         printf("jaw%d init timeout!\r\n",axes);
+                    //     }
+                    // }
+                break;
+                case PREPARE_END:
+                    if(reachFlag)
                     {
-                        uint16_t CurrentEncoderFindZero = getEncodeValue(axes);
-                       
-                        // if (jawControlByAxes[axes].location_timer < SAMP_BUF_SIZE) {
-                        //     if (axes == 1) {
-                        //         prtBufCmd[jawControlByAxes[axes].location_timer] = CurrentEncoderFindZero;
-                        //         prtBufAct[jawControlByAxes[axes].location_timer] = jawControlByAxes[axes].LastEncoderFindZero;
-                        //     }
-                        // }
-                        
-                        if ((CurrentEncoderFindZero != 0)&&(CurrentEncoderFindZero == jawControlByAxes[axes].LastEncoderFindZero))//reach back limit
-                        {
-                          //  motorCtrlByPWM(0, axes);
-                            jawControlByAxes[axes].timer7Flag = 0;//stop moving
-                            //  if(!jawControlByAxes[axes].passZEnc)   setEncodeValue(jawCtrlByAxes[axes].homeEncodeValue, axes);
-
-                            struct JawFlagType JawInitFinish;
-                            memset(&JawInitFinish, 0, sizeof(struct JawFlagType));
-                            JawInitFinish.axes = axes;
-                            JawInitFinish.masterCmd[axes] = INIT_MOVE_FORWARD;
-                            osMessageQueuePut(motor_signal_queueHandle, &JawInitFinish, 0, 0);
-                        } else {
-                            jawControlByAxes[axes].LastEncoderFindZero = CurrentEncoderFindZero;
-                        }
+                        cmd = PREPARE_END;
+                        messageToJawTask(JawFinishStep, COMMAND, axes, &cmd);
                     }
-                    #endif
+                    // else{
+                    //     if(jawControlByAxes[axes].location_timer > 2500) //wait for 10s
+                    //     {
+                    //         rtFeedback.jawInfo[axes] |= 0x08;
+                    //         printf("jaw%d prepare timeout!\r\n",axes);
+                    //     }
+                    // }  
+                break;
+                default:    break;
                 }
-                else{
-                    PID(axes);
-                }    
                 jawControlByAxes[axes].location_timer++;
             }
-            //        if (location_timer < SAMP_BUF_SIZE) {
-            //                        if (axes == 1) {
-            //                            prtBufCmd[location_timer] = jawCtrlByAxes[axes].timer7Flag;
-            //                           // prtBufAct[location_timer] = jawCtrlByAxes[axes].LastEncoderFindZero;
-            //                        }
-            //             }
+            else
+            {
+                if(oldMotorState[axes] != jawControlByAxes[axes].MotorState)
+                {
+                    switch (jawControlByAxes[axes].MotorState)
+                    {
+                    case INIT_END:
+                        //use second pos to check if init pos is right  
+                        setEncodeValue(jawControlByAxes[axes].homeEncodeValue, axes);
+                        motorCtrlByPWM(0, axes);
+                        rtFeedback.jawInfo[axes] |= 0x01;                    // jaw init done
+                        rtFeedback.jawRTPos[axes] = getEncodeValue(axes); // init end feedback init pos    
+                        motorParamInit(axes);
+                        // if( initSecPosCheck(axes) ){
+                        //     printf("jaw%d init finished %d %d\r\n", axes, rtFeedback.jawRTPos[axes],secondPosFeedback.jawSecondPos[axes]);
+                        // }    
+                        // else{
+                        //     rtFeedback.jawInfo[axes] |= 0x02; 
+                        //     printf("jaw%d init failed %d\r\n", axes, secondPosFeedback.jawSecondPos[axes]);
+                        // }
+                    break;
+                    case IDLE:
+                        printf("jaw%d idle\r\n", axes);
+                        motorDisable(axes);
+                    break;
+                    default:    break;
+                    }
+                    oldMotorState[axes] = jawControlByAxes[axes].MotorState;
+                  //  printf("%d %d\r\n",axes, oldMotorState[axes]);
+                }
+            }     
         }
         osDelay(4);
     }
@@ -651,4 +670,148 @@ static int8_t jaw_thread_init(void)
     return 0;
 }
 INIT_APP_EXPORT(jaw_thread_init);
-#endif
+
+int8_t ExecuteConsoleCmd(uint16_t _consoleCmd, uint16_t _consolePara, double _consoleFloat)
+{
+    bool axes = _consolePara;
+    printf("recv cmd:%d axes:%c | ", _consoleCmd, axes ? 'Y' : 'X');
+
+    switch (_consoleCmd)
+    {
+    case CMD_POS_KP_MODE:
+        motor_pid_pos[axes].Kp = _consoleFloat;
+        printf(" pkp: %lf\r\n", motor_pid_pos[axes].Kp);
+        break;
+    case CMD_POS_KI_MODE:
+        motor_pid_pos[axes].Ki = _consoleFloat;
+        printf(" pki: %lf\r\n", motor_pid_pos[axes].Ki);
+        break;
+    case CMD_POS_KD_MODE:
+        motor_pid_pos[axes].Kd = _consoleFloat;
+        printf(" pkd: %lf\r\n", motor_pid_pos[axes].Kd);
+        break;
+    case CMD_SPD_KP_MODE:
+        motor_pid_spd[axes].Kp = _consoleFloat;
+        printf(" skp: %lf\r\n", motor_pid_spd[axes].Kp);
+        break;
+    case CMD_SPD_KI_MODE:
+        motor_pid_spd[axes].Ki = _consoleFloat;
+        printf(" ski: %lf\r\n", motor_pid_spd[axes].Ki);
+        break;
+    case CMD_SPD_KD_MODE:
+        motor_pid_spd[axes].Kd = _consoleFloat;
+        printf(" skd: %lf\r\n", motor_pid_spd[axes].Kd);
+        break;
+    case CMD_POSITION_MODE:
+        motorParamInit(axes);
+        uint16_t tmpStart = getEncodeValue(axes);
+        jawControlByAxes[axes].fSVG.StartPosition = (double)tmpStart / ENCODER_CNT_PER_MM;      
+        jawControlByAxes[axes].fSVG.TargetPosition = jawControlByAxes[axes].fSVG.StartPosition + _consoleFloat; // 1 turn = 1024cnt = 5mm
+        jawControlByAxes[axes].fSVG.Start = 1;
+        jawControlByAxes[axes].fSVG.Enable = 1;
+        jawControlByAxes[axes].uartPIDCmd = DOUBLE_ADJ;
+        jawControlByAxes[axes].location_timer = 0;
+        jawControlByAxes[axes].startMovingFlag = 1;
+        jawControlByAxes[!axes].startMovingFlag = 0;
+        uint16_t tmpTarget = (uint16_t)(jawControlByAxes[axes].fSVG.TargetPosition*ENCODER_CNT_PER_MM);
+        printf(" pos: %lf(%d) %lf(%d)\r\n", jawControlByAxes[axes].fSVG.StartPosition,tmpStart,jawControlByAxes[axes].fSVG.TargetPosition,tmpTarget);
+       // jawControlByAxes[axes].posInPlan = (uint16_t)(jawControlByAxes[axes].fSVG.TargetPosition*ENCODER_CNT_PER_MM * 2.5);//to keep the same as plan
+        break;
+    case CMD_SPEED_MODE:
+        motorParamInit(axes);
+        motor_pid_spd[axes].Setpoint = _consoleFloat;
+        jawControlByAxes[axes].uartPIDCmd = SPEED_ADJ;
+        jawControlByAxes[axes].location_timer = 0;
+        jawControlByAxes[axes].startMovingFlag = 1;
+        jawControlByAxes[!axes].startMovingFlag = 0;
+        printf(" speed: %lf %d %d\r\n", motor_pid_spd[axes].Setpoint, jawControlByAxes[X].startMovingFlag, jawControlByAxes[Y].startMovingFlag);
+        break;
+    case CMD_POWER_MODE:
+        if (_consoleFloat > 0)
+        {
+            printf("enable motor\r\n");
+            motorEnable(axes);
+        }
+        else
+        {
+            printf("disable motor\r\n");
+            jawControlByAxes[axes].startMovingFlag = 0;
+            jawControlByAxes[axes].uartPIDCmd = 0;
+            jawControlByAxes[axes].location_timer = 0;
+            motorDisable(axes);      // tight brake
+        }
+        break;
+    case CMD_PWM_MODE:
+        printf("pwm duty %lf\r\n",_consoleFloat);
+        motorCtrlByPWM(_consoleFloat, axes);
+        break;
+    case CMD_DISPLAY_MODE:
+        for (int i = 0; i < SAMP_BUF_SIZE; i++)
+        {
+            printf("%f,%f\r\n", prtBufCmd[i],prtBufAct[i]);
+        }
+        jawControlByAxes[axes].startMovingFlag = 0;
+        memset(prtBufCmd, 0, SAMP_BUF_SIZE);
+        memset(prtBufAct, 0, SAMP_BUF_SIZE);
+        break;
+    case CMD_ENCODE_MODE:// 0: read ENC | >0: set ENC
+        if (_consoleFloat > 0)
+        { 
+            if (_consoleFloat < 65535)  setEncodeValue((uint16_t)_consoleFloat, axes);
+            else    setEncodeValue(65535, axes);
+        }
+        printf("ENC:%u\r\n", getEncodeValue(axes));
+        break;
+    case CMD_FSM_STATUS://   0: read status | [1, 99]: clear current status | [100, 110]: set status
+        if(_consoleFloat > 0)  jawControlByAxes[axes].MotorState = (uint16_t)_consoleFloat;
+        printf("current jaw fsm state %d\r\n", jawControlByAxes[axes].MotorState);  
+        break;
+    case CMD_SECOND_POS:
+        printf("second position %d\r\n",secondPosFeedback.jawSecondPos[axes]);
+        break;
+    default:    break;
+    }
+
+    return 0;
+}
+
+static int8_t cmd_motor_debug(uint8_t argc, uint8_t **argv) //uart cmd example: motor_debug pow Y 0 = disable Y Jaw
+{                                                           //motor_debug pos Y 10 = Y Jaw move 10mm
+    uint16_t type, axes;                                    //motor_debug dsp Y XX = print data in CmdBuf and ActBuf(XX can be any value)
+    double value;
+    char *validCmd[] = {"pkp", "pki", "pkd", "skp", "ski", "skd", "pwm", "spd", "pos", "pow", "dsp", "enc", "sta", "adc"};
+    uint8_t cmdNum = sizeof(validCmd) / sizeof(char *);
+
+    if (argc < 3)
+    {
+        printf("argv too few\r\n");
+        return -1;
+    }
+    // printf("%s %s %s\r\n", argv[1],argv[2],argv[3]);
+
+    for (uint8_t i = 0; i < cmdNum; i++)
+    {
+        if (strstr(argv[1], validCmd[i]) != NULL)
+        {
+            type = i;
+            break;
+        }
+    }
+    if (type >= cmdNum)
+    {
+        printf("Invalid cmd type %s!\r\n", argv[1]);
+        return -1;
+    }
+    if (strcmp("X", argv[2]) == 0)
+        axes = 0;
+    else if (strcmp("Y", argv[2]) == 0)
+        axes = 1;
+    else
+    {
+        printf("Invalid axes %s!\r\n", argv[2]);
+        return -1;
+    }
+
+    return ExecuteConsoleCmd(type, axes, strtod(argv[3], NULL));
+}
+MSH_CMD_EXPORT_ALIAS(cmd_motor_debug, motor_debug, motor debug);

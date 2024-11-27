@@ -285,7 +285,7 @@ void sendCPtoFPGA(uint16_t beamIndex, uint16_t RIIndex)
     pBeamData += 2; //skip current RI head (ControlPoint index)
 #ifdef TEST
     rtBeamData.faultInfo2 = 0;
-    for(UINT8 i = 0; i < RT_ARM_UPLOAD_POS_LEN; i+=2){
+    for(UINT8 i = 0; i < RT_FPGA_UPLOAD_POS_LEN+4; i+=2){
         rtBeamData.rtPosUpload[i/2] = (pBeamData[i+1] <<8) + pBeamData[i];
         //printf("**** 0x%x 0x%x 0x%x====", recvBuf[i], recvBuf[i+1], rtDataUpload[i/2]);
         //  rtDataUpload[i/2] = 1;
@@ -690,8 +690,6 @@ void calCarrierTrajectory(void)
     printf("carrier calculate finish!\r\n");
 #endif
 }
-//uint8_t aaaa[RT_DOWNLOAD_PAYLOAD_LEN];
-//uint8_t a;
 static bool calCarrierFlag0 = 1;
 #endif
 
@@ -727,10 +725,10 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
           //  printf("F0\r\n");
             for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
             {   //RT 0 - 165 ：82 leaf and carrier pos
-                rtBeamData.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
+                rtFeedback.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
             }
-            rtBeamData.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
-            rtBeamData.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
+            rtFeedback.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
+            rtFeedback.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
 
             for (i = 0; i < 164; i += 2) 
             {  //NRT 0 - 163 ：82 leaf second pos
@@ -745,10 +743,10 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
           //  printf("F1\r\n");
             for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
             {   //RT 0 - 165 ：82 leaf and carrier pos
-                rtBeamData.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
+                rtFeedback.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
             }
-            rtBeamData.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
-            rtBeamData.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
+            rtFeedback.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
+            rtFeedback.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
 
             for (i = 0; i < (NRT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
             {//NRT 0 - 165 ：82 leaf and carrier interlock
@@ -782,22 +780,22 @@ static int8_t realtime_ethercat_data_process(void)
     }
  
 #ifdef TEST
-    rtBeamData.faultInfo1 = 0x50;
+    rtFeedback.faultInfo1 = 0x50;
   //  memcpy(&send->InfoIn[0], &recv->InfoOut[0], sizeof(UINT16) * 8);         //rt upload， echo
     memcpy(send, recv, sizeof(UINT16) * 8);
 #else
-    send->InU16_CrtFsmState = rtBeamData.faultInfo1&0x000f;
+    send->InU16_CrtFsmState = rtFeedback.faultInfo1&0x000f;
     memcpy(&send->InU16_BeamIndexFB, &recv->OutU16_BeamIndex, sizeof(uint16_t) * 7);         //rt upload， echo
 #endif
     send->InU16_PlanCmdFB = recv->OutU16_PlanCmd;
-    send->InU16_FaultInfo1 = rtBeamData.faultInfo1&0x00f0;
+    send->InU16_FaultInfo1 = rtFeedback.faultInfo1&0x00f0;
    if(interlockFeedback.boardLoss&0x0007)  send->InU16_FaultInfo1 |= 0x0002;
-   send->InU16_FaultInfo2 = rtBeamData.faultInfo2&0x00ff;
+   send->InU16_FaultInfo2 = rtFeedback.faultInfo2&0x00ff;
 
-    memcpy(send->InAU16_LeafCrtPos, rtBeamData.rtPosUpload, sizeof(uint16_t) * (8 * 10 + 3));
-    send->InAU16_JawCrtPos[X] = jawFeedbackByAxes[X].jawCurrentPos;
-    send->InAU16_JawCrtPos[Y] = jawFeedbackByAxes[Y].jawCurrentPos;
-    send->InU16_JawInfo = (jawFeedbackByAxes[Y].jawStatusInfo << 4) + jawFeedbackByAxes[X].jawStatusInfo;
+    memcpy(send->InAU16_LeafCrtPos, rtFeedback.rtPosUpload, sizeof(uint16_t) * (8 * 10 + 3));
+    send->InAU16_JawCrtPos[X] = rtFeedback.jawRTPos[X];
+    send->InAU16_JawCrtPos[Y] = rtFeedback.jawRTPos[Y];
+    send->InU16_JawInfo = (rtFeedback.jawInfo[Y] << 4) + rtFeedback.jawInfo[X];
 
     rtBeamData.fsmState = recv->OutU16_FsmStateSetting;   //save rt cmd
     rtBeamData.beamIndex = recv->OutU16_BeamIndex;
@@ -807,15 +805,12 @@ static int8_t realtime_ethercat_data_process(void)
     if(oldState != rtBeamData.fsmState){
         printf("fsm state: %d -> %d\r\n",oldState,rtBeamData.fsmState);
         uint8_t newState = rtBeamData.fsmState;
-        // makeSingleSendAry(25, &newState, 1, 1,1);//0x50
         make_cmd_to_fpga(25, &newState, 1);
-        // FPGA_WriteByteArray(sndCtrl.cmdSendBuf, sndCtrl.singleSize[25]);
         oldState = rtBeamData.fsmState;
 
-        memset(&JawState, 0 , sizeof(struct JawFlagType));
-        JawState.axes = XY;
-        JawState.masterCmd[X] =  JawState.masterCmd[Y] = rtBeamData.fsmState;
-        osMessageQueuePut(motor_signal_queueHandle, &JawState, 0, 0);
+        uint16_t state[2];
+        state[0] = state[1] = rtBeamData.fsmState;
+        messageToJawTask(JawState, COMMAND, XY, state);
     }
     if(oldPlanCmd != rtBeamData.planCmd){
         printf("plan cmd: %d -> %d\r\n",oldPlanCmd,rtBeamData.planCmd);  

@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "websocket.h"
 #include "jaw_control.h"
+#include "fpga_rw.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,8 +13,6 @@ extern "C" {
 #define MAX_BEAM_NUM    30
 #define MAX_CP_IN_BEAM 8//3601
 #define TCP_SEND_PERIOD 1000 //100*1 = 100ms
-
-#define RT_ARM_UPLOAD_POS_LEN  170
 
 enum planCommand {NO_USE,SEND_PLAN,CLOSE_PLAN};
 typedef struct {
@@ -39,10 +38,15 @@ typedef struct {
     uint32_t oneBeamSize[MAX_BEAM_NUM];
     uint16_t beamIndex;
     uint16_t radiationIndex;
+}BEAM_DATA;
+
+typedef struct {
     uint16_t faultInfo1;
     uint16_t faultInfo2;
-    uint16_t rtPosUpload[RT_ARM_UPLOAD_POS_LEN/2];
-}RT_BEAM_DATA;
+    uint16_t rtPosUpload[RT_FPGA_UPLOAD_POS_LEN/2];
+    uint16_t jawRTPos[2];
+    uint16_t jawInfo[2];
+}REALTIME_FEEDBACK;
 
 typedef struct {
     uint16_t versionARM;
@@ -65,7 +69,8 @@ typedef struct {
     uint16_t jawSecondPos[2];
 }SECOND_POS_FEEDBACK;
 
-extern RT_BEAM_DATA rtBeamData;
+extern BEAM_DATA rtBeamData;
+extern REALTIME_FEEDBACK rtFeedback;
 extern INTERLOCK_FEEDBACK interlockFeedback;
 extern SECOND_POS_FEEDBACK secondPosFeedback;
 
