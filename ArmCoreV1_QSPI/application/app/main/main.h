@@ -96,8 +96,6 @@ void Error_Handler(void);
 #define ModSumDetect_GPIO_Port GPIOD
 #define UART3_DE_Pin GPIO_PIN_12
 #define UART3_DE_GPIO_Port GPIOD
-#define MOD_TrigOut_Pin GPIO_PIN_13
-#define MOD_TrigOut_GPIO_Port GPIOD
 #define IOEIntB_Pin GPIO_PIN_6
 #define IOEIntB_GPIO_Port GPIOG
 #define IOEIntB_EXTI_IRQn EXTI9_5_IRQn
@@ -105,8 +103,6 @@ void Error_Handler(void);
 #define EPSEnable_GPIO_Port GPIOG
 #define ModTriggerInhibitCtrl_Pin GPIO_PIN_6
 #define ModTriggerInhibitCtrl_GPIO_Port GPIOC
-#define QAMTriggerOut_Pin GPIO_PIN_7
-#define QAMTriggerOut_GPIO_Port GPIOC
 #define EmergencyDetect_Pin GPIO_PIN_8
 #define EmergencyDetect_GPIO_Port GPIOC
 #define PulseInhibitDetect_Pin GPIO_PIN_9
@@ -127,8 +123,6 @@ void Error_Handler(void);
 #define W5500_CSn_GPIO_Port GPIOG
 #define FM25V02_CSn_Pin GPIO_PIN_11
 #define FM25V02_CSn_GPIO_Port GPIOG
-#define AFC_TrigerOut_Pin GPIO_PIN_14
-#define AFC_TrigerOut_GPIO_Port GPIOG
 #define Dose2EnDetect_Pin GPIO_PIN_8
 #define Dose2EnDetect_GPIO_Port GPIOB
 #define Dose1EnDetect_Pin GPIO_PIN_9

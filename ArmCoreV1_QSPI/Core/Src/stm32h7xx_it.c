@@ -338,7 +338,6 @@ void EXTI9_5_IRQHandler(void)
 
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(IOEIntB_Pin);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
   HAL_GPIO_EXTI_IRQHandler(PulseInhibitDetect_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 

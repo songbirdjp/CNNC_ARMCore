@@ -4,6 +4,7 @@
 #include "cmsis_os2.h"
 #include "init_call.h"
 #include "drv_tim.h"
+#include "tim.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "bgm_uart.h"
@@ -189,9 +190,38 @@ struct cmd_object AFCCmdtest;
 uint8_t DoseHandshakeOK = 0;
 static void BGMFSMfunc(void *argument)
 {
+    MX_TIM1_Init();
+    MX_TIM3_Init();
+    MX_TIM4_Init();
+    MX_TIM23_Init();
+    //HAL_TIM_IC_Start(&htim1, TIM_CHANNEL_1);
+    HAL_TIM_OC_Start(&htim3, TIM_CHANNEL_2);
+    HAL_TIM_OC_Start(&htim4, TIM_CHANNEL_2);
+    HAL_TIM_OC_Start(&htim23, TIM_CHANNEL_3);
+    HAL_TIM_Base_Start(&htim1);
+    HAL_TIM_Base_Start(&htim3);
+    HAL_TIM_Base_Start(&htim4);
+    HAL_TIM_Base_Start(&htim23);
+    
     for (;;)
     {
-        BGMFiniteStateMachine();
+        //BGMFiniteStateMachine();
+        uint32_t tim1_counter = __HAL_TIM_GET_COUNTER(&htim1);
+        printf("TIM1 Counter Value: %lu\n", tim1_counter);
+        uint32_t tim1_sr_value = htim1.Instance->SR;
+
+        printf("TIM1 SR Register Value: %lu\n", tim1_sr_value);
+        if (__HAL_TIM_GET_FLAG(&htim1, TIM_FLAG_CC1)) 
+        {
+            // 清除捕获标志
+            __HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_CC1);
+            // 获取捕获时间
+            uint32_t capture_time = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1);
+            // 处理捕获的时间
+            printf("Captured Time: %lu\n", capture_time);
+        }
+        osDelay(100);
+        
         // if(osMessageQueueGetCount(ethercatE2AQueueHandle) != 0)
         //BGMEthercatDataParse(ECATSendToARMQueueRecv());// parse data from bus and send to 422
     }
