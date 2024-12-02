@@ -474,3 +474,9 @@ void BGM_RtBeamCtrl(void)
    // BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_RtDataDown,&dacCmd,1);  
 }
 MSH_CMD_EXPORT_ALIAS(BGM_RtBeamCtrl,DoseRT,"Get RT Parameter");
+
+void AFC_GetADCValueByFrame(void)
+{
+    uint8_t _afcCmd[2] = {0x60,0x05};
+    BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,2); 
+}

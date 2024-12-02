@@ -16,7 +16,8 @@
 #include "ulog.h"
 #include "ethercat.h"
 #include "lan9252_app.h"
-
+#include "drv_flash.h"
+#include "flash_port.h"
 #define ethercatA2EQueue_LENGTH 16
 #define ethercatA2EQueue_SIZE 64*sizeof(uint16_t)
 
@@ -185,45 +186,62 @@ static void BGMIOEfunc(void *argument)
         osDelay(1);
     }
 }
-
-struct cmd_object AFCCmdtest;
-uint8_t DoseHandshakeOK = 0;
-static void BGMFSMfunc(void *argument)
+void TriggerConfig_SetARR(TIM_HandleTypeDef *htim, uint32_t arr_value)
 {
+    /* 修改定时器ARR值 */
+    __HAL_TIM_SET_AUTORELOAD(htim, arr_value);
+    /* 重新加载新的ARR值 */
+    HAL_TIM_Base_Start(htim);
+}
+uint8_t isReadytoTrigAFC = 0;
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM3)
+    {
+        AFC_GetADCValueByFrame();   
+    }
+}
+
+void TriggerDistributeInit(void)
+{
+    // HAL_TIM_RegisterCallback(&htim3, HAL_TIM_PWM_PULSE_FINISHED_CB_ID, TIM3_PWM_PulseFinishedCallback);
     MX_TIM1_Init();
     MX_TIM3_Init();
     MX_TIM4_Init();
     MX_TIM23_Init();
     //HAL_TIM_IC_Start(&htim1, TIM_CHANNEL_1);
-    HAL_TIM_OC_Start(&htim3, TIM_CHANNEL_2);
-    HAL_TIM_OC_Start(&htim4, TIM_CHANNEL_2);
-    HAL_TIM_OC_Start(&htim23, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim23, TIM_CHANNEL_3);
     HAL_TIM_Base_Start(&htim1);
-    HAL_TIM_Base_Start(&htim3);
+    HAL_TIM_Base_Start_IT(&htim3);
     HAL_TIM_Base_Start(&htim4);
     HAL_TIM_Base_Start(&htim23);
-    
+}
+
+#define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
+#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 1) //0x00020000UL * 2 = 0x00040000UL
+
+struct cmd_object AFCCmdtest;
+uint8_t DoseHandshakeOK = 0;
+DEVICE_FLASH *flash;
+static DEVICE_FLASH flash_bank1 = {0};
+static DEVICE_FLASH *device_flash_get(void)
+{
+    return &flash_bank1;
+}
+static void BGMFSMfunc(void *argument)
+{
+    TriggerDistributeInit();
+    flash = device_flash_get();
+    uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE}; 
+    flash_init(flash, "DEVICE_NAME_FLASH_BANK1");
+    flash_operation_address_set(flash, flash_cfg[0], flash_cfg[1]);
+    flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
     for (;;)
     {
-        //BGMFiniteStateMachine();
-        uint32_t tim1_counter = __HAL_TIM_GET_COUNTER(&htim1);
-        printf("TIM1 Counter Value: %lu\n", tim1_counter);
-        uint32_t tim1_sr_value = htim1.Instance->SR;
-
-        printf("TIM1 SR Register Value: %lu\n", tim1_sr_value);
-        if (__HAL_TIM_GET_FLAG(&htim1, TIM_FLAG_CC1)) 
-        {
-            // 清除捕获标志
-            __HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_CC1);
-            // 获取捕获时间
-            uint32_t capture_time = HAL_TIM_ReadCapturedValue(&htim1, TIM_CHANNEL_1);
-            // 处理捕获的时间
-            printf("Captured Time: %lu\n", capture_time);
-        }
-        osDelay(100);
-        
-        // if(osMessageQueueGetCount(ethercatE2AQueueHandle) != 0)
-        //BGMEthercatDataParse(ECATSendToARMQueueRecv());// parse data from bus and send to 422
+        BGMFiniteStateMachine();
+        osDelay(5);
     }
 }
 
@@ -308,6 +326,7 @@ uint8_t isdataCaliUnlock = 0;
 uint8_t isBeamDataSetLock = 0;
 uint8_t isBeamDataSetUnlock = 0;
 uint8_t isDoseReady = 0;
+extern uint8_t isReadytoTrigAFC;
 void BGMFiniteStateMachine(void)
 {
     uint16_t ethercatALStatus;
@@ -320,8 +339,17 @@ void BGMFiniteStateMachine(void)
     {
         ARMcurrentState = BGM_STATE_BOOT;
     }
+    ARMcurrentState = BGM_STATE_TEST;
     switch (ARMcurrentState)
     {
+    case BGM_STATE_TEST:
+    //    if(isReadytoTrigAFC)
+    //    {
+    //         AFC_GetADCValueByFrame();   
+    //         isReadytoTrigAFC = 0;
+    //    }
+       osDelay(10);
+        break;
     case BGM_STATE_BOOT:
         // dataToSend.DataIn3[0] = 1;//maintain cali para lock
         // dataToSend.DataIn3[1] = 1;//maintain beam para lock

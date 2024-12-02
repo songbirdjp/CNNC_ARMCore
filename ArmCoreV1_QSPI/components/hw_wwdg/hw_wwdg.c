@@ -35,6 +35,6 @@ int8_t wwdg_init(void)
 
     return 0;
 }
-INIT_BOARD_EXPORT(wwdg_init);
+// INIT_BOARD_EXPORT(wwdg_init);
 
   

@@ -43,7 +43,9 @@ typedef struct drv_flash DEVICE_FLASH;
 
 int8_t flash_init(DEVICE_FLASH *flash, uint8_t *device_name);
 int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t addr_base, uint32_t size);
-
+int8_t flash_ioctl(DEVICE_FLASH *flash, uint8_t cmd, void *arg);
+int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout);
+int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout);
 
 #ifdef __cplusplus
 }

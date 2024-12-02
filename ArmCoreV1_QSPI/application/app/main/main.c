@@ -238,7 +238,7 @@ int main(void)
   MX_FMC_Init();
   MX_TIM2_Init();
   MX_CRC_Init();
-  MX_IWDG1_Init();
+  // MX_IWDG1_Init();
   MX_RTC_Init();
   MX_TIM6_Init();
   MX_ADC3_Init();

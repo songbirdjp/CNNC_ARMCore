@@ -3,6 +3,8 @@
 #include "cmsis_os2.h"
 #include "ulog.h"
 #include "BGM_def.h"
+#include "drv_flash.h"
+#include "flash_port.h"
 struct dose_info_t
 {
     uint8_t hw_version;
@@ -444,11 +446,11 @@ static int8_t afc_handshake_frame_parse(struct cmd_object *cmd)
     LOG_I("AFC sw version: %s\r\n", AFC_info.sw_version);
     return ret;
 }
-
+extern DEVICE_FLASH *flash;
 static int8_t afc_command_frame_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
-
+    uint16_t AFC_ADC_Flash_addr = 0;
     switch (cmd->data[0])   /* first cmd */
     {
     case 0x40:
@@ -460,6 +462,28 @@ static int8_t afc_command_frame_parse(struct cmd_object *cmd)
     }
         break;
     case 0x42:
+        break;
+    case 0x60:
+        switch (cmd->data[1])
+        {
+        case 0x05:
+            for (int i = 2; i <= 18; i++) 
+            {
+                printf("Data[%d]: %x\r\n", i, cmd->data[i]);
+            }
+           ret = flash->write(flash,AFC_ADC_Flash_addr,&cmd->data[2],16,1000);
+           AFC_ADC_Flash_addr += 16;
+            if(ret != 0)
+            {
+                LOG_I("flash write err: %d\r\n", ret);
+            }
+            break;
+        default:
+            ret = -1;
+            break;
+        }
+        break;
+      
         break;
     default:
         break;
@@ -494,7 +518,7 @@ static int8_t uart_afc_cmd_parse(struct cmd_object *cmd)
     /* 2. parse cmd type */
     switch (cmd->type)
     {
-    case 0x01:  /* handshake frame */
+    case 0x81:  /* handshake frame */
         ret = afc_handshake_frame_parse(cmd);
         if (ret != 0)
         {
@@ -502,7 +526,7 @@ static int8_t uart_afc_cmd_parse(struct cmd_object *cmd)
             return -2;
         }
         break;
-    case 0x02:  /* command frame */
+    case 0x82:  /* command frame */
         ret = afc_command_frame_parse(cmd);
         if (ret != 0)
         {
@@ -510,7 +534,7 @@ static int8_t uart_afc_cmd_parse(struct cmd_object *cmd)
             return -2;
         }
         break;
-    case 0x03:  /* realtime frame */
+    case 0x83:  /* realtime frame */
         ret = afc_realtime_frame_parse(cmd);
         if (ret != 0)
         {
@@ -849,7 +873,7 @@ static int8_t uart_send_entry(void *argument)
         osMessageQueueGet(uart_send_queue[uart_id], &send_buf, NULL, osWaitForever);
 
 #if 0
-        ("send_buf len: %d\r\n", send_buf.len);
+        LOG_I("send_buf len: %d\r\n", send_buf.len);
         for (uint8_t i = 0; i < send_buf.len; i++)
         {
             LOG_I("%02x ", send_buf.buf[i]);

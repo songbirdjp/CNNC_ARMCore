@@ -101,7 +101,7 @@ uint16_t IOE_GPIORead(void)
     IOECommandToRead[2] = 0x00;
     HAL_SPI_TransmitReceive(&hspi2,IOECommandToRead,IOERecvGPIOB,3,5000);
     GPIOData = ((IOERecvGPIOB[2]<<8)|(IOERecvGPIOA[2]));
-    printf("6666666666ExpandGPIOValue = %x\r\n",GPIOData);
+    printf("ExpandGPIOValue = %x\r\n",GPIOData);
     return GPIOData;
 }
 MSH_CMD_EXPORT_ALIAS(IOE_GPIORead,IOE,"IOE_Read");

@@ -290,7 +290,7 @@ int8_t device_uart_data_read(enum uart_id id, struct bgm_uart *buf, uint32_t tim
         return ret;
     }
 
-#if 0
+#if 1
     printf("recv original: %d bytes\r\n", buf->len);
     for (uint8_t i = 0; i < buf->len; i++)
     {
