@@ -17,23 +17,23 @@ static uint16_t adc3_result[ADC3_CHANNEL_NUM] __attribute__((section(".ram_d3"))
 static osEventFlagsId_t adc_event = NULL;
 
 
-static struct adc_object 
-adc1 = {.hadc = &hadc1, .event_flag = ADC1_CONVERT_COMPLETE_EVENT, .init = MX_ADC1_Init, .channel_num = ADC1_CHANNEL_NUM, .result = adc1_result}, 
-adc3 = {.hadc = &hadc3, .event_flag = ADC3_CONVERT_COMPLETE_EVENT, .init = MX_ADC3_Init, .channel_num = ADC3_CHANNEL_NUM, .result = adc3_result};
+// static struct adc_object 
+// adc1 = {.hadc = &hadc1, .event_flag = ADC1_CONVERT_COMPLETE_EVENT, .init = MX_ADC1_Init, .channel_num = ADC1_CHANNEL_NUM, .result = adc1_result}, 
+// adc3 = {.hadc = &hadc3, .event_flag = ADC3_CONVERT_COMPLETE_EVENT, .init = MX_ADC3_Init, .channel_num = ADC3_CHANNEL_NUM, .result = adc3_result};
 
-struct adc_object *adc_object_get(uint8_t *device_name)
-{
-    if (!memcmp(device_name, DEVICE_NAME_ADC1_DEFAULT, sizeof(DEVICE_NAME_ADC1_DEFAULT)))
-    {
-        return &adc1;
-    }
-    else if (!memcmp(device_name, DEVICE_NAME_ADC3_DEFAULT, sizeof(DEVICE_NAME_ADC3_DEFAULT)))
-    {
-        return &adc3;
-    }
+// struct adc_object *adc_object_get(uint8_t *device_name)
+// {
+//     if (!memcmp(device_name, DEVICE_NAME_ADC1_DEFAULT, sizeof(DEVICE_NAME_ADC1_DEFAULT)))
+//     {
+//         return &adc1;
+//     }
+//     else if (!memcmp(device_name, DEVICE_NAME_ADC3_DEFAULT, sizeof(DEVICE_NAME_ADC3_DEFAULT)))
+//     {
+//         return &adc3;
+//     }
 
-    return NULL;
-}
+//     return NULL;
+// }
 
 static void ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {

@@ -16,6 +16,23 @@ struct AFC_uart
     uint16_t len;
 };
 
+struct cmd_object
+{
+    union
+    {
+        uint8_t byte;
+        struct
+        {
+            uint8_t cmd_id : 7;
+            uint8_t cmd_ack : 1;
+        }bits;
+    }id;    /* device rs422 id */
+
+    uint8_t type;   /* cmd type */
+    uint16_t len;   /* data length */
+    uint8_t *data;  /* data pointer */
+};
+
 int8_t device_AFC_uart_init(uint8_t *device_name);
 int8_t device_AFC_uart_open(void);
 int8_t device_AFC_uart_data_read(struct AFC_uart *buf, uint32_t timeout);

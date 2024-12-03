@@ -10,6 +10,13 @@ extern "C" {
 
 #define AFC_UART_ID   0
 
+typedef enum
+{
+    UARTCmdType_HandshakeDown = 0x01,
+    UARTCmdType_CommandDown,
+    UARTCmdType_RtDataDown
+} UARTCmdType_t;
+
 struct AFC_object
 {
     union

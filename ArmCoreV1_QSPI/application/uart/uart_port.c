@@ -75,7 +75,7 @@ int8_t device_AFC_uart_data_read(struct AFC_uart *buf, uint32_t timeout)
         return ret;
     }
 
-#if 1
+#if 0
     LOG_E("recv original: %d bytes\r\n", buf->len);
     for (uint8_t i = 0; i < buf->len; i++)
     {

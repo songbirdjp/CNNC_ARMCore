@@ -4,6 +4,7 @@
 #include "sys_cfg.h"
 #include "mcu_adc.h"
 #include "ulog.h"
+#include "drv_flash.h"
 const uint8_t AFC_Version[4] = {0x19,0,0,1};
 static struct control_para control_data = 
 {
@@ -45,7 +46,6 @@ static int8_t AFC_uart_cmd_write(struct AFC_object *cmd)
     memcpy(send_buf.buf, cmd, sizeof(struct AFC_object));
     memcpy(&send_buf.buf[offset], cmd->data, cmd->len);
     send_buf.len = offset + cmd->len;
-
     stat = osMessageQueuePut(AFC_uart_send_queue, &send_buf, 0, 0);
     if (stat != osOK)
     {
@@ -55,23 +55,16 @@ static int8_t AFC_uart_cmd_write(struct AFC_object *cmd)
 
     return 0;
 }
-/*
-HANSHAKE 下行
-Byte1	帧类型	0x01
-Byte2~3	帧长度	0x0004
-Byte4	数据1	BGM ARM IO 板卡硬件ID/版本 0x19
-Byte5	数据2	BGM ARM IO 固件版本号(xx.yy.zz)xx
-Byte6	数据3	BGM ARM IO 固件版本号yy
-Byte7	数据4	BGM ARM IO 固件版本号zz
-HANSHAKE 上行
-Byte1	帧类型	0x81
-Byte2~3	帧长度	0x0004
-Byte4	数据1	AFC板硬件版本
-Byte5	数据2	AFC板固件版本号xx
-Byte6	数据3	AFC板固件版本号yy
-Byte7	数据4	AFC板固件版本号zz
+void AFC_UART_SendCmd(UARTCmdType_t cmdType, uint8_t *cmdData,uint8_t len)
+{
+    struct cmd_object BGMCmdToSend;
+    BGMCmdToSend.id.byte = 0x80;
+    BGMCmdToSend.type = cmdType;
+    BGMCmdToSend.len = len;
+    BGMCmdToSend.data = cmdData;
+    AFC_uart_cmd_write(&BGMCmdToSend);
+}
 
- */
 static int8_t AFC_handshake_frame_parse(struct AFC_object *cmd)
 {
     int8_t ret = 0;
@@ -109,9 +102,27 @@ static int8_t  AFC_AFTMotorCmd_parse(struct AFC_object *cmd)
 {
 
 }    
-static int8_t  AFC_ADCSampleSet_parse(struct AFC_object *cmd)
+
+extern DEVICE_FLASH *flash;
+static int8_t  AFC_ADCSampleSet_parse(struct AFC_object *cmd)//0x60
 {
-    
+    int8_t ret = 0;
+    switch (cmd->data[1])
+    {
+    case 0x01:
+        break;
+    case 0x05:
+        cmd->len = 0x12;
+        cmd->type = 0x02;
+        cmd->data[0] = 0x60;
+        cmd->data[1] = 0x05;
+        flash->read(flash, 0, &cmd->data[2], cmd->len - 2, 1000);
+        // LOG_E("flash read len: %d\r\n", cmd->len);
+        break;
+    default:
+        break;
+    }   
+   return ret;
 }   
 static int8_t  AFC_ADCParaSet_parse(struct AFC_object *cmd)
 {
@@ -155,7 +166,7 @@ static int8_t AFC_command_frame_parse(struct AFC_object *cmd)
         ret = AFC_MagMotorCmd_parse(cmd);
         break;
     case 0x41:
-        ret = AFC_AFTMotorCmd_parse(cmd);
+        ret = AFC_AFTMotorCmd_parse(cmd);//recv original: 16 bytes 55 aa 00 00 06 00 80 02 02 00 60 05 ea 71 0b fe 
         break;
     case 0x60:
         ret = AFC_ADCSampleSet_parse(cmd);
@@ -259,7 +270,7 @@ static int8_t AFC_cmd_parse(struct AFC_object *cmd)
         cmd->id.bits.cmd_ack = 0;
 
         cmd->type |= 0x80;
-
+        
         ret = AFC_uart_cmd_write(cmd);
         if (ret != 0)
         {
