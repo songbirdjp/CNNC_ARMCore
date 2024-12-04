@@ -275,11 +275,6 @@ void DMA1_Stream5_IRQHandler(void)
   /* USER CODE END DMA1_Stream5_IRQn 1 */
 }
 
-
-/**
-  * @brief This function handles EXTI line2 interrupt.
-  */
-
 /**
   * @brief This function handles EXTI line[9:5] interrupts.
   */
@@ -288,12 +283,11 @@ void EXTI9_5_IRQHandler(void)
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 
   /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(WDT_OK_LED_Pin);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
   /* USER CODE END EXTI9_5_IRQn 1 */
 }
-
 
 void DMA2_Stream3_IRQHandler(void)
 {
@@ -337,16 +331,20 @@ void TIM6_DAC_IRQHandler(void)
 
   /* USER CODE END TIM6_DAC_IRQn 1 */
 }
+/**
+  * @brief This function handles EXTI line4 interrupt.
+  */
 void EXTI4_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_IRQn 0 */
 
   /* USER CODE END EXTI4_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(W5500_INTn_Pin);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
   /* USER CODE BEGIN EXTI4_IRQn 1 */
 
   /* USER CODE END EXTI4_IRQn 1 */
 }
+
 
 /**
   * @brief This function handles DMA2 stream0 global interrupt.

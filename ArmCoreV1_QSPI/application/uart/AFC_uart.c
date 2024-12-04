@@ -2,7 +2,7 @@
 #include "uart_port.h"
 #include "init_call.h"
 #include "sys_cfg.h"
-#include "mcu_adc.h"
+// #include "mcu_adc.h"
 #include "ulog.h"
 #include "drv_flash.h"
 const uint8_t AFC_Version[4] = {0x19,0,0,1};

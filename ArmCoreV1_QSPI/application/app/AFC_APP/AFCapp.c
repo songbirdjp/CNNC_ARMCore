@@ -74,6 +74,7 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     HAL_TIM_Base_Start(&htim4);
     HAL_TIM_Base_Start(&htim8);
     HAL_TIM_Base_Start(&htim23);
+ 
     flash = device_flash_get();
     uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE}; 
     flash_init(flash, "DEVICE_NAME_FLASH_BANK1");
@@ -82,7 +83,14 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     for (;;)
     {   
         AFC_ADCSampleRecvProcess();
-        
+    }
+}
+static void AFC_DataTransmit_thread_entry(void *argument)
+{
+    for (;;)
+    {
+        LOG_E("AFC_DataTransmit_thread_entry\r\n");
+        osDelay(1000);
     }
 }
 
@@ -102,16 +110,6 @@ static int8_t Mag_MotorCtrl_thread_init(void)
     }
     return 0;
 }
-INIT_APP_EXPORT(Mag_MotorCtrl_thread_init);
-
-static void AFC_DataTransmit_thread_entry(void *argument)
-{
-    for (;;)
-    {
-       
-        osDelay(1000);
-    }
-}
 
 static int8_t AFC_DataTransmit_thread_init(void)
 {
@@ -129,4 +127,5 @@ static int8_t AFC_DataTransmit_thread_init(void)
     }
     return 0;
 }
+INIT_APP_EXPORT(Mag_MotorCtrl_thread_init);
 INIT_APP_EXPORT(AFC_DataTransmit_thread_init);

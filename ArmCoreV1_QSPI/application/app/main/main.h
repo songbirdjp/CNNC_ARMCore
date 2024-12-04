@@ -57,30 +57,22 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define SYSTEM_RUN_LED_Pin GPIO_PIN_2
-#define SYSTEM_RUN_LED_GPIO_Port GPIOE
-#define ADC_READING_LED_Pin GPIO_PIN_3
-#define ADC_READING_LED_GPIO_Port GPIOE
-#define WDT_IN_LED_Pin GPIO_PIN_4
-#define WDT_IN_LED_GPIO_Port GPIOE
-#define WDT_OK_LED_Pin GPIO_PIN_5
-#define WDT_OK_LED_GPIO_Port GPIOE
+#define AFTBrake_Pin GPIO_PIN_5
+#define AFTBrake_GPIO_Port GPIOE
 #define SPI3_NSS_Pin GPIO_PIN_4
 #define SPI3_NSS_GPIO_Port GPIOA
-#define LED1PG4_Pin GPIO_PIN_4
-#define LED1PG4_GPIO_Port GPIOG
-#define LED2PG5_Pin GPIO_PIN_5
-#define LED2PG5_GPIO_Port GPIOG
-#define LED3PG6_Pin GPIO_PIN_6
-#define LED3PG6_GPIO_Port GPIOG
-#define LED4PG7_Pin GPIO_PIN_7
-#define LED4PG7_GPIO_Port GPIOG
+#define WDT_OK_LED_Pin GPIO_PIN_4
+#define WDT_OK_LED_GPIO_Port GPIOG
+#define WDT_IN_LED_Pin GPIO_PIN_5
+#define WDT_IN_LED_GPIO_Port GPIOG
+#define ADC_READING_LED_Pin GPIO_PIN_6
+#define ADC_READING_LED_GPIO_Port GPIOG
+#define SYSTEM_RUN_LED_Pin GPIO_PIN_7
+#define SYSTEM_RUN_LED_GPIO_Port GPIOG
 #define WDT_RESET_Pin GPIO_PIN_1
 #define WDT_RESET_GPIO_Port GPIOD
 #define W5500_RSTn_Pin GPIO_PIN_3
 #define W5500_RSTn_GPIO_Port GPIOD
-#define W5500_INTn_Pin GPIO_PIN_4
-#define W5500_INTn_GPIO_Port GPIOD
 #define DOSE_EN_Pin GPIO_PIN_8
 #define DOSE_EN_GPIO_Port GPIOB
 #define TRIGGER_OUT_Pin GPIO_PIN_9
