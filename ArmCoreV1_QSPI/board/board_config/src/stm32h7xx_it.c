@@ -77,6 +77,7 @@ extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim8;
 extern TIM_HandleTypeDef htim12;
+extern TIM_HandleTypeDef htim24;
 extern DMA_HandleTypeDef hdma_uart5_tx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern WWDG_HandleTypeDef hwwdg1;
@@ -345,7 +346,19 @@ void EXTI4_IRQHandler(void)
   /* USER CODE END EXTI4_IRQn 1 */
 }
 
+/**
+  * @brief This function handles TIM24 global interrupt.
+  */
+void TIM24_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM24_IRQn 0 */
 
+  /* USER CODE END TIM24_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim24);
+  /* USER CODE BEGIN TIM24_IRQn 1 */
+
+  /* USER CODE END TIM24_IRQn 1 */
+}
 /**
   * @brief This function handles DMA2 stream0 global interrupt.
   */

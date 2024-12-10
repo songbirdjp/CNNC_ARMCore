@@ -115,15 +115,7 @@ struct radiation_point_para
 
 };
 
-struct control_para
-{
-    struct calibration_para calibration;
-    struct treatment_para treatment;
-    struct interlock_para interlock;
-    struct radiation_point_para radiation;
 
-    osMutexId_t mutex;
-};
 
 int8_t radiation_index_update_callback(int8_t (*cb)(void));
 int8_t control_data_pointer_get(void **ptr);

@@ -10,6 +10,30 @@
 #include "cmsis_os2.h"
 
 static MotorCtrlSignalDef_t MotorCtrlSignal[2];
+static PID_TypeDef MAGmotor_pid_para = {.Kp = 1,
+                                        .Ki = 0.1,
+                                        .Kd = 0,
+                                        .Setpoint = 0,
+                                        .IntegralLimit = 50,
+                                        .OutputLimit = 100};
+static PID_TypeDef AFTmotor_pid_para = {.Kp = 1,
+                                        .Ki = 0.1,
+                                        .Kd = 0,
+                                        .Setpoint = 0,
+                                        .IntegralLimit = 50,
+                                        .OutputLimit = 100};
+
+static MotorCtrlParam_TypeDef MagMotor ={0};
+static MotorCtrlParam_TypeDef AFTMotor ={0};
+
+MotorCtrlParam_TypeDef *AFT_motorParam_get(void)
+{
+    return &AFTMotor;
+}
+MotorCtrlParam_TypeDef *MAG_motorParam_get(void)
+{
+    return &MagMotor;
+}
 
 void AFTBrakeCtrl(AFTBrakeTypeDef _brakeCtrl)//only AFT motor has brake
 {
@@ -29,12 +53,33 @@ void Shell_AFTBrakeCtrl(uint8_t argc, char *argv[])
     {
         printf("Usage: MAGPWM <duty cycle>\r\n");
     }
-    double dutyCycle = atof(argv[1]);
-    motorCtrlByPWM(MOTOR_MAG, dutyCycle);
+    uint8_t AFTBrakeStatus = strtol((char *)argv[1], NULL, 10);
+    AFTBrakeCtrl(AFTBrakeStatus);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_AFTBrakeCtrl, AFTBRK,AFT brake ctrl);
 
 void SetMagMotorIO(uint16_t dir, uint16_t En)
+{
+    if (1 == En)
+    {
+        if (0 == dir)
+        {
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 0);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
+        }
+        else
+        {
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 1);
+            HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 0);
+        }
+    }
+    else
+    {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 1);
+    }
+} 
+void SetAFTMotorIO(uint16_t dir, uint16_t En)
 {
     if (1 == En)
     {
@@ -46,34 +91,13 @@ void SetMagMotorIO(uint16_t dir, uint16_t En)
         else
         {
             HAL_GPIO_WritePin(GPIOF, GPIO_PIN_12, 1);
-            HAL_GPIO_WritePin(GPIOF, GPIO_PIN_3, 0);
+            HAL_GPIO_WritePin(GPIOF, GPIO_PIN_13, 0);
         }
     }
     else
     {
-        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_12, 0);
-        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_13, 0);
-    }
-} 
-void SetAFTMotorIO(uint16_t dir, uint16_t En)
-{
-    if (1 == En)
-    {
-        if (0 == dir)
-        {
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, 0);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, 1);
-        }
-        else
-        {
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, 1);
-            HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, 0);
-        }
-    }
-    else
-    {
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, 0);
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, 0);
+        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_12, 1);
+        HAL_GPIO_WritePin(GPIOF, GPIO_PIN_13, 1);
     }
 } 
 
@@ -142,13 +166,14 @@ void stopPWMOutput(motorTypeDef motorType)
         HAL_TIM_Base_Stop_IT(&htim24);
         HAL_TIM_PWM_Stop_IT(&htim24, TIM_CHANNEL_3);
     }
-    else if(motorType == MOTOR_AFT) {
+    else if(motorType == MOTOR_AFT)
+    {
         HAL_TIM_Base_Stop_IT(&htim5);
         HAL_TIM_PWM_Stop_IT(&htim5, TIM_CHANNEL_3);
     }
 }
 
-void motorCtrlByPWM(motorTypeDef motorType,double dutyCycle)
+void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle)
 {
     if (dutyCycle > 0)
     {
@@ -165,21 +190,21 @@ void motorCtrlByPWM(motorTypeDef motorType,double dutyCycle)
         MotorCtrlSignal[motorType].MotorMoveEn = 0;
     }
 
-    double absDutyCycle = fabs(dutyCycle), pulseLength = 0;
+    float absDutyCycle = fabs(dutyCycle), pulseLength = 0;
 
     if ((absDutyCycle < 3) && (dutyCycle != 0)) absDutyCycle = 3;
-    else if (absDutyCycle > 100)  absDutyCycle = 100;// Assuming duty cycle is in percentage
+    else if (absDutyCycle > 60)  absDutyCycle = 60;// Assuming duty cycle is in percentage
    // printf("duty %d %lf\r\n",htim3.Init.Period, absDutyCycle);
   //  startPWMOutput(axesType);
     if(motorType == MOTOR_MAG)
     {
       //  printf("duty %d %lf\r\n",htim3.Init.Period, absDutyCycle);
-        pulseLength = (double)((htim24.Init.Period + 1) * absDutyCycle) / 100;
+        pulseLength = (float)((htim24.Init.Period + 1) * absDutyCycle) / 100;
         __HAL_TIM_SET_COMPARE(&htim24, TIM_CHANNEL_3, (uint16_t) pulseLength);
     }
     else if(motorType == MOTOR_AFT) 
     {
-        pulseLength = (double)((htim5.Init.Period + 1) * absDutyCycle) / 100;
+        pulseLength = (float)((htim5.Init.Period + 1) * absDutyCycle) / 100;
         __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_3, (uint16_t) pulseLength);
     }
    // printf("pulseLength = %lf %d\r\n",pulseLength, (uint16_t) pulseLength);
@@ -187,23 +212,15 @@ void motorCtrlByPWM(motorTypeDef motorType,double dutyCycle)
 }
 void Shell_MagMotorCtrlByPWM(uint8_t argc, char *argv[])
 {
-    if(argc != 2)
-    {
-        printf("Usage: MAGPWM <duty cycle>\r\n");
-    }
-    double dutyCycle = atof(argv[1]);
+    uint16_t dutyCycle = strtol((char *)argv[1], NULL, 10);
     motorCtrlByPWM(MOTOR_MAG, dutyCycle);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_MagMotorCtrlByPWM, MAGPWM,Mag motor pwm ctrl);
 
 void Shell_AFTMotorCtrlByPWM(uint8_t argc, char *argv[])
 {
-    if(argc != 2)
-    {
-        printf("Usage: MAGPWM <duty cycle>\r\n");
-    }
-    double dutyCycle = atof(argv[1]);
-    motorCtrlByPWM(MOTOR_MAG, dutyCycle);
+    uint16_t dutyCycle = strtol((char *)argv[1], NULL, 10);
+    motorCtrlByPWM(MOTOR_AFT, dutyCycle);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_AFTMotorCtrlByPWM, AFTPWM,AFT motor pwm ctrl);
 
@@ -260,7 +277,7 @@ void MagMotor_nFault_callback(void)
 {
     if(1 == MotorCtrlSignal[MOTOR_MAG].EnableTriggernFault)
     {
-        if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) == GPIO_PIN_RESET)
+        if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6) == GPIO_PIN_RESET)
         {
             SetMagMotorIO(0, 0);
         } 
@@ -275,7 +292,7 @@ void AFTMotor_nFault_callback(void)
 {
     if(1 == MotorCtrlSignal[MOTOR_AFT].EnableTriggernFault)
     {
-        if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_6) == GPIO_PIN_RESET)
+        if (HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_4) == GPIO_PIN_RESET)
         {
             SetAFTMotorIO(0, 0);
         }
@@ -285,6 +302,104 @@ void AFTMotor_nFault_callback(void)
         }
     }
 }
+
+float PID_Compute(PID_TypeDef *pid, float current, float setpoint)
+{
+    pid->Setpoint = setpoint;
+    float error = pid->Setpoint - current;
+    pid->Integral += error;
+    if (pid->Integral > pid->IntegralLimit)
+        pid->Integral = pid->IntegralLimit;
+    if (pid->Integral < -pid->IntegralLimit)
+        pid->Integral = -pid->IntegralLimit;
+
+    float derivative = error - (pid->PreviousError);
+    float output = (pid->Kp * error) + (pid->Ki * pid->Integral) + (pid->Kd * derivative);
+    pid->PreviousError = error;
+    if (output > pid->OutputLimit)
+    {
+        output = pid->OutputLimit;
+    }
+    else if (output < -pid->OutputLimit)
+    {
+        output = -pid->OutputLimit;
+    }
+    return output;
+}
+
+float PositionPIDCtrl(uint16_t current_position, uint16_t _setPosition, PID_TypeDef *pid)
+{
+    float _pidPositionOutput;
+    //float current_position = __HAL_TIM_GET_COUNTER(&htim5);
+    _pidPositionOutput = PID_Compute(pid, current_position, _setPosition);
+    //printf("_setPosition%d \t %d\r\n",current_position,_setPosition);
+    //MotorYCtrlByPWM((int16_t) pid_output);
+    return _pidPositionOutput;
+}
+
+MotorFindingZeroFSM_t MagMotorState = MotorFSM_Init;
+uint8_t MagMotorInitDone = 0;
+uint16_t MagEncoderData;
+uint16_t IsKeyDown = 0;
+uint16_t MagMotorSetPos = 20000;
+void MagMotorInitFSM(void)
+{
+   // uint16_t AFTMotorPos = 20000;
+    uint16_t MagForwardEncCounter;
+    uint16_t MagForwardEncCounterPrev;
+    uint16_t MagBackwardEncCounter;
+    uint16_t MagBackwardEncCounterPrev;
+//    printf("AFTMotorState = %d\r\n",AFTMotorState);
+    switch (MagMotorState)
+    {
+        case MotorFSM_Init:
+            printf("MotorInit\r\n");
+            if(0 == MagMotorInitDone)
+            {
+                motorEnable(MOTOR_MAG);
+                __HAL_TIM_SET_COUNTER(&htim2, 32767);
+                motorCtrlByPWM(MOTOR_MAG, 0);
+            }
+            MagMotorInitDone =1;
+            motorCtrlByPWM(MOTOR_MAG, -30);
+            osDelay(1000);
+            MagMotorState = MotorFSM_Backward2FindZero;
+            break;
+        case MotorFSM_Backward2FindZero:
+            motorCtrlByPWM(MOTOR_MAG, 30);
+            MagForwardEncCounterPrev = __HAL_TIM_GET_COUNTER(&htim2);
+            osDelay(500);
+            MagForwardEncCounter = __HAL_TIM_GET_COUNTER(&htim2);
+           // printf("MagForwardEncCounterPrev = %d MagForwardEncCounter = %d\r\n", MagForwardEncCounterPrev, MagForwardEncCounter);
+            if(MagForwardEncCounterPrev == MagForwardEncCounter)
+            {
+                __HAL_TIM_SET_COUNTER(&htim2,40500);
+                printf("MagForwardEncCounter = %d\r\n",  getEncodeValue(MOTOR_MAG));
+                motorCtrlByPWM(MOTOR_MAG, 0);
+                MagMotorState = MotorFSM_ZERO_CONFIRMED;
+            }
+            break;
+        case MotorFSM_ZERO_CONFIRMED:
+            motorCtrlByPWM(MOTOR_MAG, PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorSetPos, &MAGmotor_pid_para));
+            osDelay(1);
+            break;
+        case MotorFSM_ERROR_STATE:
+            printf("ERROR_STATE\r\n");
+            break;
+    }
+
+    }
+//static uint16_t MagMotorSetPos = 20;
+void Shell_SetMagMotorSetPos(uint8_t argc, char *argv[])
+{
+    MagMotorSetPos = strtol((char *)argv[1], NULL, 10);
+}
+MSH_CMD_EXPORT_ALIAS(Shell_SetMagMotorSetPos, MAGPOS,Mag motor set position);
+void Shell_GetMagMotorPos(uint8_t argc, char *argv[])
+{
+    LOG_E("MagMotorPos = %d\r\n",getEncodeValue(MOTOR_MAG));
+}
+MSH_CMD_EXPORT_ALIAS(Shell_GetMagMotorPos, MAGPOSGET,Mag motor get position);
 static void MotorInitial_thread_entry(void *argument)
 {
     MX_TIM2_Init();
@@ -293,13 +408,12 @@ static void MotorInitial_thread_entry(void *argument)
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
     gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
-    motorEnable(MOTOR_MAG);
+    
     motorEnable(MOTOR_AFT);
+    float setPIDOutput = 0;
     for (;;)
     {
-        printf("mag encoder = %d\r\n",getEncodeValue(MOTOR_MAG));
-        printf("aft encoder = %d\r\n",getEncodeValue(MOTOR_AFT));
-        osDelay(1000);
+        MagMotorInitFSM();
     }
 }
 
@@ -307,7 +421,7 @@ static int8_t MotorInitial_thread_init(void)
 {
     osThreadAttr_t thread_attr = {
     .name = "MotorInitial_thread",
-    .stack_size = 2048 * 4,
+    .stack_size = 1024 * 4,
     .priority = osPriorityNormal,
     };
 

@@ -5,23 +5,8 @@
 // #include "mcu_adc.h"
 #include "ulog.h"
 #include "drv_flash.h"
+#include "motorctrl.h"
 const uint8_t AFC_Version[4] = {0x19,0,0,1};
-static struct control_para control_data = 
-{
-    .calibration = {.adc_factor = {2376000, 2376000, 2376000, 2376000, 2376000}, 
-                    .dac_factor = 30,
-                    .trig_interval_min = 4000},
-    .treatment = {.prf_hz = 1},
-    .interlock = {.threshold_dose_rate = {10}, 
-                  .threshold_dose_cp = {10}, 
-                  .one_pulse = {.threshold_low = 10, .threshold_high = 10}, 
-                  .threshold_symmetry = 10, 
-                  .communication_timeout = 5000},
-};
-static struct control_para *control_data_get(void)
-{
-    return &control_data;
-}
 
 int8_t control_data_pointer_get(void **ptr)
 {
@@ -69,7 +54,7 @@ static int8_t AFC_handshake_frame_parse(struct AFC_object *cmd)
 {
     int8_t ret = 0;
 
-    struct control_para *obj = control_data_get();
+
 
 #if 1
     LOG_I("bgm arm core handshake frame parse: %d\r\n", cmd->len);

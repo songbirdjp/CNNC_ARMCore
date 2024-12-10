@@ -89,7 +89,6 @@ static void AFC_DataTransmit_thread_entry(void *argument)
 {
     for (;;)
     {
-        LOG_E("AFC_DataTransmit_thread_entry\r\n");
         osDelay(1000);
     }
 }

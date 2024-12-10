@@ -140,7 +140,7 @@ void MX_TIM2_Init(void)
   htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
@@ -278,9 +278,9 @@ void MX_TIM5_Init(void)
 
   /* USER CODE END TIM5_Init 1 */
   htim5.Instance = TIM5;
-  htim5.Init.Prescaler = 275 - 1 ;
+  htim5.Init.Prescaler = 199 ;
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim5.Init.Period = 99;
+  htim5.Init.Period = 199;
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
@@ -504,9 +504,9 @@ void MX_TIM24_Init(void)
 
   /* USER CODE END TIM24_Init 1 */
   htim24.Instance = TIM24;
-  htim24.Init.Prescaler = 274;
+  htim24.Init.Prescaler = 199;
   htim24.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim24.Init.Period = 99;
+  htim24.Init.Period = 199;
   htim24.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim24.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim24) != HAL_OK)
@@ -700,6 +700,10 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE END TIM24_MspInit 0 */
     /* TIM24 clock enable */
     __HAL_RCC_TIM24_CLK_ENABLE();
+
+    /* TIM24 interrupt Init */
+    HAL_NVIC_SetPriority(TIM24_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(TIM24_IRQn);
   /* USER CODE BEGIN TIM24_MspInit 1 */
 
   /* USER CODE END TIM24_MspInit 1 */
@@ -892,6 +896,9 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)
   /* USER CODE END TIM24_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_TIM24_CLK_DISABLE();
+
+    /* TIM24 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM24_IRQn);
   /* USER CODE BEGIN TIM24_MspDeInit 1 */
 
   /* USER CODE END TIM24_MspDeInit 1 */
