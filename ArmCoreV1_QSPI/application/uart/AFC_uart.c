@@ -6,6 +6,7 @@
 #include "ulog.h"
 #include "drv_flash.h"
 #include "motorctrl.h"
+#include "shell.h"
 const uint8_t AFC_Version[4] = {0x19,0,0,1};
 
 int8_t control_data_pointer_get(void **ptr)
@@ -79,9 +80,43 @@ static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
 {
 
 }
-static int8_t  AFC_MagMotorCmd_parse(struct AFC_object *cmd)
+void Shell_testAFC(void)
 {
-
+    MotorCtrlParam_TypeDef *obj = MAG_motorParam_get();
+           if(obj->motorFindZeroOK == 0x01)
+            {
+                LOG_E("Mag Motor find zero ok\r\n");
+            }
+            else
+            {
+                LOG_E("Mag Motor find zero failed\r\n");
+            }   
+    // LOG_E("test AFC\r\n");
+}
+MSH_CMD_EXPORT_ALIAS(Shell_testAFC, testAFC, testAFC);
+static int8_t  AFC_MagMotorCmd_parse(struct AFC_object *cmd)
+{   
+    int8_t ret = 0;
+    MotorCtrlParam_TypeDef *obj = MAG_motorParam_get();
+    switch (cmd->data[1])
+    {
+        case 0x00:// Mag Motor find zero ok
+            cmd->len = 0x01;
+            cmd->data[0] = obj->motorFindZeroOK;
+            break;
+        case 0x01://Mag Motor find zero
+            break;
+        case 0x02://Mag Motor set position
+            break;
+        case 0x03:
+            break;
+        case 0x04:
+            break;
+        case 0x05:
+            break;
+        default:
+            break;
+    }
 }   
 static int8_t  AFC_AFTMotorCmd_parse(struct AFC_object *cmd)
 {

@@ -23,16 +23,16 @@ static PID_TypeDef AFTmotor_pid_para = {.Kp = 1,
                                         .IntegralLimit = 50,
                                         .OutputLimit = 100};
 
-static MotorCtrlParam_TypeDef MagMotor ={0};
-static MotorCtrlParam_TypeDef AFTMotor ={0};
+static MotorCtrlParam_TypeDef MagMotorParameter ={0};
+static MotorCtrlParam_TypeDef AFTMotorParameter ={0};
 
 MotorCtrlParam_TypeDef *AFT_motorParam_get(void)
 {
-    return &AFTMotor;
+    return &AFTMotorParameter;
 }
 MotorCtrlParam_TypeDef *MAG_motorParam_get(void)
 {
-    return &MagMotor;
+    return &MagMotorParameter;
 }
 
 void AFTBrakeCtrl(AFTBrakeTypeDef _brakeCtrl)//only AFT motor has brake
@@ -376,6 +376,7 @@ void MagMotorInitFSM(void)
                 __HAL_TIM_SET_COUNTER(&htim2,40500);
                 printf("MagForwardEncCounter = %d\r\n",  getEncodeValue(MOTOR_MAG));
                 motorCtrlByPWM(MOTOR_MAG, 0);
+                MagMotorParameter.motorFindZeroOK = 0x01;
                 MagMotorState = MotorFSM_ZERO_CONFIRMED;
             }
             break;
@@ -387,8 +388,60 @@ void MagMotorInitFSM(void)
             printf("ERROR_STATE\r\n");
             break;
     }
-
+}
+MotorFindingZeroFSM_t AFTMotorState = MotorFSM_Init;
+uint8_t AFTMotorInitDone = 0;
+uint16_t AFTMotorEncoderData;
+uint16_t AFTMotorIsKeyDown = 0;
+uint16_t AFTMotorSetPos = 20000;
+void  AFTMotorInitFSM()
+{
+   // uint16_t AFTMotorPos = 20000;
+    uint16_t AFTForwardEncCounter;
+    uint16_t AFTForwardEncCounterPrev;
+    uint16_t AFTBackwardEncCounter;
+    uint16_t AFTBackwardEncCounterPrev;
+//    printf("AFTMotorState = %d\r\n",AFTMotorState);
+    switch (AFTMotorState)
+    {
+        case MotorFSM_Init:
+            printf("MotorInit\r\n");
+            if(0 == AFTMotorInitDone)
+            {
+                motorEnable(MOTOR_AFT);
+                __HAL_TIM_SET_COUNTER(&htim3, 32767);
+                motorCtrlByPWM(MOTOR_AFT, 0);
+            }
+            AFTMotorInitDone =1;
+            AFTBrakeCtrl(AFT_BRAKE_ON);
+            motorCtrlByPWM(MOTOR_AFT, -10);
+            osDelay(1000);
+            AFTMotorState = MotorFSM_Backward2FindZero;
+            break;
+        case MotorFSM_Backward2FindZero:
+            motorCtrlByPWM(MOTOR_AFT, 10);
+            AFTForwardEncCounterPrev = __HAL_TIM_GET_COUNTER(&htim3);
+            osDelay(500);
+            AFTForwardEncCounter = __HAL_TIM_GET_COUNTER(&htim3);   
+           // printf("MagForwardEncCounterPrev = %d MagForwardEncCounter = %d\r\n", MagForwardEncCounterPrev, MagForwardEncCounter);
+            if(AFTForwardEncCounterPrev == AFTForwardEncCounter)
+            {
+                __HAL_TIM_SET_COUNTER(&htim3,40500);
+                printf("AFTForwardEncCounter = %d\r\n",  getEncodeValue(MOTOR_AFT));
+                motorCtrlByPWM(MOTOR_AFT, 0);
+                AFTMotorParameter.motorFindZeroOK = 0x01;
+                AFTMotorState = MotorFSM_ZERO_CONFIRMED;
+            }
+            break;
+        case MotorFSM_ZERO_CONFIRMED:
+            motorCtrlByPWM(MOTOR_AFT, PositionPIDCtrl(getEncodeValue(MOTOR_AFT),AFTMotorSetPos, &AFTmotor_pid_para));
+            osDelay(1);
+            break;
+        case MotorFSM_ERROR_STATE:
+            printf("ERROR_STATE\r\n");
+            break;
     }
+}
 //static uint16_t MagMotorSetPos = 20;
 void Shell_SetMagMotorSetPos(uint8_t argc, char *argv[])
 {
@@ -433,4 +486,29 @@ static int8_t MotorInitial_thread_init(void)
     }
     return 0;
 }
+static void AFTMotorInitial_thread_entry(void *argument)
+{
+    for (;;)
+    {
+        AFTMotorInitFSM();
+    }
+}
+
+static int8_t AFTMotorInitial_thread_init(void)
+{
+    osThreadAttr_t thread_attr = {
+    .name = "AFTMotorInitial_thread",
+    .stack_size = 1024 * 4,
+    .priority = osPriorityNormal,
+    };
+
+    osThreadId_t thread_id = osThreadNew(AFTMotorInitial_thread_entry, NULL, &thread_attr);
+    if (thread_id == NULL)
+    {
+        printf("thread AFTMotorInitial create failed\r\n");
+        return -1;
+    }
+    return 0;
+}
 INIT_APP_EXPORT(MotorInitial_thread_init);
+INIT_APP_EXPORT(AFTMotorInitial_thread_init);
