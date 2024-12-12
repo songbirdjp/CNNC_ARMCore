@@ -7,6 +7,8 @@
 #include "lan9252_app.h"
 #include "BGM_def.h"
 #include "ulog.h"
+#include "planData.h"
+
 #define DATA_PROCESS_LAN_EVENT      (1<<0)
 #define DATA_PROCESS_TCP_EVENT      (1<<1)
 #define DATA_PROCESS_FPGA_EVENT     (1<<2)
@@ -136,6 +138,7 @@ static int8_t non_realtime_tcp_recv_data_callback(void)
 
 static void tcp_recv_data_process(APP_DATA_RECV *info)
 {
+    #if 0
     int8_t ret = 0;
 
     ret = websocket_cmd_parse(info->sn, info->tcpData, info->length);
@@ -143,6 +146,18 @@ static void tcp_recv_data_process(APP_DATA_RECV *info)
     {
         printf("websocket cmd parse err: %d\r\n", ret);
     }
+    #endif
+    uint16_t tag = (info->tcpData[1] << 8) + info->tcpData[0];
+   // printf("tag %d %d %d\r\n", tag, (info->tcpData[3] << 8) + info->tcpData[2], (info->tcpData[5] << 8) + info->tcpData[4]);
+    switch(tag)
+    {
+        case PLAN_DATA_SETTING_TAG: //recv plan
+          //  printf("recv plan data!\r\n");
+            nrtRecvPlan(info);
+            planFeedback(info->sn);       
+        break;
+        default: break;
+    } 
 
     /* add other process here */
 }
@@ -150,6 +165,7 @@ static void tcp_recv_data_process(APP_DATA_RECV *info)
 static int8_t data_process_init(void)
 {
     int8_t ret = 0;
+
     ret = ws_data_process_callback_register(tcp_recv_data_process);
     if (ret != 0)
     {
@@ -174,6 +190,8 @@ static int8_t data_process_init(void)
         printf("ethercat callback register err: %d\r\n", ret);
         return ret;
     }
+
+    planDataInit();
     return 0;
 }
 
@@ -215,7 +233,7 @@ static int8_t main_app_thread_init(void)
 {
     osThreadAttr_t recv_data_process_thread_attributes = {
     .name = "recv_data_process_thread",
-    .stack_size = 1024 * 4,
+    .stack_size = 2048 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
 

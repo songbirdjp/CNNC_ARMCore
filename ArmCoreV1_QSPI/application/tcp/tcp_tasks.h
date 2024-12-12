@@ -18,6 +18,17 @@ typedef struct {
     uint16_t Len;
 }TCP_DATA_t;
 
+#ifdef IS_TCP_SERVER
+typedef struct
+{
+    int8_t socketNum;
+    uint8_t clientType; //0 - controller, data come from program  1 - service, data come from browser. distinguish by IP and PORT
+    int32_t connectStatus;// -1 - fail  1 - success
+    uint32_t loopCnt;
+}CLIENT_INFO;
+
+extern CLIENT_INFO client[MAX_CLIENT_NUM];
+#endif
 
 osStatus_t tcp_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout);
 int32_t tcp_data_send(uint8_t s, uint8_t *buf, uint16_t len);

@@ -39,8 +39,13 @@ void AFC_SetADCSampleMode(uint8_t mode)
     _afcCmd[2] = mode;
     BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,3); 
 }
+void Shell_AFC_SetADCSampleMode(int8_t argc, uint8_t **argv)
+{
+    uint8_t mode = strtol((char *)argv[1], NULL, 16);
+    AFC_SetADCSampleMode(mode);
+}
 #ifdef AFC_SHELL_CMD
-MSH_CMD_EXPORT_ALIAS(AFC_SetADCSampleMode,AFCSAMMODE,"Set ADC Sample Mode");
+MSH_CMD_EXPORT_ALIAS(Shell_AFC_SetADCSampleMode,AFCSAMMODE,"Set ADC Sample Mode");
 #endif
 void AFC_SetADCSampleDelay(uint16_t delay)
 {
@@ -49,8 +54,13 @@ void AFC_SetADCSampleDelay(uint16_t delay)
     _afcCmd[3] = delay >> 8;
     BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,3); 
 }
+void Shell_AFC_SetADCSampleDelay(int8_t argc, uint8_t **argv)
+{
+    uint16_t delay = (strtol((char *)argv[2], NULL, 16) << 8) | strtol((char *)argv[1], NULL, 16);
+    AFC_SetADCSampleDelay(delay);
+}
 #ifdef AFC_SHELL_CMD
-MSH_CMD_EXPORT_ALIAS(AFC_SetADCSampleDelay,AFCSAMDELAY,"Set ADC Sample Delay");
+MSH_CMD_EXPORT_ALIAS(Shell_AFC_SetADCSampleDelay,AFCSAMDELAY,"Set ADC Sample Delay");
 #endif
 void AFC_DeleteADCData(void)
 {
@@ -83,18 +93,31 @@ void AFC_MagMotorSetPos(uint16_t pos)//0x40,0x01
     _afcCmd[3] = pos >> 8;
     BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,4); 
 }
-#ifdef AFC_SHELL_CMD
-MSH_CMD_EXPORT_ALIAS(AFC_MagMotorSetPos,AFCMAGPOS,"Mag Motor Set Pos");
-#endif
-void AFC_MagMotorRunByStep(uint16_t _stepVal)//0x40,0x02
+void Shell_AFC_MagMotorSetPos(int8_t argc, uint8_t **argv)//0x40,0x01
 {
-    uint8_t _afcCmd[4] = {0x40,0x02,0x00,0x00};
-    _afcCmd[2] = _stepVal;
-    _afcCmd[3] = _stepVal >> 8;
-    BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,4); 
+    uint16_t pos = (strtol((char *)argv[2], NULL, 16) << 8) | strtol((char *)argv[1], NULL, 16);
+    AFC_MagMotorSetPos(pos);
 }
 #ifdef AFC_SHELL_CMD
-MSH_CMD_EXPORT_ALIAS(AFC_MagMotorRunByStep,AFCMAGSTEP,"Mag Motor Run By Step");
+MSH_CMD_EXPORT_ALIAS(Shell_AFC_MagMotorSetPos,AFCMAGPOS,"Mag Motor Set Pos");
+#endif
+void AFC_MagMotorRunByStep(uint8_t dir,uint16_t _stepVal)//0x40,0x02
+{
+    uint8_t _afcCmd[5] = {0x40,0x02,0x00,0x00,0x00};
+    _afcCmd[2] = dir;
+    _afcCmd[3] = _stepVal;
+    _afcCmd[4] = _stepVal >> 8;
+    printf("dir:%d,stepVal:%d\r\n",dir,_stepVal);
+    BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,5); 
+}
+void Shell_AFC_MagMotorRunByStep(int8_t argc, uint8_t **argv)//0x40,0x02
+{
+    uint8_t dir = strtol((char *)argv[1], NULL, 16);
+    uint16_t _stepVal = (strtol((char *)argv[3], NULL, 16) << 8) | strtol((char *)argv[2], NULL, 16);   
+    AFC_MagMotorRunByStep(dir,_stepVal);
+}
+#ifdef AFC_SHELL_CMD
+MSH_CMD_EXPORT_ALIAS(Shell_AFC_MagMotorRunByStep,AFCMAGSTEP,"Mag Motor Run By Step");
 #endif
 void AFC_MagMotorGetEncValue(void)//0x40,0x03
 {
@@ -104,11 +127,18 @@ void AFC_MagMotorGetEncValue(void)//0x40,0x03
 #ifdef AFC_SHELL_CMD
 MSH_CMD_EXPORT_ALIAS(AFC_MagMotorGetEncValue,AFCMAGENC,"Mag Motor Get Enc Value");
 #endif
-void AFC_MagMotorSetPresetPos(void)//0x40,0x04
+void AFC_MagMotorSetPresetPos(uint16_t pos)//0x40,0x04
 {
-    uint8_t _afcCmd[2] = {0x40,0x04};
-    BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,2); 
+    uint8_t _afcCmd[4] = {0x40,0x04,0x00,0x00};
+    _afcCmd[2] = pos;
+    _afcCmd[3] = pos >> 8;
+    BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,4); 
+}
+void Shell_AFC_MagMotorSetPresetPos(int8_t argc, uint8_t **argv)//0x40,0x04
+{
+    uint16_t pos = (strtol((char *)argv[2], NULL, 16) << 8) | strtol((char *)argv[1], NULL, 16);
+    AFC_MagMotorSetPresetPos(pos);
 }
 #ifdef AFC_SHELL_CMD
-MSH_CMD_EXPORT_ALIAS(AFC_MagMotorSetPresetPos,AFCMAGPRESET,"Mag Motor Set Preset Pos");
+MSH_CMD_EXPORT_ALIAS(Shell_AFC_MagMotorSetPresetPos,AFCMAGPRESET,"Mag Motor Set Preset Pos");
 #endif

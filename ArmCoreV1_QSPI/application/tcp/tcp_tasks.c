@@ -10,22 +10,7 @@
 #ifndef IS_TCP_SERVER
 static uint8_t remote_ip[4] = {192, 168, 10, 110};
 static uint16_t remote_port = 8000;
-#endif
 
-static wiz_NetInfo local_net_info = {
-        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x72},
-        .ip =  {192, 168, 10, 71},
-        .sn =  {255, 255, 255, 0},
-        .gw =  {192, 168, 0, 1},
-        .dns = {180, 76, 76, 76},
-        .dhcp = NETINFO_DHCP
-};
-
-static wiz_NetInfo *local_netinfo_get(void)
-{
-    return &local_net_info;
-}
-#ifndef IS_TCP_SERVER
 static uint8_t *remote_ip_get(void)
 {
     return remote_ip;
@@ -36,6 +21,21 @@ static uint16_t remote_port_get(void)
     return remote_port;
 }
 #endif
+
+static wiz_NetInfo local_net_info = {
+        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x74},
+        .ip =  {192, 168, 10, 74},
+        .sn =  {255, 255, 255, 0},
+        .gw =  {192, 168, 0, 1},
+        .dns = {180, 76, 76, 76},
+        .dhcp = NETINFO_DHCP
+};
+
+static wiz_NetInfo *local_netinfo_get(void)
+{
+    return &local_net_info;
+}
+
 static TCP_DATA_t recvInfo = {0};
 static volatile uint8_t tcp_link_state = false;
 static uint8_t tcp_link_status_get(void)
@@ -45,7 +45,7 @@ static uint8_t tcp_link_status_get(void)
 
 static void (*fun_ptr)(uint8_t sn);
 
-void tcp_establish_cb(uint8_t sn)
+static void tcp_establish_cb(uint8_t sn)
 {
     if (fun_ptr != NULL)
     {
@@ -66,6 +66,16 @@ int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg))
 }
 
 #ifdef IS_TCP_SERVER
+CLIENT_INFO client[MAX_CLIENT_NUM] = {-1};
+
+void tcp_server_init(void)
+{
+    for (uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
+    {
+        client[i].socketNum = -1;
+        client[i].clientType = -1;
+    }
+}					
 static int8_t do_tcp_server_send(uint8_t sn)
 {
     int8_t ret = 0;
@@ -150,6 +160,9 @@ static int8_t tcp_init(osMessageQueueId_t queue)
 
     device_w5500_rx_queue_init(queue);
 
+#ifdef IS_TCP_SERVER
+    tcp_server_init();
+#endif
     return 0;
 }
 
@@ -175,7 +188,6 @@ static int8_t tcp_data_recv_with_block(void)
 */
 
 static osMessageQueueId_t tcp_rx_queueHandle = NULL;
-static osMessageQueueId_t tcp_tx_queueHandle = NULL;
 static osMutexId_t tcp_access_mutexHandle = NULL;
 
 static void TCPSendTask(void *argument)
@@ -218,7 +230,7 @@ static void TCPSendTask(void *argument)
     #endif
         osMutexRelease(tcp_access_mutexHandle);
 
-        osDelay(10);
+        osDelay(1);
     }
   /* USER CODE END TCPSendTask */
 }
