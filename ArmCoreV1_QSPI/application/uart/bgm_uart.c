@@ -329,7 +329,7 @@ static int8_t dose_command_frame_parse(struct cmd_object *cmd)
         ret = dose_state_control_parse(cmd);
         break;    
     default:
-        LOG_I("invalid cmd type: %x\r\n", cmd->data[0]);
+        LOG_I("1invalid cmd type: %x\r\n", cmd->data[0]);
         ret = -1;
         break;
     }
@@ -424,26 +424,64 @@ static int8_t uart_dose_cmd_parse(struct cmd_object *cmd)
         }
         break;
     default:
-        printf("invalid cmd type: %x\r\n", cmd->type);
+        printf("2invalid cmd type: %x\r\n", cmd->type);
         return -2;
         break;
     }
 
     return ret;
 }
-
+static int8_t  AFC_MagMotorCmd_parse(struct cmd_object *cmd)
+{   
+    int8_t ret = 0;
+   
+    switch (cmd->data[1])
+    {
+        case 0x00:// Mag Motor find zero ok 
+            if(1 == cmd->data[2])
+            {
+                LOG_I("Mag Motor find zero ok\r\n");
+            }
+            else
+            {
+                LOG_I("Mag Motor find zero fail\r\n");
+            }
+            break;
+        case 0x01://Mag Motor set position 2 bytes 
+           
+            break;
+        case 0x02://Mag Motor run by step 
+     
+            break;
+        case 0x03:
+           
+            break;
+        case 0x04:
+            
+            break;
+        default:
+            break;
+    }
+    return ret;
+}   
 static int8_t afc_handshake_frame_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
-   LOG_I("AFC Handshake success");
-    AFC_info.hw_version = cmd->data[1];
-    AFC_info.sw_version[0] = cmd->data[2];
+#if 1
+    LOG_I("bgm arm core handshake frame parse: %d\r\n", cmd->len);
+    LOG_I("hardware version: %#.2x\r\n", cmd->data[0]);
+    LOG_I("software version: %u.%u.%u\r\n", cmd->data[1], cmd->data[2], cmd->data[3]);
+    LOG_I("AFC id: %u\r\n", cmd->data[4]);
+#endif
+    LOG_I("AFC Handshake success");
+    AFC_info.hw_version = cmd->data[0];
+    AFC_info.sw_version[0] = cmd->data[1];
     AFC_info.sw_version[1] = '.';
-    AFC_info.sw_version[2] = cmd->data[3];
+    AFC_info.sw_version[2] = cmd->data[2];
     AFC_info.sw_version[3] = '.';
-    AFC_info.sw_version[4] = cmd->data[4];
-    LOG_I("AFC hw version: %d\r\n", AFC_info.hw_version);
-    LOG_I("AFC sw version: %s\r\n", AFC_info.sw_version);
+    AFC_info.sw_version[4] = cmd->data[3];
+    // LOG_I("AFC hw version: %d\r\n", AFC_info.hw_version);
+    // LOG_I("AFC sw version: %s\r\n", AFC_info.sw_version);
     return ret;
 }
 extern DEVICE_FLASH *flash;
@@ -454,6 +492,7 @@ static int8_t afc_command_frame_parse(struct cmd_object *cmd)
     switch (cmd->data[0])   /* first cmd */
     {
     case 0x40:
+        AFC_MagMotorCmd_parse(cmd);
         break;
     case 0x41:
     if(cmd->data[0] == 0x03)
@@ -469,10 +508,10 @@ static int8_t afc_command_frame_parse(struct cmd_object *cmd)
         case 0x05:
             for (int i = 2; i <= 18; i++) 
             {
-                printf("Data[%d]: %x\r\n", i, cmd->data[i]);
+                LOG_I("Data[%d]: %x\r\n", i, cmd->data[i]);
             }
-           ret = flash->write(flash,AFC_ADC_Flash_addr,&cmd->data[2],16,1000);
-           AFC_ADC_Flash_addr += 16;
+            ret = flash->write(flash,AFC_ADC_Flash_addr,&cmd->data[2],16,1000);
+            AFC_ADC_Flash_addr += 16;
             if(ret != 0)
             {
                 LOG_I("flash write err: %d\r\n", ret);
@@ -543,7 +582,7 @@ static int8_t uart_afc_cmd_parse(struct cmd_object *cmd)
         }
         break;
     default:
-        printf("invalid cmd type: %d\r\n", cmd->type);
+        printf("3invalid cmd type: %d\r\n", cmd->type);
         return -2;
         break;
     }
@@ -640,7 +679,7 @@ static int8_t uart_eps_cmd_parse(struct cmd_object *cmd)
         printf("reg addr: %#.4x, len: %#.4x\r\n", cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
         break;
     default:
-        printf("invalid cmd type: %d\r\n", cmd->type);
+        printf("4invalid cmd type: %d\r\n", cmd->type);
         return -5;
         break;
     }
@@ -712,7 +751,7 @@ static int8_t uart_vps_cmd_parse(struct cmd_object *cmd)
         LOG_I("reg addr: %#.4x, len: %#.4x\r\n", cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
         break;
     default:
-        LOG_I("invalid cmd type: %d\r\n", cmd->type);
+        LOG_I("4invalid cmd type: %d\r\n", cmd->type);
         return -5;
         break;
     }
@@ -892,7 +931,7 @@ send_data:
         if (ret != 0)
         {
             printf("device uart[%d] data read err: %d\r\n", uart_id, ret);
-            //goto send_data;
+            // goto send_data;
         }
 
         ret = uart_cmd_process(uart_id, &recv_buf);

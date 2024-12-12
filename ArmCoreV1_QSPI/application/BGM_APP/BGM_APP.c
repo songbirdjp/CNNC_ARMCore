@@ -30,6 +30,8 @@
 #define isDoseTriggerQueue_LENGTH 16
 #define isDoseTriggerQueue_SIZE    sizeof(uint16_t)
 
+const  uint8_t BGM_ARM_IO_Version[4] = {0x19,0,0,1};
+
 volatile BGMStateMachine_t ARMcurrentState = BGM_STATE_BOOT;
 volatile BGMStateMachine_t PLCcurrentState = BGM_STATE_BOOT;
 extern TOBJ6000 dataToSend;
@@ -127,19 +129,19 @@ static int8_t ioe_irq_callback(void)
 
     osMessageQueuePut(ExpandGPIOQueueHandle,&ExpandGPIOData,0,0);    
 }
-uint16_t isDoseTrigger = 0;
-static int8_t DoseTrigger_irq_callback(void)
-{
-    //osStatus_t tmp;
-    // isDoseTrigger = 1;
-    // tmp = osMessageQueuePut(isDoseTriggerQueueHandle,&isDoseTrigger,0,0);  
-    // if(tmp != osOK)
-    // {
-    //     LOG_E("isDoseTriggerQueueHandle error = %d\r\n",tmp);
-    // }
-    // isDoseTrigger = 0;  
-    TriggerOutCtrl(BGMTriggerPin, 10, 4000);
-}
+// uint16_t isDoseTrigger = 0;
+// static int8_t DoseTrigger_irq_callback(void)
+// {
+//     //osStatus_t tmp;
+//     // isDoseTrigger = 1;
+//     // tmp = osMessageQueuePut(isDoseTriggerQueueHandle,&isDoseTrigger,0,0);  
+//     // if(tmp != osOK)
+//     // {
+//     //     LOG_E("isDoseTriggerQueueHandle error = %d\r\n",tmp);
+//     // }
+//     // isDoseTrigger = 0;  
+//     TriggerOutCtrl(BGMTriggerPin, 10, 4000);
+// }
 uint16_t RtDataUP[64] = {0};
 static void BGMIOEfunc(void *argument)
 {   
@@ -159,7 +161,7 @@ static void BGMIOEfunc(void *argument)
     HAL_GPIO_WritePin(GPIOC,GPIO_PIN_6,GPIO_PIN_SET);//Trig Inhibit Disable
 
     gpio_pin_irq_callback_register("GPIOG_6", ioe_irq_callback);
-    gpio_pin_irq_callback_register("GPIOA_8", DoseTrigger_irq_callback);
+    // gpio_pin_irq_callback_register("GPIOA_8", DoseTrigger_irq_callback);
     for (;;)
     {
         if(osMessageQueueGetCount(ExpandGPIOQueueHandle) != 0)
@@ -196,7 +198,7 @@ void TriggerConfig_SetARR(TIM_HandleTypeDef *htim, uint32_t arr_value)
 uint8_t isReadytoTrigAFC = 0;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance == TIM3)
+    if (htim->Instance == TIM23)
     {
         AFC_GetADCValueByFrame();   
     }
@@ -210,13 +212,14 @@ void TriggerDistributeInit(void)
     MX_TIM4_Init();
     MX_TIM23_Init();
     //HAL_TIM_IC_Start(&htim1, TIM_CHANNEL_1);
+    __HAL_TIM_CLEAR_FLAG(&htim23, TIM_FLAG_UPDATE);
     HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim23, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start_IT(&htim23, TIM_CHANNEL_3);
     HAL_TIM_Base_Start(&htim1);
     HAL_TIM_Base_Start_IT(&htim3);
     HAL_TIM_Base_Start(&htim4);
-    HAL_TIM_Base_Start(&htim23);
+    HAL_TIM_Base_Start_IT(&htim23);
 }
 
 #define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL

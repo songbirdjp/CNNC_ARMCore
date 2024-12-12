@@ -72,6 +72,7 @@ extern DMA_HandleTypeDef hdma_tim7_up;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
+extern TIM_HandleTypeDef htim23;
 extern DMA_HandleTypeDef hdma_uart4_tx;
 extern DMA_HandleTypeDef hdma_uart5_tx;
 extern DMA_HandleTypeDef hdma_uart7_tx;
@@ -545,6 +546,7 @@ void BDMA_Channel2_IRQHandler(void)
 
   /* USER CODE END BDMA_Channel2_IRQn 1 */
 }
+
 
 /* USER CODE BEGIN 1 */
 

@@ -81,6 +81,7 @@ extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart2_tx;
 extern DMA_HandleTypeDef hdma_usart3_tx;
 extern WWDG_HandleTypeDef hwwdg1;
+extern TIM_HandleTypeDef htim23;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -423,6 +424,19 @@ void DMA2_Stream0_IRQHandler(void)
   /* USER CODE END DMA2_Stream0_IRQn 1 */
 }
 
+/**
+  * @brief This function handles TIM23 global interrupt.
+  */
+void TIM23_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM23_IRQn 0 */
+
+  /* USER CODE END TIM23_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim23);
+  /* USER CODE BEGIN TIM23_IRQn 1 */
+
+  /* USER CODE END TIM23_IRQn 1 */
+}
 /**
   * @brief This function handles DMA2 stream2 global interrupt.
   */

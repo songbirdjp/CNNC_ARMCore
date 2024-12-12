@@ -563,6 +563,10 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE END TIM23_MspInit 0 */
     /* TIM23 clock enable */
     __HAL_RCC_TIM23_CLK_ENABLE();
+
+    /* TIM23 interrupt Init */
+    HAL_NVIC_SetPriority(TIM23_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(TIM23_IRQn);
   /* USER CODE BEGIN TIM23_MspInit 1 */
 
   /* USER CODE END TIM23_MspInit 1 */
@@ -742,6 +746,9 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   /* USER CODE END TIM23_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_TIM23_CLK_DISABLE();
+
+    /* TIM23 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM23_IRQn);
   /* USER CODE BEGIN TIM23_MspDeInit 1 */
 
   /* USER CODE END TIM23_MspDeInit 1 */

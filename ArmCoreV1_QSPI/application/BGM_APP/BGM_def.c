@@ -18,7 +18,7 @@
 #include "ulog.h"
 #include "console.h"
 
-const uint8_t BGM_ARM_IO_Version[4] = {0x19,0,0,1};//Hardware version0x19 ,firmware version xx,yy,zz 
+const static uint8_t BGM_ARM_IO_Version[4] = {0x19,0,0,1};//Hardware version0x19 ,firmware version xx,yy,zz 
 
 extern BGMStateMachine_t ARMcurrentState;
 extern BGMStateMachine_t PLCcurrentState;
@@ -40,17 +40,7 @@ void Shell_CheckALLFSM(void)
     LOG_E("ARM currentState = %d\r\n",ARMcurrentState);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_CheckALLFSM,ReadAllFSM,"Read All FSM");
-int BGM2AFC_Handshake(void)
-{
-    struct cmd_object BGM2AFCHandshake;
-    BGM2AFCHandshake.id.byte = 0x80;
-    BGM2AFCHandshake.type = UARTCmdType_HandshakeDown;
-    BGM2AFCHandshake.len = sizeof(BGM_ARM_IO_Version);
-    BGM2AFCHandshake.data = BGM_ARM_IO_Version;
-    LOG_I("BGM2AFC_Handshake\r\n");
-    return uart_cmd_write(BGM_UART_AFC,&BGM2AFCHandshake);
-}
-MSH_CMD_EXPORT_ALIAS(BGM2AFC_Handshake,B2AHS,"Dose Board Handshake Set");
+
 
 int BGM2Dose_Handshake(enum uart_id uartID)
 {
@@ -475,8 +465,3 @@ void BGM_RtBeamCtrl(void)
 }
 MSH_CMD_EXPORT_ALIAS(BGM_RtBeamCtrl,DoseRT,"Get RT Parameter");
 
-void AFC_GetADCValueByFrame(void)
-{
-    uint8_t _afcCmd[2] = {0x60,0x05};
-    BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,2); 
-}
