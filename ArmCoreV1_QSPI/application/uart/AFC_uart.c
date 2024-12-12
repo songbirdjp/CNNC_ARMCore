@@ -93,21 +93,25 @@ static int8_t  AFC_MagMotorCmd_parse(struct AFC_object *cmd)
             cmd->data[2] = obj->motorFindZeroOK;
             break;
         case 0x01://Mag Motor set position 2 bytes no ACK
-            obj->encoderValTarget = (cmd->data[0] << 8) | cmd->data[1];
+            obj->encoderValTarget = (cmd->data[3] << 8) | cmd->data[2];
+            printf("MagMotorParameter.encoderValTarget = %d\r\n", obj->encoderValTarget);
             break;
         case 0x02://Mag Motor run by step no ACK
-            if(cmd->data[0] == 0x01)
-            {
-                obj->encoderValTarget = obj->encoderValTarget + cmd->data[1];
-            }
-            else if(cmd->data[0] == 0x02)
-            {
-                obj->encoderValTarget = obj->encoderValTarget - cmd->data[1];
-            }
-            else
+            if (cmd->data[2] != 0x01 && cmd->data[2] != 0x02) 
             {
                 LOG_E("Mag Motor run by step err: %d\r\n", cmd->data[0]);
+                break;
             }
+            uint16_t step_value = (cmd->data[4] << 8) | cmd->data[3];
+            if (cmd->data[2] == 0x01)
+            {
+                obj->encoderValTarget += step_value;
+            }
+            else if (cmd->data[2] == 0x02)
+            {
+                obj->encoderValTarget -= step_value;
+            }
+            //printf("MagMotorParameter.encoderValTarget = %d\r\n", obj->encoderValTarget);
             break;
         case 0x03:
             cmd->len = 0x04;

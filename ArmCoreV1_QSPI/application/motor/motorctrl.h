@@ -52,7 +52,7 @@ typedef struct{
     PID_TypeDef *pid;
     uint8_t motorInitEnable;
     uint8_t motorFindZeroOK;
-    AFTBrakeTypeDef motorBrakeStatus
+    AFTBrakeTypeDef motorBrakeStatus;
 } MotorCtrlParam_TypeDef;
 
 MotorCtrlParam_TypeDef *MAG_motorParam_get(void);
