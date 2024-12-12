@@ -46,10 +46,11 @@ typedef enum {
 
 typedef struct{
     int8_t pwm;
-    uint16_t encoderVal;
+    uint16_t encoderValCurrent;
+    uint16_t encoderValTarget;
     uint16_t presetPos;
     PID_TypeDef *pid;
-    uint8_t motorInitOK;
+    uint8_t motorInitEnable;
     uint8_t motorFindZeroOK;
     AFTBrakeTypeDef motorBrakeStatus
 } MotorCtrlParam_TypeDef;

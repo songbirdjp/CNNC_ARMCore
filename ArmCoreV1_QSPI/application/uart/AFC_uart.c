@@ -7,6 +7,7 @@
 #include "drv_flash.h"
 #include "motorctrl.h"
 #include "shell.h"
+#include "stdint.h"
 const uint8_t AFC_Version[4] = {0x19,0,0,1};
 
 int8_t control_data_pointer_get(void **ptr)
@@ -38,7 +39,6 @@ static int8_t AFC_uart_cmd_write(struct AFC_object *cmd)
         LOG_E("AFC uart send queue put err: %d\r\n", stat);
         return -1;
     }
-
     return 0;
 }
 void AFC_UART_SendCmd(UARTCmdType_t cmdType, uint8_t *cmdData,uint8_t len)
@@ -78,49 +78,99 @@ static int8_t AFC_handshake_frame_parse(struct AFC_object *cmd)
 
 static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
 {
-
+   return 0;
 }
-void Shell_testAFC(void)
-{
-    MotorCtrlParam_TypeDef *obj = MAG_motorParam_get();
-           if(obj->motorFindZeroOK == 0x01)
-            {
-                LOG_E("Mag Motor find zero ok\r\n");
-            }
-            else
-            {
-                LOG_E("Mag Motor find zero failed\r\n");
-            }   
-    // LOG_E("test AFC\r\n");
-}
-MSH_CMD_EXPORT_ALIAS(Shell_testAFC, testAFC, testAFC);
 static int8_t  AFC_MagMotorCmd_parse(struct AFC_object *cmd)
 {   
     int8_t ret = 0;
     MotorCtrlParam_TypeDef *obj = MAG_motorParam_get();
     switch (cmd->data[1])
     {
-        case 0x00:// Mag Motor find zero ok
-            cmd->len = 0x01;
-            cmd->data[0] = obj->motorFindZeroOK;
+        case 0x00:// Mag Motor find zero ok ACK
+            cmd->len = 0x03;
+            cmd->data[0] = 0x40;
+            cmd->data[1] = 0x00;
+            cmd->data[2] = obj->motorFindZeroOK;
             break;
-        case 0x01://Mag Motor find zero
+        case 0x01://Mag Motor set position 2 bytes no ACK
+            obj->encoderValTarget = (cmd->data[0] << 8) | cmd->data[1];
             break;
-        case 0x02://Mag Motor set position
+        case 0x02://Mag Motor run by step no ACK
+            if(cmd->data[0] == 0x01)
+            {
+                obj->encoderValTarget = obj->encoderValTarget + cmd->data[1];
+            }
+            else if(cmd->data[0] == 0x02)
+            {
+                obj->encoderValTarget = obj->encoderValTarget - cmd->data[1];
+            }
+            else
+            {
+                LOG_E("Mag Motor run by step err: %d\r\n", cmd->data[0]);
+            }
             break;
         case 0x03:
+            cmd->len = 0x04;
+            cmd->data[0] = 0x40;
+            cmd->data[1] = 0x03;
+            cmd->data[2] = obj->encoderValCurrent & 0xFF;
+            cmd->data[3] = (obj->encoderValCurrent >> 8) & 0xFF;
             break;
         case 0x04:
-            break;
-        case 0x05:
+            obj->presetPos = (cmd->data[0] << 8) | cmd->data[1];
             break;
         default:
             break;
     }
+    return ret;
 }   
 static int8_t  AFC_AFTMotorCmd_parse(struct AFC_object *cmd)
 {
-
+    int8_t ret = 0;
+    MotorCtrlParam_TypeDef *obj = AFT_motorParam_get();
+    switch (cmd->data[1])
+    {
+         case 0x00:
+            obj->motorBrakeStatus = cmd->data[0];
+            break;
+        case 0x01://enable AFT Motor to init
+            obj->motorInitEnable = cmd->data[0];
+            break;
+        case 0x02://enable AFT Motor to find zero
+            cmd->len = 0x01;
+            cmd->data[0] = obj->motorFindZeroOK;
+            break;
+        case 0x03://Mag Motor set position 2 bytes no ACK
+            obj->encoderValTarget = (cmd->data[0] << 8) | cmd->data[1];
+            break;
+        case 0x04://Mag Motor run by step no ACK
+            if(cmd->data[0] == 0x01)
+            {
+                obj->encoderValTarget = obj->encoderValCurrent + cmd->data[1];
+            }
+            else if(cmd->data[0] == 0x02)
+            {
+                obj->encoderValTarget = obj->encoderValCurrent - cmd->data[1];
+            }
+            else
+            {
+                LOG_E("Mag Motor run by step err: %d\r\n", cmd->data[0]);
+            }
+            break;
+        case 0x05:
+            cmd->len = 0x02;
+            cmd->data[0] = obj->encoderValCurrent & 0xFF;
+            cmd->data[1] = (obj->encoderValCurrent >> 8) & 0xFF;
+            break;
+        case 0x06:
+            obj->presetPos = (cmd->data[0] << 8) | cmd->data[1];
+            break;
+        default:
+            // ret = -1;
+            break;
+    }
+    return ret;
+    // return 0;
 }    
 
 extern DEVICE_FLASH *flash;
@@ -144,34 +194,7 @@ static int8_t  AFC_ADCSampleSet_parse(struct AFC_object *cmd)//0x60
     }   
    return ret;
 }   
-static int8_t  AFC_ADCParaSet_parse(struct AFC_object *cmd)
-{
-
-}   
-static int8_t  AFC_ADCPowerFeedback_parse(struct AFC_object *cmd)
-{
-
-}   
-static int8_t  AFC_Interlock_parse(struct AFC_object *cmd)
-{
-
-}   
-static int8_t  AFC_FlashState_parse(struct AFC_object *cmd)
-{
-
-}   
-static int8_t  AFC_StateControl_parse(struct AFC_object *cmd)
-{
-
-}       
-static int8_t  AFC_CtrlStatus_parse(struct AFC_object *cmd)
-{
-
-}   
-static int8_t  AFC_ResetCtrl_parse(struct AFC_object *cmd)
-{
-
-}   
+  
 
 static int8_t AFC_command_frame_parse(struct AFC_object *cmd)
 {
@@ -191,34 +214,14 @@ static int8_t AFC_command_frame_parse(struct AFC_object *cmd)
     case 0x60:
         ret = AFC_ADCSampleSet_parse(cmd);
         break;
-    case 0x80:
-        ret = AFC_ADCParaSet_parse(cmd);
-        break;
-    case 0x81:
-        ret = AFC_ADCPowerFeedback_parse(cmd);
-        break;
-    case 0x82:
-        ret = AFC_Interlock_parse(cmd);
-        break;  
-    case 0x83:
-        ret = AFC_FlashState_parse(cmd);
-        break;
-    case 0xC0:
-        ret = AFC_StateControl_parse(cmd);
-        break;
-    case 0xC1:
-        ret = AFC_CtrlStatus_parse(cmd);
-        break;
-    case 0xC2:
-        ret = AFC_ResetCtrl_parse(cmd);
-        break;
-    default:
+    default:    
+        ret = -1;
         break;
     }
 
     if (ret != 0)
     {
-        LOG_E("AFC uart command [%.2x, %.2x] parse err: %d\r\n", cmd->data[0], cmd->data[1], ret);
+        printf("AFC uart command [%.2x, %.2x] parse err: %d\r\n", cmd->data[0], cmd->data[1], ret);
     }
 
     return ret;
@@ -243,7 +246,6 @@ static int8_t AFC_cmd_parse(struct AFC_object *cmd)
         LOG_E("cmd is NULL\r\n");
         return -1;
     }
-
     /* 1. check cmd id */
     if (cmd->id.bits.cmd_id != AFC_UART_ID)
     {
@@ -312,13 +314,13 @@ static int8_t AFC_uart_send_entry(void *argument)
     {
         osMessageQueueGet(AFC_uart_send_queue, &send_buf, NULL, osWaitForever);
 
-#if 0
-        LOG_I("send_buf len: %d\r\n", send_buf.len);
+#if 1
+        printf("send_buf len: %d\r\n", send_buf.len);
         for (uint8_t i = 0; i < send_buf.len; i++)
         {
-            LOG_I("%02x ", send_buf.buf[i]);
+            printf("%02x ", send_buf.buf[i]);
         }
-        LOG_I("\r\n");
+        printf("\r\n");
 #endif
 
         ret = device_AFC_uart_data_write(&send_buf, send_buf.len, 1000);
@@ -350,7 +352,6 @@ static int8_t AFC_uart_cmd_process(struct AFC_uart *buf)
     struct AFC_object cmd = {0};
     memcpy(&cmd, buf->buf, sizeof(struct AFC_object));
     cmd.data = &buf->buf[sizeof(struct AFC_object) - sizeof(uint8_t *)];
-
     return AFC_cmd_parse(&cmd);
 }
 
@@ -408,7 +409,7 @@ static int8_t AFC_uart_thread_init(void)
 {
     osThreadAttr_t thread_recv_attr = {
     .name = "AFC_uart_recv_thread",
-    .stack_size = 1024 * 4,
+    .stack_size = 2048 * 4,
     .priority = osPriorityAboveNormal,
     };
 

@@ -119,8 +119,8 @@ struct radiation_point_para
 
 int8_t radiation_index_update_callback(int8_t (*cb)(void));
 int8_t control_data_pointer_get(void **ptr);
-
-
+static int8_t  AFC_MagMotorCmd_parse(struct AFC_object *cmd);
+static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd);
 #ifdef __cplusplus
 }
 #endif

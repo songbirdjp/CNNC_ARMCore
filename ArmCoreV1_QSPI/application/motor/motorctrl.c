@@ -453,6 +453,16 @@ void Shell_GetMagMotorPos(uint8_t argc, char *argv[])
     LOG_E("MagMotorPos = %d\r\n",getEncodeValue(MOTOR_MAG));
 }
 MSH_CMD_EXPORT_ALIAS(Shell_GetMagMotorPos, MAGPOSGET,Mag motor get position);
+void Shell_SetAFTMotorSetPos(uint8_t argc, char *argv[])
+{
+    AFTMotorSetPos = strtol((char *)argv[1], NULL, 10);
+}
+MSH_CMD_EXPORT_ALIAS(Shell_SetAFTMotorSetPos, AFTPOS,AFT motor set position);
+void Shell_GetAFTMotorPos(uint8_t argc, char *argv[])
+{
+    LOG_E("AFTMotorPos = %d\r\n",getEncodeValue(MOTOR_AFT));
+}
+MSH_CMD_EXPORT_ALIAS(Shell_GetAFTMotorPos, AFTPOSGET,AFT motor get position);
 static void MotorInitial_thread_entry(void *argument)
 {
     MX_TIM2_Init();
@@ -461,9 +471,6 @@ static void MotorInitial_thread_entry(void *argument)
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
     gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
-    
-    motorEnable(MOTOR_AFT);
-    float setPIDOutput = 0;
     for (;;)
     {
         MagMotorInitFSM();
@@ -510,5 +517,6 @@ static int8_t AFTMotorInitial_thread_init(void)
     }
     return 0;
 }
+
 INIT_APP_EXPORT(MotorInitial_thread_init);
 INIT_APP_EXPORT(AFTMotorInitial_thread_init);

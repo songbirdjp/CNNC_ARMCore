@@ -301,6 +301,20 @@ void DMA2_Stream3_IRQHandler(void)
   /* USER CODE END DMA2_Stream3_IRQn 1 */
 }
 
+/**
+  * @brief This function handles DMA2 stream4 global interrupt.
+  */
+void DMA2_Stream4_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream4_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream4_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_uart9_tx);
+  /* USER CODE BEGIN DMA2_Stream4_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream4_IRQn 1 */
+}
+
 
 /**
   * @brief This function handles TIM5 global interrupt.

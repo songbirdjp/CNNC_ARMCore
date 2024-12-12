@@ -51,41 +51,45 @@
 
 | 下行命令代码 | 命令子代码 | 功能                      | 参数                                                  | 上行命令代码 | 命令子代码 | 功能                               | 参数                                                         |
 | ------------ | ---------- | ------------------------- | ----------------------------------------------------- | ------------ | ---------- | ---------------------------------- | ------------------------------------------------------------ |
-| 0x01         | 0x00       | Magnetron电机初始化       | 无                                                    | 0x01         | 0x00       | Magnetron电机初始化                | 初始化失败=0（default），开始初始化=1，初始化完成=2          |
-| 0x01         | 0x01       | 获取Magnetron Encoder位置 | 2Byte                                                 | 0x01         | 0x01       | 报告Magnetron Encoder位置          | 2Byte                                                        |
-| 0x01         | 0x02       | 设定预置位                | 2Byte                                                 | 0x02         | 0x02       | 收到预置位                         | 2Byte                                                        |
-| 0x01         | 0x03       | 运动死区参数              | 2Byte                                                 | 0x03         | 0x03       | 收到运动死区参数                   | 2Byte                                                        |
-| 0x01         | 0x04       | 运动PID参数               | TBD                                                   | 0x04         | 0x04       | 收到运动PID参数                    | TBD                                                          |
-| 0x01         | 0x05       | 采样延时                  | 2Byte (10nS)                                          | 0x05         | 0x05       | 收到采样延时（10nS）               | 2Byte                                                        |
-| 0x40         | 0x00       | 收到Magnetron电机寻零完成信号      | 1Byte: 占空比                                         | 0x40         | 0x00       | Magnetron电机寻零完成信号        | 1 Byte：占空比                                               |
-| 0x40         | 0x01       | Magnetron电机点动            | 4Byte位置                                             | 0x40         | 0x01       | 收到Magnetron电机点动              | 4 Byte：位置                                                 |
-| 0x40         | 0x02       | Magnetron电机连续运动     | 2Bytes: Byte0: 方向（0: CW 1: CCW），Byte1：占空比    | 0x40         | 0x02       | 收到Magnetron电机连续运动          | 2Bytes：Byte0: 方向（0: CW 1: CCW），Byte1：占空比           |
-| 0x40         | 0x03       | Magnetron电机步进运动     | 4Bytes: Byte0: 方向 Byte1: 占空比 Byte2-3: 步进值     | 0x40         | 0x03       | 收到Magnetron电机步进运动          | 4Bytes：Byte0: 方向，Byte1: 占空比，Byte2-3: 步进值（码盘变化值） |
-| 0x40         | 0x04       | 获取Magnetron电机运动状态 | 1Byte: Bit7: already find zero flag，Bit6-0: 运动状态 | 0x40         | 0x04       | 收到获取Magnetron电机运动状态      | 1Byte：Bit7: already find zero flag，Bit6-0: 运动状态        |
-| 0x41         | 0x00       | 移相器抱闸松开/锁止       | 1Byte: 0: disable 松开, 1: enable 锁止                | 0x41         | 0x00       | 收到移相器抱闸松开/锁止            | 1Byte：0: disable 松开，1: enable 锁止                       |
-| 0x41         | 0x01       | 移相器电机停止运动        | 无                                                    | 0x41         | 0x01       | 收到移相器电机停止运动             | 无                                                           |
-| 0x41         | 0x02       | 移相器电机寻零            | 1Byte: 占空比                                         | 0x41         | 0x02       | 收到移相器电机寻零                 | 1Byte：占空比                                                |
-| 0x41         | 0x03       | 移相器电机点动            | 4 Byte: 位置                                          | 0x41         | 0x03       | 收到移相器电机点动                 | 4 Byte：位置                                                 |
-| 0x41         | 0x04       | 移相器电机连续运动        | 2Bytes: Byte0: 方向（0: CW 1: CCW），Byte1：占空比    | 0x41         | 0x04       | 收到移相器电机连续运动             | 2Bytes：Byte0: 方向（0: CW 1: CCW），Byte1：占空比           |
-| 0x41         | 0x05       | 移相器电机步进运动        | 4Bytes: Byte0: 方向 Byte1: 占空比 Byte2-3: 步进值     | 0x41         | 0x05       | 收到移相器电机步进运动             | 4Bytes：Byte0: 方向，Byte1: 占空比，Byte2-3: 步进值（码盘变化值） |
-| 0x41         | 0x06       | 获取移相器电机运动状态    | 1Byte: Bit7: already find zero flag，Bit6-0: 运动状态 | 0x41         | 0x06       | 获取移相器电机运动状态             | 1Byte：Bit7: already find zero flag，Bit6-0: 运动状态        |
-| 0x60         | 0x00       | 波形扫描周期              | 1Byte                                                 | 0x60         | 0x00       | 收到波形扫描周期（10nS）           | 1Byte                                                        |
-| 0x60         | 0x01       | 波形扫描深度              | 2Byte                                                 | 0x60         | 0x01       | 收到波形扫描深度                   | 2Byte                                                        |
-| 0x60         | 0x02       | 开始扫描波形              | 无法执行=0（default），开始扫描=1，完成扫描=2         | 0x60         | 0x02       | 开始扫描波形                       | 无法执行=0（default），开始扫描=1，完成扫描=2                |
-| 0x60         | 0x03       | 反馈ADC1波形数据          | 2+n Bytes: 2 Bytes: 数据offset，n Bytes: 扫描数据     | 0x60         | 0x03       | 反馈ADC1波形数据                   | 2+n Bytes：2 Bytes: 数据offset，n Bytes: 扫描数据            |
-| 0x60         | 0x04       | 反馈ADC2波形数据          | 2+n Bytes: 2 Bytes: 数据offset，n Bytes: 扫描数据     | 0x60         | 0x04       | 反馈ADC2波形数据                   | 2+n Bytes：2 Bytes: 数据offset，n Bytes: 扫描数据            |
-| 0x80         | 0x00       | 堵转联锁时间              | 1Byte (0.1S)                                          | 0x80         | 0x00       | 收到堵转联锁时间（0.1S）           | 1Byte                                                        |
-| 0x80         | 0x01       | ADC1输入上限              | 2Byte                                                 | 0x80         | 0x01       | 收到ADC1输入上限                   | 2Byte                                                        |
-| 0x80         | 0x02       | ADC1输入下限              | 2Byte                                                 | 0x80         | 0x02       | 收到ADC1输入下限                   | 2Byte                                                        |
-| 0x80         | 0x03       | ADC2输入上限              | 2Byte                                                 | 0x80         | 0x03       | 收到ADC2输入上限                   | 2Byte                                                        |
-| 0x80         | 0x04       | ADC2输入下限              | 2Byte                                                 | 0x80         | 0x04       | 收到ADC2输入下限                   | 2Byte                                                        |
-| 0x80         | 0x05       | 设定trigger fault超时时间 | 1Byte (S)                                             | 0x80         | 0x05       | 收到设定trigger fault超时时间（S） | 1Byte                                                        |
-| 0x80         | 0x06       | 通讯超时阈值              | 2Byte (mS)                                            | 0x80         | 0x06       | 收到通讯超时阈值（mS）             | 2Byte                                                        |
-| 0x81         | 0x00       | 获取5V电源反馈            | 2Byte（unit：mV）                                     | 0x81         | 0x00       | 报告5V电源反馈                     | 2Byte（unit：mV）                                            |
-| 0x81         | 0x01       | 获取REF电源反馈           | 2Byte（unit：mV）                                     | 0x81         | 0x01       | 报告REF电源反馈                    | 2Byte（unit：mV）                                            |
-| 0x81         | 0x02       | 获取12V电源反馈           | 2Byte（unit：mV）                                     | 0x81         | 0x02       |                                    |                                                              |
+| 0x01         | 0x01       | 设置采样模式                | 1byte 0x00 停止采样 0x01 响应触发沿采样模式 0x02 burst模式 | 0x01         | 0x01       | 反馈 设置采样模式           | 1byte 0x00 停止采样 0x01 响应触发沿采样模式 0x02 burst模式   |
+|              | 0x02       | 设置采样延迟                | 2byte 单位 百纳秒（100ns）                                 |              | 0x02       | 反馈采样延时                | 2byte 单位 百纳秒（100ns）                                   |
+|              | 0x03       | 清除ADC数据存储空间         | 无                                                         |              | 0x03       | 收到清除ADC数据存储空间     | 无                                                           |
+|              | 0x04       | 获取每次触发后获得的ADC数据 | 无                                                         |              | 0x04       | 发送每次触发后获得的ADC数据 | 32byte 前16个为8个uint16的ADC1数据，后16个为8个uint16的ADC2数据 |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+| 0x40         | 0x00       | 询问Mag电机寻零是否完成 | 无                                         | 0x40         | 0x00       | Magnetron电机寻零完成信号        | 1byte: 0x00 未完成 0x01 完成 |
+|          | 0x01       | Magnetron电机点动            | 2Byte:位置                                            |          | 0x01       | 收到Magnetron电机点动              | 2 Byte:位置                                               |
+|          | 0x02       | Magnetron电机步进运动 | 3Bytes: Byte0: 方向 Byte1-2: 步进值 |          | 0x02       | 发送Magnetron电机步进运动 | 3Bytes: Byte0: 方向 Byte1-2: 步进值 |
+|          | 0x03       | 获得Magnetron电机当前位置 | 无 |          | 0x03       | 发送Magnetron电机当前位置 | 2 Byte:位置 |
+|          | 0x04       | Magnetron设置预置位 | 2Byte:位置 |          | 0x04       | 收到Magnetron预置位 | 2Byte:位置 |
+|  | 0x05 | Magnetron设置死区 | 2Byte |  | 0x05 | 收到Magnetron设置死区 | 2Byte |
+| 0x41         | 0x00       | 询问AFT电机寻零是否完成 | 无               | 0x41         | 0x00       | AFT电机寻零完成信号         | 1byte: 0x00 未完成 0x01 完成 |
+|          | 0x01       | AFT电机点动 | 2Byte:位置                                            |          | 0x01       | 收到AFT电机点动 | 2 Byte:位置                                                  |
+|          | 0x02       | AFT电机步进运动 | 3Bytes: Byte0: 方向 Byte1-2: 步进值           |          | 0x02       | AFT电机步进运动 | 1Byte：占空比                                                |
+|          | 0x03       | 获得AFT电机当前位置 | 无                                         |          | 0x03       | 发送AFT电机当前位置 | 2 Byte:位置                                        |
+|          | 0x04       | 设置AFT电机预置位 | 2Byte:位置 |          | 0x04       | 收到AFT电机预置位 | 2Byte:位置   |
+|          | 0x05       | 控制AFT电机抱闸 | 1Byte 0x00 抱死 0x01 打开 |          | 0x05       | 发送抱闸状态 | 1Byte 0x00 抱死 0x01 打开 |
+|          | 0x06       | 控制移相器电机状态    | 1Byte: 0x00 挂起 0x01 使能 |          | 0x06       | 反馈移相器电机状态      | 1Byte: 0x00 挂起 0x01 使能 |
+|  | 0x07 | AFT电机设置死区 | 2Byte |  | 0x07 | 收到Magnetron设置死区 | 2Byte |
+| 0x60         | 0x00       | 获得5V电源反馈              | 2Bytes 单位mV                                              | 0x60         | 0x00       | 报告5V电源反馈              | 2Bytes 单位mV                                                |
+|              | 0x01       | 获得12V电源反馈             | 2Bytes 单位mV                                              |              | 0x01       | 报告12V电源反馈             | 2Bytes 单位mV                                                |
+|              | 0x02       | 获得REF电源反馈             | 2Bytes 单位mV                                              |              | 0x02       | 报告REF电源反馈             | 2Bytes 单位mV                                                |
+|              |            | 以下为service数据，待补充   |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
+|              |            |                             |                                                            |              |            |                             |                                                              |
 
-# 4 实时数据定义
+
+
+4 实时数据定义
 
 | 字节位置 | 内容          | 描述                                          | 字节位置  | 内容                       | 描述                                   |
 | -------- | ------------- | --------------------------------------------- | --------- | -------------------------- | -------------------------------------- |

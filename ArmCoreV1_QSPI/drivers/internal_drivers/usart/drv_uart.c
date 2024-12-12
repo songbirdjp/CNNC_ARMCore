@@ -122,6 +122,13 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
         return -1;
     }
 
+    // printf("len: %d\r\n", size);
+    // for (uint16_t i = 0; i < size; i++)
+    // {
+    //     printf("%02x ", buf[i]);
+    // }
+    // printf("\r\n");
+
 #ifndef ULOG_USING_ISR
     ret = osMutexAcquire(uart->tx_mutex, timeout);
     if (ret != osOK)

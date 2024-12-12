@@ -75,13 +75,13 @@ int8_t device_AFC_uart_data_read(struct AFC_uart *buf, uint32_t timeout)
         return ret;
     }
 
-#if 0
-    LOG_E("recv original: %d bytes\r\n", buf->len);
+#if 1
+    printf("recv original: %d bytes\r\n", buf->len);
     for (uint8_t i = 0; i < buf->len; i++)
     {
-        LOG_E("%.2x ", buf->buf[i]);
+        printf("%.2x ", buf->buf[i]);
     }
-    LOG_E("\r\n");
+    printf("\r\n");
 #endif
 
     uint16_t offset = 0, length = 0;

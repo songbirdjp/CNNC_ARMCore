@@ -235,7 +235,7 @@ int main(void)
   MX_MDMA_Init();
   MX_BDMA_Init();
   MX_CRC_Init();
-  // MX_IWDG1_Init();
+  MX_IWDG1_Init();
   MX_RTC_Init();
   MX_TIM6_Init();
 
