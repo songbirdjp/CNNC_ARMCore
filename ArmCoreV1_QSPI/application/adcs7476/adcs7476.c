@@ -335,59 +335,6 @@ static DEVICE_FLASH *device_flash_get(void)
 }
 #include "tim.h"
 extern DEVICE_FLASH *flash;
-int8_t adcs7476_sample_data_recv_process(void)
-{
-    // LOG_E("adcs7476_sample\r\n");
-    int8_t ret = 0;
-    uint32_t event_flag = 0;
-    
-    // printf("flash: %p\r\n", flash);
-    static uint16_t recv_tmp[BUF_LEN] = {0};
-    static uint16_t recv_tmp_1[BUF_LEN] = {0}; 
-    struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
-    struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
-    // flash_init(device_flash_get(), "DEVICE_NAME_FLASH_BANK1");
-    // flash_operation_address_set(device_flash_get(), flash_cfg[0], flash_cfg[1]);
-    // uint32_t flash_addr = FLASH_ADDRESS_BASE;
-    uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
-    event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, osWaitForever);
-    osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
-    osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
-
-    uint32_t master_queue_count = osMessageQueueGetCount(obj_master->queue);
-    uint32_t slave_queue_count = osMessageQueueGetCount(obj_slave->queue);
-    osMutexAcquire(obj_master->mutex, osWaitForever);
-    memcpy(obj_master->data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
-    osMutexRelease(obj_master->mutex);
-    osMutexAcquire(obj_slave->mutex, osWaitForever);
-    memcpy(obj_slave->data, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
-    osMutexRelease(obj_slave->mutex);
-    if (callback != NULL)
-    {
-        callback();
-    }
-// #if 1
-//     for (uint8_t i = 0; i < obj_master->buf_len; i++)
-//     {
-//         LOG_E("ADC7476_MASTER: obj_master->data[%d] = %d\r\n", i, obj_master->data[i]);
-//         LOG_E("ADC7476_SLAVE: obj_slave->data[%d] = %d\r\n", i, obj_slave->data[i]);
-//     }
-// #endif
-    flash->write(flash, flash_AFC_Offset, obj_master->data, obj_master->buf_len * sizeof(uint16_t), 1000);
-    flash_AFC_Offset += obj_master->buf_len * sizeof(uint16_t);
-
-
- 
-
-    // ret = flash->write(flash,FLASH_SECTOR_SIZE,obj_slave->data,sizeof(obj_slave->data),1000);
-    // if (ret != 0)
-    // {
-    //     LOG_E("2lash write err:%d\r\n", ret);
-    //     return -2;
-    // }
-    return 0;
-}
-
 uint16_t* AFC_ADCSampleRecvProcess(void)
 {
     //excuse time about 200ns with testing
@@ -406,19 +353,25 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
     uint32_t slave_queue_count = osMessageQueueGetCount(obj_slave->queue);
     // LOG_E("Master queue waiting count: %d\r\n", master_queue_count);
     // LOG_E("Slave queue waiting count: %d\r\n", slave_queue_count);
-
     memcpy(combined_data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
     memcpy(combined_data + obj_master->buf_len, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
 #if 0
-    for (uint8_t i = 0; i < obj_master->buf_len; i++)
+    for (uint8_t i = 0; i < 16; i++)
     {
-        LOG_E("obj_master->data[%d] = %d\r\n", i, recv_tmp[i]);
-        LOG_E("obj_slave->data[%d] = %d\r\n", i, recv_tmp_1[i]);
+        // LOG_E("obj_master->data[%d] = %d\r\n", i, recv_tmp[i]);
+        // LOG_E("obj_slave->data[%d] = %d\r\n", i, recv_tmp_1[i]);
+        LOG_E("combined_data[%d] = %x\r\n", i, combined_data[i]); 
     }
 #endif
     flash->write(flash, flash_AFC_Offset, combined_data, 16 * sizeof(uint16_t), 1000);
     flash_AFC_Offset += 16 * sizeof(uint16_t);
-
+    // LOG_E("flash_AFC_Offset: %d\r\n", flash_AFC_Offset);
+    // uint16_t read_data[16] = {0};
+    // flash->read(flash, flash_AFC_Offset - 16 * sizeof(uint16_t), read_data, 16 * sizeof(uint16_t), 1000);
+    // for (uint8_t i = 0; i < 16; i++)
+    // {
+    //     LOG_E("read_data[%d] = %x\r\n", i, read_data[i]);
+    // }
     if (callback != NULL)
     {
         callback();

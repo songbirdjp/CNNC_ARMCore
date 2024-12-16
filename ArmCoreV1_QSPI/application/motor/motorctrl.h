@@ -45,6 +45,13 @@ typedef enum {
 } MotorFindingZeroFSM_t;
 
 typedef struct{
+    uint8_t AFCHandShakeOK;
+    uint8_t AFCControlmode;
+    uint8_t AFCSampleMode;
+    uint16_t AFCSampleDelay;
+} AFCConfigParam_TypeDef;
+
+typedef struct{
     int8_t pwm;
     uint16_t encoderValCurrent;
     uint16_t encoderValTarget;

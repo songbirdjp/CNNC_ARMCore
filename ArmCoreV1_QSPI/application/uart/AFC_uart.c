@@ -8,6 +8,9 @@
 #include "motorctrl.h"
 #include "shell.h"
 #include "stdint.h"
+#include "stm32h7xx.h"
+#include "tim.h"
+extern TIM_HandleTypeDef htim4;  // TIM4句柄声明
 const uint8_t AFC_Version[4] = {0x19,0,0,1};
 
 int8_t control_data_pointer_get(void **ptr)
@@ -54,9 +57,8 @@ void AFC_UART_SendCmd(UARTCmdType_t cmdType, uint8_t *cmdData,uint8_t len)
 static int8_t AFC_handshake_frame_parse(struct AFC_object *cmd)
 {
     int8_t ret = 0;
-
-
-
+    AFCConfigParam_TypeDef *obj = AFC_ConfigParam_get();
+    obj->AFCHandShakeOK = 0x01;
 #if 1
     LOG_I("bgm arm core handshake frame parse: %d\r\n", cmd->len);
     LOG_I("hardware version: %#.2x\r\n", cmd->data[0]);
@@ -74,10 +76,44 @@ static int8_t AFC_handshake_frame_parse(struct AFC_object *cmd)
 
     return ret;
 }
-
-
+#include "drv_flash.h"
+#include "flash_port.h"
+extern DEVICE_FLASH *flash;
+//#define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
+//#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
+uint32_t start_address = 0;
+extern uint32_t flash_AFC_Offset;
 static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
 {
+    AFCConfigParam_TypeDef *obj = AFC_ConfigParam_get();
+   // uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
+    //uint32_t start_address = 0; // 定义一个起始地址
+    uint16_t temp_data[16] = {0};
+    switch (cmd->data[1])
+    {
+        case 0x00://Set AFC Control Mode
+            obj->AFCControlmode = cmd->data[2];
+            break;
+        case 0x01://Set AFC Sample Mode
+            obj->AFCSampleMode = cmd->data[2];
+            break;
+        case 0x02://Set AFC Sample Delay
+            obj->AFCSampleDelay = (cmd->data[3] << 8) | cmd->data[2];   
+            //__HAL_TIM_SET_COUNTER(&htim4, 0);
+            break;
+        case 0x03://delete sample data
+            //flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
+            break;
+        case 0x04:
+            cmd->len = 0x22;
+            if(flash_AFC_Offset != 0)
+            {
+                flash->read(flash, flash_AFC_Offset-16 * sizeof(uint16_t), &cmd->data[2], 16 * sizeof(uint16_t), 1000);
+            }
+            break;
+        default:
+            break;
+    }
    return 0;
 }
 static int8_t  AFC_MagMotorCmd_parse(struct AFC_object *cmd)
@@ -177,7 +213,7 @@ static int8_t  AFC_AFTMotorCmd_parse(struct AFC_object *cmd)
     // return 0;
 }    
 
-extern DEVICE_FLASH *flash;
+
 static int8_t  AFC_ADCSampleSet_parse(struct AFC_object *cmd)//0x60
 {
     int8_t ret = 0;
@@ -318,7 +354,7 @@ static int8_t AFC_uart_send_entry(void *argument)
     {
         osMessageQueueGet(AFC_uart_send_queue, &send_buf, NULL, osWaitForever);
 
-#if 1
+#if 0
         printf("send_buf len: %d\r\n", send_buf.len);
         for (uint8_t i = 0; i < send_buf.len; i++)
         {
