@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Shell Console with Command List</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 去掉height:100vh和overflow:hidden，让页面可滚动 */
+        }
+
+        .main-container {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            height: 90vh;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px; /* 给点顶部空间，避免页面顶部被覆盖 */
+        }
+
+        .console-container {
+            display: flex;
+            flex-direction: column;
+            width: 60%;
+            height: 100%;
+        }
+
+        .connection-bar {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .connection-bar input, .connection-bar button {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .connection-bar input {
+            flex: 1;
+        }
+
+        .connection-bar button {
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        .console-output {
+            flex: 1;
+            padding: 10px;
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 18px;
+            overflow-y: auto;
+            word-break: break-word;
+        }
+
+        .console-input {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-top: 1px solid #ccc;
+        }
+
+        .console-input input, .console-input button {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .console-input input {
+            flex: 1;
+        }
+
+        .console-input button {
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        .command-save {
+            width: 40%;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-left: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .command-save input, .command-save button {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .command-save button {
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+        }
+
+        .command-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .command-list-item span {
+            flex: 2;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .command-list-item button {
+            font-size: 12px;
+            width: 25%;
+            padding: 4px;
+            margin-left: 2px;
+        }
+
+        .send-button {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .delete-button {
+            background-color: #ff4d4d;
+            color: white;
+        }
+
+        .footer {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .tclv-input-row {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-top: 1px solid #ccc;
+            width: 90%;
+            max-width: 1200px;
+            box-sizing: border-box;
+            margin-top: 20px;
+            border-radius:8px;
+        }
+
+        .tclv-input-row label {
+            font-size: 14px;
+            margin-right: 5px;
+            white-space: nowrap;
+        }
+
+        .tclv-input-row input {
+            font-size: 14px;
+            font-family: monospace;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 6px;
+            width: 90px;
+            text-transform: uppercase;
+        }
+
+        .tclv-input-row .v-input {
+            flex: 1;
+            width: auto;
+        }
+
+        .tclv-input-row button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .chart-container {
+            width: 90%;
+            max-width: 1200px;
+            background: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .chart-container h2 {
+            text-align: center;
+            font-size: 16px;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="console-container">
+            <div class="connection-bar">
+                <input type="text" id="ipInput" placeholder="Enter IP Address" style="width: 40%;">
+                <input type="text" id="portInput" placeholder="Enter Port" style="width: 20%;">
+                <button id="connectButton">Connect</button>
+            </div>
+            <div class="console-output" id="consoleOutput"></div>
+            <div class="console-input">
+                <input type="text" id="consoleInput" placeholder="Type a command...">
+                <button id="sendButton" disabled>Send</button>
+                <button id="clearButton" disabled>Clear</button>
+                <button id="disconnectButton" disabled>Disconnect</button>
+            </div>
+        </div>
+        <div class="command-save">
+            <input type="text" id="commandNameInput" placeholder="Command Name">
+            <input type="text" id="commandTextInput" placeholder="Command Text">
+            <input type="text" id="intervalInput" placeholder="Interval (ms)">
+            <button id="saveCommandButton">Save Command</button>
+            <div id="commandList"></div>
+        </div>
+    </div>
+    <div class="tclv-input-row">
+        <label for="tInput">T(uint16 hex):</label><input type="text" id="tInput" placeholder="0A0B">
+        <label for="cInput">C(uint16 hex):</label><input type="text" id="cInput" placeholder="0102">
+        <label for="lInput">L(uint16 hex):</label><input type="text" id="lInput" placeholder="0003">
+        <label for="vInput">V(hex):</label><input type="text" id="vInput" class="v-input" placeholder="1A2B3C">
+        <button id="sendTclvButton">Send TCLV</button>
+    </div>
+
+    <div class="chart-container">
+        <h2>ADC1 Data</h2>
+        <canvas id="adc1Chart"></canvas>
+    </div>
+    <div class="chart-container">
+        <h2>ADC2 Data</h2>
+        <canvas id="adc2Chart"></canvas>
+    </div>
+    <div style="text-align: center; margin: 20px 0;">
+        <button id="sendFixedTclvButton" style="
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;">
+            Send Fixed TCLV Frame
+        </button>
+    </div>
+    <div class="footer">
+        Designed by Songbird@CNNC     Version 1.0.1
+    </div>
+
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        let websocket = null;
+        let parsedValues = []; // 存储解析后的160个值（0-4096）
+        let adc1Chart = null;
+        let adc2Chart = null;
+
+        window.onload = () => {
+            const ip = localStorage.getItem("lastIP");
+            const port = localStorage.getItem("lastPort");
+            const lastCommand = localStorage.getItem("lastCommand");
+
+            if (ip && port) {
+                document.getElementById("ipInput").value = ip;
+                document.getElementById("portInput").value = port;
+                connectWebSocket();
+            }
+
+            if (lastCommand) {
+                document.getElementById("consoleInput").value = lastCommand;
+            }
+
+            loadCommandList();
+        };
+
+        document.getElementById("connectButton").addEventListener("click", connectWebSocket);
+        document.getElementById("disconnectButton").addEventListener("click", disconnectWebSocket);
+        document.getElementById("sendButton").addEventListener("click", sendCommand);
+        document.getElementById("clearButton").addEventListener("click", clearConsole);
+        document.getElementById("consoleInput").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") sendCommand();
+        });
+        document.getElementById("consoleInput").addEventListener("input", saveLastCommand);
+        document.getElementById("saveCommandButton").addEventListener("click", saveCommand);
+        document.getElementById("sendTclvButton").addEventListener("click", sendTclvData);
+        document.getElementById("sendFixedTclvButton").addEventListener("click", sendFixedTclvFrame);
+
+        function sendFixedTclvFrame() {
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                logMessage("WebSocket is not connected. Cannot send the TCLV frame.");
+                return;
+            }
+
+    // 定义TCLV内容：T=FF00, C=0000, L=0A00, V=01020304
+    const tHex = "FF00";
+    const cHex = "0000";
+    const lHex = "0A00";
+    const vHex = "01020304";
+
+    const combinedHex = tHex + cHex + lHex + vHex;
+
+    // 将十六进制字符串转换为Uint8Array
+    const bytes = [];
+    for (let i = 0; i < combinedHex.length; i += 2) {
+        bytes.push(parseInt(combinedHex.substr(i, 2), 16));
+    }
+    const uint8Array = new Uint8Array(bytes);
+
+    // 通过WebSocket发送数据
+    websocket.send(uint8Array);
+    logMessage(`Sent Fixed TCLV Frame: T=${tHex}, C=${cHex}, L=${lHex}, V=${vHex}`);
+}
+
+        function connectWebSocket() {
+            const ip = document.getElementById("ipInput").value.trim();
+            const port = document.getElementById("portInput").value.trim();
+
+            if (!ip || !port) {
+                logMessage("Please enter a valid IP address and port.");
+                return;
+            }
+
+            localStorage.setItem("lastIP", ip);
+            localStorage.setItem("lastPort", port);
+
+            const url = `ws://${ip}:${port}`;
+            websocket = new WebSocket(url);
+
+            websocket.onopen = () => {
+                logMessage(`Connected to WebSocket server at ${url}`);
+                toggleConnectionButtons(true);
+            };
+
+            websocket.onmessage = (event) => {
+                if (typeof event.data === "string") {
+                    logMessage(event.data);
+                } else if (event.data instanceof Blob) {
+                    event.data.arrayBuffer().then(buffer => {
+                        const dataView = new DataView(buffer);
+                        const length = dataView.byteLength;
+
+                        if (length < 6) {
+                            // 数据不足，无法解析
+                            return;
+                        }
+
+                        const t = dataView.getUint16(0, false);
+                        const c = dataView.getUint16(2, false);
+                        const l = dataView.getUint16(4, false);
+
+                        const vBytes = new Uint8Array(buffer, 6);
+                        const bytePairs = [];
+                        for (let i = 0; i < vBytes.length; i += 2) {
+                            if (i+1 < vBytes.length) {
+                                bytePairs.push([vBytes[i], vBytes[i+1]]);
+                            }
+                        }
+
+                        parsedValues = []; // 重置解析数组
+                        for (let i = 0; i < bytePairs.length; i++) {
+                            const lowByte = bytePairs[i][0];
+                            const highByte = bytePairs[i][1];
+                            const val = (highByte << 8) | lowByte;
+                            parsedValues.push(val);
+                            logMessage(`Index ${i}: 0x${val.toString(16).toUpperCase()} (dec: ${val})`);
+                        }
+
+                        if (parsedValues.length === 160) {
+                            drawCharts(parsedValues);
+                        }
+                    });
+                }
+            };
+
+            websocket.onerror = (error) => {
+                logMessage("WebSocket error: " + error);
+            };
+
+            websocket.onclose = () => {
+                logMessage("Disconnected from the WebSocket server");
+                toggleConnectionButtons(false);
+            };
+        }
+
+        function disconnectWebSocket() {
+            if (websocket) {
+                websocket.close();
+                websocket = null;
+            }
+        }
+
+        function sendCommand() {
+            const input = document.getElementById("consoleInput");
+            const cmd = input.value.trim();
+            if (websocket && cmd) {
+                const message = "[shell]" + cmd;
+                websocket.send(message);
+                logMessage(`Sent command: ${cmd}`);
+            }
+        }
+
+        function saveLastCommand() {
+            const command = document.getElementById("consoleInput").value.trim();
+            if (command) {
+                localStorage.setItem("lastCommand", command);
+            } else {
+                localStorage.removeItem("lastCommand");
+            }
+        }
+
+        function clearConsole() {
+            document.getElementById("consoleOutput").innerHTML = "";
+        }
+
+        const MAX_LOG_LINES = 500; // 最大输出行数
+
+        function logMessage(message) {
+            const consoleOutput = document.getElementById("consoleOutput");
+
+            // 创建新的日志行
+            const newLine = document.createElement("div");
+            newLine.textContent = message;
+
+            // 添加新行到控制台
+            consoleOutput.appendChild(newLine);
+
+            // 如果超出最大行数，移除最旧的行
+            while (consoleOutput.children.length > MAX_LOG_LINES) {
+                consoleOutput.removeChild(consoleOutput.firstChild);
+            }
+
+            // 滚动到最新行
+            //consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+
+
+        function toggleConnectionButtons(isConnected) {
+            document.getElementById("connectButton").disabled = isConnected;
+            document.getElementById("disconnectButton").disabled = !isConnected;
+            document.getElementById("sendButton").disabled = !isConnected;
+            document.getElementById("clearButton").disabled = !isConnected;
+        }
+
+        function saveCommand() {
+            const commandName = document.getElementById("commandNameInput").value.trim();
+            const commandText = document.getElementById("commandTextInput").value.trim();
+            const interval = document.getElementById("intervalInput").value.trim();
+            const command = { commandName, commandText, interval };
+
+            if (commandName || commandText) {
+                const commandList = JSON.parse(localStorage.getItem("commandList") || "[]");
+                commandList.push(command);
+                localStorage.setItem("commandList", JSON.stringify(commandList));
+                loadCommandList();
+            }
+        }
+
+        function loadCommandList() {
+            const commandList = JSON.parse(localStorage.getItem("commandList") || "[]");
+            const commandListContainer = document.getElementById("commandList");
+            commandListContainer.innerHTML = "";
+
+            commandList.forEach((command, index) => {
+                const item = document.createElement("div");
+                item.className = "command-list-item";
+                item.innerHTML = `
+                    <span>${command.commandName} - ${command.commandText}</span>
+                    <button class="send-button" onclick="executeCommand(${index})">Send</button>
+                    <button class="delete-button" onclick="deleteCommand(${index})">Delete</button>
+                `;
+                commandListContainer.appendChild(item);
+            });
+        }
+
+        function executeCommand(index) {
+            const commandList = JSON.parse(localStorage.getItem("commandList") || "[]");
+            const command = commandList[index];
+            if (command && websocket) {
+                const message = `[shell]${command.commandName} ${command.commandText}`;
+                websocket.send(message);
+                logMessage(`Sent command: ${command.commandName}`);
+            }
+        }
+
+        function deleteCommand(index) {
+            const commandList = JSON.parse(localStorage.getItem("commandList") || "[]");
+            commandList.splice(index, 1);
+            localStorage.setItem("commandList", JSON.stringify(commandList));
+            loadCommandList();
+        }
+
+        function sendTclvData() {
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                logMessage("WebSocket is not connected. Cannot send TCLV data.");
+                return;
+            }
+
+            const tHex = document.getElementById("tInput").value.trim().replace(/\s+/g, '').toUpperCase();
+            const cHex = document.getElementById("cInput").value.trim().replace(/\s+/g, '').toUpperCase();
+            const lHex = document.getElementById("lInput").value.trim().replace(/\s+/g, '').toUpperCase();
+            const vHex = document.getElementById("vInput").value.trim().replace(/\s+/g, '').toUpperCase();
+
+            if (tHex.length !== 4 || cHex.length !== 4 || lHex.length !== 4) {
+                logMessage("T, C, L fields must each be 2 bytes (4 hex characters).");
+                return;
+            }
+
+            const hexRegex = /^[0-9A-F]+$/;
+            if (!hexRegex.test(tHex) || !hexRegex.test(cHex) || !hexRegex.test(lHex) || (vHex && !hexRegex.test(vHex))) {
+                logMessage("Invalid hex input. Use only 0-9A-F characters.");
+                return;
+            }
+
+            const combinedHex = tHex + cHex + lHex + vHex;
+            const bytes = [];
+            for (let i = 0; i < combinedHex.length; i += 2) {
+                bytes.push(parseInt(combinedHex.substr(i, 2), 16));
+            }
+            const uint8Array = new Uint8Array(bytes);
+
+            websocket.send(uint8Array);
+            logMessage(`Sent TCLV data (binary): T=${tHex}, C=${cHex}, L=${lHex}, V=${vHex}`);
+        }
+
+        function drawCharts(values) {
+    if (adc1Chart) adc1Chart.destroy();
+    if (adc2Chart) adc2Chart.destroy();
+
+    const adc1Data = [];
+    const adc2Data = [];
+
+    // 定义时间和索引映射表
+    const timeMapping = [
+        [0, 0, 16, 32, 48, 64, 80, 96, 112, 128, 144],  // 0us
+        [1, 1, 17, 33, 49, 65, 81, 97, 113, 129, 145],  // 1us
+        [2, 2, 18, 34, 50, 66, 82, 98, 114, 130, 146],  // 2us
+        [3, 3, 19, 35, 51, 67, 83, 99, 115, 131, 147],  // 3us
+        [4, 4, 20, 36, 52, 68, 84, 100, 116, 132, 148], // 4us
+        [5, 5, 21, 37, 53, 69, 85, 101, 117, 133, 149], // 5us
+        [6, 6, 22, 38, 54, 70, 86, 102, 118, 134, 150], // 6us
+        [7, 7, 23, 39, 55, 71, 87, 103, 119, 135, 151]  // 7us
+    ];
+
+    // 遍历映射表，按顺序填充数据
+    for (let us = 0; us < timeMapping.length; us++) {
+        for (let nsIndex = 1; nsIndex < timeMapping[us].length; nsIndex++) {
+            const time = us * 1000 + (nsIndex - 1) * 100; // 计算时间 (100ns 单位)
+            const adc1Index = timeMapping[us][nsIndex];  // ADC1通道索引
+            const adc2Index = adc1Index + 8;            // ADC2通道索引
+
+            // 检查索引有效性并添加到对应数据集
+            if (values[adc1Index] !== undefined && values[adc1Index] !== 0xFFFF) {
+                adc1Data.push({ x: time, y: values[adc1Index] });
+            }
+            if (values[adc2Index] !== undefined && values[adc2Index] !== 0xFFFF) {
+                adc2Data.push({ x: time, y: values[adc2Index] });
+            }
+        }
+    }
+
+    // 绘制ADC1图表
+    const ctx1 = document.getElementById('adc1Chart').getContext('2d');
+    adc1Chart = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'ADC1',
+                data: adc1Data,
+                borderColor: 'blue',
+                fill: false,
+                pointRadius: 2,
+                tension: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: { display: true, text: 'Time (100ns units)' }
+                },
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: 4096,
+                    title: { display: true, text: 'ADC Value' }
+                }
+            }
+        }
+    });
+
+    // 绘制ADC2图表
+    const ctx2 = document.getElementById('adc2Chart').getContext('2d');
+    adc2Chart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'ADC2',
+                data: adc2Data,
+                borderColor: 'red',
+                fill: false,
+                pointRadius: 2,
+                tension: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    type: 'linear',
+                    title: { display: true, text: 'Time (100ns units)' }
+                },
+                y: {
+                    beginAtZero: true,
+                    suggestedMax: 4096,
+                    title: { display: true, text: 'ADC Value' }
+                }
+            }
+        }
+    });
+}
+
+
+
+
+    </script>
+</body>
+</html>

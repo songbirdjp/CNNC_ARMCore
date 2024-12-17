@@ -153,8 +153,8 @@ void startPWMOutput(motorTypeDef motorType)
 {
     if(motorType == MOTOR_MAG)  
     {
-        HAL_TIM_Base_Start_IT(&htim12);
-        HAL_TIM_PWM_Start_IT(&htim12, TIM_CHANNEL_1);
+        HAL_TIM_Base_Start_IT(&htim24);
+        HAL_TIM_PWM_Start_IT(&htim24, TIM_CHANNEL_3);
     }
     else if(motorType == MOTOR_AFT)
     {
@@ -167,8 +167,8 @@ void stopPWMOutput(motorTypeDef motorType)
 {
     if(motorType == MOTOR_MAG)  
     {
-        HAL_TIM_Base_Stop_IT(&htim12);
-        HAL_TIM_PWM_Stop_IT(&htim12, TIM_CHANNEL_1);
+        HAL_TIM_Base_Stop_IT(&htim24);
+        HAL_TIM_PWM_Stop_IT(&htim24, TIM_CHANNEL_3);
     }
     else if(motorType == MOTOR_AFT)
     {
@@ -203,8 +203,8 @@ void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle)
     if(motorType == MOTOR_MAG)
     {
       //  printf("duty %d %lf\r\n",htim3.Init.Period, absDutyCycle);
-        pulseLength = (float)((htim12.Init.Period + 1) * absDutyCycle) / 100;
-        __HAL_TIM_SET_COMPARE(&htim12, TIM_CHANNEL_1, (uint16_t) pulseLength);
+        pulseLength = (float)((htim24.Init.Period + 1) * absDutyCycle) / 100;
+        __HAL_TIM_SET_COMPARE(&htim24, TIM_CHANNEL_3, (uint16_t) pulseLength);
     }
     else if(motorType == MOTOR_AFT) 
     {
@@ -251,7 +251,7 @@ void motorDisable(motorTypeDef motorType)
 
 void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)//todo
 {
-    if (htim->Instance == TIM12)
+    if (htim->Instance == TIM24)    
     {
         MotorCtrlSignal[MOTOR_MAG].EnableTriggernFault = 0;
         SetMagMotorIO(0,0);
@@ -265,7 +265,7 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)//todo
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance == TIM12)
+    if (htim->Instance == TIM24)    
     {
         SetMagMotorIO(MotorCtrlSignal[MOTOR_MAG].MotorDir,MotorCtrlSignal[MOTOR_MAG].MotorMoveEn);
         MotorCtrlSignal[MOTOR_MAG].EnableTriggernFault = 1;
@@ -475,7 +475,7 @@ static void MotorInitial_thread_entry(void *argument)
     MX_TIM2_Init();
     MX_TIM3_Init();
     MX_TIM5_Init();
-    MX_TIM12_Init();
+    MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
     gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
     MagMotorParameter.encoderValTarget = 20000;

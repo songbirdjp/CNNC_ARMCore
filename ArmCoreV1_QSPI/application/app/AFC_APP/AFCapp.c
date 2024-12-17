@@ -67,6 +67,7 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     MX_TIM1_Init();
     MX_TIM4_Init();
     MX_TIM8_Init();
+    //MX_TIM24_Init();
     MX_TIM23_Init();
     HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -74,7 +75,8 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     HAL_TIM_Base_Start(&htim4);
     HAL_TIM_Base_Start(&htim8);
     HAL_TIM_Base_Start(&htim23);
- 
+   // HAL_TIM_Base_Start(&htim24);
+
     flash = device_flash_get();
     uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE}; 
     flash_init(flash, "DEVICE_NAME_FLASH_BANK1");

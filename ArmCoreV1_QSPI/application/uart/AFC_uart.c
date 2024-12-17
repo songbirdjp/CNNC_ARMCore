@@ -83,13 +83,15 @@ extern DEVICE_FLASH *flash;
 //#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
 uint32_t start_address = 0;
 extern uint32_t flash_AFC_Offset;
+uint8_t tim4Delaytimes = 12;
 static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
 {
     AFCConfigParam_TypeDef *obj = AFC_ConfigParam_get();
    // uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
     //uint32_t start_address = 0; // 定义一个起始地址
     uint16_t temp_data[16] = {0};
-    switch (cmd->data[1])
+    
+    switch (cmd->data[1])//0x01
     {
         case 0x00://Set AFC Control Mode
             obj->AFCControlmode = cmd->data[2];
@@ -99,7 +101,8 @@ static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
             break;
         case 0x02://Set AFC Sample Delay
             obj->AFCSampleDelay = (cmd->data[3] << 8) | cmd->data[2];   
-            //__HAL_TIM_SET_COUNTER(&htim4, 0);
+            //LOG_E("AFC Sample Delay: %d\r\n", obj->AFCSampleDelay);
+            __HAL_TIM_SET_COUNTER(&htim4, obj->AFCSampleDelay);
             break;
         case 0x03://delete sample data
             //flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
@@ -110,6 +113,14 @@ static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
             {
                 flash->read(flash, flash_AFC_Offset-16 * sizeof(uint16_t), &cmd->data[2], 16 * sizeof(uint16_t), 1000);
             }
+            printf("tim24Delaytimes: %d\r\n", tim4Delaytimes);
+            __HAL_TIM_SET_COUNTER(&htim4, tim4Delaytimes);
+            
+            if(tim4Delaytimes <= 2)
+            {
+                tim4Delaytimes = 12;
+            }
+            tim4Delaytimes--;
             break;
         default:
             break;
