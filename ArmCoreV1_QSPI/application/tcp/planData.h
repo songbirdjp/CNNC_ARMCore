@@ -9,6 +9,12 @@ extern "C" {
 #endif
 
 #define PLAN_DATA_SETTING_TAG 2
+
+#define BGM_NRT_COMMAND_TAG 30
+#define AFC_NRT_COMMAND_TAG 31
+#define DOSE1_NRT_COMMAND_TAG 32
+#define DOSE2_NRT_COMMAND_TAG 33
+
 #define MAX_BEAM_NUM    30
 #define MAX_CP_IN_BEAM 256
 #define TCP_SEND_PERIOD 1000 //100*1 = 100ms

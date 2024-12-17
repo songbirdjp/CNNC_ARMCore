@@ -8,7 +8,7 @@
 #include "BGM_def.h"
 #include "ulog.h"
 #include "planData.h"
-
+#include "cmdData.h"
 #define DATA_PROCESS_LAN_EVENT      (1<<0)
 #define DATA_PROCESS_TCP_EVENT      (1<<1)
 #define DATA_PROCESS_FPGA_EVENT     (1<<2)
@@ -104,6 +104,7 @@ void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
     }
 }
 // TOBJ6000 dataToSend = {0};
+
 static int8_t realtime_ethercat_data_process(void)
 {
     TOBJ7010 recv_data = {0};
@@ -138,9 +139,9 @@ static int8_t non_realtime_tcp_recv_data_callback(void)
 
 static void tcp_recv_data_process(APP_DATA_RECV *info)
 {
-    #if 0
-    int8_t ret = 0;
 
+    #if 1
+    int8_t ret = 0;
     ret = websocket_cmd_parse(info->sn, info->tcpData, info->length);
     if (ret != 0)
     {
@@ -148,15 +149,29 @@ static void tcp_recv_data_process(APP_DATA_RECV *info)
     }
     #endif
     uint16_t tag = (info->tcpData[1] << 8) + info->tcpData[0];
-   // printf("tag %d %d %d\r\n", tag, (info->tcpData[3] << 8) + info->tcpData[2], (info->tcpData[5] << 8) + info->tcpData[4]);
+    LOG_E("tag %x %x %x\r\n", tag, (info->tcpData[3] << 8) + info->tcpData[2], (info->tcpData[5] << 8) + info->tcpData[4]);
     switch(tag)
     {
+        /*#define BGM_NRT_COMMAND_TAG 30
+        #define AFC_NRT_COMMAND_TAG 31
+        #define DOSE1_NRT_COMMAND_TAG 32
+        #define DOSE2_NRT_COMMAND_TAG 33 */
         case PLAN_DATA_SETTING_TAG: //recv plan
           //  printf("recv plan data!\r\n");
             nrtRecvPlan(info);
             planFeedback(info->sn);       
         break;
-        default: break;
+        case 0x31:
+            nrtRecvCommandParse(info);
+        break;
+        case 0x50:
+            nrtRecvCommandParse(info);
+            break;
+        case 0xFF:
+            AFC_ADCSampleDataFeedback(info);
+            break;
+        default:      
+        break;
     } 
 
     /* add other process here */

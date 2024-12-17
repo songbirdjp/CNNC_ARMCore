@@ -567,9 +567,16 @@ static int8_t getClientType(uint8_t s, uint8_t *pString)
 			serviceNumber++;									
             printf("client %d is service\r\n", s);
         }
+      
+        
         else    return -1;
     }
-    else    return -1;
+    else
+    {
+        client[s].clientType = SERVICE;//this client is controller
+		serviceNumber++;									
+        printf("client %d is service\r\n", s);
+    }
 
     return 1;
 }

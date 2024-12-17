@@ -36,7 +36,8 @@ typedef enum {
     BGM_STATE_TERMINATE,//15
     BGM_STATE_INTERRUPT,//16
 
-    BGM_STATE_TEST = 17,
+    BGM_STATE_TEST_ON = 17,
+    BGM_STATE_TEST_OFF = 18,
     BGM_STATE_MAX
 
 } BGMStateMachine_t;

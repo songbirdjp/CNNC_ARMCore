@@ -5,6 +5,7 @@
 #include "BGM_def.h"
 #include "drv_flash.h"
 #include "flash_port.h"
+#include "websocket.h"
 struct dose_info_t
 {
     uint8_t hw_version;
@@ -431,33 +432,107 @@ static int8_t uart_dose_cmd_parse(struct cmd_object *cmd)
 
     return ret;
 }
+extern DEVICE_FLASH *flash;
+uint16_t AFC_ADC_Flash_addr = 0;
+MotorCtrlParam_TypeDef magMotorCtrlParam = {0};
+MotorCtrlParam_TypeDef aftMotorCtrlParam = {0};
+static MotorCtrlParam_TypeDef *MagMotorCtrlParamGet(void)
+{
+    return &magMotorCtrlParam;
+}
+static MotorCtrlParam_TypeDef *AftMotorCtrlParamGet(void)
+{
+    return &aftMotorCtrlParam;
+}
+static int8_t  AFC_AFCConfigParameter_parse(struct cmd_object *cmd)
+{   
+    int8_t ret = 0;
+    switch (cmd->data[1])
+    {
+        case 0x00:
+            break;
+        case 0x01:
+            break;
+        case 0x02:
+            break;
+        case 0x03:
+            break;  
+        case 0x04:
+            ret = flash->write(flash,AFC_ADC_Flash_addr,&cmd->data[2],16,1000);
+            AFC_ADC_Flash_addr += 16*sizeof(uint16_t);
+            //ws_send(1, &cmd->data[2], 32, true, false, WDT_BINDATA);
+
+            // LOG_E("flash_AFC_Offset: %d\r\n", AFC_ADC_Flash_addr);
+            // uint16_t read_data[16] = {0};
+            // flash->read(flash, AFC_ADC_Flash_addr - 16 * sizeof(uint16_t), read_data, 16 * sizeof(uint16_t), 1000);
+            // for (uint8_t i = 0; i < 16; i++)
+            // {
+            //     LOG_E("2222read_data[%d] = %x\r\n", i, read_data[i]);
+            // }
+            break;
+        default:
+            break;
+    }
+    return ret;
+}
 static int8_t  AFC_MagMotorCmd_parse(struct cmd_object *cmd)
 {   
     int8_t ret = 0;
-   
+   MotorCtrlParam_TypeDef *obj = MagMotorCtrlParamGet();
     switch (cmd->data[1])
     {
         case 0x00:// Mag Motor find zero ok 
-            if(1 == cmd->data[2])
-            {
-                LOG_I("Mag Motor find zero ok\r\n");
-            }
-            else
-            {
-                LOG_I("Mag Motor find zero fail\r\n");
-            }
+            obj->motorFindZeroOK = cmd->data[2];
             break;
         case 0x01://Mag Motor set position 2 bytes 
-           
+            obj->encoderValCurrent = cmd->data[2] << 8 | cmd->data[1];
             break;
         case 0x02://Mag Motor run by step 
-     
+            obj->encoderValCurrent = cmd->data[2] << 8 | cmd->data[1];
             break;
         case 0x03:
-           
+            obj->encoderValCurrent = cmd->data[2] << 8 | cmd->data[1];
             break;
         case 0x04:
-            
+            obj->presetPos = cmd->data[2] << 8 | cmd->data[1];
+            break;
+        case 0x05:
+            obj->deadZone = cmd->data[2] << 8 | cmd->data[1];
+            break;
+        default:
+            break;
+    }
+    return ret;
+}   
+static int8_t  AFC_AFTMotorCmd_parse(struct cmd_object *cmd)
+{   
+    int8_t ret = 0;
+    MotorCtrlParam_TypeDef *obj = AftMotorCtrlParamGet();
+    switch (cmd->data[1])
+    {
+        case 0x00:// Mag Motor find zero ok 
+            obj->motorFindZeroOK = cmd->data[2];
+            break;
+        case 0x01://Mag Motor set position 2 bytes 
+            obj->encoderValCurrent = cmd->data[2] << 8 | cmd->data[1];
+            break;
+        case 0x02://Mag Motor run by step 
+            obj->encoderValCurrent = cmd->data[2] << 8 | cmd->data[1];
+            break;
+        case 0x03:
+            obj->encoderValCurrent = cmd->data[2] << 8 | cmd->data[1];
+            break;
+        case 0x04:
+            obj->presetPos = cmd->data[2] << 8 | cmd->data[1];
+            break;
+        case 0x05:
+            obj->motorBrakeStatus = cmd->data[2];
+            break;
+        case 0x06:
+            obj->motorStatus = cmd->data[2];    
+            break;
+        case 0x07:
+            obj->deadZone = cmd->data[2] << 8 | cmd->data[1];
             break;
         default:
             break;
@@ -484,44 +559,23 @@ static int8_t afc_handshake_frame_parse(struct cmd_object *cmd)
     // LOG_I("AFC sw version: %s\r\n", AFC_info.sw_version);
     return ret;
 }
-extern DEVICE_FLASH *flash;
+
 static int8_t afc_command_frame_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
-    uint16_t AFC_ADC_Flash_addr = 0;
+   
     switch (cmd->data[0])   /* first cmd */
     {
+    case 0x01:
+        AFC_AFCConfigParameter_parse(cmd);
+        break;
     case 0x40:
         AFC_MagMotorCmd_parse(cmd);
         break;
     case 0x41:
-    if(cmd->data[0] == 0x03)
-    {
-        ;
-    }
-        break;
-    case 0x42:
+        AFC_AFTMotorCmd_parse(cmd);
         break;
     case 0x60:
-        switch (cmd->data[1])
-        {
-        case 0x05:
-            for (int i = 2; i <= 18; i++) 
-            {
-                LOG_I("Data[%d]: %x\r\n", i, cmd->data[i]);
-            }
-            ret = flash->write(flash,AFC_ADC_Flash_addr,&cmd->data[2],16,1000);
-            AFC_ADC_Flash_addr += 16;
-            if(ret != 0)
-            {
-                LOG_I("flash write err: %d\r\n", ret);
-            }
-            break;
-        default:
-            ret = -1;
-            break;
-        }
-        break;
       
         break;
     default:

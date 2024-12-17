@@ -211,15 +211,15 @@ void TriggerDistributeInit(void)
     MX_TIM3_Init();
     MX_TIM4_Init();
     MX_TIM23_Init();
-    //HAL_TIM_IC_Start(&htim1, TIM_CHANNEL_1);
-    __HAL_TIM_CLEAR_FLAG(&htim23, TIM_FLAG_UPDATE);
-    HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start_IT(&htim23, TIM_CHANNEL_3);
-    HAL_TIM_Base_Start(&htim1);
-    HAL_TIM_Base_Start_IT(&htim3);
-    HAL_TIM_Base_Start(&htim4);
-    HAL_TIM_Base_Start_IT(&htim23);
+
+    // __HAL_TIM_CLEAR_FLAG(&htim23, TIM_FLAG_UPDATE);
+    // HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_2);
+    // HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+    // HAL_TIM_PWM_Start_IT(&htim23, TIM_CHANNEL_3);
+    // HAL_TIM_Base_Start(&htim1);
+    // HAL_TIM_Base_Start_IT(&htim3);
+    // HAL_TIM_Base_Start(&htim4);
+    // HAL_TIM_Base_Start_IT(&htim23);
 }
 
 #define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
@@ -330,6 +330,36 @@ uint8_t isBeamDataSetLock = 0;
 uint8_t isBeamDataSetUnlock = 0;
 uint8_t isDoseReady = 0;
 extern uint8_t isReadytoTrigAFC;
+void Shell_Fortest_ChangeFSM(int8_t argc, uint8_t **argv)
+{
+    if( strtol((char *)argv[1], NULL, 16) == 1)
+    {
+        HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_2);
+        HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+        HAL_TIM_PWM_Start_IT(&htim23, TIM_CHANNEL_3);
+        HAL_TIM_Base_Start(&htim1);
+        HAL_TIM_Base_Start_IT(&htim3);
+        HAL_TIM_Base_Start(&htim4);
+        HAL_TIM_Base_Start_IT(&htim23);
+        __HAL_TIM_CLEAR_FLAG(&htim23, TIM_FLAG_UPDATE);
+        ARMcurrentState = BGM_STATE_TEST_ON;
+    }
+    else
+    {
+        HAL_TIM_PWM_Stop_IT(&htim3, TIM_CHANNEL_2);
+        HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+        HAL_TIM_PWM_Stop_IT(&htim23, TIM_CHANNEL_3);
+        HAL_TIM_Base_Stop(&htim1);
+        HAL_TIM_Base_Stop_IT(&htim3);
+        HAL_TIM_Base_Stop(&htim4);
+        HAL_TIM_Base_Stop_IT(&htim23);
+        ARMcurrentState = BGM_STATE_TEST_OFF;
+    }
+    printf("ARMcurrentState = %d\r\n",ARMcurrentState);
+
+}
+MSH_CMD_EXPORT_ALIAS(Shell_Fortest_ChangeFSM,FTEST,"Change FSM");
+
 void BGMFiniteStateMachine(void)
 {
     uint16_t ethercatALStatus;
@@ -342,16 +372,14 @@ void BGMFiniteStateMachine(void)
     {
         ARMcurrentState = BGM_STATE_BOOT;
     }
-    ARMcurrentState = BGM_STATE_TEST;
+    ARMcurrentState = BGM_STATE_TEST_OFF;
     switch (ARMcurrentState)
     {
-    case BGM_STATE_TEST:
-    //    if(isReadytoTrigAFC)
-    //    {
-    //         AFC_GetADCValueByFrame();   
-    //         isReadytoTrigAFC = 0;
-    //    }
-       osDelay(10);
+    case BGM_STATE_TEST_OFF:
+
+    break;
+    case BGM_STATE_TEST_ON:
+
         break;
     case BGM_STATE_BOOT:
         // dataToSend.DataIn3[0] = 1;//maintain cali para lock
