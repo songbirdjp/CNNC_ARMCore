@@ -345,7 +345,7 @@ MotorFindingZeroFSM_t MagMotorState = MotorFSM_Init;
 uint8_t MagMotorInitDone = 0;
 uint16_t MagEncoderData;
 uint16_t IsKeyDown = 0;
-uint16_t MagMotorSetPos = 20000;
+uint16_t MagMotorSetPos = 31000;
 
 void MagMotorInitFSM(void)
 {
@@ -421,12 +421,12 @@ void  AFTMotorInitFSM()
             }
             AFTMotorInitDone =1;
             AFTBrakeCtrl(AFT_BRAKE_ON);
-            motorCtrlByPWM(MOTOR_AFT, -30);
+            motorCtrlByPWM(MOTOR_AFT, -40);
             osDelay(1000);
             AFTMotorState = MotorFSM_Backward2FindZero;
             break;
         case MotorFSM_Backward2FindZero:
-            motorCtrlByPWM(MOTOR_AFT, 30);
+            motorCtrlByPWM(MOTOR_AFT, 40);
             AFTForwardEncCounterPrev = __HAL_TIM_GET_COUNTER(&htim3);
             osDelay(500);
             AFTForwardEncCounter = __HAL_TIM_GET_COUNTER(&htim3);   
@@ -478,7 +478,8 @@ static void MotorInitial_thread_entry(void *argument)
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
     gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
-    MagMotorParameter.encoderValTarget = 20000;
+    MagMotorParameter.presetPos = 30800;
+    MagMotorParameter.encoderValTarget = MagMotorParameter.presetPos;
     for (;;)
     {
         MagMotorInitFSM();

@@ -19,7 +19,7 @@
         .main-container {
             display: flex;
             width: 90%;
-            max-width: 1200px;
+            max-width: 2500px;
             height: 90vh;
             background-color: #ffffff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -99,13 +99,14 @@
         }
 
         .command-save {
-            width: 40%;
-            padding: 10px;
-            background-color: #f4f4f4;
-            border-left: 1px solid #ccc;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        width: 1000px;
+        padding: 10px;
+        background-color: #f4f4f4;
+        border-left: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-sizing: border-box; /* 确保内边距不会增加实际总宽度 */
         }
 
         .command-save input, .command-save button {
@@ -113,7 +114,7 @@
             font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            width: 100%;
+            width: 95%;
         }
 
         .command-save button {
@@ -123,25 +124,26 @@
         }
 
         .command-list-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+        gap: 10px; /* 添加一些合适的gap值来控制间距 */
+        }   
+
 
         .command-list-item span {
-            flex: 2;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 
         .command-list-item button {
-            font-size: 12px;
-            width: 25%;
-            padding: 4px;
-            margin-left: 2px;
+            margin-left: 5px; /* 根据需要微调 */
+            width: auto;
         }
+
 
         .send-button {
             background-color: #4caf50;
@@ -151,6 +153,52 @@
         .delete-button {
             background-color: #ff4d4d;
             color: white;
+        }
+
+        .tclv-save {
+        width: 1000px;
+        padding: 10px;
+        background-color: #f4f4f4;
+        border-left: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        box-sizing: border-box;
+}
+
+        .tclv-save input, .tclv-save button {
+        padding: 8px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 95%;
+        }
+
+        .tclv-save button {
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+        }
+
+        .tclv-list-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        }
+
+        .tclv-list-item span {
+        flex: 2;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        }
+
+        .tclv-list-item button {
+        font-size: 12px;
+        width: 10%;
+        padding: 4px;
+        margin-left: 2px;
         }
 
         .footer {
@@ -219,6 +267,12 @@
             font-size: 16px;
             margin-top: 0;
         }
+
+        /* #commandList, #tclvList {
+            max-height: 200px;
+            overflow-y: auto;
+        } */
+
     </style>
 </head>
 <body>
@@ -244,6 +298,16 @@
             <button id="saveCommandButton">Save Command</button>
             <div id="commandList"></div>
         </div>
+        <div class="tclv-save">
+            <h3>Save TCLV Data</h3>
+            <input type="text" id="tTclvInput" placeholder="T (uint16 hex)">
+            <input type="text" id="cTclvInput" placeholder="C (uint16 hex)">
+            <input type="text" id="lTclvInput" placeholder="L (uint16 hex)">
+            <input type="text" id="vTclvInput" placeholder="V (hex)">
+            <button id="saveTclvButton">Save TCLV</button>
+            <div id="tclvList"></div>
+        </div>
+        
     </div>
     <div class="tclv-input-row">
         <label for="tInput">T(uint16 hex):</label><input type="text" id="tInput" placeholder="0A0B">
@@ -461,7 +525,7 @@
             }
 
             // 滚动到最新行
-            //consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
         }
 
 
@@ -519,6 +583,67 @@
             localStorage.setItem("commandList", JSON.stringify(commandList));
             loadCommandList();
         }
+        document.getElementById("saveTclvButton").addEventListener("click", saveTclvData);
+
+    function saveTclvData() {
+        const t = document.getElementById("tTclvInput").value.trim().toUpperCase();
+        const c = document.getElementById("cTclvInput").value.trim().toUpperCase();
+        const l = document.getElementById("lTclvInput").value.trim().toUpperCase();
+        const v = document.getElementById("vTclvInput").value.trim().toUpperCase();
+
+        if (!t || !c || !l) {
+            logMessage("T, C, and L fields are required to save TCLV data.");
+            return;
+        }
+
+        const tclv = { t, c, l, v };
+        const tclvList = JSON.parse(localStorage.getItem("tclvList") || "[]");
+        tclvList.push(tclv);
+        localStorage.setItem("tclvList", JSON.stringify(tclvList));
+
+        loadTclvList();
+    }
+
+    function loadTclvList() {
+        const tclvList = JSON.parse(localStorage.getItem("tclvList") || "[]");
+        const tclvListContainer = document.getElementById("tclvList");
+        tclvListContainer.innerHTML = "";
+
+        tclvList.forEach((tclv, index) => {
+            const item = document.createElement("div");
+            item.className = "tclv-list-item";
+            item.innerHTML = `
+                <span>T=${tclv.t}, C=${tclv.c}, L=${tclv.l}, V=${tclv.v}</span>
+                <button class="send-button" onclick="sendTclvFrame(${index})">Send</button>
+                <button class="delete-button" onclick="deleteTclvData(${index})">Delete</button>
+            `;
+            tclvListContainer.appendChild(item);
+        });
+    }
+    function sendTclvFrame(index) {
+    const tclvList = JSON.parse(localStorage.getItem("tclvList") || "[]");
+    const tclv = tclvList[index];
+
+    // 将选中的TCLV数据填入底部输入框
+    document.getElementById("tInput").value = tclv.t;
+    document.getElementById("cInput").value = tclv.c;
+    document.getElementById("lInput").value = tclv.l;
+    document.getElementById("vInput").value = tclv.v;
+
+    // 调用已有的sendTclvData()函数来发送数据
+    sendTclvData();
+}
+
+
+    function deleteTclvData(index) {
+        const tclvList = JSON.parse(localStorage.getItem("tclvList") || "[]");
+        tclvList.splice(index, 1);
+        localStorage.setItem("tclvList", JSON.stringify(tclvList));
+        loadTclvList();
+    }
+
+    // 初次加载 TCLV 数据
+    loadTclvList();
 
         function sendTclvData() {
             if (!websocket || websocket.readyState !== WebSocket.OPEN) {

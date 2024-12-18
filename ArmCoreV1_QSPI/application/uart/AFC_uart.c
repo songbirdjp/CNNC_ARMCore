@@ -131,6 +131,7 @@ static int8_t  AFC_MagMotorCmd_parse(struct AFC_object *cmd)
 {   
     int8_t ret = 0;
     MotorCtrlParam_TypeDef *obj = MAG_motorParam_get();
+    obj->encoderValCurrent = __HAL_TIM_GET_COUNTER(&htim2);
     switch (cmd->data[1])
     {
         case 0x00:// Mag Motor find zero ok ACK
@@ -141,24 +142,40 @@ static int8_t  AFC_MagMotorCmd_parse(struct AFC_object *cmd)
             break;
         case 0x01://Mag Motor set position 2 bytes no ACK
             obj->encoderValTarget = (cmd->data[3] << 8) | cmd->data[2];
-            printf("MagMotorParameter.encoderValTarget = %d\r\n", obj->encoderValTarget);
+            cmd->len = 0x04;
+            cmd->data[0] = 0x40;
+            cmd->data[1] = 0x01;
+            cmd->data[2] = obj->encoderValCurrent & 0xFF;
+            cmd->data[3] = (obj->encoderValCurrent >> 8) & 0xFF;
             break;
         case 0x02://Mag Motor run by step no ACK
             if (cmd->data[2] != 0x01 && cmd->data[2] != 0x02) 
             {
-                LOG_E("Mag Motor run by step err: %d\r\n", cmd->data[0]);
+                //LOG_E("Mag Motor run by step err: %d\r\n", cmd->data[0]);
                 break;
             }
             uint16_t step_value = (cmd->data[4] << 8) | cmd->data[3];
             if (cmd->data[2] == 0x01)
             {
                 obj->encoderValTarget += step_value;
+                if(obj->encoderValCurrent> 35200)//1024*4.75*5.18 = 25195.5200;
+                {
+                    obj->encoderValTarget = 35200;
+                }
             }
             else if (cmd->data[2] == 0x02)
             {
                 obj->encoderValTarget -= step_value;
+                if(obj->encoderValCurrent < 10000)
+                {
+                    obj->encoderValTarget = 10000;
+                }
             }
-            //printf("MagMotorParameter.encoderValTarget = %d\r\n", obj->encoderValTarget);
+            cmd->len = 0x04;
+            cmd->data[0] = 0x40;
+            cmd->data[1] = 0x02;
+            cmd->data[2] = obj->encoderValCurrent & 0xFF;
+            cmd->data[3] = (obj->encoderValCurrent >> 8) & 0xFF;
             break;
         case 0x03:
             cmd->len = 0x04;
@@ -179,6 +196,7 @@ static int8_t  AFC_AFTMotorCmd_parse(struct AFC_object *cmd)
 {
     int8_t ret = 0;
     MotorCtrlParam_TypeDef *obj = AFT_motorParam_get();
+    
     switch (cmd->data[1])
     {
          case 0x00:
@@ -197,11 +215,11 @@ static int8_t  AFC_AFTMotorCmd_parse(struct AFC_object *cmd)
         case 0x04://Mag Motor run by step no ACK
             if(cmd->data[0] == 0x01)
             {
-                obj->encoderValTarget = obj->encoderValCurrent + cmd->data[1];
+                obj->encoderValTarget = obj->encoderValCurrent + cmd->data[2];
             }
             else if(cmd->data[0] == 0x02)
             {
-                obj->encoderValTarget = obj->encoderValCurrent - cmd->data[1];
+                obj->encoderValTarget = obj->encoderValCurrent - cmd->data[2];
             }
             else
             {
@@ -247,6 +265,13 @@ static int8_t  AFC_ADCSampleSet_parse(struct AFC_object *cmd)//0x60
 }   
   
 
+#include "shell.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "rtc.h"
+#include "init_call.h"
+#include "ulog.h"
+
 static int8_t AFC_command_frame_parse(struct AFC_object *cmd)
 {
     int8_t ret = 0;
@@ -264,6 +289,8 @@ static int8_t AFC_command_frame_parse(struct AFC_object *cmd)
         break;
     case 0x60:
         ret = AFC_ADCSampleSet_parse(cmd);
+    case 0xEE:
+        HAL_NVIC_SystemReset();   
         break;
     default:    
         ret = -1;
