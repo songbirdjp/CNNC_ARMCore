@@ -1,22 +1,8 @@
-#include "main.h"
-#include "BGM_def.h"
-#include "SPIDriver.h"
-#include "ethercat.h"
-#include "applInterface.h"
-// #include "lan9252_port.h"
-// #include "lan9252_app.h"
-#include "cmsis_os2.h"
-// #include "drv_tim.h"
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "bgm_uart.h"
-// #include "AFCCmd.h"
+#include "afc_cmd.h"
+#include "bgm_def.h"
+#include <stddef.h>
 #include "shell.h" 
-#include "drv_spi.h"
-#include "spi.h"
-// #include "IOE.h"
 #include "ulog.h"
-// #include "console.h"
 
 // extern const uint8_t BGM_ARM_IO_Version[4];
 
