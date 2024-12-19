@@ -12,7 +12,7 @@ extern "C" {
 struct radiation_point_data
 {
     float dose_cumulative;
-    float dose_rate;
+    float dose_rate;        /* Unit: MU/min */
     uint16_t time_expected; /* Unit: ms */
 };
 

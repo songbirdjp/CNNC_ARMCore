@@ -95,6 +95,11 @@ static int8_t dose_handshake_frame_parse(struct dose_object *cmd)
     cmd->data[3] = strtoul(&fw_ver[3], NULL, 10);
     cmd->data[4] = strtoul(&fw_ver[6], NULL, 10);
 
+    if (fsm_state_switch(FSM_STATE_IDLE) != 0)
+    {
+        LOG_E("fsm state switch err\r\n");
+    }
+
     return ret;
 }
 
@@ -218,12 +223,12 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             }
             break;
         case 0x05:
-            ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4]);
+            ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, cmd->data[3] << 8 | cmd->data[2], (cmd->data[5] << 8 | cmd->data[4]) / 10.0);
             if (ret != 0)
             {
                 LOG_E("beam data ri cumulative set err: %d\r\n", ret);
             }
-            ret = beam_data_value_set(0, BEAM_RI_DOSE_RATE, cmd->data[3] << 8 | cmd->data[2], cmd->data[7] << 8 | cmd->data[6]);
+            ret = beam_data_value_set(0, BEAM_RI_DOSE_RATE, cmd->data[3] << 8 | cmd->data[2], (cmd->data[7] << 8 | cmd->data[6]) / 10.0);
             if (ret != 0)
             {
                 LOG_E("beam data ri dose rate set err: %d\r\n", ret);
@@ -448,6 +453,12 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
         break;
     case FSM_STATE_DUMMY:
         if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_FAULT)
+        {
+            ret = -1;
+        }
+        break;
+    case FSM_STATE_DUMMY_END:
+        if (new_state != FSM_STATE_PREPARE)
         {
             ret = -1;
         }

@@ -4,7 +4,7 @@
 #include "gpio_app.h"
 
 static osMutexId_t fsm_mutex = NULL;
-static enum fsm_state fsm_state_current = FSM_STATE_IDLE;
+static enum fsm_state fsm_state_current = FSM_STATE_INIT;
 static osEventFlagsId_t fsm_event = NULL;
 #define FSM_CHANGE_EVENT   (1 << 0)
 static int8_t fsm_state_set(enum fsm_state state)
@@ -52,6 +52,9 @@ int8_t fsm_state_switch(enum fsm_state new_state)
     case FSM_STATE_DUMMY:
         ret = dose_hv_enable_set(1);
         break;
+    case FSM_STATE_DUMMY_END:
+        ret = dose_hv_enable_set(0);
+        break;
     case FSM_STATE_PREPARE:
         ret = dose_hv_enable_set(1);
         break;
@@ -97,6 +100,8 @@ static int8_t fsm_process_entry(void *argument)
         case FSM_STATE_IDLE:
             break;
         case FSM_STATE_DUMMY:
+            break;
+        case FSM_STATE_DUMMY_END:
             break;
         case FSM_STATE_PREPARE:
             break;

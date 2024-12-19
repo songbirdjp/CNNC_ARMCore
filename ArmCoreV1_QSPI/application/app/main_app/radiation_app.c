@@ -957,7 +957,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
 
     uint64_t board_id = radiation_data_value_get(DOSE_BOARD_ID);
 
-    #define DOSE_BOARD_NO_TRIGGER_OUT_SCALE 2
+    #define DOSE_BOARD_NO_TRIGGER_OUT_SCALE 1.1
     if (board_id == DOSE_BOARD_NO_TRIGGER_OUT)
     {
         dose_accumulated_target *= DOSE_BOARD_NO_TRIGGER_OUT_SCALE;
@@ -1006,7 +1006,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
                 return ret;
             }
 
-            ret = fsm_state_switch(FSM_STATE_IDLE);
+            ret = fsm_state_switch(FSM_STATE_DUMMY_END);
         }
         else
         {
@@ -1429,7 +1429,7 @@ static int8_t dose_interpolation_calculate(void)
     LOG_I("pulse_interval_min: %u\r\n", pulse_interval_min);
 #endif
 
-    time_radiation_index = time_radiation_index * 1000 - 100;    /* here reserve 100ms for safety */
+    time_radiation_index -= 100;    /* here reserve 100ms for safety */
     if (dose_accumulated_cur < dose_radiation_index)
     {
         dose_rate_interpolated = (dose_radiation_index - dose_accumulated_cur) / time_radiation_index;
@@ -1590,7 +1590,7 @@ static int8_t dose_dummy_mode_test(uint8_t argc, char **argv)
         return ret;
     }
     /* 3. update fsm state */
-    enum fsm_state state = atoi(argv[1]);   /* FSM_STATE_DUMMY: 2   FSM_STATE_RADIATION: 5 */
+    enum fsm_state state = atoi(argv[1]);   /* FSM_STATE_DUMMY: 2   FSM_STATE_RADIATION: 6 */
 
     if (state == FSM_STATE_DUMMY)
     {
@@ -1635,7 +1635,7 @@ static int8_t dose_radiation_mode_test(uint8_t argc, char **argv)
     }
 
     /* 3. update fsm state */
-    enum fsm_state state = atoi(argv[1]);   /* FSM_STATE_DUMMY: 2   FSM_STATE_RADIATION: 5 */
+    enum fsm_state state = atoi(argv[1]);   /* FSM_STATE_DUMMY: 2   FSM_STATE_RADIATION: 6 */
 
     if (state == FSM_STATE_DUMMY)
     {
@@ -1793,11 +1793,12 @@ static int8_t fsm_state_current_set(uint8_t argc, char **argv)
     0：FSM_STATE_INIT,
     1：FSM_STATE_IDLE,
     2：FSM_STATE_DUMMY,
-    3：FSM_STATE_PREPARE,
-    4：FSM_STATE_READY,
-    5：FSM_STATE_RADIATION,
-    6：FSM_STATE_COMPLETE,
-    7：FSM_STATE_FAULT, */
+    3: FSM_STATE_DUMMY_END,
+    4：FSM_STATE_PREPARE,
+    5：FSM_STATE_READY,
+    6：FSM_STATE_RADIATION,
+    7：FSM_STATE_COMPLETE,
+    8：FSM_STATE_FAULT, */
     
     int8_t ret = fsm_state_switch(state);
 
