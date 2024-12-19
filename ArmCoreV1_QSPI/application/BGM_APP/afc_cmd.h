@@ -1,12 +1,7 @@
-#ifndef DOSE_CMD_H
-#define DOSE_CMD_H
-// Commands Type
-// typedef enum
-// {
-//     AFCCmdType_HandshakeDown = 0x01,
-//     AFCCmdType_CommandDown,
-//     AFCCmdType_RtDataDown
-// } AFCCmdType_t;
+#ifndef __AFC_CMD_H__
+#define __AFC_CMD_H__
+
+#include <stdint.h>
 
 typedef enum
 {

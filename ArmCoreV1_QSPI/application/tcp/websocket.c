@@ -461,12 +461,12 @@ static int32_t ws_buildRespondShakeKey(char *acceptKey, uint32_t acceptKeyLen, c
 
     if (acceptKey == NULL)
         return 0;
-
     memcpy(clientKey, acceptKey, acceptKeyLen);
     memcpy(&clientKey[acceptKeyLen], guid, guidLen);
-
    // printf("message: %s\r\n", clientKey);
      sha1_hash(clientKey, sha1DataTemp);
+
+     
      sha1DataTempLen = strlen((const char *)sha1DataTemp);
     // printf("digest:  %d %s\r\n", sha1DataTempLen, sha1DataTemp);
 
@@ -489,7 +489,9 @@ static int32_t ws_buildRespondShakeKey(char *acceptKey, uint32_t acceptKeyLen, c
         j += 1;
     }
 
+
     ret = ws_base64_encode((const uint8_t *)sha1Data, (char *)respondKey, j);
+
 
     return ret;
 }
@@ -542,6 +544,7 @@ static int32_t ws_replyClient(uint8_t s, char *buff, char *path)
     }
     // 创建回复key
     ws_buildHttpRespond(recvShakeKey, ret, respondPackage);
+
   //    printf("response %s\r\n",respondPackage);
     tcp_data_send(s, (uint8_t *)respondPackage, strlen(respondPackage));
     printf("Handshake Success!\r\n");
@@ -567,16 +570,9 @@ static int8_t getClientType(uint8_t s, uint8_t *pString)
 			serviceNumber++;									
             printf("client %d is service\r\n", s);
         }
-      
-        
         else    return -1;
     }
-    else
-    {
-        client[s].clientType = SERVICE;//this client is controller
-		serviceNumber++;									
-        printf("client %d is service\r\n", s);
-    }
+    else    return -1;
 
     return 1;
 }
@@ -669,7 +665,7 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
         #endif
     }
     else if (client[s].connectStatus > 0)
-    {   
+    {
         // recv data after handshake
           //  for (i = 0; i < len; i++) printf("%x ", data[i]);
           //  printf("\r\n");

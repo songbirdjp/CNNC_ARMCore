@@ -25,7 +25,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "FreeRTOSConfig.h"
-#include "ulog.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -72,6 +71,7 @@ extern DMA_HandleTypeDef hdma_spi6_tx;
 extern DMA_HandleTypeDef hdma_tim7_up;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim5;
 extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim7;
 extern DMA_HandleTypeDef hdma_uart4_tx;
@@ -81,7 +81,6 @@ extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart2_tx;
 extern DMA_HandleTypeDef hdma_usart3_tx;
 extern WWDG_HandleTypeDef hwwdg1;
-extern TIM_HandleTypeDef htim23;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -341,13 +340,12 @@ void DMA1_Stream6_IRQHandler(void)
 void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-  
+
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(IOEIntB_Pin);
   HAL_GPIO_EXTI_IRQHandler(PulseInhibitDetect_Pin);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
-  
+
   /* USER CODE END EXTI9_5_IRQn 1 */
 }
 
@@ -363,6 +361,20 @@ void TIM2_IRQHandler(void)
   /* USER CODE BEGIN TIM2_IRQn 1 */
 
   /* USER CODE END TIM2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM3 global interrupt.
+  */
+void TIM3_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM3_IRQn 0 */
+
+  /* USER CODE END TIM3_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim3);
+  /* USER CODE BEGIN TIM3_IRQn 1 */
+
+  /* USER CODE END TIM3_IRQn 1 */
 }
 
 /**
@@ -391,6 +403,20 @@ void FMC_IRQHandler(void)
   /* USER CODE BEGIN FMC_IRQn 1 */
 
   /* USER CODE END FMC_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM5 global interrupt.
+  */
+void TIM5_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM5_IRQn 0 */
+
+  /* USER CODE END TIM5_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim5);
+  /* USER CODE BEGIN TIM5_IRQn 1 */
+
+  /* USER CODE END TIM5_IRQn 1 */
 }
 
 /**
@@ -424,19 +450,6 @@ void DMA2_Stream0_IRQHandler(void)
   /* USER CODE END DMA2_Stream0_IRQn 1 */
 }
 
-/**
-  * @brief This function handles TIM23 global interrupt.
-  */
-void TIM23_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM23_IRQn 0 */
-
-  /* USER CODE END TIM23_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim23);
-  /* USER CODE BEGIN TIM23_IRQn 1 */
-
-  /* USER CODE END TIM23_IRQn 1 */
-}
 /**
   * @brief This function handles DMA2 stream2 global interrupt.
   */
@@ -555,16 +568,3 @@ void BDMA_Channel2_IRQHandler(void)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-/**
-  * @brief This function handles TIM3 global interrupt.
-  */
-void TIM3_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM3_IRQn 0 */
-
-  /* USER CODE END TIM3_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim3);
-  /* USER CODE BEGIN TIM3_IRQn 1 */
-
-  /* USER CODE END TIM3_IRQn 1 */
-}

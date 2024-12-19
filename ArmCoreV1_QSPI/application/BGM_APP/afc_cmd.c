@@ -3,30 +3,30 @@
 #include "SPIDriver.h"
 #include "ethercat.h"
 #include "applInterface.h"
-#include "lan9252_port.h"
-#include "lan9252_app.h"
+// #include "lan9252_port.h"
+// #include "lan9252_app.h"
 #include "cmsis_os2.h"
-#include "drv_tim.h"
+// #include "drv_tim.h"
 #include "FreeRTOS.h"
 #include "queue.h"
 #include "bgm_uart.h"
-#include "AFCCmd.h"
+// #include "AFCCmd.h"
 #include "shell.h" 
 #include "drv_spi.h"
 #include "spi.h"
-#include "IOE.h"
+// #include "IOE.h"
 #include "ulog.h"
-#include "console.h"
+// #include "console.h"
 
-extern const uint8_t BGM_ARM_IO_Version[4];
+// extern const uint8_t BGM_ARM_IO_Version[4];
 
 int BGM2AFC_Handshake(void)
 {
     struct cmd_object BGM2AFCHandshake;
-    BGM2AFCHandshake.id.byte = 0x80;
-    BGM2AFCHandshake.type = UARTCmdType_HandshakeDown;
-    BGM2AFCHandshake.len = sizeof(BGM_ARM_IO_Version);
-    BGM2AFCHandshake.data = BGM_ARM_IO_Version;
+    // BGM2AFCHandshake.id.byte = 0x80;
+    // BGM2AFCHandshake.type = UARTCmdType_HandshakeDown;
+    // BGM2AFCHandshake.len = sizeof(BGM_ARM_IO_Version);
+    // BGM2AFCHandshake.data = BGM_ARM_IO_Version;
     LOG_I("BGM2AFC_Handshake\r\n");
     return uart_cmd_write(BGM_UART_AFC,&BGM2AFCHandshake);
 }

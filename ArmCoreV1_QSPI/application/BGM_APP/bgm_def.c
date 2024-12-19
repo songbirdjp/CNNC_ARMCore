@@ -1,24 +1,307 @@
-#include "main.h"
-#include "BGM_def.h"
-#include "SPIDriver.h"
-#include "ethercat.h"
-#include "applInterface.h"
-#include "lan9252_port.h"
-#include "lan9252_app.h"
-#include "cmsis_os2.h"
-#include "drv_tim.h"
-#include "FreeRTOS.h"
-#include "queue.h"
-#include "bgm_uart.h"
-#include "AFCCmd.h"
-#include "shell.h" 
-#include "drv_spi.h"
-#include "spi.h"
-#include "IOE.h"
+#include "bgm_def.h"
+#include "sys_cfg.h"
+#include <stddef.h>
+#include <stdlib.h>
+#include "plan_data.h"
 #include "ulog.h"
-#include "console.h"
 
-const static uint8_t BGM_ARM_IO_Version[4] = {0x19,0,0,1};//Hardware version0x19 ,firmware version xx,yy,zz 
+#define BGM_ARM_HW_VERSION  0x19
+
+/* 1. bgm with dose board communication interface */
+int8_t dose_handshake(enum uart_id id)
+{
+    int8_t ret = 0;
+    uint8_t *fw_ver = system_info_get()->fw_version;
+    uint8_t versionToHandshake[5] = {0};
+
+    versionToHandshake[0] = BGM_ARM_HW_VERSION;
+    versionToHandshake[1] = strtoul(&fw_ver[0], NULL, 10);;//sw version XX
+    versionToHandshake[2] = strtoul(&fw_ver[3], NULL, 10);;//sw version YY
+    versionToHandshake[3] = strtoul(&fw_ver[6], NULL, 10);;//sw version ZZ
+    versionToHandshake[4] = (uint8_t)id;
+
+    ret = dose_data_info_set(id, DOSE_INFO_VERSION, versionToHandshake, sizeof(versionToHandshake));
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_adc_value_set(enum uart_id id, uint32_t value)
+{
+    int8_t ret = 0;
+    ret = dose_data_info_set(id, DOSE_INFO_ADC_CALI, &value, 0);
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_dac_value_set(enum uart_id id, uint32_t value)
+{
+    int8_t ret = 0;
+    ret = dose_data_info_set(id, DOSE_INFO_DAC_CALI, &value, 0);
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_meter_value_set(enum uart_id id, float dose_meter)
+{
+    int8_t ret = 0;
+
+    uint16_t value = (uint16_t)(dose_meter * 10.0f);
+
+    ret = dose_data_info_set(id, DOSE_INFO_METER_SET, &value, 0);
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_prf_value_set(enum uart_id id, uint8_t prf)
+{
+    int8_t ret = 0;
+
+    ret = dose_data_info_set(id, DOSE_INFO_PRF_SET, &prf, 0);
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_generate_mode_set(enum uart_id id, uint8_t mode)
+{
+    int8_t ret = 0;
+
+    ret = dose_data_info_set(id, DOSE_INFO_GENERATE_MODE_SET, &mode, 0);
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_pulse_mode_set(enum uart_id id, uint8_t pulse_mode)
+{
+    int8_t ret = 0;
+
+    ret = dose_data_info_set(id, DOSE_INFO_PULSE_MODE_SET, &pulse_mode, 0);
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_fsm_state_set(enum uart_id id, enum dose_fsm_state state)
+{
+    int8_t ret = 0;
+
+    uint8_t stat = (uint8_t)state;
+
+    ret = dose_data_info_set(id, DOSE_INFO_FSM_STATE_SET, &stat, sizeof(stat));
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_fsm_state_get(enum uart_id id, enum dose_fsm_state *state)
+{
+    *state = dose_data_info_get(id, DOSE_INFO_FSM_STATE_GET, state);
+    return 0;
+}
+
+int8_t dose_fsm_state_polling(enum uart_id id)
+{
+    int8_t ret = 0;
+
+    ret = dose_data_info_set(id, DOSE_INFO_FSM_STATE_GET, NULL, 0);
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_beam_cumulated_clear(enum uart_id id)
+{
+    int8_t ret = 0;
+
+    ret = dose_data_info_set(id, DOSE_INFO_CUMULATED_CLEAR, NULL, 0);
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_beam_parameter_set(enum uart_id id, uint16_t beam_id)
+{
+    int8_t ret = 0;
+    struct one_beam_order beam_obj = {0};
+
+    ret = getPlanBeamData(beam_id, &beam_obj);
+    if (ret != 1)
+    {
+        LOG_E("get beam data err: %d\r\n", ret);
+        return -1;
+    }
+
+    ret = dose_data_info_set(id, DOSE_INFO_BEAM_SET, &beam_obj, 0);
+
+    /* 1. beam unlock */
+
+    /* 2. beam meter */
+
+    /* 3. beam cp & ri num */
+
+    /* 4. beam cp & ri map */
+
+    /* 5. beam ri value */
+
+    /* 6. beam lock and validate */
+
+    return ret;
+}
+
+int8_t dose_radiation_data_get(enum uart_id id)
+{
+    int8_t ret = 0;
+    uint8_t data = 0x01;
+
+    ret = dose_data_info_set(id, DOSE_INFO_RADIATION_GET, &data, sizeof(data));
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+int8_t dose_radiation_index_set(enum uart_id id, uint16_t index, uint8_t emergency)
+{
+    int8_t ret = 0;
+    uint8_t data[3] = {0};
+
+    data[0] = index;
+    data[1] = index >> 8;
+    data[2] = emergency;
+
+    ret = dose_data_info_set(id, DOSE_INFO_RADIATION_SET, data, sizeof(data) / sizeof(uint8_t));
+    if(ret != 0)
+    {
+        LOG_E("dose info set err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
+#ifndef DOSE_CMD_TEST
+#include "shell.h"
+static int8_t dose_cmd_test(int8_t argc, uint8_t **argv)
+{
+    int8_t ret = 0;
+
+    if(argc != 4)
+    {
+        printf("dose_cmd_test: invalid arguments\r\n");
+        return -1;
+    }
+
+    switch (atoi(argv[1]))
+    {
+    case 0:
+        dose_handshake(atoi(argv[2]));
+        break;
+    case 1:
+        dose_adc_value_set(atoi(argv[2]), atoi(argv[3]));
+        break;
+    case 2:
+        dose_dac_value_set(atoi(argv[2]), atoi(argv[3]));
+        break;
+    case 3:
+        dose_fsm_state_set(atoi(argv[2]), DOSE_FSM_STATE_IDLE);
+        break;
+    case 4:
+        uint8_t state = 0;
+        dose_fsm_state_get(atoi(argv[2]), &state);
+        printf("state = %d\r\n", state);
+        break;
+    case 5:
+        dose_fsm_state_polling(atoi(argv[2]));
+        break;
+    case 6:
+        dose_beam_cumulated_clear(atoi(argv[2]));
+        break;
+    case 7:
+        dose_beam_parameter_set(atoi(argv[2]), atoi(argv[3]));
+        break;
+    case 8:
+        dose_radiation_data_get(atoi(argv[2]));
+        break;
+    case 9:
+        dose_radiation_index_set(atoi(argv[2]), atoi(argv[3]), 0);
+        break;
+    case 10:
+        dose_meter_value_set(atoi(argv[2]), atof(argv[3]));
+        break;
+    case 11:
+        dose_prf_value_set(atoi(argv[2]), atoi(argv[3]));
+        break;
+    case 12:
+        dose_generate_mode_set(atoi(argv[2]), atoi(argv[3]));
+        break;
+    case 13:
+        dose_pulse_mode_set(atoi(argv[2]), atoi(argv[3]));
+        break;
+    default:
+        break;
+    }
+
+    return ret;
+}
+MSH_CMD_EXPORT_ALIAS(dose_cmd_test, dose_cmd_test, test dose cmd);
+#endif
+
+
+
+/* 2. bgm with afc board communication interface */
+void BGM_SendCmd(enum uart_id uartID, UARTCmdType_t cmdType, uint8_t *cmdData,uint8_t len)
+{
+    struct cmd_object BGMCmdToSend;
+    BGMCmdToSend.id.bits.cmd_id = 0;
+    BGMCmdToSend.id.bits.cmd_ack = 1;
+    BGMCmdToSend.type = cmdType;
+    BGMCmdToSend.len = len;
+    BGMCmdToSend.data = cmdData;
+    uart_cmd_write(uartID,&BGMCmdToSend);
+}
+
+#if 0
+void AFC_GetADCValueByFrame(void)
+{
+    uint8_t _afcCmd[2] = {0x60,0x05};
+    BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,2); 
+}
 
 extern BGMStateMachine_t ARMcurrentState;
 extern BGMStateMachine_t PLCcurrentState;
@@ -40,24 +323,17 @@ void Shell_CheckALLFSM(void)
     LOG_E("ARM currentState = %d\r\n",ARMcurrentState);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_CheckALLFSM,ReadAllFSM,"Read All FSM");
-
-
-int BGM2Dose_Handshake(enum uart_id uartID)
+int BGM2AFC_Handshake(void)
 {
-    uint8_t versionToHandshake[5];
-    versionToHandshake[0] = BGM_ARM_IO_Version[0];
-    versionToHandshake[1] = BGM_ARM_IO_Version[1];//sw version XX
-    versionToHandshake[2] = BGM_ARM_IO_Version[2];//sw version YY
-    versionToHandshake[3] = BGM_ARM_IO_Version[3];//sw version ZZ
-    versionToHandshake[4] = (uint8_t)uartID;
-    struct cmd_object BGM2DoseHandshake;
-    BGM2DoseHandshake.id.byte = 0x80;
-    BGM2DoseHandshake.type = UARTCmdType_HandshakeDown;
-    BGM2DoseHandshake.len = sizeof(versionToHandshake);
-    BGM2DoseHandshake.data = versionToHandshake;
-
-    return uart_cmd_write(uartID,&BGM2DoseHandshake);
+    struct cmd_object BGM2AFCHandshake;
+    BGM2AFCHandshake.id.byte = 0x80;
+    BGM2AFCHandshake.type = UARTCmdType_HandshakeDown;
+    BGM2AFCHandshake.len = sizeof(BGM_ARM_IO_Version);
+    BGM2AFCHandshake.data = BGM_ARM_IO_Version;
+    LOG_I("BGM2AFC_Handshake\r\n");
+    return uart_cmd_write(BGM_UART_AFC,&BGM2AFCHandshake);
 }
+MSH_CMD_EXPORT_ALIAS(BGM2AFC_Handshake,B2AHS,"Dose Board Handshake Set");
 
 void Shell_BGM2Dose_Handshake(int8_t argc, uint8_t **argv)
 {
@@ -75,20 +351,9 @@ void Shell_BGM2Dose_Handshake(int8_t argc, uint8_t **argv)
     {
         uartID = BGM_UART_DOSE2;
     }
-    BGM2Dose_Handshake(uartID); 
+    dose_handshake(uartID); 
 }
 MSH_CMD_EXPORT_ALIAS(Shell_BGM2Dose_Handshake,B2DHS,"Dose Board Handshake Set");
-
-void BGM_SendCmd(enum uart_id uartID,UARTCmdType_t cmdType, uint8_t *cmdData,uint8_t len)
-{
-    struct cmd_object BGMCmdToSend;
-    BGMCmdToSend.id.byte = 0x80;
-    BGMCmdToSend.type = cmdType;
-    BGMCmdToSend.len = len;
-    BGMCmdToSend.data = cmdData;
-    uart_cmd_write(uartID,&BGMCmdToSend);
-}
-
 
 void BGMShell_BGM2AFTCmd(int8_t argc, uint8_t **argv)
 {
@@ -176,112 +441,6 @@ void BGMShell_BGMtoDose2Cmd(int8_t argc, uint8_t **argv)
 }
 MSH_CMD_EXPORT_ALIAS(BGMShell_BGMtoDose2Cmd,DOSE2CMD,"DOSE 2 CMD Set");
 
-BGMInterlocksDetect_t BGM_ReadAllInterlocks(void)
-{   
-    BGMInterlocksDetect_t AllInterlocks= {0};
-    ExpandGPIOStatus_t exdata = IOE_ExpandGPIODataParse(IOE_GPIORead());
-    memcpy(&AllInterlocks.exGPIODetect,&exdata,sizeof(exdata));
-    AllInterlocks.ModTrigONDetect  = ReadIO_ModTrigFB();
-    AllInterlocks.LvOKDetect  = ReadIO_LvOKDetect();
-    AllInterlocks.HvEnDetect  = ReadIO_HvENFB();
-    AllInterlocks.ModArcDetect  = ReadIO_ModArcDetect();
-    AllInterlocks.ModTrigONDetect  = ReadIO_ModTrigONDetect();
-
-    AllInterlocks.ModHvONDetect = ReadIO_ModHvONDetect();
-    AllInterlocks.ModSumDetect  = ReadIO_ModSumDetect();
-    AllInterlocks.Dose1Detect  = ReadIO_Dose1Detect();
-    AllInterlocks.Dose2Detect  = ReadIO_Dose2Detect();
-    AllInterlocks.EmergencyDetect  = ReadIO_EmergencyDetect();
-
-    AllInterlocks.ModTrigONDetect  = ReadIO_PulseInhibitDetect();
-
-    LOG_E("//////////////////////BGM Interlocks Status//////////////////////// \r\n");
-    LOG_E("CoolingLv1Detect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.CoolingLv1Detect);
-    LOG_E("CoolingLv2Detect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.CoolingLv2Detect);
-    LOG_E("WaterSW1Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW1Detect);
-    LOG_E("WaterSW2Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW2Detect);
-    LOG_E("WaterSW3Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW3Detect);
-    LOG_E("WaterSW4Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW4Detect);
-    LOG_E("WaterSW5Detect          =   %d\r\n",AllInterlocks.exGPIODetect.bits.WaterSW5Detect);
-    LOG_E("SF6HighDetect           =   %d\r\n",AllInterlocks.exGPIODetect.bits.SF6HighDetect);
-    LOG_E("SF6LowDetect            =   %d\r\n",AllInterlocks.exGPIODetect.bits.SF6LowDetect);
-    LOG_E("EPSStateOPDetect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.EPSStateOPDetect);
-    LOG_E("nEPSStateFaultDetect    =   %d\r\n",AllInterlocks.exGPIODetect.bits.nEPSStateFaultDetect);
-    LOG_E("VPSStateFaultDetect     =   %d\r\n",AllInterlocks.exGPIODetect.bits.VPSStateFaultDetect);
-    LOG_E("VPSStateOPDetect        =   %d\r\n",AllInterlocks.exGPIODetect.bits.VPSStateOPDetect);
-    LOG_E("GatingDetect            =   %d\r\n",AllInterlocks.exGPIODetect.bits.GatingDetect);
-    LOG_E("HVConFBDetect           =   %d\r\n",AllInterlocks.exGPIODetect.bits.HVConFBDetect);
-    LOG_E("MVTreatmentENDetect     =   %d\r\n",AllInterlocks.exGPIODetect.bits.MVTreatmentENDetect);
-    LOG_E("Dose1Detect             =   %d\r\n",AllInterlocks.Dose1Detect);
-    LOG_E("Dose2Detect             =   %d\r\n",AllInterlocks.Dose2Detect);
-    LOG_E("EmergencyDetect         =   %d\r\n",AllInterlocks.EmergencyDetect);
-    LOG_E("HvEnDetect              =   %d\r\n",AllInterlocks.HvEnDetect);
-    LOG_E("LvOKDetect              =   %d\r\n",AllInterlocks.LvOKDetect);
-    LOG_E("ModArcDetect            =   %d\r\n",AllInterlocks.ModArcDetect);
-    LOG_E("ModHvONDetect           =   %d\r\n",AllInterlocks.ModHvONDetect);
-    LOG_E("ModSumDetect            =   %d\r\n",AllInterlocks.ModSumDetect);
-    LOG_E("ModTrigONDetect         =   %d\r\n",AllInterlocks.ModTrigONDetect);
-    LOG_E("ModTriggerInhibitDetect =   %d\r\n",AllInterlocks.ModTriggerInhibitDetect);
-    LOG_E("PulseInhibitDetect      =   %d\r\n",AllInterlocks.PulseInhibitDetect);
-    LOG_E("///////////////////////////////////////////////////////////////////// \r\n");
-    
-}
-MSH_CMD_EXPORT_ALIAS(BGM_ReadAllInterlocks,ReadIO,"Read IO");
-
-uint16_t BGM_ReadModInterlocks(void)
-{
-    static uint16_t ModInterlockStatus;
-    uint8_t ModTrigONStatus;
-    uint8_t ModHvONDetectStatus;
-    uint8_t ModArcDetectStatus;
-    uint8_t ModSumDetectStatus;
-
-    ModTrigONStatus = ReadIO_ModTrigONDetect();
-    ModHvONDetectStatus = ReadIO_ModArcDetect();
-    ModArcDetectStatus = ReadIO_ModHvONDetect();
-    ModSumDetectStatus = ReadIO_ModSumDetect();
-
-    ModInterlockStatus = (uint16_t)((ModTrigONStatus << 7)|(ModTrigONStatus << 6)|(ModArcDetectStatus << 5)|(ModSumDetectStatus << 4));
-    return ModInterlockStatus;
-}
-void BGM_CtrlDoseBoardFSM(DoseFsmState_t doseFSM)
-{
-    static uint8_t fsmCmd[3] = {0xc0,0x00,0x00};
-    if(doseFSM == 0)
-    {
-        fsmCmd[2] = 0x00;
-    }
-    else if(doseFSM == 1)
-    {
-        fsmCmd[2] = 0x01;
-    }
-    else if(doseFSM == 2)
-    {
-        fsmCmd[2] = 0x02;
-    }
-    else if(doseFSM == 3)
-    {
-        fsmCmd[2] = 0x03;
-    }
-    else if(doseFSM == 4)
-    {
-        fsmCmd[2] = 0x04;
-    }
-    else if(doseFSM == 5)
-    {
-        fsmCmd[2] = 0x05;
-    }
-    else if(doseFSM == 6)
-    {
-        fsmCmd[2] = 0x06;
-    }
-    else 
-    {
-        fsmCmd[2] = 0x07;//fault
-    }
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,fsmCmd,3); 
-    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,fsmCmd,3);
-}
 void BGMShell_CtrlDoseBoardFSM(int8_t argc, uint8_t **argv)
 {
         for (int i = 0; i < argc; i++)
@@ -291,7 +450,7 @@ void BGMShell_CtrlDoseBoardFSM(int8_t argc, uint8_t **argv)
         uint8_t shellDoseFSM = 0;
         shellDoseFSM = (uint8_t)strtol((char *)argv[1], NULL, 16); 
         LOG_I("shellDoseFSM = %d\r\n",shellDoseFSM);
-        BGM_CtrlDoseBoardFSM((DoseFsmState_t) shellDoseFSM);
+        dose_fsm_state_set((DoseFsmState_t) shellDoseFSM);
 }
 MSH_CMD_EXPORT_ALIAS(BGMShell_CtrlDoseBoardFSM,DOSE1FSM,"CtrlDoseBoard1 FSM");
 
@@ -357,15 +516,6 @@ void BGMShell_SetDoseBoardDose(int8_t argc, uint8_t **argv)
 }
 MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseBoardDose,DOSEdoseset,"Set DoseBoard aim dose");
 
-
-void BGM_LockDoseCaliPara(enum uart_id uartID,uint8_t _lockStatus)
-{
-    uint8_t LockCmd[3] = {0x01,0x00,0x00};
-    LockCmd[2] = _lockStatus;
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,LockCmd,3); 
-    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,LockCmd,3); 
-}
-
 void BGMShell_LockDoseCaliPara(int8_t argc, uint8_t **argv)
 {
     for (int i = 0; i < argc; i++)
@@ -379,15 +529,6 @@ void BGMShell_LockDoseCaliPara(int8_t argc, uint8_t **argv)
     BGM_LockDoseCaliPara(id,shellLockPara);
 }
 MSH_CMD_EXPORT_ALIAS(BGMShell_LockDoseCaliPara,DOSELockPara,"Set DOSELockPara");
-
-void BGM_LockBeamData(enum uart_id uartID,uint8_t _lockStatus)
-{
-    uint8_t LockCmd[3] = {0x43,0x00,0x00};
-    LockCmd[2] = _lockStatus;
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,LockCmd,3); 
-    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,LockCmd,3); 
-}
-
 
 void BGMShell_LockBeamData(int8_t argc, uint8_t **argv)
 {
@@ -456,12 +597,4 @@ void BGMShell_SetDoseBoardDAC(int8_t argc, uint8_t **argv)
     BGM_SetDoseBoardDAC(id,shellDosedac);
 }
 MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseBoardDAC,DOSEdac,"Set DoseBoard dac");
-
-void BGM_RtBeamCtrl(void)
-{
-    uint8_t dacCmd= 0x01;
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_RtDataDown,&dacCmd,1);  
-   // BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_RtDataDown,&dacCmd,1);  
-}
-MSH_CMD_EXPORT_ALIAS(BGM_RtBeamCtrl,DoseRT,"Get RT Parameter");
-
+#endif

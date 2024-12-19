@@ -68,7 +68,7 @@ int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg))
 #ifdef IS_TCP_SERVER
 CLIENT_INFO client[MAX_CLIENT_NUM] = {-1};
 
-void tcp_server_init(void)
+static void tcp_server_init(void)
 {
     for (uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
     {

@@ -1,15 +1,14 @@
 add_subdirectory(app)
+add_subdirectory(bgm_app)
 
 set(current_path ${CMAKE_CURRENT_LIST_DIR})
 
 set(include_path ${include_path}
     "${current_path}/adc" 
-    "${current_path}/BGM_APP" 
     "${current_path}/ethercat" 
     # "${current_path}/fdcan" 
     "${current_path}/flash" 
     # "${current_path}/fpga" 
-    "${current_path}/IOExpander" 
     "${current_path}/system_common" 
     "${current_path}/tcp" 
     "${current_path}/uart" 
@@ -17,12 +16,10 @@ set(include_path ${include_path}
 
 set(src_path ${src_path}
     "${current_path}/adc/*.*" 
-    "${current_path}/BGM_APP/*.*" 
     "${current_path}/ethercat/*.*" 
     # "${current_path}/fdcan/*.*" 
     "${current_path}/flash/*.*" 
     # "${current_path}/fpga/*.*" 
-    "${current_path}/IOExpander/*.*" 
     "${current_path}/system_common/*.*" 
     "${current_path}/tcp/*.*" 
     "${current_path}/uart/*.*" 

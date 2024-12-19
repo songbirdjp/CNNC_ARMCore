@@ -46,12 +46,12 @@ void HAL_FLASH_OperationErrorCallback(uint32_t ReturnValue)
 }
 #endif
 
-uint32_t flash_sector_get(uint32_t address)
+static uint32_t flash_sector_get(uint32_t address)
 {
     return (address - FLASH_BASE) / FLASH_SECTOR_SIZE;
 }
 
-int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, uint32_t address_end, uint32_t timeout)   /* 不包含address_end地址所在的扇区 */
+static int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, uint32_t address_end, uint32_t timeout)   /* 不包含address_end地址所在的扇区 */
 {
     if (flash == NULL)
     {
@@ -142,7 +142,7 @@ out:
     return ret;
 }
 
-int8_t flash_open(DEVICE_FLASH *flash)
+static int8_t flash_open(DEVICE_FLASH *flash)
 {
     if (flash->open_state)
     {
@@ -157,7 +157,7 @@ int8_t flash_open(DEVICE_FLASH *flash)
     return 0;
 }
 
-int8_t flash_close(DEVICE_FLASH *flash)
+static int8_t flash_close(DEVICE_FLASH *flash)
 {
     if (flash->open_state)
     {
@@ -186,7 +186,7 @@ int8_t flash_close(DEVICE_FLASH *flash)
     return 0;
 }
 
-int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
+static int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
 {
     if (flash == NULL || buf == NULL || size == 0)
     {
@@ -277,7 +277,7 @@ out:
     return ret;
 }
 
-int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
+static int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
 {
     if (flash == NULL || buf == NULL || size == 0 || offset & 0x3 != 0)
     {
@@ -323,7 +323,7 @@ int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t s
     return 0;
 }
 
-int8_t flash_ioctl(DEVICE_FLASH *flash, uint8_t cmd, void *arg)
+static int8_t flash_ioctl(DEVICE_FLASH *flash, uint8_t cmd, void *arg)
 {
     if (flash == NULL || arg == NULL)
     {
@@ -529,10 +529,7 @@ int8_t flash_test(uint8_t argc, char *argv[])
         break;
 
     case 3:
-    printf("[0]\r\n");
-   
         ret = flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
-          printf("[1]\r\n");
         if (ret != 0)
         {
             printf("flash erase err:%d\r\n", ret);

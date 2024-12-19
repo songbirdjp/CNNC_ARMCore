@@ -3,107 +3,86 @@
 #include "init_call.h"
 #include "ethercat.h"
 #include "tcp_tasks.h"
-#include "websocket_console.h"
 #include "lan9252_app.h"
-#include "BGM_def.h"
 #include "ulog.h"
-#include "planData.h"
-#include "cmdData.h"
+#include "bgm_def.h"
+#include "websocket_console.h"
+#include "websocket_port.h"
+#include "bgm_app.h"
+#include "io_port.h"
+
 #define DATA_PROCESS_LAN_EVENT      (1<<0)
 #define DATA_PROCESS_TCP_EVENT      (1<<1)
 #define DATA_PROCESS_FPGA_EVENT     (1<<2)
 static osEventFlagsId_t data_process_eventHandle = NULL;
 
-extern BGMStateMachine_t ARMcurrentState;
-extern BGMStateMachine_t PLCcurrentState;
-static TOBJ7010 EcatDataOutPrev = {0};
-TOBJ6000 dataToSend = {0};
-void BGMEthercatDataParsePoint(TOBJ7010 *EcatDataOut)
-{
-    
-    uint32_t _ecatADCUART1Val = EcatDataOut->DataOut3[3] | (EcatDataOut->DataOut3[4] << 16);
-    uint32_t _ecatADCUART2Val = EcatDataOut->DataOut3[5] | (EcatDataOut->DataOut3[6] << 16);
-    uint32_t _ecatADCUART1ValPrev;
-    uint32_t _ecatADCUART2ValPrev;
-    if (memcmp(&EcatDataOutPrev, EcatDataOut,sizeof(TOBJ7010)) != 0)
-    {
-        LOG_I("BGMEthercatDataParsePoint");
-        if(EcatDataOut->DataOut1[0] != EcatDataOutPrev.DataOut1[0])  
-        {
-            // ARMcurrentState = (BGMStateMachine_t)EcatDataOut->DataOut1[0];
-            PLCcurrentState = (BGMStateMachine_t)EcatDataOut->DataOut1[0];
-            LOG_I("PCL FSM change to %d\r\n",PLCcurrentState);
-            //BGM_CtrlDoseBoardFSM((DoseFsmState_t)EcatDataOut->DataOut1[0]);
-            EcatDataOutPrev.DataOut1[0] =  EcatDataOut->DataOut1[0];
-        }
-            if(ARMcurrentState  ==  BGM_STATE_IDLE)
-            {
-            //prf set to dose by plc
-                    if(EcatDataOut->DataOut3[0] != EcatDataOutPrev.DataOut3[0])  
-                    {
-                        BGM_SetDoseBoardPRF(BGM_UART_DOSE1,EcatDataOut->DataOut3[0]);
-                        LOG_I("Set PRF to %d\r\n",EcatDataOut->DataOut3[0]);
-                        EcatDataOutPrev.DataOut3[0] =  EcatDataOut->DataOut3[0];
-                    }
-                    //Dose Meter set to Dose Board by plc
-                    if(EcatDataOut->DataOut3[1] != EcatDataOutPrev.DataOut3[1])  
-                    {
-                        BGM_SetDoseBoardDose(BGM_UART_DOSE1,EcatDataOut->DataOut3[1]);
-                        //BGM_SetDoseBoardDose(BGM_UART_DOSE2,(EcatDataOut->DataOut3[1]));
-                        LOG_I("Set Dose Meter to %d\r\n",EcatDataOut->DataOut3[1]);
-                        EcatDataOutPrev.DataOut3[1] =  EcatDataOut->DataOut3[1];
-                    }
 
-                    //Dose Mode set to Dose Board by plc
-                    if(EcatDataOut->DataOut3[7] != EcatDataOutPrev.DataOut3[7])  
-                    {
-                        BGM_SetDoseMode(BGM_UART_DOSE1,EcatDataOut->DataOut3[7]);
-                        BGM_SetDoseMode(BGM_UART_DOSE2,EcatDataOut->DataOut3[7]);
-                        LOG_I("Set Dose Mode to %d\r\n",EcatDataOut->DataOut3[7]);
-                        EcatDataOutPrev.DataOut3[7] =  EcatDataOut->DataOut3[7];
-                    }
-                    //DAC set to Dose Board by plc
-                    if(EcatDataOut->DataOut3[2] != EcatDataOutPrev.DataOut3[2])  
-                    {
-                        BGM_SetDoseBoardDAC(BGM_UART_DOSE1,EcatDataOut->DataOut3[2]);
-                        LOG_I("Set DAC to %d\r\n",EcatDataOut->DataOut3[2]);
-                        EcatDataOutPrev.DataOut3[2] =  EcatDataOut->DataOut3[2];
-                    }
-                    //ADC1 set to Dose Board 1 by plc
-                    if(_ecatADCUART1Val != _ecatADCUART1ValPrev)  
-                    {
-                        BGM_SetDoseBoardKadc(BGM_UART_DOSE1,_ecatADCUART1Val);
-                        LOG_I("Set ADC1 to %ld\r\n",_ecatADCUART1Val);
-                        _ecatADCUART1ValPrev = _ecatADCUART1Val;
-                        //BGM_LockDoseCaliPara(BGM_UART_DOSE1,1);
-                        //BGM_LockDoseCaliPara(BGM_UART_DOSE2,1);
-                        //BGM_CtrlDoseBoardFSM((DoseFsmState_t)3);//change Dose FSM to Prepare
-                    }
-                    //ADC2 set to Dose Board 2 by plc
-                    if(_ecatADCUART2Val != _ecatADCUART2ValPrev)  
-                    {
-                        BGM_SetDoseBoardKadc(BGM_UART_DOSE2,_ecatADCUART2Val);
-                        LOG_I("Set ADC2 to %ld\r\n",_ecatADCUART2Val);
-                        _ecatADCUART2ValPrev = _ecatADCUART2Val;
-                    }
-                
-            }
-              //AFC POS set to AFC by plc
-            if(EcatDataOut->DataOut4[2] != EcatDataOutPrev.DataOut4[2])  
-            {
-                uint8_t cmd[4] = {0x41,0x03,0x00,0x00};
-                //BGM_SetDoseBoardDAC(BGM_UART_DOSE1,EcatDataOut->DataOut3[2]);
-                cmd[2] = EcatDataOut->DataOut4[2];
-                cmd[3] = (EcatDataOut->DataOut4[2]) >> 8;
-                BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,cmd,4); 
-                LOG_I("Set AFC pos to %d\r\n",EcatDataOut->DataOut4[2]);
-                EcatDataOutPrev.DataOut4[2] =  EcatDataOut->DataOut4[2];
-            }
-        
-        memcpy(&EcatDataOutPrev, EcatDataOut,sizeof(TOBJ7010));
+static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
+{
+    int8_t ret = 0;
+    static uint16_t last_radiation_index = 0;
+    struct bgm_data_info *obj = bgm_data_info_get();
+
+    if (last_radiation_index != recv->OutU16_RadiationIndex)
+    {
+        last_radiation_index = recv->OutU16_RadiationIndex;
+
+        ret = dose_radiation_index_set(BGM_UART_DOSE1, last_radiation_index, 0);
+        ret |= dose_radiation_index_set(BGM_UART_DOSE2, last_radiation_index, 0);
     }
+
+    osMutexAcquire(obj->mutex, osWaitForever);
+    obj->fsm_state_request = recv->OutU8_RequireState;
+    obj->beam_id = recv->OutU8_BeamId;
+    obj->radiation_index = recv->OutU16_RadiationIndex;
+    osMutexRelease(obj->mutex);
+
+    return ret;
 }
-// TOBJ6000 dataToSend = {0};
+
+static int8_t ethercat_send_data_process(TOBJ6000 *send)
+{
+    int8_t ret = 0;
+    struct bgm_data_info *obj = bgm_data_info_get();
+
+    osMutexAcquire(obj->mutex, osWaitForever);
+    send->InU8_FsmState = obj->fsm_state;
+    send->InU8_BeamId = obj->beam_id;
+    send->InU16_RadiationIndex = obj->radiation_index;
+    osMutexRelease(obj->mutex);
+
+
+    InterlocksDetect_t interlock = {0};
+    ret = interlock_status_get(&interlock);
+    if (ret != 0)
+    {
+        LOG_E("interlock status get err: %d\r\n", ret);
+        return -1;
+    }
+
+    send->InU16_NotReadyEvent = 0;
+    send->InU32_WaringInterlock = 0;
+    send->InU32_MinorInterlock = 0;
+    send->InU32_SeriousInterlock = interlock.exGPIODetect.expandGpioData;
+
+
+    send->InF_BeamOnTime = 0;
+    send->InF_PrimaryDoseTotalActual = dose_data_info_get(BGM_UART_DOSE1, DOSE_INFO_METER_GET, NULL);
+    send->InF_SecondaryDoseTotalActual = dose_data_info_get(BGM_UART_DOSE2, DOSE_INFO_METER_GET, NULL);
+    send->InF_PrimaryDoseRateActual = 0;
+    send->InF_SecondaryDoseRateActual = 0;
+
+
+    send->InU8_DoseAFsmState = (uint8_t)dose_data_info_get(BGM_UART_DOSE1, DOSE_INFO_FSM_STATE_GET, NULL);
+    send->InU8_DoseBFsmState = (uint8_t)dose_data_info_get(BGM_UART_DOSE2, DOSE_INFO_FSM_STATE_GET, NULL);
+    send->InU32_DoseAInterlock = (uint32_t)dose_data_info_get(BGM_UART_DOSE1, DOSE_INFO_INTERLOCK_GET, NULL);
+    send->InU32_DoseBInterlock = (uint32_t)dose_data_info_get(BGM_UART_DOSE2, DOSE_INFO_INTERLOCK_GET, NULL);
+
+    send->InU32_AfcState = 0;
+    send->InF_AfcPositionCurrent = 0;
+
+    return ret;
+}
 
 static int8_t realtime_ethercat_data_process(void)
 {
@@ -114,11 +93,24 @@ static int8_t realtime_ethercat_data_process(void)
     TOBJ6000 *send = (TOBJ6000 *)ethercat_send_data_get((uint16_t *)&send_data, sizeof(send_data));
     if (recv == NULL || send == NULL)
     {
-        printf("ethercat data get failed\r\n");
+        LOG_E("ethercat data get failed\r\n");
         return -1;
     }
-    BGMEthercatDataParsePoint(recv);
-    memcpy(send, &dataToSend, sizeof(TOBJ6000));
+
+    int8_t ret = ethercat_recv_data_process(recv);
+    if (ret != 0)
+    {
+        LOG_E("ethercat data process err: %d\r\n", ret);
+        return -2;
+    }
+
+    ret = ethercat_send_data_process(send);
+    if (ret != 0)
+    {
+        LOG_E("ethercat data process err: %d\r\n", ret);
+        return -3;
+    }
+
     return ethercat_send_data_update(send, sizeof(send_data));
 }
 
@@ -139,40 +131,19 @@ static int8_t non_realtime_tcp_recv_data_callback(void)
 
 static void tcp_recv_data_process(APP_DATA_RECV *info)
 {
-
-    #if 1
     int8_t ret = 0;
-    ret = websocket_cmd_parse(info->sn, info->tcpData, info->length);
+
+    ret = websocket_shell_cmd_parse(info->sn, info->tcpData, info->length);
     if (ret != 0)
     {
-        printf("websocket cmd parse err: %d\r\n", ret);
+        LOG_E("websocket cmd parse err: %d\r\n", ret);
     }
-    #endif
-    uint16_t tag = (info->tcpData[1] << 8) + info->tcpData[0];
-    LOG_E("tag %x %x %x\r\n", tag, (info->tcpData[3] << 8) + info->tcpData[2], (info->tcpData[5] << 8) + info->tcpData[4]);
-    switch(tag)
+
+    ret = websocket_cmd_parse(info);
+    if (ret != 0)
     {
-        /*#define BGM_NRT_COMMAND_TAG 30
-        #define AFC_NRT_COMMAND_TAG 31
-        #define DOSE1_NRT_COMMAND_TAG 32
-        #define DOSE2_NRT_COMMAND_TAG 33 */
-        case PLAN_DATA_SETTING_TAG: //recv plan
-          //  printf("recv plan data!\r\n");
-            nrtRecvPlan(info);
-            planFeedback(info->sn);       
-        break;
-        case 0x31:
-            nrtRecvCommandParse(info);
-        break;
-        case 0x50:
-            nrtRecvCommandParse(info);
-            break;
-        case 0xFF:
-            AFC_ADCSampleDataFeedback(info);
-            break;
-        default:      
-        break;
-    } 
+        LOG_E("websocket cmd parse err: %d\r\n", ret);
+    }
 
     /* add other process here */
 }
@@ -184,29 +155,27 @@ static int8_t data_process_init(void)
     ret = ws_data_process_callback_register(tcp_recv_data_process);
     if (ret != 0)
     {
-        printf("websocket data process callback register err: %d\r\n", ret);
+        LOG_E("websocket data process callback register err: %d\r\n", ret);
         return ret;
     }
     ret = tcp_establish_cb_register(non_realtime_tcp_callback);
     if (ret != 0)
     {
-        printf("tcp callback register err: %d\r\n", ret);
+        LOG_E("tcp callback register err: %d\r\n", ret);
         return ret;
     }
     ret = tcp_recv_data_callback_register(non_realtime_tcp_recv_data_callback);
     if (ret != 0)
     {
-        printf("tcp recv data callback register err: %d\r\n", ret);
+        LOG_E("tcp recv data callback register err: %d\r\n", ret);
         return ret;
     }
     ret = ethercat_slave_appl_cb_register(data_process_eventHandle, DATA_PROCESS_LAN_EVENT, realtime_ethercat_data_process);
     if (ret != 0)
     {
-        printf("ethercat callback register err: %d\r\n", ret);
+        LOG_E("ethercat callback register err: %d\r\n", ret);
         return ret;
     }
-
-    planDataInit();
     return 0;
 }
 
@@ -233,12 +202,13 @@ static void data_process_entry(void *argument)
             if (stat == osOK)
             {
 #ifdef TCP_WEBSOCKET
+                extern int32_t ws_recv_data_process(TCP_DATA_t *recvData);
                 ws_recv_data_process(&tcp_info);
 #endif
             }
             else
             {
-                printf("no msg in tcp rx queue: %d\r\n", stat);
+                LOG_E("no msg in tcp rx queue: %d\r\n", stat);
             }
         }
     }

@@ -187,14 +187,17 @@ int8_t frame_format_pack_and_send(struct frame_statistics *stats, uint8_t *buf, 
     buf_send[len + FRAME_DATA_OFFSET + 1] = (crc_cal >> 8) & 0xFF;
     buf_send[len + FRAME_DATA_OFFSET + 2] = (crc_cal >> 16) & 0xFF;
     buf_send[len + FRAME_DATA_OFFSET + 3] = (crc_cal >> 24) & 0xFF;
+
     /* 6. send data */
     if (cb != NULL)
     {
         ret = cb(buf_send, len + FRAME_EXTRA_LEN, timeout);
     }
+
 #ifdef USING_FRAME_STATISTICS
     /* 7. update frame statistics */
     ret |= frame_stats_send_update(stats);
+
 #endif
 
     return ret;

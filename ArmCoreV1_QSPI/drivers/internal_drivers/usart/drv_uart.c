@@ -25,7 +25,14 @@ static void RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
         printf("%s queue put err:%d\r\n", uart->name, ret);
     }
 
+    __disable_irq();
+
     HAL_UARTEx_ReceiveToIdle_DMA((UART_HandleTypeDef *)uart, (uint8_t *)uart->rx_buf, uart->rx_buf_len);
+
+    __HAL_UART_DISABLE_IT(&uart->huart, UART_IT_ERR);
+
+    __enable_irq();
+
 }
 
 static void TxCpltCallback(UART_HandleTypeDef *huart)
@@ -48,6 +55,8 @@ static int8_t uart_open(DEVICE_UART *uart)
         uart->open_state = 1;
     }
 
+    __disable_irq();
+
     HAL_StatusTypeDef status = HAL_UARTEx_ReceiveToIdle_DMA((UART_HandleTypeDef *)uart, (uint8_t *)uart->rx_buf, uart->rx_buf_len);
     if (status != HAL_OK)
     {
@@ -55,7 +64,11 @@ static int8_t uart_open(DEVICE_UART *uart)
         return -2;
     }
 
+    __HAL_UART_DISABLE_IT(&uart->huart, UART_IT_ERR);
+
     __HAL_UART_ENABLE(&uart->huart);
+
+    __enable_irq();
 
     return 0;
 }

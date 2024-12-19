@@ -26,7 +26,6 @@ static DEVICE_UART *bgm_uart_get(enum uart_id id)
     return &bgm_uart[id];
 }
 
-#if 1
 /**
   * @brief This function handles UART7 global interrupt.
   */
@@ -96,8 +95,6 @@ void UART4_IRQHandler(void)
 
   /* USER CODE END UART4_IRQn 1 */
 }
-#endif
-
 
 static uint8_t *device_uart_name_find(enum uart_id id)
 {

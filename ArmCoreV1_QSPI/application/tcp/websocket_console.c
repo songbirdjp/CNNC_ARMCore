@@ -11,7 +11,7 @@ static int8_t websocket_write(uint8_t *buf, uint32_t len)
     return ws_send(websocket_console_sn, buf, len, 1, 0, WDT_TXTDATA);
 }
 
-int8_t websocket_cmd_parse(uint8_t sn, uint8_t *buf, uint16_t len)
+int8_t websocket_shell_cmd_parse(uint8_t sn, uint8_t *buf, uint16_t len)
 {
     uint8_t *header = "[shell]";
 

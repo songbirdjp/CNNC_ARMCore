@@ -2,7 +2,7 @@
 #define __WEBSOCKET_H__
 
 #include <stdint.h>
-#include "stdbool.h"
+#include <stdbool.h>
 #include "cmsis_os2.h"
 #include "stm32h7xx_hal.h"
 
@@ -59,14 +59,11 @@ typedef struct
 {
     APP_DATA_SEND * pActiveSend;
     uint16_t sendItemNum;
-												   
-					 
 }SEND_INFO;
 
 
 extern SEND_INFO sendStructInfo;
-
-									   
+								   
 																		  
 int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type);
 bool operateSendMutex(bool opType, uint8_t itemIndex, uint32_t timeout);

@@ -1,4 +1,5 @@
 #include "cmox_crypto.h"
+#include "crc.h"
 
 int8_t crypto_sha1_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *hash_len)
 {
@@ -7,6 +8,9 @@ int8_t crypto_sha1_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *hash
         printf("parameter error\r\n");
         return -1;
     }
+
+    uint32_t hw_crc_cfg[sizeof(CRC_TypeDef) / sizeof(uint32_t)] = {0};
+    memcpy(hw_crc_cfg, &hcrc.Instance->DR, sizeof(CRC_TypeDef));
 
     /* Initialize cryptographic library */
     if (cmox_initialize(NULL) != CMOX_INIT_SUCCESS)
@@ -51,6 +55,8 @@ int8_t crypto_sha1_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *hash
         return -5;
     }
 
+    memcpy(&hcrc.Instance->DR, hw_crc_cfg, sizeof(CRC_TypeDef));
+
     return 0;
 }
 
@@ -61,6 +67,9 @@ int8_t crypto_sha256_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *ha
         printf("parameter error\r\n");
         return -1;
     }
+
+    uint32_t hw_crc_cfg[sizeof(CRC_TypeDef) / sizeof(uint32_t)] = {0};
+    memcpy(hw_crc_cfg, &hcrc.Instance->DR, sizeof(CRC_TypeDef));
 
     /* Initialize cryptographic library */
     if (cmox_initialize(NULL) != CMOX_INIT_SUCCESS)
@@ -212,6 +221,8 @@ int8_t crypto_sha256_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *ha
         printf("cryptographic library finalization failed\r\n");
         return -5;
     }
+
+    memcpy(&hcrc.Instance->DR, hw_crc_cfg, sizeof(CRC_TypeDef));
 
     return 0;
 }
