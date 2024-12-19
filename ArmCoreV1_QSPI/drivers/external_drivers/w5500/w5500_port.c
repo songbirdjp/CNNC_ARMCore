@@ -32,12 +32,13 @@ void SPI3_IRQHandler(void)
 }
 
 static void w5500_irq_callback(void)
-{
+{   
+    printf("w5500_irq_callback\r\n");
     struct node_info
     {
         uint8_t *name;
         DEVICE_IRQ_LIST *node
-    }info = {"irq_line_4", NULL};
+    }info = {"irq_line_2", NULL};
 
     if (device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_IRQ_NODE_FIND, (void *)&info) == 0)
     {
@@ -523,8 +524,8 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
 #endif
 
 #ifdef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
-    device_w5500_irq_init(&device_w5500, "irq_line_4");
-    gpio_pin_irq_callback_register("GPIOD_4", w5500_irq_callback);
+    device_w5500_irq_init(&device_w5500, "irq_line_2");
+    gpio_pin_irq_callback_register("GPIOE_2", w5500_irq_callback);//cjh change for afc ex  ethernet
 #endif
 
     ret = device_w5500_get()->open(device_w5500_get());
@@ -613,7 +614,7 @@ int8_t device_w5500_data_recv_with_block(void)
         uint8_t *name;
         char splitter;
         uint32_t timeout
-    }info = {"irq_line_4", ' ', osWaitForever};
+    }info = {"irq_line_2", ' ', osWaitForever};
 
     return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_IRQ_WAIT_WITH_BLOCK, (void *)&info);
 }

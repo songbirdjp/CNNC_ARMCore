@@ -335,6 +335,7 @@ static DEVICE_FLASH *device_flash_get(void)
 }
 #include "tim.h"
 extern DEVICE_FLASH *flash;
+uint8_t tim4Delaytimes = 12;
 uint16_t* AFC_ADCSampleRecvProcess(void)
 {
     //excuse time about 200ns with testing
@@ -346,11 +347,11 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
     struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
     
-    event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, osWaitForever);
+    event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, 1000);//osWaitForever
     osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
     osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
-    uint32_t master_queue_count = osMessageQueueGetCount(obj_master->queue);
-    uint32_t slave_queue_count = osMessageQueueGetCount(obj_slave->queue);
+    // uint32_t master_queue_count = osMessageQueueGetCount(obj_master->queue);
+    // uint32_t slave_queue_count = osMessageQueueGetCount(obj_slave->queue);
     // LOG_E("Master queue waiting count: %d\r\n", master_queue_count);
     // LOG_E("Slave queue waiting count: %d\r\n", slave_queue_count);
     memcpy(combined_data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
@@ -363,8 +364,14 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
         LOG_E("combined_data[%d] = %x\r\n", i, combined_data[i]); 
     }
 #endif
-    flash->write(flash, flash_AFC_Offset, combined_data, 16 * sizeof(uint16_t), 1000);
-    flash_AFC_Offset += 16 * sizeof(uint16_t);
+    __HAL_TIM_SET_COUNTER(&htim4, tim4Delaytimes);
+    if(tim4Delaytimes <= 2)
+    {
+        tim4Delaytimes = 12;
+    }
+    tim4Delaytimes--;
+    // flash->write(flash, flash_AFC_Offset, combined_data, 16 * sizeof(uint16_t), 1000);
+    // flash_AFC_Offset += 16 * sizeof(uint16_t);
     // LOG_E("flash_AFC_Offset: %d\r\n", flash_AFC_Offset);
     // uint16_t read_data[16] = {0};
     // flash->read(flash, flash_AFC_Offset - 16 * sizeof(uint16_t), read_data, 16 * sizeof(uint16_t), 1000);

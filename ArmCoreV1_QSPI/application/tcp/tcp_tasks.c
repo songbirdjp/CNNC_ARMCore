@@ -59,7 +59,26 @@ int8_t tcp_establish_cb_register(void (*fun_cb)(uint8_t sn))
 
     return 0;
 }
-
+/**
+ * ########## function initialize begin ##########
+done_1  [backup_ram_clk_enable            0 ]
+done_2  [hsem_clk_enable                  0 ]
+done_3  [device_flash_init                0 ]
+done_4  [gpio_port_init                   0 ]
+done_5  [console_log_init                 0 ]
+done_6  [console_thread_init              0 ]
+done_7  [AFC_DataTransmit_thread_init     0 ]
+done_8  [AFC_uart_thread_init             0 ]
+done_9  [AFTMotorInitial_thread_init      0 ]
+done_10 [Mag_MotorCtrl_thread_init        0 ]
+done_11 [MotorInitial_thread_init         0 ]
+done_12 [adcs7476_sample_thread_init      0 ]
+done_13 [fsm_init                         0 ]
+done_14 [main_app_thread_init             0 ]
+done_15 [tcp_thread_init                  0 ]
+done_16 [ulog_thread_init                 0 ]
+########## function initialize end   ##########
+ */
 int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg))
 {
     return device_w5500_rx_callback_register(fun_cb);
@@ -305,7 +324,7 @@ static int8_t tcp_thread_init(void)
 
     return 0;
 }
-// INIT_APP_EXPORT(tcp_thread_init);
+INIT_APP_EXPORT(tcp_thread_init);
 
 osStatus_t tcp_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
 {

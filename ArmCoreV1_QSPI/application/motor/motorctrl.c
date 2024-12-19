@@ -450,6 +450,31 @@ void  AFTMotorInitFSM()
     }
 }
 //static uint16_t MagMotorSetPos = 20;
+void Shell_SetMagMotorRunByStep(uint8_t argc, char *argv[])
+{   
+    uint8_t dir = strtol((char *)argv[1], NULL, 10);
+    uint16_t step = strtol((char *)argv[2], NULL, 10) | (strtol((char *)argv[3], NULL, 10) << 8);
+    
+    printf("dir = %d step = %d\r\n",dir,step);
+    if(dir == 1)
+    {
+        MagMotorSetPos += step;
+    }
+    else if(dir == 2)
+    {
+        MagMotorSetPos -= step;
+    }
+    if(MagMotorSetPos > 65535)
+    {
+        MagMotorSetPos = 65535;
+    }
+    else if(MagMotorSetPos < 10000)
+    {
+        MagMotorSetPos = 10000;
+    }
+    MagMotorParameter.encoderValTarget = MagMotorSetPos;
+}
+MSH_CMD_EXPORT_ALIAS(Shell_SetMagMotorRunByStep, MAGSTEP,Mag motor run by step);
 void Shell_SetMagMotorSetPos(uint8_t argc, char *argv[])
 {
     MagMotorSetPos = strtol((char *)argv[1], NULL, 10);

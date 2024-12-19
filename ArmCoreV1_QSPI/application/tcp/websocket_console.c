@@ -42,4 +42,4 @@ static int8_t websocket_log_init(void)
 
     return 0;
 }
-// INIT_COMPONENT_EXPORT(websocket_log_init);
+INIT_COMPONENT_EXPORT(websocket_log_init);

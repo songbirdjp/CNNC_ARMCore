@@ -77,11 +77,11 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     HAL_TIM_Base_Start(&htim23);
    // HAL_TIM_Base_Start(&htim24);
 
-    flash = device_flash_get();
-    uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE}; 
-    flash_init(flash, "DEVICE_NAME_FLASH_BANK1");
-    flash_operation_address_set(flash, flash_cfg[0], flash_cfg[1]);
-    flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
+    // flash = device_flash_get();
+    // uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE}; 
+    // flash_init(flash, "DEVICE_NAME_FLASH_BANK1");
+    // flash_operation_address_set(flash, flash_cfg[0], flash_cfg[1]);
+    // flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
     for (;;)
     {   
         AFC_ADCSampleRecvProcess();

@@ -121,13 +121,15 @@ static int8_t uart_write(DEVICE_UART *uart, uint8_t *buf, uint16_t size, uint32_
         printf("device %s is closed\r\n", uart->name);
         return -1;
     }
-
+// #define UART_DEBUG
+#ifdef UART_DEBUG
     printf("len: %d\r\n", size);
     for (uint16_t i = 0; i < size; i++)
     {
         printf("%02x ", buf[i]);
     }
     printf("\r\n");
+#endif
 
 #ifndef ULOG_USING_ISR
     ret = osMutexAcquire(uart->tx_mutex, timeout);

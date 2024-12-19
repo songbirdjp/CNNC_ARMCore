@@ -83,7 +83,7 @@ extern DEVICE_FLASH *flash;
 //#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
 uint32_t start_address = 0;
 extern uint32_t flash_AFC_Offset;
-uint8_t tim4Delaytimes = 12;
+// uint8_t tim4Delaytimes = 12;
 static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
 {
     AFCConfigParam_TypeDef *obj = AFC_ConfigParam_get();
@@ -108,19 +108,11 @@ static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
             //flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
             break;
         case 0x04:
-            cmd->len = 0x22;
-            if(flash_AFC_Offset != 0)
-            {
-                flash->read(flash, flash_AFC_Offset-16 * sizeof(uint16_t), &cmd->data[2], 16 * sizeof(uint16_t), 1000);
-            }
-            printf("tim24Delaytimes: %d\r\n", tim4Delaytimes);
-            __HAL_TIM_SET_COUNTER(&htim4, tim4Delaytimes);
-            
-            if(tim4Delaytimes <= 2)
-            {
-                tim4Delaytimes = 12;
-            }
-            tim4Delaytimes--;
+            cmd->len = 0x02;
+            cmd->data[0] = 0x01;    
+            cmd->data[1] = 0x04;
+
+            //memcpy(&cmd->data[2],AFC_ADCSampleRecvProcess(), sizeof(uint8_t) * 16 * 2);
             break;
         default:
             break;
@@ -255,7 +247,7 @@ static int8_t  AFC_ADCSampleSet_parse(struct AFC_object *cmd)//0x60
         cmd->type = 0x02;
         cmd->data[0] = 0x60;
         cmd->data[1] = 0x05;
-        flash->read(flash, 0, &cmd->data[2], cmd->len - 2, 1000);
+       // flash->read(flash, 0, &cmd->data[2], cmd->len - 2, 1000);
         // LOG_E("flash read len: %d\r\n", cmd->len);
         break;
     default:
