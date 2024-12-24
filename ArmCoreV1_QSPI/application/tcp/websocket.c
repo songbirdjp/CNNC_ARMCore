@@ -314,11 +314,11 @@ static int32_t ws_dePackage(
 
 int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type)
 {
-    if(client[s].connectStatus < 1) return 0;  //connect is not establish
     uint8_t headLen = 8;	
     uint8_t wsPkg[DATA_BUF_SIZE] = {0};
     int32_t retLen;
     // 参数检查
+    if(client[s].connectStatus < 1) return 0;  //connect is not establish
     if ((buffLen < 0) || ((buffLen + headLen) > DATA_BUF_SIZE))
         return -1;
     // 非包数据发送
@@ -368,7 +368,7 @@ static int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* ret
        // printf("retDePkg1 %d\r\n", retDePkg);
         if (retDePkg < 0)//尝试解析出完整的一包
         {
-            retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen - retDePkg, &retDataLen, retHeadLen, &retPkgType);																								   
+            retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen - retDePkg, &retDataLen, retHeadLen, &retPkgType);
         }
      //   printf("retDePkg2 %d\r\n", retDePkg);
         if (retDePkg > 0)   //已经解析到完整的一包
@@ -544,6 +544,7 @@ static int32_t ws_replyClient(uint8_t s, char *buff, char *path)
     }
     // 创建回复key
     ws_buildHttpRespond(recvShakeKey, ret, respondPackage);
+
   //    printf("response %s\r\n",respondPackage);
     tcp_data_send(s, (uint8_t *)respondPackage, strlen(respondPackage));
     printf("Handshake Success!\r\n");
@@ -551,7 +552,8 @@ static int32_t ws_replyClient(uint8_t s, char *buff, char *path)
     return 1;
 }
 
-int8_t getClientType(uint8_t s, uint8_t *pString)
+
+static int8_t getClientType(uint8_t s, uint8_t *pString)
 {
     char *p = strstr(pString, "authorization=");
 
@@ -567,6 +569,11 @@ int8_t getClientType(uint8_t s, uint8_t *pString)
             client[s].clientType = SERVICE;//this client is service
             serviceNumber++;
             printf("client %d is service\r\n", s);
+        }
+        else if( strstr(p, SHELL_AUTHORIZATION) )
+        {
+            client[s].clientType = SHELL;//this client is shell
+            printf("client %d is shell\r\n", s);
         }
         else    return -1;
     }
@@ -628,7 +635,7 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
     
     if (strncmp(data, "GET", 3) == 0)
     { // deal with handshake
-      //  printf("%s\r\n",data);
+        // printf("%s\r\n",data);
         if (strstr(data, "Sec-WebSocket-Key"))
         {
             ret = ws_replyClient(s, data, "/");
@@ -664,11 +671,12 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
         #endif
     }
     else if (client[s].connectStatus > 0)
-    {   // recv data after handshake
-       // for (i = 0; i < len; i++) printf("%x ", data[i]);
-     //   printf("\r\n");
+    {
+        // recv data after handshake
+        // for (i = 0; i < len; i++) printf("%x ", data[i]);
+        // printf("\r\n");
         ret = ws_recv(s, data, DATA_BUF_SIZE, &retPkgType, &retHeadLen);
-      //  printf("ret len %d\r\n", retHeadLen);
+        // printf("ret len %d\r\n", retHeadLen);
         if(ret < 0)//本包数据内容或长度错误，直接丢弃
         {
             printf("this pack is wrong\r\n");
@@ -690,11 +698,11 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
                 if(client[s].clientType == SERVICE) serviceNumber--;
                 break;		 
             case WDT_TXTDATA:
-              //  printf("recv:%s\r\n",data);
+                // printf("%s\r\n", (char*)data);
             case WDT_BINDATA:
-                itemRecv.length = len - retHeadLen;//actual received payload length
+                itemRecv.length = len - retHeadLen;
                 itemRecv.sn = s;
-                itemRecv.recvDataType = retPkgType;
+				itemRecv.recvDataType = retPkgType;
                 itemRecv.clientType = client[s].clientType;
                 itemRecv.tcpData = data;
 #if 0
@@ -732,7 +740,7 @@ int8_t ws_send_data_process(uint8_t s)
     if ((client[s].socketNum == -1) || (client[s].connectStatus < 1))
     {
       //  printf("Not a client sn %d!\r\n", s);
-        return 0;//sn not bind with a client yet
+        return 0;
     }
 
     if((sendStructInfo.pActiveSend == NULL) || (sendStructInfo.sendItemNum == 0))
@@ -759,7 +767,8 @@ int8_t ws_send_data_process(uint8_t s)
                 return -1;
             } 
             
-            if(ret > 0){    //send success
+            if(ret > 0)
+            {    //send success
                 if(sendStructInfo.pActiveSend[i].controlSignal == TO_SEND)
                 {
                     if(client[s].clientType == CONTROLLER)  sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;//only one controller
@@ -777,9 +786,10 @@ int8_t ws_send_data_process(uint8_t s)
                 return -1;
             }   
         }
-    } 
-    client[s].loopCnt++; 
-   
+    }
+
+	client[s].loopCnt++;
+
     return ret;
 }
 #endif

@@ -8,8 +8,9 @@
 
 #define TCP_WEBSOCKET
 
-#define CONTROLLER_AUTHORIZATION   "CONTROLLER"
-#define SERVICE_AUTHORIZATION   "SERVICE"
+#define CONTROLLER_AUTHORIZATION    "CONTROLLER"
+#define SERVICE_AUTHORIZATION       "SERVICE"
+#define SHELL_AUTHORIZATION         "SHELL"
 
 typedef enum
 {
@@ -32,6 +33,7 @@ typedef enum
 {
     CONTROLLER = 1,
     SERVICE,
+    SHELL,
     ALL_CLIENTS
 } Client_Type;
 

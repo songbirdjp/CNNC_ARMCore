@@ -46,13 +46,18 @@ static void tcp_recv_data_process(APP_DATA_RECV *info)
 {
     int8_t ret = 0;
 
-    ret = websocket_cmd_parse(info->sn, info->tcpData, info->length);
+    ret = websocket_shell_cmd_parse(info->sn, info->tcpData, info->length);
     if (ret != 0)
     {
-        printf("websocket cmd parse err: %d\r\n", ret);
+        printf("websocket shell cmd parse err: %d\r\n", ret);
     }
 
     /* add other process here */
+    // ret = websocket_cmd_parse(info);
+    // if (ret != 0)
+    // {
+    //     printf("websocket cmd parse err: %d\r\n", ret);
+    // }
 }
 
 static int8_t data_process_init(void)
@@ -108,6 +113,7 @@ static void data_process_entry(void *argument)
             if (stat == osOK)
             {
 #ifdef TCP_WEBSOCKET
+                extern int32_t ws_recv_data_process(TCP_DATA_t *recvData);
                 ws_recv_data_process(&tcp_info);
 #endif
             }
@@ -123,7 +129,7 @@ static int8_t main_app_thread_init(void)
 {
     osThreadAttr_t recv_data_process_thread_attributes = {
     .name = "recv_data_process_thread",
-    .stack_size = 1024 * 4,
+    .stack_size = 2048 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
 

@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #define IS_TCP_SERVER
-#define MAX_CLIENT_NUM  2
+#define MAX_CLIENT_NUM  8
 #define DATA_BUF_SIZE   2048
 
 typedef struct {
@@ -29,7 +29,6 @@ typedef struct
 
 extern CLIENT_INFO client[MAX_CLIENT_NUM];
 #endif
-
 
 osStatus_t tcp_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout);
 int32_t tcp_data_send(uint8_t s, uint8_t *buf, uint16_t len);

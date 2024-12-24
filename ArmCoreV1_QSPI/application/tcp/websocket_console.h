@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 
-int8_t websocket_cmd_parse(uint8_t sn, uint8_t *buf, uint16_t len);
+int8_t websocket_shell_cmd_parse(uint8_t sn, uint8_t *buf, uint16_t len);
 
 
 #ifdef __cplusplus

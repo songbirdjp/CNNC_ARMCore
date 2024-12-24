@@ -262,9 +262,12 @@ ArmCoreV1_QSPI
 │     └─ wwdg
 │        ├─ wwdg.c
 │        └─ wwdg.h
+├─ EcScript
 ├─ EcScript.exe
 ├─ ETHERCAT_CNNCPM.ioc
+├─ file_reorganize
 ├─ file_reorganize.exe
+├─ info_generation
 ├─ info_generation.exe
 ├─ libraries
 │  ├─ CMakeLists.txt
@@ -408,6 +411,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_uart_ex.c
 │        ├─ stm32h7xx_hal_wwdg.c
 │        └─ stm32h7xx_ll_fmc.c
+├─ makefile_update
 ├─ makefile_update.exe
 ├─ Middlewares
 │  ├─ CMakeLists.txt
