@@ -16,7 +16,7 @@ static struct control_para control_data =
     .board_id = DOSE_BOARD_TRIGGER_OUT,
     .calibration = {.adc_factor = {2376000, 2376000, 2376000, 2376000, 2376000}, 
                     .dac_factor = 30,
-                    .trig_interval_min = 4000},
+                    .trig_interval_min = 8000},
     .treatment = {.prf_hz = 1},
     .interlock = {.threshold_dose_rate = {10}, 
                   .threshold_dose_cp = {10}, 
@@ -212,6 +212,8 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             {
                 LOG_E("beam data total ri set err: %d\r\n", ret);
             }
+            LOG_I("dose beam total cp set: %d\r\n", cmd->data[2]);
+            LOG_I("dose beam total ri set: %d\r\n", cmd->data[4] << 8 | cmd->data[3]);
             break;
         case 0x03:
             break;
@@ -221,6 +223,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             {
                 LOG_E("beam data cp ri map set err: %d\r\n", ret);
             }
+            // LOG_I("ri_value[%d]: %d\r\n", cmd->data[2], cmd->data[4] << 8 | cmd->data[3]);
             break;
         case 0x05:
             ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, cmd->data[3] << 8 | cmd->data[2], (cmd->data[5] << 8 | cmd->data[4]) / 10.0);
@@ -238,6 +241,8 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             {
                 LOG_E("beam data ri time expected set err: %d\r\n", ret);
             }
+            // LOG_I("ri_data[%d]: dose: %d, dose_rate: %d, dose_expect_time: %d ms\r\n", 
+            //             cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4], cmd->data[7] << 8 | cmd->data[6], cmd->data[9] << 8 | cmd->data[8]);
             break;
         default:
             ret = -1;
@@ -593,6 +598,8 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             break;
         case 0x02:
             ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
+            ret |= dose_value_status_set(ONE_PULSE_DOSE, 0);
+            ret |= dose_value_status_set(ONE_PULSE_COUNT, 0);
             if (ret != 0)
             {
                 LOG_E("dose value status set err: %d\r\n", ret);

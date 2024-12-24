@@ -133,7 +133,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
             osMutexRelease(obj->control_data->mutex);
 
             osMutexAcquire(obj->beam_data->mutex, osWaitForever);
-            value = obj->beam_data->dose_meter * factor;
+            value = (uint64_t)(obj->beam_data->dose_meter * factor);
             osMutexRelease(obj->beam_data->mutex);
         }
         break;
@@ -145,7 +145,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
             osMutexRelease(obj->control_data->mutex);
 
             osMutexAcquire(obj->beam_data->mutex, osWaitForever);
-            value = (uint64_t)obj->beam_data->radiation_data[idx].dose_cumulative * factor;
+            value = (uint64_t)(obj->beam_data->radiation_data[idx].dose_cumulative * factor);
             osMutexRelease(obj->beam_data->mutex);
         }
         break;
@@ -157,7 +157,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
             osMutexRelease(obj->control_data->mutex);
 
             osMutexAcquire(obj->beam_data->mutex, osWaitForever);
-            value = (uint64_t)obj->beam_data->radiation_data[idx].dose_rate * factor;
+            value = (uint64_t)(obj->beam_data->radiation_data[idx].dose_rate * factor);
             osMutexRelease(obj->beam_data->mutex);            
         }
         break;
@@ -407,7 +407,7 @@ struct trigger_out
 
     osMutexId_t mutex;
 };
-struct trigger_out trigger_out_object = {0};
+static struct trigger_out trigger_out_object = {0};
 static struct trigger_out *trigger_out_obj_get(void)
 {
     return &trigger_out_object;
@@ -511,7 +511,7 @@ static int8_t timer_delay_start(uint8_t type, uint32_t timeout_us)
 {
     if (timer_delay_flag & TIM_DELAY_RUNNING_FLAG_BIT_7)
     {
-        // LOG_I("timer delay is running\r\n");
+        LOG_I("timer delay is running\r\n");
         return 0;
     }
 
@@ -563,6 +563,7 @@ static int8_t time_delay_entry(void *argument)
             }
             if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
             {
+                LOG_I("---trigger out begin---\r\n");
                 ret = dose_trigger_out_set(0);
                 if (ret != 0)
                 {
@@ -594,6 +595,7 @@ static int8_t time_delay_entry(void *argument)
 #ifdef RADIATION_FIX_RATE_SIMULATE
                 ret = adcs7476_value_dose(10000, 10000, 100);
 #endif
+                LOG_I("---trigger out end---\r\n");
                 ret = dose_trigger_out_set(1);
                 if (ret != 0)
                 {
@@ -607,10 +609,17 @@ static int8_t time_delay_entry(void *argument)
                     uint64_t dose_interpolated = radiation_data_value_get(DOSE_INTERPOLATED_RADIATION_IDX);
                     LOG_I("dose_accumulated_cur: %llu, dose_interpolated: %llu\r\n", dose_accumulated_cur, dose_interpolated);
 #endif
-                    ret = dose_interpolation_check(&type);
-                    if (ret != 0)
+                    if (radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
                     {
-                        LOG_E("dose interpolation check err: %d\r\n", ret);
+                        type = TIM_DELAY_PULSE_INTERVAL_TIME_US;
+                    }
+                    else
+                    {
+                        ret = dose_interpolation_check(&type);
+                        if (ret != 0)
+                        {
+                            LOG_E("dose interpolation check err: %d\r\n", ret);
+                        }
                     }
 
                     // type == 1 ? LOG_I("next: trigger a new pulse\r\n") : LOG_I("next: trigger no pulse\r\n");
@@ -638,10 +647,17 @@ static int8_t time_delay_entry(void *argument)
                 uint64_t dose_interpolated = radiation_data_value_get(DOSE_INTERPOLATED_RADIATION_IDX);
                 LOG_I("dose_accumulated_cur: %llu, dose_interpolated: %llu\r\n", dose_accumulated_cur, dose_interpolated);
 #endif
-                ret = dose_interpolation_check(&type);
-                if (ret != 0)
+                if (radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
                 {
-                    LOG_E("dose interpolation check err: %d\r\n", ret);
+                    type = TIM_DELAY_PULSE_INTERVAL_TIME_US;
+                }
+                else
+                {
+                    ret = dose_interpolation_check(&type);
+                    if (ret != 0)
+                    {
+                        LOG_E("dose interpolation check err: %d\r\n", ret);
+                    }
                 }
 
                 // type == 1 ? LOG_I("next: trigger a new pulse\r\n") : LOG_I("next: trigger no pulse\r\n");
@@ -957,7 +973,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
 
     uint64_t board_id = radiation_data_value_get(DOSE_BOARD_ID);
 
-    #define DOSE_BOARD_NO_TRIGGER_OUT_SCALE 1.1
+    #define DOSE_BOARD_NO_TRIGGER_OUT_SCALE 2.0
     if (board_id == DOSE_BOARD_NO_TRIGGER_OUT)
     {
         dose_accumulated_target *= DOSE_BOARD_NO_TRIGGER_OUT_SCALE;
@@ -1042,6 +1058,8 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type)
 
         /* calculate next interpolated dose */
         dose_interpolated += dose_rate_interpolated * pulse_interval;
+        LOG_I("dose_interpolated: %llu\r\n", dose_interpolated);
+        dose_interpolated = (dose_interpolated <= dose_radiation_index) ? dose_interpolated : dose_radiation_index;
         ret = radiation_data_value_set(DOSE_INTERPOLATED_RADIATION_IDX, dose_interpolated);
         if (ret != 0)
         {
@@ -1101,6 +1119,12 @@ static int8_t detect_whether_one_pulse_repeat(void)
             LOG_E("trigger out info set err: %d\r\n", ret);
             return ret;
         }
+        ret = radiation_data_value_set(DOSE_INTERPOLATED_RADIATION_IDX, 0);
+        if (ret != 0)
+        {
+            LOG_E("radiation data value set err: %d\r\n", ret);
+            return ret;
+        }
         return 0;
     }
 
@@ -1110,6 +1134,13 @@ static int8_t detect_whether_one_pulse_repeat(void)
     {
         uint8_t time_delay_type = 0;
         uint8_t pulse_mode = radiation_data_value_get(PULSE_GENERATION_MODE);
+        ret = radiation_data_value_set(PULSE_INTERVAL, radiation_data_value_get(PULSE_INTERVAL_MIN));
+        if (ret != 0)
+        {
+            LOG_E("radiation data value set err: %d\r\n", ret);
+            return ret;
+        }
+
         uint32_t pulse_interval = radiation_data_value_get(PULSE_INTERVAL);
         
         if (pulse_mode == 0)    /* PRF */
@@ -1309,15 +1340,6 @@ int8_t adcs7476_value_process(void)
     }
 #endif
 
-#if 0
-    static uint32_t cnt = 0;
-    if (cnt++ % 1000 == 0)
-    {
-        LOG_I("buf: %d  buf_1: %d\r\n", buf[0], buf_1[0]);
-        LOG_I("pulse_cnt: %d, pulse_cnt_1: %d\r\n", pulse_cnt, pulse_cnt_1);
-    }
-#endif
-
     uint16_t one_pulse_cnt = dose_value_status_get(ONE_PULSE_COUNT);
 
 #ifdef DETECT_RADIATION_TIME_FROM_TRIGGER_OUT
@@ -1325,6 +1347,16 @@ int8_t adcs7476_value_process(void)
     {
         system_time_get(&end_time);
         // LOG_I("radiation delayed from trigger out: %u us\r\n", time_diff_us(&begin_time, &end_time));
+    }
+#endif
+
+#if 0
+    static uint32_t cnt = 0;
+    if (cnt++ % 10000 == 0)
+    {
+        // LOG_I("buf: %d  buf_1: %d\r\n", buf[0], buf_1[0]);
+        LOG_I("one_pulse_cnt: %d\r\n", one_pulse_cnt);
+        LOG_I("pulse_cnt: %d, pulse_cnt_1: %d\r\n", pulse_cnt, pulse_cnt_1);
     }
 #endif
 
@@ -1420,32 +1452,42 @@ static int8_t dose_interpolation_calculate(void)
     uint16_t pulse_interval_min = radiation_data_value_get(PULSE_INTERVAL_MIN);
 
     uint32_t dose_rate_interpolated = 0;
-    // uint64_t dose_interpolated = 0;
+    uint64_t dose_interpolated = 0;
 
-#if 0
+#if 1
     LOG_I("dose_radiation_index: %llu\r\n", dose_radiation_index);
     LOG_I("dose_accumulated_cur: %llu\r\n", dose_accumulated_cur);
-    LOG_I("time_radiation_index: %u\r\n", time_radiation_index);
-    LOG_I("pulse_interval_min: %u\r\n", pulse_interval_min);
+    LOG_I("time_radiation_index: %u ms\r\n", time_radiation_index);
+    LOG_I("pulse_interval_min: %u us\r\n", pulse_interval_min);
 #endif
 
-    time_radiation_index -= 100;    /* here reserve 100ms for safety */
+    // time_radiation_index -= 100;    /* here reserve 100ms for safety */
+    time_radiation_index = time_radiation_index * 1000;   /* here reserve 100us for safety */
     if (dose_accumulated_cur < dose_radiation_index)
     {
-        dose_rate_interpolated = (dose_radiation_index - dose_accumulated_cur) / time_radiation_index;
-        // dose_interpolated = dose_accumulated_cur + dose_rate_interpolated * pulse_interval_min;
+        if (time_radiation_index == 0)
+        {
+            dose_rate_interpolated = radiation_data_value_get(DOSE_RATE_INTERPOLATED_RADIATION_IDX);
+        }
+        else
+        {
+            dose_rate_interpolated = (double)(dose_radiation_index - dose_accumulated_cur) / time_radiation_index;
+        }        
+        
+        LOG_I("dose_rate_interpolated: %u\r\n", dose_rate_interpolated);
+        dose_interpolated = dose_accumulated_cur + dose_rate_interpolated * pulse_interval_min;
         ret = radiation_data_value_set(DOSE_RATE_INTERPOLATED_RADIATION_IDX, dose_rate_interpolated);
         if (ret != 0)
         {
             LOG_E("radiation data value set err: %d\r\n", ret);
             return ret;
         }
-        // ret = radiation_data_value_set(DOSE_INTERPOLATED_RADIATION_IDX, dose_interpolated);
-        // if (ret != 0)
-        // {
-        //     LOG_E("radiation data value set err: %d\r\n", ret);
-        //     return ret;
-        // }
+        ret = radiation_data_value_set(DOSE_INTERPOLATED_RADIATION_IDX, dose_interpolated);
+        if (ret != 0)
+        {
+            LOG_E("radiation data value set err: %d\r\n", ret);
+            return ret;
+        }
         ret = radiation_data_value_set(PULSE_INTERVAL, pulse_interval_min);
         if (ret != 0)
         {
@@ -1486,15 +1528,39 @@ static int8_t interlock_fault_process_init(void)
 
 static int8_t radiation_thread_init(void)
 {
-    osMutexAttr_t mutex_attributes = {
-    .name = "data_mutex",
+    osMutexAttr_t dose_value_mutex_attributes = {
+    .name = "dose_value_mutex",
     .attr_bits = osMutexRecursive | osMutexPrioInherit
     };
 
-    dose_value_obj_get()->mutex = osMutexNew(&mutex_attributes);
+    dose_value_obj_get()->mutex = osMutexNew(&dose_value_mutex_attributes);
     if (dose_value_obj_get()->mutex == NULL)
     {
         LOG_E("dose value mutex create failed\r\n");
+        return -1;
+    }
+
+    osMutexAttr_t radiation_data_mutex_attributes = {
+    .name = "radiation_data_mutex",
+    .attr_bits = osMutexRecursive | osMutexPrioInherit
+    };
+
+    radiation_data_get()->mutex = osMutexNew(&radiation_data_mutex_attributes);
+    if (radiation_data_get()->mutex == NULL)
+    {
+        LOG_E("radiation data mutex create failed\r\n");
+        return -1;
+    }
+
+    osMutexAttr_t trigger_out_mutex_attributes = {
+    .name = "trigger_out_mutex",
+    .attr_bits = osMutexRecursive | osMutexPrioInherit
+    };
+
+    trigger_out_obj_get()->mutex = osMutexNew(&trigger_out_mutex_attributes);
+    if (trigger_out_obj_get()->mutex == NULL)
+    {
+        LOG_E("trigger out mutex create failed\r\n");
         return -1;
     }
 
@@ -1509,14 +1575,14 @@ static int8_t radiation_thread_init(void)
     if (timer_delay_event == NULL)
     {
         LOG_E("timer delay event create failed\r\n");
-        return -3;
+        return -2;
     }
 
     osThreadId_t time_delay_threadHandle = osThreadNew(time_delay_entry, NULL, &time_delay_thread_attributes);
     if (time_delay_threadHandle == NULL)
     {
         LOG_E("thread time delay create failed\r\n");
-        return -2;
+        return -3;
     }
 #endif
 
@@ -1525,7 +1591,7 @@ static int8_t radiation_thread_init(void)
     if (lptim3_delay_event == NULL)
     {
         LOG_E("lptim3 delay event create failed\r\n");
-        return -3;
+        return -4;
     }
 
     osThreadAttr_t lptim3_delay_thread_attributes = {
@@ -1538,7 +1604,7 @@ static int8_t radiation_thread_init(void)
     if (lptim3_delay_threadHandle == NULL)
     {
         LOG_E("thread lptim3 delay create failed\r\n");
-        return -2;
+        return -5;
     }
 #endif
 
@@ -1546,21 +1612,21 @@ static int8_t radiation_thread_init(void)
     if (ret != 0)
     {
         LOG_E("radiation data init err: %d\r\n", ret);
-        return -4;
+        return -6;
     }
 
     ret = dose_interpolation_init();
     if (ret != 0)
     {
         LOG_E("dose interpolation init err: %d\r\n", ret);
-        return -5;
+        return -7;
     }
 
     ret = interlock_fault_process_init();
     if (ret != 0)
     {
         LOG_E("interlock fault process init err: %d\r\n", ret);
-        return -6;
+        return -8;
     }
 
     return 0;
@@ -1840,6 +1906,7 @@ MSH_CMD_EXPORT_ALIAS(trigger_out_stop, trigger_out_stop, trigger out stop);
 
 static int8_t beam_data_info_get(uint8_t argc, char **argv)
 {
+    LOG_I("dose board id: %llu\r\n", radiation_data_value_get(DOSE_BOARD_ID));
     LOG_I("dose meter target: %llu\r\n", radiation_data_value_get(DOSE_BEAM_METER));
     LOG_I("dose radiation index: %llu\r\n", radiation_data_value_get(DOSE_RADIATION_IDX));
     LOG_I("dose rate radiation index: %llu\r\n", radiation_data_value_get(DOSE_RATE_RADIATION_IDX));

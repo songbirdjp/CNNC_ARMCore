@@ -59,6 +59,7 @@ int8_t fsm_state_switch(enum fsm_state new_state)
         ret = dose_hv_enable_set(1);
         break;
     case FSM_STATE_READY:
+        ret = dose_hv_enable_set(1);
         break;
     case FSM_STATE_RADIATION:
         break;
