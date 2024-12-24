@@ -416,7 +416,7 @@ static int8_t dose_interlock_parse(enum uart_id id, struct cmd_object *cmd)
         }
         break;
     case 0xB0:
-        LOG_I("[%d] dose interlock get %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
+        // LOG_I("[%d] dose interlock get %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
         obj->status.interlock.bytes = cmd->data[3] << 8 | cmd->data[2];
         break;
     case 0xB1:
@@ -446,7 +446,7 @@ static int8_t dose_state_control_parse(enum uart_id id, struct cmd_object *cmd)
             cmd->data[2] == 0 ? LOG_I("[%d] dose state switch success\r\n", id) : LOG_I("[%d] dose state switch fail\r\n", id);
             break;
         case 0x01:  /* dose current state */
-            LOG_I("[%d] dose current state: %d\r\n", id, cmd->data[2]);
+            // LOG_I("[%d] dose current state: %d\r\n", id, cmd->data[2]);
             osMutexAcquire(obj->mutex, osWaitForever);
             obj->fsm_state = cmd->data[2];
             osMutexRelease(obj->mutex);
@@ -876,6 +876,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = beam_meter;
         buf[offset++] = beam_meter >> 8;
         ret = dose_cmd_write(id, 0x02, buf, offset);
+        LOG_I("[%d] beam meter set: %d\r\n", id, beam_meter);
         /* 3. beam cp & ri num */
         offset = 0;
         buf[offset++] = 0x42;
@@ -884,13 +885,14 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = beam_info->info->RIQuantityInBeam;          /* ri num low */
         buf[offset++] = beam_info->info->RIQuantityInBeam >> 8;     /* ri num high */
         ret = dose_cmd_write(id, 0x02, buf, offset);
+        LOG_I("[%d] beam cp num: %d, ri num: %d\r\n", id, beam_info->info->CPQuantityInBeam, beam_info->info->RIQuantityInBeam);
         /* 4. beam cp & ri map */
         offset = 0;
         buf[offset++] = 0x42;
         buf[offset++] = 0x04;
         for (uint8_t i = 0; i < beam_info->info->CPQuantityInBeam; i++)    /* cp num */
         {
-            buf[offset++] = i;   /* cp index */
+            buf[offset++] = i + 1;   /* cp index */
             buf[offset++] = beam_info->cp_ri_map[i];        /* ri value low */
             buf[offset++] = beam_info->cp_ri_map[i] >> 8;   /* ri value high */
             ret = dose_cmd_write(id, 0x02, buf, offset);
@@ -902,8 +904,8 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x05;
         for (uint16_t i = 0; i < beam_info->info->RIQuantityInBeam; i++)    /* ri num */
         {
-            buf[offset++] = i;
-            buf[offset++] = i >> 8;
+            buf[offset++] = i + 1;
+            buf[offset++] = (i + 1) >> 8;
             uint16_t dose = beam_info->ri_data[i].fCumulativeDose * 10.0f;
             buf[offset++] = dose;   /* ri dose value, need *10 */
             buf[offset++] = dose >> 8;
@@ -1020,6 +1022,10 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x03;
         ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
+    case DOSE_INFO_INTERLOCK_GET:
+        buf[offset++] = 0xB0;
+        buf[offset++] = 0x00;
+        ret = dose_cmd_write(id, 0x02, buf, offset);
     case DOSE_INFO_CUMULATED_CLEAR:
         buf[offset++] = 0xC1;
         buf[offset++] = 0x02;

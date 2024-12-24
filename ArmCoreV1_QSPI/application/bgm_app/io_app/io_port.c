@@ -348,16 +348,16 @@ static int8_t io_thread_init(void)
 }
 INIT_APP_EXPORT(io_thread_init);
 
-int8_t interlock_status_get(InterlocksDetect_t *interlock)
+InterlocksDetect_t interlock_status_get(void)
 {
-    osStatus_t stat = osOK;
+    InterlocksDetect_t interlock = {0};
     InterlocksDetect_t *obj = gpio_info_get();
 
     osMutexAcquire(gpio_mutex, osWaitForever);
-    memcpy(interlock, obj, sizeof(InterlocksDetect_t));
+    memcpy(&interlock, obj, sizeof(InterlocksDetect_t));
     osMutexRelease(gpio_mutex);
 
-    return 0;
+    return interlock;
 }
 
 
@@ -385,9 +385,7 @@ int8_t interlock_status_get(InterlocksDetect_t *interlock)
 static int8_t InterlockTest(uint8_t argc, char *argv[])
 {
     InterlocksDetect_t *obj = gpio_info_get();
-    InterlocksDetect_t interlock = {0};
-
-    interlock_status_get(&interlock);
+    InterlocksDetect_t interlock = interlock_status_get();
 
     LOG_I("//////////////////////BGM Interlocks Status//////////////////////// \r\n");
     LOG_I("CoolingLv1Detect        =   %d\r\n", interlock.exGPIODetect.bits.CoolingLv1Detect);

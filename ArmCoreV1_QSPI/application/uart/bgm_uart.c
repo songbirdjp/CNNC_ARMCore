@@ -262,6 +262,8 @@ static int8_t uart_send_entry(void *argument)
     struct bgm_uart send_buf = {0}, recv_buf = {0};
     enum uart_id uart_id = *(enum uart_id *)argument;
 
+    // osDelay(1000);
+
     ret = uart_init(uart_id);
     if (ret != 0)
     {
@@ -301,7 +303,8 @@ send_data:
         if (ret != 0)
         {
             LOG_E("uart[%d] data read err: %d\r\n", uart_id, ret);
-            continue;// goto send_data;
+            // goto send_data;
+            continue;
         }
 
         ret = uart_cmd_process(uart_id, &recv_buf);

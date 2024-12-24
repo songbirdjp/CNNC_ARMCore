@@ -16,10 +16,33 @@
 #define DATA_PROCESS_FPGA_EVENT     (1<<2)
 static osEventFlagsId_t data_process_eventHandle = NULL;
 
+static uint8_t bgm_fsm_state_ctrl = 0;
+#include "shell.h"
+static int8_t bgm_fsm_state_ctrl_switch(uint8_t argc, char *argv[])
+{
+    bgm_fsm_state_ctrl = atoi(argv[1]);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_ctrl_switch, bgm_fsm_state_ctrl_switch, set bgm fsm state ctrl);
+
+static int8_t bgm_fsm_state_set(uint8_t argc, char *argv[])
+{
+    struct bgm_data_info *obj = bgm_data_info_get();
+
+    osMutexAcquire(obj->mutex, osWaitForever);
+    obj->fsm_state_request = atoi(argv[1]);
+    osMutexRelease(obj->mutex);
+
+    return 0;
+
+}
+MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_set, bgm_fsm_state_set, set bgm fsm state);
 
 static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
 {
     int8_t ret = 0;
+    static enum bgm_fsm_state last_fsm_state = BGM_STATE_MAX;
     static uint16_t last_radiation_index = 0;
     struct bgm_data_info *obj = bgm_data_info_get();
 
@@ -32,7 +55,17 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
     }
 
     osMutexAcquire(obj->mutex, osWaitForever);
-    obj->fsm_state_request = recv->OutU8_RequireState;
+
+    if (bgm_fsm_state_ctrl == 0)
+    {
+        obj->fsm_state_request = recv->OutU8_RequireState;
+    }
+    
+    if (last_fsm_state != obj->fsm_state_request)
+    {
+        obj->fsm_state_request_pre = last_fsm_state;
+        last_fsm_state = obj->fsm_state_request;
+    }
     obj->beam_id = recv->OutU8_BeamId;
     obj->radiation_index = recv->OutU16_RadiationIndex;
     osMutexRelease(obj->mutex);
@@ -51,32 +84,23 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
     send->InU16_RadiationIndex = obj->radiation_index;
     osMutexRelease(obj->mutex);
 
-
-    InterlocksDetect_t interlock = {0};
-    ret = interlock_status_get(&interlock);
-    if (ret != 0)
-    {
-        LOG_E("interlock status get err: %d\r\n", ret);
-        return -1;
-    }
-
     send->InU16_NotReadyEvent = 0;
     send->InU32_WaringInterlock = 0;
     send->InU32_MinorInterlock = 0;
-    send->InU32_SeriousInterlock = interlock.exGPIODetect.expandGpioData;
+    send->InU32_SeriousInterlock = interlock_status_get().exGPIODetect.expandGpioData;
 
 
     send->InF_BeamOnTime = 0;
-    send->InF_PrimaryDoseTotalActual = dose_data_info_get(BGM_UART_DOSE1, DOSE_INFO_METER_GET, NULL);
-    send->InF_SecondaryDoseTotalActual = dose_data_info_get(BGM_UART_DOSE2, DOSE_INFO_METER_GET, NULL);
+    send->InF_PrimaryDoseTotalActual = dose_meter_value_get(BGM_UART_DOSE1);
+    send->InF_SecondaryDoseTotalActual = dose_meter_value_get(BGM_UART_DOSE2);
     send->InF_PrimaryDoseRateActual = 0;
     send->InF_SecondaryDoseRateActual = 0;
 
 
-    send->InU8_DoseAFsmState = (uint8_t)dose_data_info_get(BGM_UART_DOSE1, DOSE_INFO_FSM_STATE_GET, NULL);
-    send->InU8_DoseBFsmState = (uint8_t)dose_data_info_get(BGM_UART_DOSE2, DOSE_INFO_FSM_STATE_GET, NULL);
-    send->InU32_DoseAInterlock = (uint32_t)dose_data_info_get(BGM_UART_DOSE1, DOSE_INFO_INTERLOCK_GET, NULL);
-    send->InU32_DoseBInterlock = (uint32_t)dose_data_info_get(BGM_UART_DOSE2, DOSE_INFO_INTERLOCK_GET, NULL);
+    send->InU8_DoseAFsmState = (uint8_t)dose_fsm_state_get(BGM_UART_DOSE1);
+    send->InU8_DoseBFsmState = (uint8_t)dose_fsm_state_get(BGM_UART_DOSE2);
+    send->InU32_DoseAInterlock = dose_interlock_get(BGM_UART_DOSE1);
+    send->InU32_DoseBInterlock = dose_interlock_get(BGM_UART_DOSE2);
 
     send->InU32_AfcState = 0;
     send->InF_AfcPositionCurrent = 0;

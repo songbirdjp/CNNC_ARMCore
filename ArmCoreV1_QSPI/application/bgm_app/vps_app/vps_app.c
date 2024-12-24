@@ -10,14 +10,14 @@ static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
 {
     if (cmd == NULL)
     {
-        LOG_E("cmd is NULL\r\n");
+        LOG_E("[%d] cmd is NULL\r\n", id);
         return -1;
     }
 
     /* 1. check cmd id */
     if (cmd->id.byte != DEVICE_ADDRESS_VPS)
     {
-        LOG_E("invalid cmd id: %d\r\n", cmd->id.byte);
+        LOG_E("[%d] invalid cmd id: %d\r\n", id, cmd->id.byte);
         return -2;
     }
 
@@ -31,7 +31,7 @@ static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     uint16_t crc_cal = modbus_crc16_cal(buf, cmd->len);
     if (crc_cal != crc)
     {
-        LOG_E("crc err: %x, %x \r\n", crc_cal, crc);
+        LOG_E("[%d] crc err: %x, %x \r\n", id, crc_cal, crc);
         return -3;
     }
 
@@ -43,7 +43,7 @@ static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
          * 3：寄存器数量超限
          * 4：内部处理出错
          */
-        LOG_E("cmd frame err: %d\r\n", cmd->data[0]);
+        LOG_E("[%d] cmd frame err: %d\r\n", id, cmd->data[0]);
         return -4;
     }
 
@@ -52,25 +52,25 @@ static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     case READ_HOLDING_REGISTERS:
         for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
         {
-            LOG_I("%.4x ", cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("[%d] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
         }
         LOG_I("\r\n");
         break;
     case READ_INPUT_REGISTERS:
         for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
         {
-            LOG_I("%.4x ", cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("[%d] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
         }
         LOG_I("\r\n");
         break;
     case WRITE_SINGLE_REGISTER:
-        LOG_I("reg addr: %#.4x, value: %#.4x\r\n", cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("[%d] reg addr: %#.4x, value: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
         break;
     case WRITE_MULTIPLE_REGISTERS:
-        LOG_I("reg addr: %#.4x, len: %#.4x\r\n", cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("[%d] reg addr: %#.4x, len: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
         break;
     default:
-        LOG_E("invalid cmd type: %d\r\n", cmd->type);
+        LOG_E("[%d] invalid cmd type: %d\r\n", id, cmd->type);
         return -5;
         break;
     }

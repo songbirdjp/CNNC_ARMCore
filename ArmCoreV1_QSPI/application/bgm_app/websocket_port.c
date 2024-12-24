@@ -16,8 +16,6 @@ typedef struct
 /* -------------------------------------------------------------------------- */
 /*                            websocket cmd for afc                           */
 /* -------------------------------------------------------------------------- */
-
-#if 0
 void nrtCommand_AFCParameterParse(CMD2UART_DATA* nrtCommand)
 {
     switch(nrtCommand->data[1])
@@ -113,67 +111,6 @@ void nrtCommand_PowerStatusParse(CMD2UART_DATA* nrtCommand)
             break;
     }
 }
-void AFC_AFCConfigFeedback()
-{
-    switch(nrtCommand.data[1])
-    {
-        case 0x00:
-            nrtCommand.data[2] = 0x00;
-            break;
-        case 0x01:
-            break;
-        case 0x02:
-            break;
-        case 0x03:
-            break;
-        default:
-            break;
-    }
-}
-void AFC_MagMotorFeedback()
-{
-
-}
-void AFC_AFTMotorFeedback()
-{
-
-}
-void nrtRecvCommandFeedback(APP_DATA_RECV* info)
-{
-    switch(nrtCommand.data[0])
-    {
-        case 0x01:
-            AFC_AFCConfigFeedback();
-            break;
-        case 0x40:
-            AFC_MagMotorFeedback();
-            break;
-        case 0x41:
-            AFC_AFTMotorFeedback();
-            break;  
-        default:
-            break;
-    }
-}
-extern DEVICE_FLASH *flash;
-uint16_t WS_AFC_ADC_Flash_addr = 0;
-void AFC_ADCSampleDataFeedback(APP_DATA_RECV* info)
-{
-    uint16_t read_data[10*16] = {0};
-    flash->read(flash, WS_AFC_ADC_Flash_addr, read_data, 10*16 * sizeof(uint16_t), 1000);
-    // for (int i = 0; i < 8* 16; i++) {
-    //     LOG_E("read_data[%d] = %x\r\n", i, read_data[i]);
-    // }
-    WS_AFC_ADC_Flash_addr += 10*16 * sizeof(uint16_t);
-    uint16_t  *pFDAry = feedback;
-    *pFDAry++ = 0xFF;//tag
-    *pFDAry++ = 0x00;//control
-    *pFDAry++ = sizeof(read_data )+ 6; //  length 
-    memcpy(pFDAry, read_data, sizeof(read_data));
-    pFDAry += 10*16; // 16个uint16_t移动16步
-    ws_send(info->sn, feedback,sizeof(read_data )+ 6, true, false, WDT_BINDATA);
-}
-#endif
 
 static int8_t afc_cmd_parse(APP_DATA_RECV *info)
 {
@@ -187,13 +124,13 @@ static int8_t afc_cmd_parse(APP_DATA_RECV *info)
     switch(nrtCommand.data[0])
     {
         case 0x01:
-            // nrtCommand_AFCParameterParse(&nrtCommand);
+            nrtCommand_AFCParameterParse(&nrtCommand);
             break;
         case 0x40:
-            // nrtCommand_MagMotorParse(&nrtCommand);
+            nrtCommand_MagMotorParse(&nrtCommand);
             break;
         case 0x41:
-            // nrtCommand_AFTMotorParse(&nrtCommand);
+            nrtCommand_AFTMotorParse(&nrtCommand);
             break;
         case 0x60:
             break;
@@ -294,7 +231,7 @@ static int8_t cali_data_set(APP_DATA_RECV *info)
 {
     int8_t ret = 0;
 
-    if ((info->tcpData[5] << 8 | info->tcpData[4]) != 24)
+    if ((info->tcpData[5] << 8 | info->tcpData[4]) != 30)
     {
         LOG_E("cali data len err: %d\r\n", (info->tcpData[4] | info->tcpData[5] << 8));
         return -1;
@@ -334,10 +271,18 @@ static int8_t cali_data_set(APP_DATA_RECV *info)
         return -2;
     }
 
-    ret |= dose_dac_value_set(BGM_UART_DOSE1, para.dose1_dac_ch1);
-    ret |= dose_adc_value_set(BGM_UART_DOSE1, para.dose1_adc_ch1);
-    ret |= dose_dac_value_set(BGM_UART_DOSE2, para.dose2_dac_ch1);
-    ret |= dose_adc_value_set(BGM_UART_DOSE2, para.dose2_adc_ch1);
+    // ret |= dose_dac_value_set(BGM_UART_DOSE1, para.dose1_dac_ch1);
+    // ret |= dose_adc_value_set(BGM_UART_DOSE1, para.dose1_adc_ch1);
+    // ret |= dose_dac_value_set(BGM_UART_DOSE2, para.dose2_dac_ch1);
+    // ret |= dose_adc_value_set(BGM_UART_DOSE2, para.dose2_adc_ch1);
+
+    struct bgm_data_info *obj = bgm_data_info_get();
+    osMutexAcquire(obj->mutex, osWaitForever);
+
+    obj->cali_dac = para.dose1_dac_ch1;
+    obj->cali_adc = para.dose1_adc_ch1;
+
+    osMutexRelease(obj->mutex);
 
     return ret;
 }
@@ -352,6 +297,7 @@ int8_t websocket_cmd_parse(APP_DATA_RECV *info)
     switch (info->tcpData[1] << 8 |info->tcpData[0])
     {
     case TAG_PLAN_DATA_SETTING:
+        osDelay(1);
         ret = nrtRecvPlan(info);
         if (ret != 0)
         {

@@ -41,6 +41,6 @@ typedef struct {
      uint8_t Dose2Detect;
 } InterlocksDetect_t;
 
-int8_t interlock_status_get(InterlocksDetect_t *interlock);
+InterlocksDetect_t interlock_status_get(void);
 
 #endif  /* __IO_PORT_H__ */

@@ -131,10 +131,12 @@ static int8_t uart_opt_before_write(DEVICE_UART *uart)
 
     if (!memcmp(uart->name, DEVICE_EPS_UART_NAME_DEFAULT, strlen(DEVICE_EPS_UART_NAME_DEFAULT)))
     {
+        osDelay(50);
         HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
     }
     else if (!memcmp(uart->name, DEVICE_VPS_UART_NAME_DEFAULT, strlen(DEVICE_VPS_UART_NAME_DEFAULT)))
     {
+        osDelay(50);
         HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
     }
     

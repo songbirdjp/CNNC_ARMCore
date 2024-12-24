@@ -68,6 +68,11 @@ int8_t dose_meter_value_set(enum uart_id id, float dose_meter)
     return ret;
 }
 
+float dose_meter_value_get(enum uart_id id)
+{
+    return dose_data_info_get(id, DOSE_INFO_METER_GET, NULL);
+}
+
 int8_t dose_prf_value_set(enum uart_id id, uint8_t prf)
 {
     int8_t ret = 0;
@@ -122,17 +127,22 @@ int8_t dose_fsm_state_set(enum uart_id id, enum dose_fsm_state state)
     return ret;
 }
 
-int8_t dose_fsm_state_get(enum uart_id id, enum dose_fsm_state *state)
+enum dose_fsm_state dose_fsm_state_get(enum uart_id id)
 {
-    *state = dose_data_info_get(id, DOSE_INFO_FSM_STATE_GET, state);
-    return 0;
+    return dose_data_info_get(id, DOSE_INFO_FSM_STATE_GET, NULL);
 }
 
-int8_t dose_fsm_state_polling(enum uart_id id)
+uint16_t dose_interlock_get(enum uart_id id)
+{
+    return dose_data_info_get(id, DOSE_INFO_INTERLOCK_GET, NULL);
+}
+
+int8_t dose_state_polling(enum uart_id id)
 {
     int8_t ret = 0;
 
     ret = dose_data_info_set(id, DOSE_INFO_FSM_STATE_GET, NULL, 0);
+    ret = dose_data_info_set(id, DOSE_INFO_INTERLOCK_GET, NULL, 0);
     if(ret != 0)
     {
         LOG_E("dose info set err: %d\r\n", ret);
@@ -160,7 +170,7 @@ int8_t dose_beam_parameter_set(enum uart_id id, uint16_t beam_id)
     struct one_beam_order beam_obj = {0};
 
     ret = getPlanBeamData(beam_id, &beam_obj);
-    if (ret != 1)
+    if (ret != 0)
     {
         LOG_E("get beam data err: %d\r\n", ret);
         return -1;
@@ -186,9 +196,8 @@ int8_t dose_beam_parameter_set(enum uart_id id, uint16_t beam_id)
 int8_t dose_radiation_data_get(enum uart_id id)
 {
     int8_t ret = 0;
-    uint8_t data = 0x01;
 
-    ret = dose_data_info_set(id, DOSE_INFO_RADIATION_GET, &data, sizeof(data));
+    ret = dose_data_info_set(id, DOSE_INFO_RADIATION_GET, NULL, 0);
     if(ret != 0)
     {
         LOG_E("dose info set err: %d\r\n", ret);
@@ -242,12 +251,10 @@ static int8_t dose_cmd_test(int8_t argc, uint8_t **argv)
         dose_fsm_state_set(atoi(argv[2]), DOSE_FSM_STATE_IDLE);
         break;
     case 4:
-        uint8_t state = 0;
-        dose_fsm_state_get(atoi(argv[2]), &state);
-        printf("state = %d\r\n", state);
+        printf("state = %d\r\n", dose_fsm_state_get(atoi(argv[2])));
         break;
     case 5:
-        dose_fsm_state_polling(atoi(argv[2]));
+        dose_state_polling(atoi(argv[2]));
         break;
     case 6:
         dose_beam_cumulated_clear(atoi(argv[2]));

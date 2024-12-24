@@ -1,17 +1,6 @@
 #include "hw_crc.h"
 #include "crc.h"
 
-/* note: user must ^0xFFFFFFFF with below functions to get final result */
-uint32_t hardware_crc_calculate(uint8_t pBuffer[], uint32_t size)
-{
-    return HAL_CRC_Calculate(&hcrc, (uint32_t *)pBuffer, size);
-}
-
-uint32_t hardware_crc_calculate_continue(uint8_t pBuffer[], uint32_t size)
-{
-    return HAL_CRC_Accumulate(&hcrc, (uint32_t *)pBuffer, size);
-}
-
 struct hardware_crc_para
 {
     uint8_t bit_len;    /* crc bit length */
@@ -28,7 +17,7 @@ static struct hardware_crc_para crc_config_default[] =
     {CRC_POLYLENGTH_32B, DEFAULT_CRC32_POLY, DEFAULT_CRC_INITVALUE, CRC_INPUTDATA_INVERSION_BYTE, CRC_OUTPUTDATA_INVERSION_ENABLE}
 };
 
-HAL_StatusTypeDef hardware_crc_config(enum hardware_crc_default index)
+static HAL_StatusTypeDef hardware_crc_config(enum hardware_crc_default index)
 {
     HAL_StatusTypeDef status = HAL_OK;
 
@@ -39,3 +28,58 @@ HAL_StatusTypeDef hardware_crc_config(enum hardware_crc_default index)
 
     return status;
 }
+
+static uint32_t hardware_crc_calculate_continue(uint8_t pBuffer[], uint32_t size)
+{
+    return HAL_CRC_Accumulate(&hcrc, (uint32_t *)pBuffer, size);
+}
+
+#include "init_call.h"
+#include "cmsis_os2.h"
+static osMutexId_t crc_mutex = NULL;
+static int8_t hw_crc_init(void)
+{
+    osMutexAttr_t crc_mutex_attributes = {
+    .name = "crc_mutex",
+    .attr_bits = osMutexRecursive | osMutexPrioInherit
+    };
+
+    crc_mutex = osMutexNew(&crc_mutex_attributes);
+    if (crc_mutex == NULL)
+    {
+        printf("crc_mutex create failed\r\n");
+        return -1;
+    }
+
+    return 0;
+}
+INIT_ENV_EXPORT(hw_crc_init);
+
+/* note: user must ^0xFFFFFFFF with below functions to get final result */
+uint32_t hardware_crc_calculate(enum hardware_crc_default index, uint8_t pBuffer[], uint32_t size)
+{
+    static enum hardware_crc_default index_last = CRC_MAX;
+    uint32_t crc_result = 0;
+    HAL_StatusTypeDef status = HAL_OK;
+
+    osMutexAcquire(crc_mutex, osWaitForever);
+
+    if (index_last != index)
+    {
+        status = hardware_crc_config(index);
+        if (status != HAL_OK)
+        {
+            printf("hardware_crc_config failed\r\n");
+            return -1;
+        }
+        
+        index_last = index;
+    }
+
+    crc_result = HAL_CRC_Calculate(&hcrc, (uint32_t *)pBuffer, size);
+    osMutexRelease(crc_mutex);
+
+    return crc_result;
+}
+
+

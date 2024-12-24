@@ -76,7 +76,7 @@ int32_t planFeedback(uint8_t sn, uint8_t tag_fb)
     memcpy(pFDAry, &interlockFeedback, typeLen*2);
     #endif
 
-    return ret;
+    return (ret <= 0 ? -1 : 0);
 }
 
 int8_t nrtRecvPlan(APP_DATA_RECV* info)
@@ -134,7 +134,7 @@ int8_t nrtRecvPlan(APP_DATA_RECV* info)
         printf("recv error #6: sdram isn't enough, clear it!!! \r\n");
         return -1; 
     }
-    crcCal = hardware_crc_calculate(&data[headLength], saveLength);
+    crcCal = hardware_crc_calculate(CRC32, &data[headLength], saveLength);
     crcCal^= 0xFFFFFFFF;
    // printf("hw crcCal: %#.8x\r\n", crcCal^0xFFFFFFFF);
    // crcCal = Crc32Buffer(&data[headLength], saveLength);
@@ -341,7 +341,7 @@ int8_t clearPlan(void)
     uint32_t totalSize = 0;
 
     if(nrtBeamData.totalBeam <= 0){
-        printf("no beam to clear!\r\n");
+        printf("no beam data to clear!\r\n");
         return 0;
     }  
 
@@ -355,19 +355,13 @@ int8_t clearPlan(void)
     memset(nrtBeamData.totalRIInBeam, 0, sizeof(nrtBeamData.totalRIInBeam));
     memset(nrtBeamData.oneBeamSize, 0, sizeof(nrtBeamData.oneBeamSize));
 
-    printf("clear finished!\r\n");
+    printf("clear beam data finished!\r\n");
     return 0;
 }
 
 static int8_t planDataInit(void)
 {
    // InitCrc32Table();
-    HAL_StatusTypeDef status = hardware_crc_config(CRC32);
-    if (status != HAL_OK)
-    {
-        printf("hardware_crc_config error:%d\r\n", status);
-        return -2;
-    }
     pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
 
     feedback16Len = 5;

@@ -115,20 +115,13 @@ static int8_t info_crc_check(struct code_info *info)
         return -1;
     }
 
-    HAL_StatusTypeDef status = hardware_crc_config(CRC32);
-    if (status != HAL_OK)
-    {
-        printf("hardware_crc_config error:%d\r\n", status);
-        return -2;
-    }
-
-    uint32_t res = hardware_crc_calculate(info, info->info_len - sizeof (info->info_crc));
+    uint32_t res = hardware_crc_calculate(CRC32, info, info->info_len - sizeof (info->info_crc));
     res ^= 0xFFFFFFFF;
 
     if (res != info->info_crc)
     {
         printf("info crc check err, cal_crc = %#.8x, info crc = %#.8x\r\n", res, info->info_crc);
-        return -3;
+        return -2;
     }
 
     return 0;
@@ -330,7 +323,6 @@ static int8_t patch_execute(struct code_info *info)
 
     uint32_t flag = info->patch_flag;
     uint32_t crc = 0;
-    HAL_StatusTypeDef status = HAL_OK;
 
     if (flag & 0x0F)
     {
@@ -338,20 +330,13 @@ static int8_t patch_execute(struct code_info *info)
         {
             if (flag & (1 << i))
             {
-                status = hardware_crc_config(CRC32);
-                if (status != HAL_OK)
-                {
-                    printf("hardware_crc_config error:%d\r\n", status);
-                    return -2;
-                }
-
-                crc = hardware_crc_calculate(info->patch[i].patch_addr, info->patch[i].patch_len);
+                crc = hardware_crc_calculate(CRC32, info->patch[i].patch_addr, info->patch[i].patch_len);
                 crc ^= 0xFFFFFFFF;
 
                 if (crc != info->patch[i].patch_crc)
                 {
                     printf("info crc check err, crc = %#.8x, patch[%d] crc = %#.8x\r\n", crc, i, info->patch[i].patch_crc);
-                    return -3;
+                    return -2;
                 }
                 else
                 {
@@ -720,14 +705,7 @@ static int8_t upgrade_info_crc_update(struct code_info *info)
     }
 
     /* 3. calculate crc of info */
-    HAL_StatusTypeDef status = hardware_crc_config(CRC32);
-    if (status != HAL_OK)
-    {
-        printf("hardware_crc_config error:%d\r\n", status);
-        return -2;
-    }
-
-    uint32_t res = hardware_crc_calculate(info, info->info_len - sizeof (info->info_crc));
+    uint32_t res = hardware_crc_calculate(CRC32, info, info->info_len - sizeof (info->info_crc));
     info->info_crc = res^0xFFFFFFFF;
     printf("crc32 res = %#x\r\n", info->info_crc);
 
