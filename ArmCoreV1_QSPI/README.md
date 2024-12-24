@@ -75,10 +75,12 @@ ArmCoreV1_QSPI
 │  │  ├─ syscalls.c
 │  │  └─ sysmem.c
 │  ├─ tcp
-│  │  ├─ tcp_client.c
-│  │  ├─ tcp_client.h
-│  │  ├─ tcp_server.c
-│  │  └─ tcp_server.h
+│  │  ├─ tcp_tasks.c
+│  │  ├─ tcp_tasks.h
+│  │  ├─ websocket.c
+│  │  ├─ websocket.h
+│  │  ├─ websocket_console.c
+│  │  └─ websocket_console.h
 │  └─ uart
 │     ├─ dose_uart.c
 │     ├─ dose_uart.h
@@ -285,9 +287,12 @@ ArmCoreV1_QSPI
 │     └─ wwdg
 │        ├─ wwdg.c
 │        └─ wwdg.h
+├─ EcScript
 ├─ EcScript.exe
 ├─ ETHERCAT_CNNCPM.ioc
+├─ file_reorganize
 ├─ file_reorganize.exe
+├─ info_generation
 ├─ info_generation.exe
 ├─ libraries
 │  ├─ CMakeLists.txt
@@ -299,9 +304,7 @@ ArmCoreV1_QSPI
 │  │  │        │  ├─ stm32h723xx.h
 │  │  │        │  ├─ stm32h7xx.h
 │  │  │        │  └─ system_stm32h7xx.h
-│  │  │        ├─ LICENSE.txt
-│  │  │        └─ Source
-│  │  │           └─ Templates
+│  │  │        └─ LICENSE.txt
 │  │  ├─ Include
 │  │  │  ├─ cmsis_armcc.h
 │  │  │  ├─ cmsis_armclang.h
@@ -425,6 +428,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_uart.c
 │        ├─ stm32h7xx_hal_uart_ex.c
 │        └─ stm32h7xx_hal_wwdg.c
+├─ makefile_update
 ├─ makefile_update.exe
 ├─ Middlewares
 │  ├─ CMakeLists.txt

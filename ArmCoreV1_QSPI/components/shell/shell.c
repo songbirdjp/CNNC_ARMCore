@@ -1,7 +1,6 @@
 #include "shell.h"
 #include "stddef.h"
 #include "utilities.h"
-#include "ulog.h"
 
 typedef int (*fun_ptr)(int8_t argc, uint8_t **argv);
 
@@ -42,7 +41,7 @@ static int8_t shell_cmd_exec(uint8_t *cmd, uint16_t length)
     if (fun == NULL)
     {
         cmd[cmd_len] = '\0';
-        LOG_E("[%s] command not found\r\n", cmd);
+        printf("[%s] command not found\r\n", cmd);
         return -2;
     }
 
@@ -75,6 +74,6 @@ static int8_t shell_exec(uint8_t *cmd, uint16_t length)
 
 int8_t shell_cmd_parse_entry(uint8_t *cmd_buf, uint16_t len)
 {
-    LOG_I("shell >\r\n");
+    printf("shell >\r\n");
     shell_exec(cmd_buf, len);
 }

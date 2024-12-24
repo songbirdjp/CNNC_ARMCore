@@ -121,10 +121,13 @@ static int8_t w5500_chip_init(wiz_NetInfo *net_info)
 }
 
 #define USING_SENDOK_INTERRUPT
-static void W5500_interrupt_init(uint8_t sn)
+static void W5500_interrupt_init(uint8_t max_interrupt)
 {
-    intr_kind int_mask = IK_WOL | IK_PPPOE_TERMINATED | IK_DEST_UNREACH | IK_IP_CONFLICT | (1 << (8 + sn));
-    wizchip_setinterruptmask(int_mask);
+    uint8_t sn;
+
+    intr_kind int_mask = IK_WOL | IK_PPPOE_TERMINATED | IK_DEST_UNREACH | IK_IP_CONFLICT ;
+    for(sn = 0; sn < max_interrupt; sn++)  int_mask |= (1 << (8 + sn));
+    ctlwizchip(CW_SET_INTRMASK, (void *)&int_mask);
     
 #ifdef USING_SENDOK_INTERRUPT
     setSn_IMR(sn, Sn_IR_SENDOK | Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
@@ -139,7 +142,7 @@ static void W5500_interrupt_init(uint8_t sn)
     wiz_NetTimeout net_timeout = {1, 16384};
     wizchip_settimeout(&net_timeout);
 
-    setSn_KPALVTR(sn, 1);
+    for(sn = 0; sn < max_interrupt; sn++)   setSn_KPALVTR(sn, 1);
 }
 
 static void W5500_interrupt_status_print(uint8_t sn)
@@ -156,7 +159,7 @@ static void W5500_interrupt_status_print(uint8_t sn)
     //     printf("---W5500 INTn pin reset---\r\n");
     // }
 }
-#include "tcp_client.h"
+#include "tcp_tasks.h"
 static int32_t w5500_irq_process(void)
 {
     uint16_t interrupt_type = 0; // SIR << 8 | IR
@@ -194,10 +197,10 @@ static int32_t w5500_irq_process(void)
     if (reg_sn_ir) // 清除中断标志位
     {
         // printf("reg_sn_ir:%x\r\n", reg_sn_ir);
-        (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: Connected to server succeed\r\n", sn) : NULL;
-        (reg_sn_ir & Sn_IR_DISCON) ? printf("tcp client disconnect to server\r\n") : NULL;
-        // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp client recv interrupt\r\n") : NULL;
-        (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("tcp client timeout interrupt\r\n") : NULL;
+        (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: Connected to peer succeed\r\n", sn) : NULL;
+        (reg_sn_ir & Sn_IR_DISCON) ? printf("disconnect to peer\r\n") : NULL;
+        // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp recv interrupt\r\n") : NULL;
+        (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("tcp timeout interrupt\r\n") : NULL;
         // (reg_sn_ir & Sn_IR_SENDOK) ? socket_sending_status_set(socket_sending_status_get() & (~(1<<sn))) : NULL;
 
         if (reg_sn_ir & Sn_IR_SENDOK)
@@ -239,13 +242,13 @@ static int32_t w5500_irq_process(void)
             recv_len = getSn_RX_RSR(sn);            /*获取接收的数据长度*/
             if (recv_len > 0)  //接收到数据
             {
-                recv_ret = recv(sn, dev->rx_buf, recv_len);     /*接收来自Server的数据*/
+                recv_ret = recv(sn, dev->rx_buf, recv_len);     /*接收来自对端的数据*/
                 if (recv_ret <= SOCK_BUSY)
                 {
-                    printf("tcp client receive err:%d\r\n", recv_ret);
+                    printf("tcp receive err:%d\r\n", recv_ret);
                     return recv_ret;
                 }
-               // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* TODO: must according to static TCP_DATA_t */
+               // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* NOTE: must according to static TCP_DATA_t */
                 TCP_DATA_t rxBufTmp = {0};
                 rxBufTmp.sn = sn;
                 rxBufTmp.Len = recv_len;
@@ -411,14 +414,14 @@ int8_t device_w5500_rx_callback_register(void (*callback)(void *arg))
     return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_SET_RX_CALLBACK, (void *)callback);
 }
 
-int8_t device_w5500_interrupt_init(uint8_t sn)
+int8_t device_w5500_interrupt_init(uint8_t max_interrupt)
 {
-    if (sn > 7)
+    if (max_interrupt > 8)
     {
         return -1;
     }
 
-    W5500_interrupt_init(sn);
+    W5500_interrupt_init(max_interrupt);
 
     return 0;
 }

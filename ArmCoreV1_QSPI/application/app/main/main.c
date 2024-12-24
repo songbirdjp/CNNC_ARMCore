@@ -269,28 +269,22 @@ int main(void)
 
 #if 0
     uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-    hardware_crc_config(CRC32);
-    uint32_t res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    uint32_t res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
     printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
 
-    hardware_crc_config(CRC8);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
     printf("crc8 res = %#x\r\n", res);
 
-    hardware_crc_config(CRC16);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
     printf("crc16 res = %#x\r\n", res);
 
-    hardware_crc_config(CRC32);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
     printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
 
-    hardware_crc_config(CRC8);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
     printf("crc8 res = %#x\r\n", res);
 
-    hardware_crc_config(CRC16);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
+    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
     printf("crc16 res = %#x\r\n", res);
     
 #endif
