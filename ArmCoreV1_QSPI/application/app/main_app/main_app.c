@@ -160,7 +160,7 @@ static void tcp_recv_data_process(APP_DATA_RECV *info)
     ret = websocket_shell_cmd_parse(info->sn, info->tcpData, info->length);
     if (ret != 0)
     {
-        LOG_E("websocket cmd parse err: %d\r\n", ret);
+        LOG_E("websocket shell cmd parse err: %d\r\n", ret);
     }
 
     ret = websocket_cmd_parse(info);

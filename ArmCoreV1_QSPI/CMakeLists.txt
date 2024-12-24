@@ -102,7 +102,6 @@ set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
 set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
 set(INFO_BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_INFO.bin)
 set(MAKE_FILE ${PROJECT_BINARY_DIR}/Makefile)
-
 set(EC_FILE ${CMAKE_SOURCE_DIR}/drivers/external_drivers/lan9252/lan9252_appObjects.h)
 
 cmake_host_system_information(RESULT OS_NAME QUERY OS_NAME)

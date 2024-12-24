@@ -75,7 +75,8 @@ static void tcp_server_init(void)
         client[i].socketNum = -1;
         client[i].clientType = -1;
     }
-}					
+}
+
 static int8_t do_tcp_server_send(uint8_t sn)
 {
     int8_t ret = 0;
@@ -163,6 +164,7 @@ static int8_t tcp_init(osMessageQueueId_t queue)
 #ifdef IS_TCP_SERVER
     tcp_server_init();
 #endif
+
     return 0;
 }
 

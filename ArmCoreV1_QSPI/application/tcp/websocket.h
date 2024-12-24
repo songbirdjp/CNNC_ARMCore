@@ -4,12 +4,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cmsis_os2.h"
-#include "stm32h7xx_hal.h"
+
 
 #define TCP_WEBSOCKET
 
-#define CONTROLLER_AUTHORIZATION   "CONTROLLER"
-#define SERVICE_AUTHORIZATION   "SERVICE"
+#define CONTROLLER_AUTHORIZATION    "CONTROLLER"
+#define SERVICE_AUTHORIZATION       "SERVICE"
+#define SHELL_AUTHORIZATION         "SHELL"
 
 typedef enum
 {
@@ -32,6 +33,7 @@ typedef enum
 {
     CONTROLLER = 1,
     SERVICE,
+    SHELL,
     ALL_CLIENTS
 } Client_Type;
 
@@ -46,6 +48,7 @@ typedef struct
     osMutexId_t sendUpdateMutexHandle;
     uint8_t onceSendCnt;
 }APP_DATA_SEND;
+
 typedef struct
 {
     uint16_t length;    //unit: Byte
@@ -61,10 +64,8 @@ typedef struct
     uint16_t sendItemNum;
 }SEND_INFO;
 
-
 extern SEND_INFO sendStructInfo;
-								   
-																		  
+
 int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type);
 bool operateSendMutex(bool opType, uint8_t itemIndex, uint32_t timeout);
 bool isSendPeriod(uint8_t sn, uint8_t itemIndex);// to inquire if current loop is sending loop for  a group of period send data

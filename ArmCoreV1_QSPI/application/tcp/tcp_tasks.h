@@ -8,9 +8,9 @@
 extern "C" {
 #endif
 
-#define MAX_CLIENT_NUM  2
-#define DATA_BUF_SIZE   2048
 #define IS_TCP_SERVER
+#define MAX_CLIENT_NUM  8
+#define DATA_BUF_SIZE   2048
 
 typedef struct {
     uint8_t sn;

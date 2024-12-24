@@ -314,7 +314,7 @@ static int32_t ws_dePackage(
 int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type)
 {
     uint8_t headLen = 8;	
-    uint8_t wsPkg[DATA_BUF_SIZE];
+    uint8_t wsPkg[DATA_BUF_SIZE] = {0};
     int32_t retLen;
     // 参数检查
     if(client[s].connectStatus < 1) return 0;  //connect is not establish
@@ -344,6 +344,7 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_
     // 显示数据
   //   printf("ws_send: %x %x %x %x %x %x\r\n", wsPkg[0],wsPkg[1],wsPkg[2],wsPkg[3],wsPkg[4],wsPkg[5] );
     //  for(int32_t i = 0; i < retLen; i++)    printf("0x%x ", wsPkg[i]);
+   
     return tcp_data_send(s, wsPkg, retLen);
 }
 
@@ -461,12 +462,12 @@ static int32_t ws_buildRespondShakeKey(char *acceptKey, uint32_t acceptKeyLen, c
 
     if (acceptKey == NULL)
         return 0;
+
     memcpy(clientKey, acceptKey, acceptKeyLen);
     memcpy(&clientKey[acceptKeyLen], guid, guidLen);
+
    // printf("message: %s\r\n", clientKey);
      sha1_hash(clientKey, sha1DataTemp);
-
-     
      sha1DataTempLen = strlen((const char *)sha1DataTemp);
     // printf("digest:  %d %s\r\n", sha1DataTempLen, sha1DataTemp);
 
@@ -489,9 +490,7 @@ static int32_t ws_buildRespondShakeKey(char *acceptKey, uint32_t acceptKeyLen, c
         j += 1;
     }
 
-
     ret = ws_base64_encode((const uint8_t *)sha1Data, (char *)respondKey, j);
-
 
     return ret;
 }
@@ -566,9 +565,14 @@ static int8_t getClientType(uint8_t s, uint8_t *pString)
         }
         else if( strstr(p, SERVICE_AUTHORIZATION) )
         {
-            client[s].clientType = SERVICE;//this client is controller
-			serviceNumber++;									
+            client[s].clientType = SERVICE;//this client is service
+			serviceNumber++;
             printf("client %d is service\r\n", s);
+        }
+        else if( strstr(p, SHELL_AUTHORIZATION) )
+        {
+            client[s].clientType = SHELL;//this client is shell
+            printf("client %d is shell\r\n", s);
         }
         else    return -1;
     }
@@ -607,6 +611,7 @@ uint8_t isClientTypeMatch(uint8_t sn, uint8_t itemIndex)// to inquire if assigne
 
     return 0;//not match
 }
+
 static void (*DataProcessCallback)(APP_DATA_RECV *info) = NULL;
 int8_t ws_data_process_callback_register(void (*cb)(APP_DATA_RECV *info))
 {
@@ -623,9 +628,9 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
     Ws_DataType retPkgType = WDT_NULL;
     int32_t ret = 0;
     APP_DATA_RECV itemRecv = {0};
-	uint32_t retHeadLen = 0;												  
+	uint32_t retHeadLen = 0;
 
-  //  printf("recv length = %d\r\n", len);
+    // printf("recv length = %d\r\n", len);
     
     if (strncmp(data, "GET", 3) == 0)
     { // deal with handshake
@@ -667,10 +672,10 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
     else if (client[s].connectStatus > 0)
     {
         // recv data after handshake
-          //  for (i = 0; i < len; i++) printf("%x ", data[i]);
-          //  printf("\r\n");
+        // for (i = 0; i < len; i++) printf("%x ", data[i]);
+        // printf("\r\n");
         ret = ws_recv(s, data, DATA_BUF_SIZE, &retPkgType, &retHeadLen);
-        //printf("ret %d\r\n", ret);
+        // printf("ret len %d\r\n", retHeadLen);
         if(ret < 0)//本包数据内容或长度错误，直接丢弃
         {
             printf("this pack is wrong\r\n");
@@ -692,11 +697,11 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
                 if(client[s].clientType == SERVICE) serviceNumber--;
                 break;			 
             case WDT_TXTDATA:
-               // printf("%s\r\n", (char*)data);
+                // printf("%s\r\n", (char*)data);
             case WDT_BINDATA:
                 itemRecv.length = len - retHeadLen;
                 itemRecv.sn = s;
-				itemRecv.recvDataType = retPkgType;																   
+				itemRecv.recvDataType = retPkgType;
                 itemRecv.clientType = client[s].clientType;
                 itemRecv.tcpData = data;
 #if 0
@@ -780,9 +785,10 @@ int8_t ws_send_data_process(uint8_t s)
                 return -1;
             }   
         }
-    }   
+    }
 
-	client[s].loopCnt++; 		   
+	client[s].loopCnt++;
+
     return ret;
 }
 #endif
