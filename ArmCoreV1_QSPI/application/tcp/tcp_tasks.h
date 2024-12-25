@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #define IS_TCP_SERVER
-#define MAX_CLIENT_NUM  8
+#define MAX_CLIENT_NUM  2
 #define DATA_BUF_SIZE   2048
 
 typedef struct {

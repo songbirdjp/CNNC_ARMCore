@@ -562,7 +562,7 @@ static int8_t dose_realtime_frame_parse(enum uart_id id, struct cmd_object *cmd)
         }
         break;
     case 0x01:
-#if 1
+#if 0
         LOG_I("[%d] dose state: %#.2x\r\n", id, cmd->data[1]);
         LOG_I("[%d] dose interlock: %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
         LOG_I("[%d] dose current cp: %d\r\n", id, cmd->data[4]);

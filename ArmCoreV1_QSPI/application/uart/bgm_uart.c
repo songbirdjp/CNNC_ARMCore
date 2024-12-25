@@ -259,6 +259,7 @@ static int8_t uart_recv_entry(void *argument)
 static int8_t uart_send_entry(void *argument)
 {
     int8_t ret = 0;
+    uint8_t send_retry_cnt = 0;
     struct bgm_uart send_buf = {0}, recv_buf = {0};
     enum uart_id uart_id = *(enum uart_id *)argument;
 
@@ -302,9 +303,18 @@ send_data:
         ret = device_uart_data_read(uart_id, &recv_buf, TIMEOUT_MS);
         if (ret != 0)
         {
-            LOG_E("uart[%d] data read err: %d\r\n", uart_id, ret);
-            // goto send_data;
-            continue;
+            send_retry_cnt++;
+            if (send_retry_cnt < 3)
+            {
+                LOG_I("uart[%d] data read err: %d, try cnt: %d\r\n", uart_id, ret, send_retry_cnt);
+                goto send_data;
+            }
+            else
+            {
+                LOG_E("uart[%d] data read err: %d, try cnt: %d\r\n", uart_id, ret, send_retry_cnt);
+                send_retry_cnt = 0;
+                continue;
+            }
         }
 
         ret = uart_cmd_process(uart_id, &recv_buf);

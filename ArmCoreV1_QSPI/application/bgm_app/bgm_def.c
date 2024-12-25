@@ -29,28 +29,14 @@ int8_t dose_handshake(enum uart_id id)
     return ret;
 }
 
-int8_t dose_adc_value_set(enum uart_id id, uint32_t value)
+int8_t dose_adc_value_set(enum uart_id id, uint32_t *value)
 {
-    int8_t ret = 0;
-    ret = dose_data_info_set(id, DOSE_INFO_ADC_CALI, &value, 0);
-    if(ret != 0)
-    {
-        LOG_E("dose info set err: %d\r\n", ret);
-    }
-
-    return ret;
+    return dose_data_info_set(id, DOSE_INFO_ADC_CALI, (void *)value, 0);
 }
 
-int8_t dose_dac_value_set(enum uart_id id, uint32_t value)
+int8_t dose_dac_value_set(enum uart_id id, uint32_t *value)
 {
-    int8_t ret = 0;
-    ret = dose_data_info_set(id, DOSE_INFO_DAC_CALI, &value, 0);
-    if(ret != 0)
-    {
-        LOG_E("dose info set err: %d\r\n", ret);
-    }
-
-    return ret;
+    return dose_data_info_set(id, DOSE_INFO_DAC_CALI, (void *)value, 0);
 }
 
 int8_t dose_meter_value_set(enum uart_id id, float dose_meter)
@@ -73,43 +59,19 @@ float dose_meter_value_get(enum uart_id id)
     return dose_data_info_get(id, DOSE_INFO_METER_GET, NULL);
 }
 
-int8_t dose_prf_value_set(enum uart_id id, uint8_t prf)
+int8_t dose_prf_value_set(enum uart_id id, uint8_t *prf)
 {
-    int8_t ret = 0;
-
-    ret = dose_data_info_set(id, DOSE_INFO_PRF_SET, &prf, 0);
-    if(ret != 0)
-    {
-        LOG_E("dose info set err: %d\r\n", ret);
-    }
-
-    return ret;
+    return dose_data_info_set(id, DOSE_INFO_PRF_SET, (void *)prf, 0);
 }
 
-int8_t dose_generate_mode_set(enum uart_id id, uint8_t mode)
+int8_t dose_generate_mode_set(enum uart_id id, uint8_t *mode)
 {
-    int8_t ret = 0;
-
-    ret = dose_data_info_set(id, DOSE_INFO_GENERATE_MODE_SET, &mode, 0);
-    if(ret != 0)
-    {
-        LOG_E("dose info set err: %d\r\n", ret);
-    }
-
-    return ret;
+    return dose_data_info_set(id, DOSE_INFO_GENERATE_MODE_SET, (void *)mode, 0);
 }
 
-int8_t dose_pulse_mode_set(enum uart_id id, uint8_t pulse_mode)
+int8_t dose_pulse_mode_set(enum uart_id id, uint8_t *pulse_mode)
 {
-    int8_t ret = 0;
-
-    ret = dose_data_info_set(id, DOSE_INFO_PULSE_MODE_SET, &pulse_mode, 0);
-    if(ret != 0)
-    {
-        LOG_E("dose info set err: %d\r\n", ret);
-    }
-
-    return ret;
+    return dose_data_info_set(id, DOSE_INFO_PULSE_MODE_SET, (void *)pulse_mode, 0);
 }
 
 int8_t dose_fsm_state_set(enum uart_id id, enum dose_fsm_state state)
@@ -236,49 +198,52 @@ static int8_t dose_cmd_test(int8_t argc, uint8_t **argv)
         return -1;
     }
 
+    enum uart_id id = atoi(argv[2]);
+    uint32_t value = atoi(argv[3]);
+
     switch (atoi(argv[1]))
     {
     case 0:
-        dose_handshake(atoi(argv[2]));
+        dose_handshake(id);
         break;
     case 1:
-        dose_adc_value_set(atoi(argv[2]), atoi(argv[3]));
+        dose_adc_value_set(id, &value);
         break;
     case 2:
-        dose_dac_value_set(atoi(argv[2]), atoi(argv[3]));
+        dose_dac_value_set(id, &value);
         break;
     case 3:
-        dose_fsm_state_set(atoi(argv[2]), DOSE_FSM_STATE_IDLE);
+        dose_fsm_state_set(id, DOSE_FSM_STATE_IDLE);
         break;
     case 4:
-        printf("state = %d\r\n", dose_fsm_state_get(atoi(argv[2])));
+        printf("state = %d\r\n", dose_fsm_state_get(id));
         break;
     case 5:
-        dose_state_polling(atoi(argv[2]));
+        dose_state_polling(id);
         break;
     case 6:
-        dose_beam_cumulated_clear(atoi(argv[2]));
+        dose_beam_cumulated_clear(id);
         break;
     case 7:
-        dose_beam_parameter_set(atoi(argv[2]), atoi(argv[3]));
+        dose_beam_parameter_set(id, value);
         break;
     case 8:
-        dose_radiation_data_get(atoi(argv[2]));
+        dose_radiation_data_get(id);
         break;
     case 9:
-        dose_radiation_index_set(atoi(argv[2]), atoi(argv[3]), 0);
+        dose_radiation_index_set(id, value, 0);
         break;
     case 10:
-        dose_meter_value_set(atoi(argv[2]), atof(argv[3]));
+        dose_meter_value_set(id, value);
         break;
     case 11:
-        dose_prf_value_set(atoi(argv[2]), atoi(argv[3]));
+        dose_prf_value_set(id, &value);
         break;
     case 12:
-        dose_generate_mode_set(atoi(argv[2]), atoi(argv[3]));
+        dose_generate_mode_set(id, &value);
         break;
     case 13:
-        dose_pulse_mode_set(atoi(argv[2]), atoi(argv[3]));
+        dose_pulse_mode_set(id, &value);
         break;
     default:
         break;

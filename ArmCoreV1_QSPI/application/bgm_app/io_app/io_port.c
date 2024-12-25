@@ -201,12 +201,12 @@ static int8_t gpio_thread_entry(void *argument)
         osThreadExit();
     }
 
-    ret = gpio_pin_irq_callback_register("GPIOG_6", ioe_irq_callback);
-    if(ret != 0)
-    {
-        LOG_E("gpio_pin_irq_callback_register err: %d\r\n",ret);
-        osThreadExit();
-    }
+    // ret = gpio_pin_irq_callback_register("GPIOG_6", ioe_irq_callback);
+    // if(ret != 0)
+    // {
+    //     LOG_E("gpio_pin_irq_callback_register err: %d\r\n",ret);
+    //     osThreadExit();
+    // }
 
     for (;;)
     {
@@ -271,6 +271,8 @@ static int8_t gpio_status_polling(void *argument)
     InterlocksDetect_t *obj = gpio_info_get();
     InterlocksDetect_t AllInterlocks= {0};
 
+    AllInterlocks.exGPIODetect.expandGpioData = ioe_read();
+
     AllInterlocks.ModTrigFB  = ReadIO_ModTrigFB();
     AllInterlocks.LvOKDetect  = ReadIO_LvOKDetect();
     AllInterlocks.HvEnDetect  = ReadIO_HvENFB();
@@ -286,7 +288,7 @@ static int8_t gpio_status_polling(void *argument)
     AllInterlocks.ModTriggerInhibitDetect  = ReadIO_PulseInhibitDetect();
 
     osMutexAcquire(mutex, osWaitForever);
-    memcpy(&obj->LvOKDetect, &AllInterlocks.LvOKDetect, sizeof(InterlocksDetect_t) - sizeof(ExpandGPIOStatus_t));
+    memcpy(obj, &AllInterlocks, sizeof(InterlocksDetect_t));
     osMutexRelease(mutex);
 
     return 0;
@@ -337,7 +339,7 @@ static int8_t io_thread_init(void)
         return -4;
     }
 
-    osStatus_t stat = osTimerStart(timerId, 10);
+    osStatus_t stat = osTimerStart(timerId, 50);
     if (stat != osOK)
     {
         printf("timerId start failed\r\n");
@@ -359,25 +361,6 @@ InterlocksDetect_t interlock_status_get(void)
 
     return interlock;
 }
-
-
-// uint16_t BGM_ReadModInterlocks(void)
-// {
-//     static uint16_t ModInterlockStatus;
-//     uint8_t ModTrigONStatus;
-//     uint8_t ModHvONDetectStatus;
-//     uint8_t ModArcDetectStatus;
-//     uint8_t ModSumDetectStatus;
-
-//     ModTrigONStatus = ReadIO_ModTrigONDetect();
-//     ModHvONDetectStatus = ReadIO_ModArcDetect();
-//     ModArcDetectStatus = ReadIO_ModHvONDetect();
-//     ModSumDetectStatus = ReadIO_ModSumDetect();
-
-//     ModInterlockStatus = (uint16_t)((ModTrigONStatus << 7)|(ModTrigONStatus << 6)|(ModArcDetectStatus << 5)|(ModSumDetectStatus << 4));
-//     return ModInterlockStatus;
-// }
-
 
 
 #ifndef INTERLOCK_TEST

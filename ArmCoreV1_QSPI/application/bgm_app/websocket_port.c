@@ -265,22 +265,13 @@ static int8_t cali_data_set(APP_DATA_RECV *info)
         return -2;
     }
 
-    if (para.dose1_dac_ch1 != para.dose2_dac_ch1 || para.dose1_adc_ch1 != para.dose2_adc_ch1)
-    {
-        LOG_E("dose1 and dose2 cali data err\r\n");
-        return -2;
-    }
-
-    // ret |= dose_dac_value_set(BGM_UART_DOSE1, para.dose1_dac_ch1);
-    // ret |= dose_adc_value_set(BGM_UART_DOSE1, para.dose1_adc_ch1);
-    // ret |= dose_dac_value_set(BGM_UART_DOSE2, para.dose2_dac_ch1);
-    // ret |= dose_adc_value_set(BGM_UART_DOSE2, para.dose2_adc_ch1);
-
     struct bgm_data_info *obj = bgm_data_info_get();
     osMutexAcquire(obj->mutex, osWaitForever);
 
-    obj->cali_dac = para.dose1_dac_ch1;
-    obj->cali_adc = para.dose1_adc_ch1;
+    obj->cali_dose1_dac = para.dose1_dac_ch1;
+    obj->cali_dose1_adc = para.dose1_adc_ch1;
+    obj->cali_dose2_dac = para.dose2_dac_ch1;
+    obj->cali_dose2_adc = para.dose2_adc_ch1;
 
     osMutexRelease(obj->mutex);
 

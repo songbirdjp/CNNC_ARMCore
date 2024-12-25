@@ -14,8 +14,10 @@ static struct bgm_data_info bgm_info =
     .fsm_state = BGM_STATE_INIT,
     .cali_mode = 0,
     .cali_prf = 10,
-    .cali_adc = 2376000,
-    .cali_dac = 30,
+    .cali_dose1_adc = 1213875,
+    .cali_dose1_dac = 30,
+    .cali_dose2_adc = 1398015,
+    .cali_dose2_dac = 30,
     .dose_meter = 100.0,
     .dose_meter_dummy = 300.0
 };
@@ -216,23 +218,25 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         LOG_I("pulse_mode: %d\r\n", info.pulse_mode);
         LOG_I("cali_mode: %d\r\n", info.cali_mode);
         LOG_I("cali_prf: %d\r\n", info.cali_prf);
-        LOG_I("cali_adc: %d\r\n", info.cali_adc);
-        LOG_I("cali_dac: %d\r\n", info.cali_dac);
+        LOG_I("cali_dose1_adc: %d\r\n", info.cali_dose1_adc);
+        LOG_I("cali_dose1_dac: %d\r\n", info.cali_dose1_dac);
+        LOG_I("cali_dose2_adc: %d\r\n", info.cali_dose2_adc);
+        LOG_I("cali_dose2_dac: %d\r\n", info.cali_dose2_dac);
         LOG_I("dose_meter_dummy: %f\r\n", info.dose_meter_dummy);
         /* 1. set cali adc & dac value */
-        ret = dose_adc_value_set(BGM_UART_DOSE1, info.cali_adc);
-        ret |= dose_adc_value_set(BGM_UART_DOSE2, info.cali_adc);
-        ret |= dose_dac_value_set(BGM_UART_DOSE1, info.cali_dac);
-        ret |= dose_dac_value_set(BGM_UART_DOSE2, info.cali_dac);
+        ret = dose_adc_value_set(BGM_UART_DOSE1, &info.cali_dose1_adc);
+        ret |= dose_adc_value_set(BGM_UART_DOSE2, &info.cali_dose2_adc);
+        ret |= dose_dac_value_set(BGM_UART_DOSE1, &info.cali_dose1_dac);
+        ret |= dose_dac_value_set(BGM_UART_DOSE2, &info.cali_dose2_dac);
         /* 2. clear beam cumulated */
         ret |= dose_beam_cumulated_clear(BGM_UART_DOSE1);
         ret |= dose_beam_cumulated_clear(BGM_UART_DOSE2);
         /* 3. set generate mode to 0 */
-        ret |= dose_generate_mode_set(BGM_UART_DOSE1, info.dose_mode);
-        ret |= dose_generate_mode_set(BGM_UART_DOSE2, info.dose_mode);
+        ret |= dose_generate_mode_set(BGM_UART_DOSE1, &info.dose_mode);
+        ret |= dose_generate_mode_set(BGM_UART_DOSE2, &info.dose_mode);
         /* 4. set pulse mode to 0 */
-        ret |= dose_pulse_mode_set(BGM_UART_DOSE1, info.pulse_mode);
-        ret |= dose_pulse_mode_set(BGM_UART_DOSE2, info.pulse_mode);
+        ret |= dose_pulse_mode_set(BGM_UART_DOSE1, &info.pulse_mode);
+        ret |= dose_pulse_mode_set(BGM_UART_DOSE2, &info.pulse_mode);
         /* 5. set dummy dose meter */
         ret |= dose_meter_value_set(BGM_UART_DOSE1, info.dose_meter_dummy);
         ret |= dose_meter_value_set(BGM_UART_DOSE2, info.dose_meter_dummy);
@@ -246,24 +250,22 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         LOG_I("pulse_mode: %d\r\n", info.pulse_mode);
         LOG_I("cali_mode: %d\r\n", info.cali_mode);
         LOG_I("cali_prf: %d\r\n", info.cali_prf);
-        LOG_I("cali_adc: %d\r\n", info.cali_adc);
-        LOG_I("cali_dac: %d\r\n", info.cali_dac);
         LOG_I("dose_meter: %f\r\n", info.dose_meter);
         /* 1. clear beam cumulated */
         ret = dose_beam_cumulated_clear(BGM_UART_DOSE1);
         ret |= dose_beam_cumulated_clear(BGM_UART_DOSE2);
         /* 2. set generate mode to 1 */
-        ret |= dose_generate_mode_set(BGM_UART_DOSE1, info.dose_mode);
-        ret |= dose_generate_mode_set(BGM_UART_DOSE2, info.dose_mode);
+        ret |= dose_generate_mode_set(BGM_UART_DOSE1, &info.dose_mode);
+        ret |= dose_generate_mode_set(BGM_UART_DOSE2, &info.dose_mode);
         /* 3. set pulse mode */
-        ret |= dose_pulse_mode_set(BGM_UART_DOSE1, info.pulse_mode);
-        ret |= dose_pulse_mode_set(BGM_UART_DOSE2, info.pulse_mode);
+        ret |= dose_pulse_mode_set(BGM_UART_DOSE1, &info.pulse_mode);
+        ret |= dose_pulse_mode_set(BGM_UART_DOSE2, &info.pulse_mode);
         /* 4. download beam parameters to dose board */
         if (info.cali_mode == 1)
         {
             /* 4.1 set prf */
-            ret |= dose_prf_value_set(BGM_UART_DOSE1, info.cali_prf);
-            ret |= dose_prf_value_set(BGM_UART_DOSE2, info.cali_prf);
+            ret |= dose_prf_value_set(BGM_UART_DOSE1, &info.cali_prf);
+            ret |= dose_prf_value_set(BGM_UART_DOSE2, &info.cali_prf);
             /* 4.2 set dose meter */
             ret |= dose_meter_value_set(BGM_UART_DOSE1, info.dose_meter);
             ret |= dose_meter_value_set(BGM_UART_DOSE2, info.dose_meter);
@@ -272,8 +274,8 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         {
             ret |= dose_beam_parameter_set(BGM_UART_DOSE1, info.beam_id);
             ret |= dose_beam_parameter_set(BGM_UART_DOSE2, info.beam_id);
-            ret |= dose_radiation_index_set(BGM_UART_DOSE1, info.radiation_index, 0);
-            ret |= dose_radiation_index_set(BGM_UART_DOSE2, info.radiation_index, 0);
+            // ret |= dose_radiation_index_set(BGM_UART_DOSE1, info.radiation_index, 0);
+            // ret |= dose_radiation_index_set(BGM_UART_DOSE2, info.radiation_index, 0);
         }
         /* 5. set dose board to prepare */
         ret |= dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_PREPARE);
@@ -436,6 +438,16 @@ static int8_t fsm_state_update_from_local(void)
     if (ret != 0)
     {
         LOG_E("dose fsm get err: %d\r\n", ret);
+    }
+
+    if (fsm_state_dose1 == DOSE_FSM_STATE_INIT || fsm_state_dose2 == DOSE_FSM_STATE_INIT)
+    {
+        ret = dose_handshake(BGM_UART_DOSE1);
+        ret |= dose_handshake(BGM_UART_DOSE2);
+        if (ret != 0)
+        {
+            LOG_E("dose handshake err: %d\r\n", ret);
+        }
     }
 
     /* 2. update fsm state current from local */
@@ -688,8 +700,10 @@ static int8_t bgm_info_get(uint8_t argc, char **argv)
     LOG_I("pulse_mode: %d\r\n", info.pulse_mode);
     LOG_I("cali_mode: %d\r\n", info.cali_mode);
     LOG_I("cali_prf: %d\r\n", info.cali_prf);
-    LOG_I("cali_dac: %d\r\n", info.cali_dac);
-    LOG_I("cali_adc: %d\r\n", info.cali_adc);
+    LOG_I("cali_dose1_dac: %d\r\n", info.cali_dose1_dac);
+    LOG_I("cali_dose1_adc: %d\r\n", info.cali_dose1_adc);
+    LOG_I("cali_dose2_dac: %d\r\n", info.cali_dose2_dac);
+    LOG_I("cali_dose2_adc: %d\r\n", info.cali_dose2_adc);
     LOG_I("dose_meter: %f\r\n", info.dose_meter);
     LOG_I("dose_meter_dummy: %f\r\n", info.dose_meter_dummy);
     LOG_I("dummy_end_flag: %d\r\n", info.dummy_end_flag);

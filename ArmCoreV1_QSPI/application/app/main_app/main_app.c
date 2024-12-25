@@ -35,9 +35,21 @@ static int8_t bgm_fsm_state_set(uint8_t argc, char *argv[])
     osMutexRelease(obj->mutex);
 
     return 0;
-
 }
 MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_set, bgm_fsm_state_set, set bgm fsm state);
+
+static int8_t bgm_fsm_state_set_pre(uint8_t argc, char *argv[])
+{
+    struct bgm_data_info *obj = bgm_data_info_get();
+
+    osMutexAcquire(obj->mutex, osWaitForever);
+    obj->fsm_state_request_pre = atoi(argv[1]);
+    obj->fsm_state_request_already = atoi(argv[1]);
+    osMutexRelease(obj->mutex);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_set_pre, bgm_fsm_state_set_pre, set bgm fsm state pre);
 
 static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
 {
@@ -46,15 +58,15 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
     static uint16_t last_radiation_index = 0;
     struct bgm_data_info *obj = bgm_data_info_get();
 
-    if (last_radiation_index != recv->OutU16_RadiationIndex)
+    osMutexAcquire(obj->mutex, osWaitForever);
+
+    if (last_radiation_index != recv->OutU16_RadiationIndex && obj->fsm_state == BGM_STATE_WORK)
     {
         last_radiation_index = recv->OutU16_RadiationIndex;
 
         ret = dose_radiation_index_set(BGM_UART_DOSE1, last_radiation_index, 0);
         ret |= dose_radiation_index_set(BGM_UART_DOSE2, last_radiation_index, 0);
     }
-
-    osMutexAcquire(obj->mutex, osWaitForever);
 
     if (bgm_fsm_state_ctrl == 0)
     {

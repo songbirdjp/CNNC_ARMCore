@@ -33,6 +33,33 @@ ArmCoreV1_QSPI
 │  │     ├─ config.h
 │  │     ├─ sys_cfg.c
 │  │     └─ sys_cfg.h
+│  ├─ bgm_app
+│  │  ├─ afc_app
+│  │  │  ├─ afc_app.c
+│  │  │  └─ afc_app.h
+│  │  ├─ afc_cmd.c
+│  │  ├─ afc_cmd.h
+│  │  ├─ bgm_app.c
+│  │  ├─ bgm_app.h
+│  │  ├─ bgm_def.c
+│  │  ├─ bgm_def.h
+│  │  ├─ CMakeLists.txt
+│  │  ├─ dose_app
+│  │  │  ├─ dose_app.c
+│  │  │  └─ dose_app.h
+│  │  ├─ eps_app
+│  │  │  ├─ eps_app.c
+│  │  │  └─ eps_app.h
+│  │  ├─ io_app
+│  │  │  ├─ io_port.c
+│  │  │  └─ io_port.h
+│  │  ├─ plan_data.c
+│  │  ├─ plan_data.h
+│  │  ├─ vps_app
+│  │  │  ├─ vps_app.c
+│  │  │  └─ vps_app.h
+│  │  ├─ websocket_port.c
+│  │  └─ websocket_port.h
 │  ├─ CMakeLists.txt
 │  ├─ ethercat
 │  │  ├─ ethercat.c
@@ -54,13 +81,18 @@ ArmCoreV1_QSPI
 │  │  ├─ syscall.h
 │  │  ├─ syscalls.c
 │  │  └─ sysmem.c
-│  └─ tcp
-│     ├─ tcp_tasks.c
-│     ├─ tcp_tasks.h
-│     ├─ websocket.c
-│     ├─ websocket.h
-│     ├─ websocket_console.c
-│     └─ websocket_console.h
+│  ├─ tcp
+│  │  ├─ tcp_tasks.c
+│  │  ├─ tcp_tasks.h
+│  │  ├─ websocket.c
+│  │  ├─ websocket.h
+│  │  ├─ websocket_console.c
+│  │  └─ websocket_console.h
+│  └─ uart
+│     ├─ bgm_uart.c
+│     ├─ bgm_uart.h
+│     ├─ bgm_uart_port.c
+│     └─ bgm_uart_port.h
 ├─ ARM_core.pdf
 ├─ board
 │  ├─ board_config
@@ -262,9 +294,12 @@ ArmCoreV1_QSPI
 │     └─ wwdg
 │        ├─ wwdg.c
 │        └─ wwdg.h
+├─ EcScript
 ├─ EcScript.exe
 ├─ ETHERCAT_CNNCPM.ioc
+├─ file_reorganize
 ├─ file_reorganize.exe
+├─ info_generation
 ├─ info_generation.exe
 ├─ libraries
 │  ├─ CMakeLists.txt
@@ -276,9 +311,7 @@ ArmCoreV1_QSPI
 │  │  │        │  ├─ stm32h723xx.h
 │  │  │        │  ├─ stm32h7xx.h
 │  │  │        │  └─ system_stm32h7xx.h
-│  │  │        ├─ LICENSE.txt
-│  │  │        └─ Source
-│  │  │           └─ Templates
+│  │  │        └─ LICENSE.txt
 │  │  ├─ Include
 │  │  │  ├─ cmsis_armcc.h
 │  │  │  ├─ cmsis_armclang.h
@@ -408,6 +441,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_uart_ex.c
 │        ├─ stm32h7xx_hal_wwdg.c
 │        └─ stm32h7xx_ll_fmc.c
+├─ makefile_update
 ├─ makefile_update.exe
 ├─ Middlewares
 │  ├─ CMakeLists.txt
