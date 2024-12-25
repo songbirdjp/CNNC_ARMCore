@@ -16,7 +16,7 @@ static struct control_para control_data =
     .board_id = DOSE_BOARD_TRIGGER_OUT,
     .calibration = {.adc_factor = {2376000, 2376000, 2376000, 2376000, 2376000}, 
                     .dac_factor = 30,
-                    .trig_interval_min = 8000},
+                    .trig_interval_min = 6000},
     .treatment = {.prf_hz = 1},
     .interlock = {.threshold_dose_rate = {10}, 
                   .threshold_dose_cp = {10}, 
@@ -166,6 +166,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
     {
     case 0x40:
         obj->treatment.dose_mode = (cmd->data[2] == 0) ? 0 : 1;
+        LOG_I("set dose mode: %d\r\n", cmd->data[2]);
         break;
     case 0x41:
         switch (cmd->data[1])
@@ -445,6 +446,7 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
             {
                 ret = -1;
             }
+            obj->treatment.dose_mode = 0;
             if (obj->treatment.dose_mode != 0)
             {
                 ret = -1;
@@ -483,6 +485,7 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
                 LOG_I("lock: %d, %d\r\n", obj->calibration.status.bits.lock, obj->treatment.status.bits.lock);
                 ret = -1;
             }
+            obj->treatment.dose_mode = 1;
             if (obj->treatment.dose_mode != 1)
             {
                 LOG_I("dose mode: %d\r\n", obj->treatment.dose_mode);

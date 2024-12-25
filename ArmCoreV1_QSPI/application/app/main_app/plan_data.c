@@ -1,4 +1,5 @@
 #include "plan_data.h"
+#include "ulog.h"
 
 static struct beam_data beam_data_array[BEAMS_MAX] = {0};
 
@@ -18,7 +19,7 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
 
     if (beam_data == NULL) 
     {
-        printf("invalid beam_id: %d\n", beam_id);
+        LOG_E("invalid beam_id: %d\n", beam_id);
         return 0;
     }
 
@@ -43,7 +44,7 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
     case BEAM_RI_DOSE_RATE:
         if (ri_idx > beam_data->total_ri)
         {
-            printf("invalid ri_idx: %d\n", ri_idx);
+            LOG_E("invalid ri_idx: %d\n", ri_idx);
             break;
         }
         value = beam_data->radiation_data[ri_idx].dose_rate;
@@ -51,7 +52,7 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
     case BEAM_RI_CUMULATIVE:
         if (ri_idx > beam_data->total_ri)
         {
-            printf("invalid ri_idx: %d\n", ri_idx);
+            LOG_E("invalid ri_idx: %d\n", ri_idx);
             break;
         }
         value = beam_data->radiation_data[ri_idx].dose_cumulative;
@@ -59,7 +60,7 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
     case BEAM_RI_TIME_EXPECTED:
         if (ri_idx > beam_data->total_ri)
         {
-            printf("invalid ri_idx: %d\n", ri_idx);
+            LOG_E("invalid ri_idx: %d\n", ri_idx);
             break;
         }
         value = beam_data->radiation_data[ri_idx].time_expected;
@@ -67,7 +68,7 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
     case BEAM_RI_IN_CP:
         if (ri_idx > beam_data->total_ri)
         {
-            printf("invalid ri_idx: %d\n", ri_idx);
+            LOG_E("invalid ri_idx: %d\n", ri_idx);
             break;
         }
         for (uint8_t i = 1; i <= beam_data->total_cp; i++)
@@ -82,7 +83,7 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
     case BEAM_RI_IN_CP_MAX:
         if (ri_idx > beam_data->total_ri)
         {
-            printf("invalid ri_idx: %d\n", ri_idx);
+            LOG_E("invalid ri_idx: %d\n", ri_idx);
             break;
         }
         for (uint8_t i = 1; i <= beam_data->total_cp; i++)
@@ -95,7 +96,7 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
         }
         break;
     default:
-        printf("invalid state: %d\n", state);
+        LOG_E("invalid state: %d\n", state);
         break;
     }
 
@@ -110,7 +111,7 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
 
     if (beam_data == NULL) 
     {
-        printf("invalid beam_id: %d\n", beam_id);
+        LOG_E("invalid beam_id: %d\n", beam_id);
         return -1;
     }
 
@@ -129,7 +130,7 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
     case BEAM_TOTAL_CP:
         if (value > CP_RI_MAP_MAX)
         {
-            printf("invalid total_cp: %d\n", (uint16_t)value);
+            LOG_E("invalid total_cp: %d\n", (uint16_t)value);
             ret = -1;
             break;
         }
@@ -138,7 +139,7 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
     case BEAM_TOTAL_RI:
         if (value > RADIATION_POINT_MAX)
         {
-            printf("invalid total_ri: %d\n", (uint16_t)value);
+            LOG_E("invalid total_ri: %d\n", (uint16_t)value);
             ret = -1;
             break;
         }
@@ -147,7 +148,7 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
     case BEAM_RI_DOSE_RATE:
         if (ri_idx > beam_data->total_ri)
         {
-            printf("invalid ri_idx: %d\n", ri_idx);
+            LOG_E("invalid ri_idx: %d\n", ri_idx);
             ret = -1;
             break;
         }
@@ -156,7 +157,7 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
     case BEAM_RI_CUMULATIVE:
         if (ri_idx > beam_data->total_ri)
         {
-            printf("invalid ri_idx: %d\n", ri_idx);
+            LOG_E("invalid ri_idx: %d\n", ri_idx);
             ret = -1;
             break;
         }
@@ -165,7 +166,7 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
     case BEAM_RI_TIME_EXPECTED:
         if (ri_idx > beam_data->total_ri)
         {
-            printf("invalid ri_idx: %d\n", ri_idx);
+            LOG_E("invalid ri_idx: %d\n", ri_idx);
             ret = -1;
             break;
         }
@@ -174,14 +175,14 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
     case BEAM_CP_RI_MAP:
         if (ri_idx > beam_data->total_cp)
         {
-            printf("invalid cp_idx: %d\n", ri_idx);
+            LOG_E("invalid cp_idx: %d\n", ri_idx);
             ret = -1;
             break;
         }
         beam_data->cp_ri_map[ri_idx] = value;
         break;
     default:
-        printf("invalid state: %d\n", state);
+        LOG_E("invalid state: %d\n", state);
         ret = -1;
         break;
     }
@@ -209,7 +210,7 @@ int8_t beam_data_cleanup(uint8_t beam_id)
 
     if (beam_data == NULL) 
     {
-        printf("invalid beam_id: %d\n", beam_id);
+        LOG_E("invalid beam_id: %d\n", beam_id);
         return -1;
     }
 

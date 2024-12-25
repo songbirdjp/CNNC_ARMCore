@@ -563,7 +563,6 @@ static int8_t time_delay_entry(void *argument)
             }
             if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
             {
-                LOG_I("---trigger out begin---\r\n");
                 ret = dose_trigger_out_set(0);
                 if (ret != 0)
                 {
@@ -595,7 +594,6 @@ static int8_t time_delay_entry(void *argument)
 #ifdef RADIATION_FIX_RATE_SIMULATE
                 ret = adcs7476_value_dose(10000, 10000, 100);
 #endif
-                LOG_I("---trigger out end---\r\n");
                 ret = dose_trigger_out_set(1);
                 if (ret != 0)
                 {
@@ -1058,7 +1056,6 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type)
 
         /* calculate next interpolated dose */
         dose_interpolated += dose_rate_interpolated * pulse_interval;
-        LOG_I("dose_interpolated: %llu\r\n", dose_interpolated);
         dose_interpolated = (dose_interpolated <= dose_radiation_index) ? dose_interpolated : dose_radiation_index;
         ret = radiation_data_value_set(DOSE_INTERPOLATED_RADIATION_IDX, dose_interpolated);
         if (ret != 0)
@@ -1454,7 +1451,7 @@ static int8_t dose_interpolation_calculate(void)
     uint32_t dose_rate_interpolated = 0;
     uint64_t dose_interpolated = 0;
 
-#if 1
+#if 0
     LOG_I("dose_radiation_index: %llu\r\n", dose_radiation_index);
     LOG_I("dose_accumulated_cur: %llu\r\n", dose_accumulated_cur);
     LOG_I("time_radiation_index: %u ms\r\n", time_radiation_index);
@@ -1474,7 +1471,6 @@ static int8_t dose_interpolation_calculate(void)
             dose_rate_interpolated = (double)(dose_radiation_index - dose_accumulated_cur) / time_radiation_index;
         }        
         
-        LOG_I("dose_rate_interpolated: %u\r\n", dose_rate_interpolated);
         dose_interpolated = dose_accumulated_cur + dose_rate_interpolated * pulse_interval_min;
         ret = radiation_data_value_set(DOSE_RATE_INTERPOLATED_RADIATION_IDX, dose_rate_interpolated);
         if (ret != 0)
