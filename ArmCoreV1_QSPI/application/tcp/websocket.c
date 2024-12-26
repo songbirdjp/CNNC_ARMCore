@@ -2,41 +2,11 @@
 #include "tcp_tasks.h"
 #include "crypto_sha.h"
 #include <stdio.h>
-#include "ulog.h"
+
 #ifdef TCP_WEBSOCKET
 
-typedef enum
-{
-    TO_SEND = -1,
-    STOP_SEND,
-} App_SendStatus;
-
-typedef enum
-{
-    CONTROLLER,
-    SERVICE,
-} Client_Type;
-
-typedef struct
-{
-    APP_DATA_SEND *pActiveSend;
-    uint16_t sendItemNum;
-}SEND_INFO;
-
-typedef struct
-{
-    int8_t socketNum;
-  //  uint8_t destIP[4];
-  //  uint16_t destPort;
-    uint8_t clientType; //0 - controller, data come from program  1 - service, data come from browser. distinguish by IP and PORT
-    int32_t connectStatus;// -1 - fail  1 - success
-    uint32_t loopCnt;
-}CLIENT_INFO;
-
-static SEND_INFO sendStructInfo = {0};
-
-static char *broswerName[]={ "Mozilla", "AppleWebKit", "Chrome", "Safari", "Edg" };
-static CLIENT_INFO client[MAX_CLIENT_NUM] = {-1};
+SEND_INFO sendStructInfo = {0};
+static uint8_t serviceNumber = 0;
 static const char ws_base64char[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -343,13 +313,13 @@ static int32_t ws_dePackage(
 
 int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type)
 {
-    if (client[s].connectStatus <= 0)    return -1; //connect is not establish
-    // uint8_t* wsPkg = NULL;
-    uint8_t wsPkg[DATA_BUF_SIZE] = {0};
+    uint8_t headLen = 8;	
+    uint8_t wsPkg[DATA_BUF_SIZE];
     int32_t retLen;
     // 参数检查
-    if (buffLen < 0)
-        return 0;
+    if(client[s].connectStatus < 1) return 0;  //connect is not establish
+    if ((buffLen < 0) || ((buffLen + headLen) > DATA_BUF_SIZE))
+        return -1;
     // 非包数据发送
     if (type == WDT_NULL)
     {
@@ -364,35 +334,29 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_
     // 数据打包 +14 预留类型、掩码、长度保存位
     // wsPkg = (uint8_t*)pvPortMalloc(buffLen + 14);
     memset(wsPkg, 0, DATA_BUF_SIZE);
-    retLen = ws_enPackage((uint8_t *)buff, buffLen, wsPkg, (buffLen + 14), fin, mask, type);
+    retLen = ws_enPackage((uint8_t *)buff, buffLen, wsPkg, (buffLen + headLen), fin, mask, type);
     //   printf("retLen: %d\r\n",retLen );
     if (retLen <= 0)
     {
-        //  vPortFree(wsPkg);
         return -1;
     }
 
     // 显示数据
   //   printf("ws_send: %x %x %x %x %x %x\r\n", wsPkg[0],wsPkg[1],wsPkg[2],wsPkg[3],wsPkg[4],wsPkg[5] );
     //  for(int32_t i = 0; i < retLen; i++)    printf("0x%x ", wsPkg[i]);
-    //
-    // ret = send(fd, wsPkg, retLen, MSG_NOSIGNAL);
     return tcp_data_send(s, wsPkg, retLen);
-    //  vPortFree(wsPkg);
 }
 
-static int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* retType)
+static int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* retType, uint32_t* retHeadLen)
 {
     int32_t retDePkg = -1;        //调用解包的返回
     uint32_t timeout = 0;    //接收超时计数
     Ws_DataType retPkgType = WDT_NULL; //默认返回包类型
-   // char* cBuff = (char*)buff; //转换指针类型
     uint8_t maxHeadLen = 14;
     uint32_t retDataLen = 0; //解包得到的数据段长度
-    uint32_t retHeadLen = 0; //解包得到的包头部长度
     int32_t retFinal = -1;
 
-    retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen, &retDataLen, &retHeadLen, &retPkgType); //为防止一次接收到多包数据(粘包),先尝试性解析ws头部字节（最大14Bytes）,得知总长度后再解析剩下部分
+    retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen, &retDataLen, retHeadLen, &retPkgType); //为防止一次接收到多包数据(粘包),先尝试性解析ws头部字节（最大14Bytes）,得知总长度后再解析剩下部分
     if (retDePkg == 0 || (retDePkg < 0 && maxHeadLen - retDePkg > buffSize))//头部解析失败或解析出的包长过大（超过2K）
     {
          printf("tcp recv error %d\r\n", retDePkg);
@@ -402,7 +366,7 @@ static int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* ret
        // printf("retDePkg1 %d\r\n", retDePkg);
         if (retDePkg < 0)//尝试解析出完整的一包
         {
-            retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen - retDePkg, &retDataLen, &retHeadLen, &retPkgType);
+            retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen - retDePkg, &retDataLen, retHeadLen, &retPkgType);
         }
      //   printf("retDePkg2 %d\r\n", retDePkg);
         if (retDePkg > 0)   //已经解析到完整的一包
@@ -488,9 +452,6 @@ static int32_t ws_base64_encode(const uint8_t *bindata, char *base64, int32_t bi
 
 static int32_t ws_buildRespondShakeKey(char *acceptKey, uint32_t acceptKeyLen, char *respondKey)
 {
-    // char* clientKey;
-    //  char* sha1DataTemp;
-    // uint8_t* sha1Data;
     char sha1DataTemp[128] = {0};
     uint8_t sha1Data[65] = {0}; // 128/2+1
     int32_t i, j, ret;
@@ -583,44 +544,73 @@ static int32_t ws_replyClient(uint8_t s, char *buff, char *path)
     ws_buildHttpRespond(recvShakeKey, ret, respondPackage);
   //    printf("response %s\r\n",respondPackage);
     tcp_data_send(s, (uint8_t *)respondPackage, strlen(respondPackage));
-    //printf("Handshake Success!\r\n");
+    printf("Handshake Success!\r\n");
 
     return 1;
 }
 
-static bool isBroswer(uint8_t *pString)
-{
-    for(uint8_t i = 0; i < sizeof(broswerName)/sizeof(char*); i++)
-    {
-        if(strstr(pString, broswerName[i])) return 1;
-    }
-
-    return 0;
-}
 
 static int8_t getClientType(uint8_t s, uint8_t *pString)
 {
-    char *p = strstr(pString, "User-Agent");
+    char *p = strstr(pString, "authorization=");
 
     if (p != NULL)
     {
-        if(strstr(p, CONTROLLER_USER_AGENT)) 
+        if(strstr(p, CONTROLLER_AUTHORIZATION)) 
         {
             client[s].clientType = CONTROLLER;//this client is controller
             printf("client %d is controller\r\n", s);
         }
-        else if( isBroswer(p) )
+        else if( strstr(p, SERVICE_AUTHORIZATION) )
         {
             client[s].clientType = SERVICE;//this client is controller
+			serviceNumber++;									
             printf("client %d is service\r\n", s);
         }
+      
+        
         else    return -1;
     }
-    else    return -1;
+    else
+    {
+        client[s].clientType = SERVICE;//this client is controller
+		serviceNumber++;									
+        printf("client %d is service\r\n", s);
+    }
 
     return 1;
 }
 
+bool operateSendMutex(bool opType, uint8_t itemIndex, uint32_t timeout)   // opType = 1:Acquire opType = 0:Release
+{
+    if(sendStructInfo.pActiveSend[itemIndex].sendUpdateMutexHandle == NULL) return 0;
+
+    if(opType)  osMutexAcquire(sendStructInfo.pActiveSend[itemIndex].sendUpdateMutexHandle, timeout);
+    else    osMutexRelease(sendStructInfo.pActiveSend[itemIndex].sendUpdateMutexHandle);
+
+    return 1;
+}
+
+bool isSendPeriod(uint8_t sn, uint8_t itemIndex) // to inquire if current loop is sending loop for a group of period send data, if yes, you can do sth. in this loop before or after send
+{
+    if((sendStructInfo.pActiveSend == NULL) || (sendStructInfo.sendItemNum == 0))   return 0;// no data to send    
+    if((client[sn].loopCnt % sendStructInfo.pActiveSend[itemIndex].controlSignal) == 0)   return 1;
+    
+    return 0;
+}
+
+uint8_t isClientTypeMatch(uint8_t sn, uint8_t itemIndex)// to inquire if assigned client type of a group of data match with the real client(sn), if true, return the type
+{
+    if(client[sn].clientType == -1) return 0;//no client
+    if((sendStructInfo.pActiveSend == NULL) || (sendStructInfo.sendItemNum == 0))   return 0;// no data to send    
+
+    if(((client[sn].clientType == SERVICE) && (sendStructInfo.pActiveSend[itemIndex].assignedClientType == SERVICE)) || 
+        ((client[sn].clientType == CONTROLLER) && (sendStructInfo.pActiveSend[itemIndex].assignedClientType == CONTROLLER)) ||
+        (sendStructInfo.pActiveSend[itemIndex].assignedClientType == ALL_CLIENTS))
+        return sendStructInfo.pActiveSend[itemIndex].assignedClientType; //match
+
+    return 0;//not match
+}
 static void (*DataProcessCallback)(APP_DATA_RECV *info) = NULL;
 int8_t ws_data_process_callback_register(void (*cb)(APP_DATA_RECV *info))
 {
@@ -637,24 +627,26 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
     Ws_DataType retPkgType = WDT_NULL;
     int32_t ret = 0;
     APP_DATA_RECV itemRecv = {0};
+	uint32_t retHeadLen = 0;												  
 
-   // printf("recv length = %d\r\n", len);
+  //  printf("recv length = %d\r\n", len);
     
     if (strncmp(data, "GET", 3) == 0)
     { // deal with handshake
-       printf("%s\r\n",data);
+        printf("%s\r\n",data);
         if (strstr(data, "Sec-WebSocket-Key"))
         {
             ret = ws_replyClient(s, data, "/");
             if (ret > 0)
             {
-                client[s].socketNum = s;
-                client[s].loopCnt = 0;
-                client[s].connectStatus = ret; 
-
                 ret = getClientType(s, data);
                 if(ret < 0){
                     printf("failed to get client type!\r\n"); 
+                } 
+				else{
+                    client[s].socketNum = s;
+                    client[s].loopCnt = 0;
+                    client[s].connectStatus = ret; 
                 }  
             } 
             else{
@@ -679,9 +671,9 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
     else if (client[s].connectStatus > 0)
     {   
         // recv data after handshake
-        //    for (i = 0; i < len; i++) printf("%x ", data[i]);
-        //    printf("\r\n");
-        ret = ws_recv(s, data, DATA_BUF_SIZE, &retPkgType);
+          //  for (i = 0; i < len; i++) printf("%x ", data[i]);
+          //  printf("\r\n");
+        ret = ws_recv(s, data, DATA_BUF_SIZE, &retPkgType, &retHeadLen);
         //printf("ret %d\r\n", ret);
         if(ret < 0)//本包数据内容或长度错误，直接丢弃
         {
@@ -700,19 +692,24 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
                 client[s].connectStatus = 0;
                 client[s].clientType = 0;
                 client[s].socketNum = -1;
+				client[s].loopCnt = 0;	
+                if(client[s].clientType == SERVICE) serviceNumber--;
+                break;			 
             case WDT_TXTDATA:
+               // printf("%s\r\n", (char*)data);
             case WDT_BINDATA:
-                itemRecv.length = ret;
+                itemRecv.length = len - retHeadLen;
                 itemRecv.sn = s;
+				itemRecv.recvDataType = retPkgType;																   
                 itemRecv.clientType = client[s].clientType;
                 itemRecv.tcpData = data;
-#if 1
-                LOG_E("recv data from client %d, length %d, type %d\r\n", s, ret, retPkgType);
+#if 0
+                printf("recv data from client %d, length %d, type %d\r\n", s, ret, retPkgType);
                 for (i = 0; i < ret; i++)
                 {
-                    LOG_E("%x ", data[i]);
+                    printf("%x ", data[i]);
                 }
-                LOG_E("\r\n");
+                printf("\r\n");
 #endif
                 if (DataProcessCallback != NULL)
                 {
@@ -732,24 +729,18 @@ int8_t ws_send_data_process(uint8_t s)
     uint8_t i;
     int32_t ret = 0;
 
-    if ((s > MAX_CLIENT_NUM) || (s < 0))
+    if ((s >= MAX_CLIENT_NUM) || (s < 0))
     {
         printf("Invalid socket number %d!\r\n", s);
         return -1;
     }
 
-    for (i = 0; i < MAX_CLIENT_NUM; i++)
-    {
-        if (s == client[i].socketNum)
-            break;
-    }
-    if (i == MAX_CLIENT_NUM)
+    if ((client[s].socketNum == -1) || (client[s].connectStatus < 1))
     {
       //  printf("Not a client sn %d!\r\n", s);
-        return -1;
+        return 0;
     }
 
-    if (client[s].connectStatus <= 0)    return -1; //connect is not establish
     if((sendStructInfo.pActiveSend == NULL) || (sendStructInfo.sendItemNum == 0))
     {
       //  printf("no send data struct is attached\r\n");
@@ -759,23 +750,34 @@ int8_t ws_send_data_process(uint8_t s)
     for (i = 0; i < sendStructInfo.sendItemNum; i++)
     {
         if(sendStructInfo.pActiveSend[i].tcpData == NULL)   continue;//no data is assigned, go to next item
-        if (((sendStructInfo.pActiveSend[i].controlSignal == TO_SEND) ||    //send once or
-            ((sendStructInfo.pActiveSend[i].controlSignal > STOP_SEND) && ((client[s].loopCnt++ % sendStructInfo.pActiveSend[i].controlSignal) == 0)))&&//send period and
-            ((client[s].clientType == SERVICE) && (sendStructInfo.pActiveSend[i].assignedClientType == SERVICE) || //client is service and data assigned to service
-            (client[s].clientType == CONTROLLER) && (sendStructInfo.pActiveSend[i].assignedClientType == CONTROLLER)))//client is controller and data assigned to controller
+        if (((sendStructInfo.pActiveSend[i].controlSignal == TO_SEND) || ((sendStructInfo.pActiveSend[i].controlSignal > STOP_SEND) && isSendPeriod(s, i)))//send once or send period 
+            && (isClientTypeMatch(s, i) > 0))//client type match
         {   // send data
-            if (sendStructInfo.pActiveSend[i].sendMode == WDT_BINDATA)
-                ret = ws_send(s, sendStructInfo.pActiveSend[i].tcpData, sendStructInfo.pActiveSend[i].length, true, false, WDT_BINDATA);
-            else if (sendStructInfo.pActiveSend[i].sendMode == WDT_TXTDATA)
-                ret = ws_send(s, sendStructInfo.pActiveSend[i].tcpData, sendStructInfo.pActiveSend[i].length, true, false, WDT_TXTDATA);
+            if((sendStructInfo.pActiveSend[i].sendMode == WDT_BINDATA) || 
+                (sendStructInfo.pActiveSend[i].sendMode == WDT_TXTDATA) || (sendStructInfo.pActiveSend[i].sendMode == WDT_NULL))
+            {
+                if(!operateSendMutex(1, i, osWaitForever))  printf("%s mutex is NULL!\r\n", sendStructInfo.pActiveSend[i].name);
+                ret = ws_send(s, sendStructInfo.pActiveSend[i].tcpData, sendStructInfo.pActiveSend[i].length, true, false, sendStructInfo.pActiveSend[i].sendMode);
+                operateSendMutex(0, i, 0);
+            }
             else{
                 printf("Wrong ws send data type!\r\n");
                 return -1;
             } 
-
-            if(ret > 0){
-                if(sendStructInfo.pActiveSend[i].controlSignal == TO_SEND)    
-                    sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;
+            
+            if(ret > 0)
+            {    //send success
+                if(sendStructInfo.pActiveSend[i].controlSignal == TO_SEND)
+                {
+                    if(client[s].clientType == CONTROLLER)  sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;//only one controller
+                    else if(client[s].clientType == SERVICE)//wait for all service send once finish, then clean flag
+                    {
+                        if(++sendStructInfo.pActiveSend[i].onceSendCnt >= serviceNumber){
+                            sendStructInfo.pActiveSend[i].controlSignal = STOP_SEND;
+                            sendStructInfo.pActiveSend[i].onceSendCnt = 0;
+                        }
+                    }    
+                }
             }  
             else{
                 printf("ws send failed!\r\n");
@@ -784,6 +786,7 @@ int8_t ws_send_data_process(uint8_t s)
         }
     }   
 
-    return 0;
+	client[s].loopCnt++; 		   
+    return ret;
 }
 #endif

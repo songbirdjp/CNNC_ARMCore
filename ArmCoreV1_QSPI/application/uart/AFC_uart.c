@@ -78,31 +78,48 @@ static int8_t AFC_handshake_frame_parse(struct AFC_object *cmd)
 }
 #include "drv_flash.h"
 #include "flash_port.h"
+#include "AFCapp.h"
 extern DEVICE_FLASH *flash;
 //#define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
 //#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
 uint32_t start_address = 0;
 extern uint32_t flash_AFC_Offset;
 // uint8_t tim4Delaytimes = 12;
+extern MotorFindingZeroFSM_t MagMotorState;
 static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
 {
-    AFCConfigParam_TypeDef *obj = AFC_ConfigParam_get();
+    AFCConfigParam_TypeDef *objConfig = AFC_ConfigParam_get();
+    AFCApplicationParam_t *objAFCApp = AFCApplicationParamGet();
    // uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
     //uint32_t start_address = 0; // 定义一个起始地址
     uint16_t temp_data[16] = {0};
-    
     switch (cmd->data[1])//0x01
     {
         case 0x00://Set AFC Control Mode
-            obj->AFCControlmode = cmd->data[2];
+            objConfig->AFCControlmode = cmd->data[2];
+            switch(objConfig->AFCControlmode)
+            {
+                case 0x00:
+                    MagMotorState = MotorFSM_StayAtPresetPos;
+                    objAFCApp->whichData =1;
+                    break;
+                case 0x01:
+                    MagMotorState = MotorFSM_ManualControl;
+                    objAFCApp->whichData =2;
+                    break;
+                case 0x02:
+                    MagMotorState = MotorFSM_AutoControl;
+                    objAFCApp->whichData =3;
+                    break;
+            }
             break;
         case 0x01://Set AFC Sample Mode
-            obj->AFCSampleMode = cmd->data[2];
+            objConfig->AFCSampleMode = cmd->data[2];
             break;
         case 0x02://Set AFC Sample Delay
-            obj->AFCSampleDelay = (cmd->data[3] << 8) | cmd->data[2];   
+            objConfig->AFCSampleDelay = (cmd->data[3] << 8) | cmd->data[2];   
             //LOG_E("AFC Sample Delay: %d\r\n", obj->AFCSampleDelay);
-            __HAL_TIM_SET_COUNTER(&htim4, obj->AFCSampleDelay);
+            __HAL_TIM_SET_COUNTER(&htim4, objConfig->AFCSampleDelay);
             break;
         case 0x03://delete sample data
             //flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
@@ -184,11 +201,12 @@ static int8_t  AFC_MagMotorCmd_parse(struct AFC_object *cmd)
     }
     return ret;
 }   
+#include "motorCtrl.h"  
 static int8_t  AFC_AFTMotorCmd_parse(struct AFC_object *cmd)
 {
     int8_t ret = 0;
     MotorCtrlParam_TypeDef *obj = AFT_motorParam_get();
-    
+     obj->encoderValCurrent = __HAL_TIM_GET_COUNTER(&htim3);
     switch (cmd->data[1])
     {
          case 0x00:
@@ -197,26 +215,51 @@ static int8_t  AFC_AFTMotorCmd_parse(struct AFC_object *cmd)
         case 0x01://enable AFT Motor to init
             obj->motorInitEnable = cmd->data[0];
             break;
-        case 0x02://enable AFT Motor to find zero
+        case 0x0F://enable AFT Motor to find zero
             cmd->len = 0x01;
             cmd->data[0] = obj->motorFindZeroOK;
             break;
         case 0x03://Mag Motor set position 2 bytes no ACK
             obj->encoderValTarget = (cmd->data[0] << 8) | cmd->data[1];
             break;
-        case 0x04://Mag Motor run by step no ACK
-            if(cmd->data[0] == 0x01)
+        case 0x02://Mag Motor run by step no ACK
+          if (cmd->data[2] != 0x01 && cmd->data[2] != 0x02) 
             {
-                obj->encoderValTarget = obj->encoderValCurrent + cmd->data[2];
+                LOG_E("AFT Motor run by step err: %d\r\n", cmd->data[0]);
+                break;
             }
-            else if(cmd->data[0] == 0x02)
+            uint16_t step_value = (cmd->data[4] << 8) | cmd->data[3];
+            printf("step_value = %d\r\n",step_value);
+            if (cmd->data[2] == 0x01)
             {
-                obj->encoderValTarget = obj->encoderValCurrent - cmd->data[2];
+                // obj->encoderValTarget += step_value;
+                // if(obj->encoderValCurrent> 65535)//1024*4.75*5.18 = 25195.5200;
+                // {
+                //     obj->encoderValTarget = 65535;
+                // }
+                motorCtrlByPWM(MOTOR_AFT, 60);
+                osDelay(200);
+                motorCtrlByPWM(MOTOR_AFT, 0);
+                printf("A1111111111111\r\n");
             }
-            else
+            else if (cmd->data[2] == 0x02)
             {
-                LOG_E("Mag Motor run by step err: %d\r\n", cmd->data[0]);
+                // obj->encoderValTarget -= step_value;
+                // if(obj->encoderValCurrent < 100)
+                // {
+                //     obj->encoderValTarget = 100;
+                // }
+                motorCtrlByPWM(MOTOR_AFT, -60);
+                osDelay(200);
+                motorCtrlByPWM(MOTOR_AFT, 0);
+                printf("A2222222222222\r\n");
             }
+            printf("obj->encoderValTarget = %d\r\n",obj->encoderValTarget);
+            cmd->len = 0x04;
+            cmd->data[0] = 0x41;
+            cmd->data[1] = 0x02;
+            cmd->data[2] = obj->encoderValCurrent & 0xFF;
+            cmd->data[3] = (obj->encoderValCurrent >> 8) & 0xFF;
             break;
         case 0x05:
             cmd->len = 0x02;

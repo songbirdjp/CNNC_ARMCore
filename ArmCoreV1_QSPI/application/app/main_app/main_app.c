@@ -7,6 +7,7 @@
 // #include "lan9252_app.h"
 // #include "BGM_def.h"
 #include "ulog.h"
+#include "planData.h"
 #define DATA_PROCESS_LAN_EVENT      (1<<0)
 #define DATA_PROCESS_TCP_EVENT      (1<<1)
 #define DATA_PROCESS_FPGA_EVENT     (1<<2)
@@ -26,7 +27,24 @@ static int8_t non_realtime_tcp_recv_data_callback(void)
     osEventFlagsSet(data_process_eventHandle, DATA_PROCESS_TCP_EVENT);
     return 0;
 }
-
+static uint16_t *feedback;
+void AFC_ADCSampleDataFeedback(uint8_t socket)
+{
+    uint8_t read_data[10] = {1,2,3,4,5,6,7,8,9,10};
+    //flash->read(flash, WS_AFC_ADC_Flash_addr, read_data, 10*16 * sizeof(uint16_t), 1000);
+    // for (int i = 0; i < 8* 16; i++)     
+    // {
+    //     //LOG_E("wswswsread_data[%d] = %x\r\n", i, read_data[i]);
+    // }
+    // LOG_E("socket = %d\r\n", socket);
+    uint16_t  *pFDAry = feedback;
+    *pFDAry++ = 0xFF;//tag
+    *pFDAry++ = 0x00;//control
+    *pFDAry++ = sizeof(read_data )+ 6; //  length 
+    memcpy(pFDAry, read_data, sizeof(read_data));
+    pFDAry += 10; // 16个uint16_t移动16步
+    ws_send(socket, feedback,sizeof(read_data )+ 6, true, false, WDT_BINDATA);
+}
 static void tcp_recv_data_process(APP_DATA_RECV *info)
 {
     int8_t ret = 0;
@@ -36,7 +54,23 @@ static void tcp_recv_data_process(APP_DATA_RECV *info)
     {
         printf("websocket cmd parse err: %d\r\n", ret);
     }
-
+    uint16_t tag = (info->tcpData[1] << 8) + info->tcpData[0];
+    LOG_E("111T %x C%x L%x\r\n", tag, (info->tcpData[3] << 8) + info->tcpData[2], (info->tcpData[5] << 8) + info->tcpData[4]);
+    switch(tag)
+    {
+        case 0x31:
+            // nrtRecvCommandParse(info);
+            // AFC_MagMotorFeedback(info);
+            AFC_ADCSampleDataFeedback(info);
+        break;
+        case 0xFF:
+            //LOG_E("222\r\n");
+            // planFeedback(info->sn);       
+            // AFC_ADCSampleDataFeedback(info);
+            break;
+        default:      
+        break;
+    } 
     /* add other process here */
 }
 

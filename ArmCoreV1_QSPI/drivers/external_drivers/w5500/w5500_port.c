@@ -33,7 +33,6 @@ void SPI3_IRQHandler(void)
 
 static void w5500_irq_callback(void)
 {   
-    printf("w5500_irq_callback\r\n");
     struct node_info
     {
         uint8_t *name;

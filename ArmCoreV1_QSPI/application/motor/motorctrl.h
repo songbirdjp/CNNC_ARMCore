@@ -41,6 +41,9 @@ typedef enum {
     MotorFSM_Backward2FindZero,
     MotorFSM_POSITION_ADJUST,
     MotorFSM_ZERO_CONFIRMED,
+    MotorFSM_StayAtPresetPos,
+    MotorFSM_ManualControl,
+    MotorFSM_AutoControl,
     MotorFSM_ERROR_STATE
 } MotorFindingZeroFSM_t;
 
@@ -61,7 +64,8 @@ typedef struct{
     uint8_t motorFindZeroOK;
     AFTBrakeTypeDef motorBrakeStatus;
 } MotorCtrlParam_TypeDef;
-
+void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle);
 MotorCtrlParam_TypeDef *MAG_motorParam_get(void);
 MotorCtrlParam_TypeDef *AFT_motorParam_get(void);
+MotorFindingZeroFSM_t *MagMotorState_get(void);
 #endif

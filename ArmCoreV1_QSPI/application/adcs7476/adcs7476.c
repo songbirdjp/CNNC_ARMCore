@@ -347,7 +347,7 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
     struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
     
-    event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, 1000);//osWaitForever
+    event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll,osWaitForever);//osWaitForever
     osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
     osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
     // uint32_t master_queue_count = osMessageQueueGetCount(obj_master->queue);
@@ -356,20 +356,20 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
     // LOG_E("Slave queue waiting count: %d\r\n", slave_queue_count);
     memcpy(combined_data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
     memcpy(combined_data + obj_master->buf_len, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
-#if 0
+#if 1
     for (uint8_t i = 0; i < 16; i++)
     {
         // LOG_E("obj_master->data[%d] = %d\r\n", i, recv_tmp[i]);
         // LOG_E("obj_slave->data[%d] = %d\r\n", i, recv_tmp_1[i]);
-        LOG_E("combined_data[%d] = %x\r\n", i, combined_data[i]); 
+        LOG_E("combined_data[%d] = %d\r\n", i, combined_data[i]); 
     }
 #endif
-    __HAL_TIM_SET_COUNTER(&htim4, tim4Delaytimes);
-    if(tim4Delaytimes <= 2)
-    {
-        tim4Delaytimes = 12;
-    }
-    tim4Delaytimes--;
+    // __HAL_TIM_SET_COUNTER(&htim4, tim4Delaytimes);
+    // if(tim4Delaytimes <= 2)
+    // {
+    //     tim4Delaytimes = 12;
+    // }
+    // tim4Delaytimes--;
     // flash->write(flash, flash_AFC_Offset, combined_data, 16 * sizeof(uint16_t), 1000);
     // flash_AFC_Offset += 16 * sizeof(uint16_t);
     // LOG_E("flash_AFC_Offset: %d\r\n", flash_AFC_Offset);

@@ -2,11 +2,14 @@
 #define __WEBSOCKET_H__
 
 #include <stdint.h>
-#include <stdbool.h>
+#include "stdbool.h"
+#include "cmsis_os2.h"
+#include "stm32h7xx_hal.h"
 
 #define TCP_WEBSOCKET
 
-#define CONTROLLER_USER_AGENT   "TcWebSocket"//TwinCAT webSocket client
+#define CONTROLLER_AUTHORIZATION   "CONTROLLER"
+#define SERVICE_AUTHORIZATION   "SERVICE"
 
 typedef enum
 {
@@ -19,6 +22,19 @@ typedef enum
     WDT_PONG,     // 0xA：pong类型数据包
 } Ws_DataType;
 
+typedef enum
+{
+    TO_SEND = -1,
+    STOP_SEND,
+} App_SendStatus;
+
+typedef enum
+{
+    CONTROLLER = 1,
+    SERVICE,
+    ALL_CLIENTS
+} Client_Type;
+
 typedef struct 
 {
     int8_t* name;
@@ -27,19 +43,34 @@ typedef struct
     uint8_t sendMode;//send by text:WDT_TXTDATA   send by binary:WDT_BINDATA
     uint8_t assignedClientType;//0 - program  1 - service. In active send, to assign the data receiver
     void* tcpData;
+    osMutexId_t sendUpdateMutexHandle;
+    uint8_t onceSendCnt;
 }APP_DATA_SEND;
-
 typedef struct
 {
     uint16_t length;    //unit: Byte
     uint8_t sn; //socket number data come from
+    uint8_t recvDataType;
     uint8_t clientType; //0 - program  1 - service. 
     uint8_t* tcpData;
 }APP_DATA_RECV;
 
+typedef struct
+{
+    APP_DATA_SEND * pActiveSend;
+    uint16_t sendItemNum;
+												   
+					 
+}SEND_INFO;
 
-int8_t ws_send_data_process(uint8_t s);
-int8_t ws_data_process_callback_register(void (*cb)(APP_DATA_RECV* info));
+
+extern SEND_INFO sendStructInfo;
+
+									   
+																		  
 int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_DataType type);
-
+bool operateSendMutex(bool opType, uint8_t itemIndex, uint32_t timeout);
+bool isSendPeriod(uint8_t sn, uint8_t itemIndex);// to inquire if current loop is sending loop for  a group of period send data
+uint8_t isClientTypeMatch(uint8_t sn, uint8_t itemIndex);
+int8_t ws_data_process_callback_register(void (*cb)(APP_DATA_RECV *info));
 #endif //__WEBSOCKET_H__

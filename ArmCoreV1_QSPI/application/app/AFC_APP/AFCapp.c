@@ -10,6 +10,7 @@
 #include "lptim.h"
 #include "tim.h"
 #include "shell.h"
+#include "AFCapp.h"
 #define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
 #define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
 
@@ -60,8 +61,40 @@ int8_t WriteArrayToFlash(uint16_t *data, uint32_t len)
 
     return 0;
 }
+AFCApplicationParam_t AFCApplicationParam = {   .whichData = 5,
+                                                .positionDeadzone = 20,
+                                                .A1In_Para = 1,
+                                                .A2In_Para = 1,
+                                                .B1In_Para = 35,
+                                                .B2In_Para = 35,
+                                                .positionStep = 20};
+uint16_t *AFCApplicationParamGet(void)
+{
+    return &AFCApplicationParam;
+}
+void MagMotorCtrlbyADC(uint16_t *data)
+{
+    AFCApplicationParam_t *obj = AFCApplicationParamGet();
+    obj->positionCurrent = __HAL_TIM_GET_COUNTER(&htim2); 
+    uint16_t dataADC1[8], dataADC2[8] = {0};
+    memcpy(dataADC1, data, 8 * sizeof(uint16_t));
+    memcpy(dataADC2, data + 8, 8 * sizeof(uint16_t));
+    uint16_t phaseA = obj->A1In_Para * dataADC1[obj->whichData] + obj->B1In_Para;
+    uint16_t phaseB = obj->A2In_Para * dataADC2[obj->whichData] + obj->B2In_Para;
+    if(phaseA > phaseB + obj->positionDeadzone)
+    {
+        obj->positionCalculated = obj->positionCurrent + obj->positionStep;
+    }
+    else if(phaseA < phaseB - obj->positionDeadzone)
+    {
+        obj->positionCalculated = obj->positionCurrent - obj->positionStep;
+    }
+    else
+    {
+        obj->positionCalculated = obj->positionCurrent;
+    }
+}
 
-DEVICE_FLASH *flash;
 static void Mag_MotorCtrl_thread_entry(void *argument)
 {
     MX_TIM1_Init();
@@ -82,9 +115,11 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     // flash_init(flash, "DEVICE_NAME_FLASH_BANK1");
     // flash_operation_address_set(flash, flash_cfg[0], flash_cfg[1]);
     // flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
+    uint16_t data[16] = {0};
     for (;;)
     {   
         AFC_ADCSampleRecvProcess();
+        // MagMotorCtrlbyADC(AFC_ADCSampleRecvProcess());
     }
 }
 static void AFC_DataTransmit_thread_entry(void *argument)

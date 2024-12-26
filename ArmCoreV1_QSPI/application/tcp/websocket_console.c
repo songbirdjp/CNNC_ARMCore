@@ -5,7 +5,13 @@
 #include "shell.h"
 #include <stddef.h>
 
-static uint8_t websocket_console_sn = 0;
+uint8_t websocket_console_sn = 0;
+
+uint8_t *get_websocket_console_sn(void) 
+{
+    return &websocket_console_sn;
+}
+
 static int8_t websocket_write(uint8_t *buf, uint32_t len)
 {
     return ws_send(websocket_console_sn, buf, len, 1, 0, WDT_TXTDATA);
