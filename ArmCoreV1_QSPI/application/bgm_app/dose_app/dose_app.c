@@ -131,6 +131,7 @@ struct realtime_data
     uint8_t control_point;
     uint16_t radiation_index;
     float dose_cumulated;   /* unit: MU */
+    float dose_rate;        /* unit: MU/min */
     uint8_t prf_current;
     uint8_t one_pulse_valid_flag;
     uint16_t one_pulse_dose;
@@ -724,6 +725,12 @@ float dose_data_info_get(enum uart_id id, enum dose_info_index index, void *data
         break;
     case DOSE_INFO_METER_GET:
         value = obj->realtime.dose_cumulated;
+        break;
+    case DOSE_INFO_DOSE_RATE_SET:
+        obj->realtime.dose_rate = *(float *)data;
+        break;
+    case DOSE_INFO_DOSE_RATE_GET:
+        value = obj->realtime.dose_rate;
         break;
     case DOSE_INFO_PRF_GET:
         value = obj->realtime.prf_current;

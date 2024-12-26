@@ -11,6 +11,8 @@ int8_t dose_adc_value_set(enum uart_id id, uint32_t *value);
 int8_t dose_dac_value_set(enum uart_id id, uint32_t *value);
 int8_t dose_meter_value_set(enum uart_id id, float dose_meter);
 float dose_meter_value_get(enum uart_id id);
+int8_t dose_rate_value_set(enum uart_id id, float *dose_rate);
+float dose_rate_value_get(enum uart_id id);
 int8_t dose_prf_value_set(enum uart_id id, uint8_t *prf);
 int8_t dose_generate_mode_set(enum uart_id id, uint8_t *mode);
 int8_t dose_pulse_mode_set(enum uart_id id, uint8_t *pulse_mode);

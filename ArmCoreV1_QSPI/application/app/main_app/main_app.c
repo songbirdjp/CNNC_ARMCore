@@ -105,8 +105,8 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
     send->InF_BeamOnTime = 0;
     send->InF_PrimaryDoseTotalActual = dose_meter_value_get(BGM_UART_DOSE1);
     send->InF_SecondaryDoseTotalActual = dose_meter_value_get(BGM_UART_DOSE2);
-    send->InF_PrimaryDoseRateActual = 0;
-    send->InF_SecondaryDoseRateActual = 0;
+    send->InF_PrimaryDoseRateActual = dose_rate_value_get(BGM_UART_DOSE1);
+    send->InF_SecondaryDoseRateActual = dose_rate_value_get(BGM_UART_DOSE2);
 
 
     send->InU8_DoseAFsmState = (uint8_t)dose_fsm_state_get(BGM_UART_DOSE1);
