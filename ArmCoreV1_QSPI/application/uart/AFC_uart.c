@@ -101,16 +101,18 @@ static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
             {
                 case 0x00:
                     MagMotorState = MotorFSM_StayAtPresetPos;
-                    objAFCApp->whichData =1;
+                    // objAFCApp->whichData =1;
+                    printf("MotorFSM_StayAtPresetPos\r\n");
                     break;
                 case 0x01:
                     MagMotorState = MotorFSM_ManualControl;
-                    objAFCApp->whichData =2;
+                    // objAFCApp->whichData =2;
+                    printf("MotorFSM_ManualControl\r\n");
                     break;
                 case 0x02:
                     MagMotorState = MotorFSM_AutoControl;
                     objAFCApp->positionCalculated = __HAL_TIM_GET_COUNTER(&htim2);
-                    objAFCApp->whichData =3;
+                    printf("MotorFSM_AutoControl\r\n");
                     break;
             }
             break;

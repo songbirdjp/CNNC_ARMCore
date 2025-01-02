@@ -61,7 +61,7 @@ int8_t WriteArrayToFlash(uint16_t *data, uint32_t len)
 
     return 0;
 }
-AFCApplicationParam_t AFCApplicationParam = {   .whichData = 4,
+AFCApplicationParam_t AFCApplicationParam = {   .whichData = 1,
                                                 .positionDeadzone = 15,
                                                 .A1In_Para = 1,
                                                 .A2In_Para = 1,
@@ -81,6 +81,9 @@ void MagMotorCtrlbyADC(uint16_t *data)
     memcpy(dataADC2, data + 8, 8 * sizeof(uint16_t));
     uint16_t phaseA = obj->A1In_Para * dataADC1[obj->whichData] + obj->B1In_Para;
     uint16_t phaseB = obj->A2In_Para * dataADC2[obj->whichData] + obj->B2In_Para;
+    // printf("phaseA = %d\r\n",phaseA);
+    // printf("phaseB = %d\r\n",phaseB);
+    // printf("phaseA - phaseB = %d\r\n",phaseA - phaseB);
     if(phaseA > phaseB + obj->positionDeadzone)
     {
         obj->positionCalculated = obj->positionCurrent - obj->positionStep;
@@ -93,7 +96,8 @@ void MagMotorCtrlbyADC(uint16_t *data)
     {
         obj->positionCalculated = obj->positionCurrent;
     }
-    // printf("2obj->positionCalculated  = %d\r\n\r\n",obj->positionCalculated );
+    LOG_I("posCalculated = %d\r\n\r\n",obj->positionCalculated);
+    LOG_I("posCurrent = %d\r\n\r\n",obj->positionCurrent);
 }
 
 static void Mag_MotorCtrl_thread_entry(void *argument)

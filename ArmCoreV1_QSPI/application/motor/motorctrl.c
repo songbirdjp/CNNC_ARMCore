@@ -482,6 +482,23 @@ void  AFTMotorInitFSM()
     }
 }
 //static uint16_t MagMotorSetPos = 20;
+void Shell_SetAFTMotorRunByStep(uint8_t argc, char *argv[])
+{
+    uint8_t dir = strtol((char *)argv[1], NULL, 10);
+    if(dir == 1)
+    {
+        motorCtrlByPWM(MOTOR_AFT, 60);
+        osDelay(100);
+        motorCtrlByPWM(MOTOR_AFT, 0);
+    }
+    else if(dir == 2)
+    {
+        motorCtrlByPWM(MOTOR_AFT, -60);
+        osDelay(100);
+        motorCtrlByPWM(MOTOR_AFT, 0);   
+    }
+}
+MSH_CMD_EXPORT_ALIAS(Shell_SetAFTMotorRunByStep, AFTStep,AFT motor run by step);
 void Shell_SetMagMotorRunByStep(uint8_t argc, char *argv[])
 {   
     uint8_t dir = strtol((char *)argv[1], NULL, 10);
