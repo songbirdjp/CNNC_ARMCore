@@ -61,13 +61,13 @@ int8_t WriteArrayToFlash(uint16_t *data, uint32_t len)
 
     return 0;
 }
-AFCApplicationParam_t AFCApplicationParam = {   .whichData = 5,
-                                                .positionDeadzone = 20,
+AFCApplicationParam_t AFCApplicationParam = {   .whichData = 4,
+                                                .positionDeadzone = 15,
                                                 .A1In_Para = 1,
                                                 .A2In_Para = 1,
-                                                .B1In_Para = 35,
-                                                .B2In_Para = 35,
-                                                .positionStep = 20};
+                                                .B1In_Para = 0,
+                                                .B2In_Para = 0,
+                                                .positionStep = 10};
 uint16_t *AFCApplicationParamGet(void)
 {
     return &AFCApplicationParam;
@@ -83,16 +83,17 @@ void MagMotorCtrlbyADC(uint16_t *data)
     uint16_t phaseB = obj->A2In_Para * dataADC2[obj->whichData] + obj->B2In_Para;
     if(phaseA > phaseB + obj->positionDeadzone)
     {
-        obj->positionCalculated = obj->positionCurrent + obj->positionStep;
+        obj->positionCalculated = obj->positionCurrent - obj->positionStep;
     }
     else if(phaseA < phaseB - obj->positionDeadzone)
     {
-        obj->positionCalculated = obj->positionCurrent - obj->positionStep;
+        obj->positionCalculated = obj->positionCurrent + obj->positionStep;
     }
     else
     {
         obj->positionCalculated = obj->positionCurrent;
     }
+    // printf("2obj->positionCalculated  = %d\r\n\r\n",obj->positionCalculated );
 }
 
 static void Mag_MotorCtrl_thread_entry(void *argument)
@@ -118,8 +119,8 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     uint16_t data[16] = {0};
     for (;;)
     {   
-        AFC_ADCSampleRecvProcess();
-        // MagMotorCtrlbyADC(AFC_ADCSampleRecvProcess());
+        // AFC_ADCSampleRecvProcess();
+        MagMotorCtrlbyADC(AFC_ADCSampleRecvProcess());
     }
 }
 static void AFC_DataTransmit_thread_entry(void *argument)

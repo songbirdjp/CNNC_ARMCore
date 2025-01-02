@@ -109,6 +109,7 @@ static int8_t  AFC_ParaSet_parse(struct AFC_object *cmd)
                     break;
                 case 0x02:
                     MagMotorState = MotorFSM_AutoControl;
+                    objAFCApp->positionCalculated = __HAL_TIM_GET_COUNTER(&htim2);
                     objAFCApp->whichData =3;
                     break;
             }

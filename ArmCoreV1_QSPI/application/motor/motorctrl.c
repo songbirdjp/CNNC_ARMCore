@@ -384,11 +384,11 @@ void MagMotorInitFSM(void)
             if(MagForwardEncCounterPrev == MagForwardEncCounter)
             {
                 __HAL_TIM_SET_COUNTER(&htim2,35195);
-                printf("MagForwardEncCounter = %d\r\n",  getEncodeValue(MOTOR_MAG));
+                printf("231MagForwardEncCounter = %d\r\n",  getEncodeValue(MOTOR_MAG));
                 motorCtrlByPWM(MOTOR_MAG, 0);
                 MagMotorParameter.motorFindZeroOK = 0x01;
-                printf("Go to  presetPos= %d\r\n",MagMotorParameter.presetPos);
-                MagMotorState = MotorFSM_ZERO_CONFIRMED;
+                printf("111Go to  presetPos= %d\r\n",MagMotorParameter.presetPos);
+                MagMotorState = MotorFSM_StayAtPresetPos;
             }
             break;  
         case MotorFSM_ZERO_CONFIRMED:
@@ -535,7 +535,7 @@ static void MotorInitial_thread_entry(void *argument)
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
     gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
-    MagMotorParameter.presetPos = 24805;// 25495;
+    MagMotorParameter.presetPos = 25118;// 25495;
     MagMotorParameter.encoderValTarget = MagMotorParameter.presetPos;
     for (;;)
     {
