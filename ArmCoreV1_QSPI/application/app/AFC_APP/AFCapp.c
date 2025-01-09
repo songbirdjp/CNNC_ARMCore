@@ -62,42 +62,54 @@ int8_t WriteArrayToFlash(uint16_t *data, uint32_t len)
     return 0;
 }
 AFCApplicationParam_t AFCApplicationParam = {   .whichData = 1,
-                                                .positionDeadzone = 15,
+                                                .positionDeadzone = 100,
                                                 .A1In_Para = 1,
                                                 .A2In_Para = 1,
                                                 .B1In_Para = 0,
                                                 .B2In_Para = 0,
-                                                .positionStep = 10};
+                                                .positionStep = 100};
 uint16_t *AFCApplicationParamGet(void)
 {
     return &AFCApplicationParam;
 }
+#include "motorCtrl.h"
 void MagMotorCtrlbyADC(uint16_t *data)
 {
     AFCApplicationParam_t *obj = AFCApplicationParamGet();
     obj->positionCurrent = __HAL_TIM_GET_COUNTER(&htim2); 
     uint16_t dataADC1[8], dataADC2[8] = {0};
-    memcpy(dataADC1, data, 8 * sizeof(uint16_t));
-    memcpy(dataADC2, data + 8, 8 * sizeof(uint16_t));
-    uint16_t phaseA = obj->A1In_Para * dataADC1[obj->whichData] + obj->B1In_Para;
-    uint16_t phaseB = obj->A2In_Para * dataADC2[obj->whichData] + obj->B2In_Para;
-    // printf("phaseA = %d\r\n",phaseA);
-    // printf("phaseB = %d\r\n",phaseB);
-    // printf("phaseA - phaseB = %d\r\n",phaseA - phaseB);
-    if(phaseA > phaseB + obj->positionDeadzone)
-    {
-        obj->positionCalculated = obj->positionCurrent - obj->positionStep;
-    }
-    else if(phaseA < phaseB - obj->positionDeadzone)
+    memcpy(dataADC1, data, 1 * sizeof(uint16_t));
+    memcpy(dataADC2, data + 1, 1 * sizeof(uint16_t));
+    uint16_t phaseA = obj->A1In_Para * dataADC1[0] + obj->B1In_Para;
+    uint16_t phaseB = obj->A2In_Para * dataADC2[0] + obj->B2In_Para;
+    // LOG_I("phaseA = %d\r\n",phaseA);
+    // LOG_I("phaseB = %d\r\n",phaseB);
+    // LOG_I("A - B = %d\r\n",phaseA - phaseB);
+
+    if(phaseA > (phaseB + obj->positionDeadzone))
     {
         obj->positionCalculated = obj->positionCurrent + obj->positionStep;
+    }
+    else if(phaseA <( phaseB - obj->positionDeadzone))
+    {
+        obj->positionCalculated = obj->positionCurrent - obj->positionStep;
     }
     else
     {
         obj->positionCalculated = obj->positionCurrent;
     }
-    LOG_I("posCalculated = %d\r\n\r\n",obj->positionCalculated);
-    LOG_I("posCurrent = %d\r\n\r\n",obj->positionCurrent);
+  
+    
+    if(obj->positionCurrent > 24972)
+    {
+        obj->positionCalculated = 24965;
+    }
+    else if(obj->positionCurrent < 23983)
+    {
+        obj->positionCalculated = 23990;
+    }
+    // LOG_I("posCalculated = %d\r\n\r\n",obj->positionCalculated);
+    // LOG_I("pos = %d\r\n\r\n",obj->positionCurrent);
 }
 
 static void Mag_MotorCtrl_thread_entry(void *argument)
@@ -125,6 +137,7 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     {   
         // AFC_ADCSampleRecvProcess();
         MagMotorCtrlbyADC(AFC_ADCSampleRecvProcess());
+        // osDelay(100);
     }
 }
 static void AFC_DataTransmit_thread_entry(void *argument)

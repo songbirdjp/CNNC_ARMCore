@@ -356,7 +356,7 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
     // LOG_E("Slave queue waiting count: %d\r\n", slave_queue_count);
     memcpy(combined_data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
     memcpy(combined_data + obj_master->buf_len, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
-#if 1
+#if 0
     for (uint8_t i = 0; i < 16; i++)
     {
         // LOG_E("obj_master->data[%d] = %d\r\n", i, recv_tmp[i]);
@@ -364,8 +364,8 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
         LOG_I("combined_data[%d] = %d\r\n", i, combined_data[i]); 
     }
 #endif
-    // LOG_I("data[4] = %d\r\n", combined_data[3]); 
-    // LOG_I("data[12] = %d\r\n", combined_data[11]); 
+    // LOG_I("data[0] = %d\r\n", combined_data[0]); 
+    // LOG_I("data[1] = %d\r\n", combined_data[1]); 
     // LOG_I("delta = %d\r\n", combined_data[3] - combined_data[11]); 
     // __HAL_TIM_SET_COUNTER(&htim4, tim4Delaytimes);
     // if(tim4Delaytimes <= 2)

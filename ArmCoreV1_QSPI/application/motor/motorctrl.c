@@ -10,12 +10,12 @@
 #include "cmsis_os2.h"
 #include "AFCapp.h"
 static MotorCtrlSignalDef_t MotorCtrlSignal[2];
-static PID_TypeDef MAGmotor_pid_para = {.Kp = 1,
-                                        .Ki = 0.1,
+static PID_TypeDef MAGmotor_pid_para = {.Kp = 1.2,
+                                        .Ki = 0.0,
                                         .Kd = 0,
                                         .Setpoint = 0,
                                         .IntegralLimit = 50,
-                                        .OutputLimit = 100};
+                                        .OutputLimit = 40};
 static PID_TypeDef AFTmotor_pid_para = {.Kp = 1,
                                         .Ki = 0.1,
                                         .Kd = 0,
@@ -179,6 +179,7 @@ void stopPWMOutput(motorTypeDef motorType)
 
 void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle)
 {
+
     if (dutyCycle > 0)
     {
         MotorCtrlSignal[motorType].MotorMoveEn = 1;
@@ -197,7 +198,7 @@ void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle)
     float absDutyCycle = fabs(dutyCycle), pulseLength = 0;
 
     if ((absDutyCycle < 3) && (dutyCycle != 0)) absDutyCycle = 3;
-    else if (absDutyCycle > 60)  absDutyCycle = 60;// Assuming duty cycle is in percentage
+    else if (absDutyCycle >40)  absDutyCycle = 40;// Assuming duty cycle is in percentage
    // printf("duty %d %lf\r\n",htim3.Init.Period, absDutyCycle);
   //  startPWMOutput(axesType);
     if(motorType == MOTOR_MAG)
@@ -351,6 +352,8 @@ MotorFindingZeroFSM_t *MagMotorState_get(void)
 {
     return &MagMotorState;
 }
+// static float AutoControl_pid_output;
+uint16_t MagMotorAutoControltimes = 100;
 void MagMotorInitFSM(void)
 {
    // uint16_t AFTMotorPos = 20000;
@@ -359,6 +362,7 @@ void MagMotorInitFSM(void)
     uint16_t MagBackwardEncCounter;
     uint16_t MagBackwardEncCounterPrev;
     MotorCtrlParam_TypeDef *obj = MAG_motorParam_get();
+    static float AutoControl_pid_output;
     //MagMotorParameter.encoderValTarget = 20000;
     switch (MagMotorState)
     {
@@ -388,7 +392,7 @@ void MagMotorInitFSM(void)
                 motorCtrlByPWM(MOTOR_MAG, 0);
                 MagMotorParameter.motorFindZeroOK = 0x01;
                 printf("111Go to  presetPos= %d\r\n",MagMotorParameter.presetPos);
-                MagMotorState = MotorFSM_StayAtPresetPos;
+                MagMotorState = MotorFSM_ManualControl;
             }
             break;  
         case MotorFSM_ZERO_CONFIRMED:
@@ -405,7 +409,17 @@ void MagMotorInitFSM(void)
             osDelay(1);
             break;
         case MotorFSM_AutoControl:
-            motorCtrlByPWM(MOTOR_MAG, PositionPIDCtrl(getEncodeValue(MOTOR_MAG),AFCApplicationParam.positionCalculated, &MAGmotor_pid_para));
+        // if(MagMotorAutoControltimes % 1000 == 0)
+        // {
+        //     // AutoControl_pid_output = PositionPIDCtrl(getEncodeValue(MOTOR_MAG),AFCApplicationParam.positionCalculated, &MAGmotor_pid_para);
+        //     AutoControl_pid_output = PositionPIDCtrl(getEncodeValue(MOTOR_MAG),25000, &MAGmotor_pid_para);
+        //     LOG_I("Calculated = %d\r\n",AFCApplicationParam.positionCalculated);
+        //     LOG_I("pid_output = %d\r\n",AutoControl_pid_output);
+        // }
+        AutoControl_pid_output = 0;
+
+            MagMotorAutoControltimes++;
+            motorCtrlByPWM(MOTOR_MAG, AutoControl_pid_output);
             osDelay(1);
             break;
         case MotorFSM_ERROR_STATE:
@@ -504,7 +518,7 @@ void Shell_SetMagMotorRunByStep(uint8_t argc, char *argv[])
     uint8_t dir = strtol((char *)argv[1], NULL, 10);
     uint16_t step = strtol((char *)argv[2], NULL, 10) | (strtol((char *)argv[3], NULL, 10) << 8);
     
-    printf("dir = %d step = %d\r\n",dir,step);
+    // LOG_I("dir = %d step = %d\r\n",dir,step);
     if(dir == 1)
     {
         MagMotorSetPos += step;
@@ -522,6 +536,7 @@ void Shell_SetMagMotorRunByStep(uint8_t argc, char *argv[])
         MagMotorSetPos = 10000;
     }
     MagMotorParameter.encoderValTarget = MagMotorSetPos;
+    // LOG_I("Target = %d\r\n",MagMotorParameter.encoderValTarget);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_SetMagMotorRunByStep, MAGSTEP,Mag motor run by step);
 void Shell_SetMagMotorSetPos(uint8_t argc, char *argv[])
