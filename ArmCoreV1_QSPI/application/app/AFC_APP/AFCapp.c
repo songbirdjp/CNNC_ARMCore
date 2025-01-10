@@ -67,7 +67,7 @@ AFCApplicationParam_t AFCApplicationParam = {   .whichData = 1,
                                                 .A2In_Para = 1,
                                                 .B1In_Para = 0,
                                                 .B2In_Para = 0,
-                                                .positionStep = 100};
+                                                .positionStep = 30};
 uint16_t *AFCApplicationParamGet(void)
 {
     return &AFCApplicationParam;
@@ -82,9 +82,9 @@ void MagMotorCtrlbyADC(uint16_t *data)
     memcpy(dataADC2, data + 1, 1 * sizeof(uint16_t));
     uint16_t phaseA = obj->A1In_Para * dataADC1[0] + obj->B1In_Para;
     uint16_t phaseB = obj->A2In_Para * dataADC2[0] + obj->B2In_Para;
-    // LOG_I("phaseA = %d\r\n",phaseA);
-    // LOG_I("phaseB = %d\r\n",phaseB);
-    // LOG_I("A - B = %d\r\n",phaseA - phaseB);
+    LOG_I("phaseA = %d\r\n",phaseA);
+    LOG_I("phaseB = %d\r\n",phaseB);
+    LOG_I("A - B = %d\r\n",phaseA - phaseB);
 
     if(phaseA > (phaseB + obj->positionDeadzone))
     {
@@ -100,18 +100,35 @@ void MagMotorCtrlbyADC(uint16_t *data)
     }
   
     
-    if(obj->positionCurrent > 24972)
-    {
-        obj->positionCalculated = 24965;
-    }
-    else if(obj->positionCurrent < 23983)
-    {
-        obj->positionCalculated = 23990;
-    }
-    // LOG_I("posCalculated = %d\r\n\r\n",obj->positionCalculated);
-    // LOG_I("pos = %d\r\n\r\n",obj->positionCurrent);
+    // if(obj->positionCurrent > 24972)
+    // {
+    //     obj->positionCalculated = 24965;
+    // }
+    // else if(obj->positionCurrent < 23983)
+    // {
+    //     obj->positionCalculated = 23990;
+    // }
+    LOG_I("posCalculated = %d\r\n\r\n",obj->positionCalculated);
+    LOG_I("pos = %d\r\n\r\n",obj->positionCurrent);
 }
-
+void Shell_ChangeCalPos(uint8_t argc, char *argv[])
+{
+    
+    AFCApplicationParam_t *obj = AFCApplicationParamGet();
+    obj->positionCurrent = getEncodeValue(MOTOR_MAG);
+    uint16_t dir = atoi(argv[1]);
+    uint16_t posStep = atoi(argv[2]);
+    if(dir == 1)
+    {
+        obj->positionCalculated = obj->positionCurrent + posStep;
+    }
+    else if(dir == 2)
+    {
+        obj->positionCalculated = obj->positionCurrent - posStep;
+    }
+}
+MSH_CMD_EXPORT_ALIAS(Shell_ChangeCalPos, ChangeCalPos, Change Cal Position);
+uint16_t MagMotorADCValue[2] = {0};
 static void Mag_MotorCtrl_thread_entry(void *argument)
 {
     MX_TIM1_Init();
@@ -132,11 +149,16 @@ static void Mag_MotorCtrl_thread_entry(void *argument)
     // flash_init(flash, "DEVICE_NAME_FLASH_BANK1");
     // flash_operation_address_set(flash, flash_cfg[0], flash_cfg[1]);
     // flash->ioctl(flash, FLASH_CMD_ERASE_SECTOR, (void *)flash_cfg);
-    uint16_t data[16] = {0};
+    uint16_t data[2] = {0};
     for (;;)
     {   
+       
+        // MagMotorCtrlbyADC(AFC_ADCSampleRecvProcess());
+        // 
         // AFC_ADCSampleRecvProcess();
-        MagMotorCtrlbyADC(AFC_ADCSampleRecvProcess());
+        memcpy(MagMotorADCValue, AFC_ADCSampleRecvProcess(), 2 * sizeof(uint16_t));
+        // LOG_I("1111MagMotorADCValue = %d\r\n",MagMotorADCValue[0]);
+        // LOG_I("222222MagMotorADCValue = %d\r\n",MagMotorADCValue[1]);
         // osDelay(100);
     }
 }

@@ -357,7 +357,7 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
     memcpy(combined_data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
     memcpy(combined_data + obj_master->buf_len, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
 #if 0
-    for (uint8_t i = 0; i < 16; i++)
+    for (uint8_t i = 0; i < 2; i++)
     {
         // LOG_E("obj_master->data[%d] = %d\r\n", i, recv_tmp[i]);
         // LOG_E("obj_slave->data[%d] = %d\r\n", i, recv_tmp_1[i]);

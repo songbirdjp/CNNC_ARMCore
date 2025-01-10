@@ -179,7 +179,16 @@ void stopPWMOutput(motorTypeDef motorType)
 
 void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle)
 {
-
+    uint16_t current_pwm = 0;
+    if (motorType == MOTOR_MAG)
+    {
+        // current_pwm =  (__HAL_TIM_GET_COMPARE(&htim24, TIM_CHANNEL_3)) / 2;
+        current_pwm =  __HAL_TIM_GET_COMPARE(&htim24, TIM_CHANNEL_3);
+    }
+    else if (motorType == MOTOR_AFT)
+    {
+        current_pwm =  (__HAL_TIM_GET_COMPARE(&htim5, TIM_CHANNEL_3) / (htim5.Init.Period + 1)) * 100;
+    }
     if (dutyCycle > 0)
     {
         MotorCtrlSignal[motorType].MotorMoveEn = 1;
@@ -195,7 +204,8 @@ void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle)
         MotorCtrlSignal[motorType].MotorMoveEn = 0;
     }
 
-    float absDutyCycle = fabs(dutyCycle), pulseLength = 0;
+    float absDutyCycle = fabs(dutyCycle);
+    uint16_t pulseLength = 0;
 
     if ((absDutyCycle < 3) && (dutyCycle != 0)) absDutyCycle = 3;
     else if (absDutyCycle >40)  absDutyCycle = 40;// Assuming duty cycle is in percentage
@@ -204,8 +214,14 @@ void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle)
     if(motorType == MOTOR_MAG)
     {
       //  printf("duty %d %lf\r\n",htim3.Init.Period, absDutyCycle);
-        pulseLength = (float)((htim24.Init.Period + 1) * absDutyCycle) / 100;
-        __HAL_TIM_SET_COMPARE(&htim24, TIM_CHANNEL_3, (uint16_t) pulseLength);
+        pulseLength = ((htim24.Init.Period + 1) * absDutyCycle) / 100;
+        if(current_pwm != pulseLength)
+        {
+            LOG_I("%d    %d\r\n",current_pwm,pulseLength);
+    
+        }
+        __HAL_TIM_SET_COMPARE(&htim24, TIM_CHANNEL_3,  pulseLength);
+       
     }
     else if(motorType == MOTOR_AFT) 
     {
@@ -213,7 +229,7 @@ void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle)
         __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_3, (uint16_t) pulseLength);
     }
    // printf("pulseLength = %lf %d\r\n",pulseLength, (uint16_t) pulseLength);
-//    printf("%ld,%d,%f,%f,%d\r\n", encoder_val, _encoderYZ, MotorSpeed, pid_output, tmp);
+//    printf("%ld,%d,%f,%f,%d\r\n", encoder_val, _encoderYZ, MotorSpeed, pid_output, tmp);  
 }
 void Shell_MagMotorCtrlByPWM(uint8_t argc, char *argv[])
 {
@@ -354,6 +370,8 @@ MotorFindingZeroFSM_t *MagMotorState_get(void)
 }
 // static float AutoControl_pid_output;
 uint16_t MagMotorAutoControltimes = 100;
+uint16_t MagMotorAutoTarget;
+extern uint16_t MagMotorADCValue[2];
 void MagMotorInitFSM(void)
 {
    // uint16_t AFTMotorPos = 20000;
@@ -364,6 +382,7 @@ void MagMotorInitFSM(void)
     MotorCtrlParam_TypeDef *obj = MAG_motorParam_get();
     static float AutoControl_pid_output;
     //MagMotorParameter.encoderValTarget = 20000;
+    // MagMotorAutoTarget = getEncodeValue(MOTOR_MAG);
     switch (MagMotorState)
     {
         case MotorFSM_Init:
@@ -392,11 +411,17 @@ void MagMotorInitFSM(void)
                 motorCtrlByPWM(MOTOR_MAG, 0);
                 MagMotorParameter.motorFindZeroOK = 0x01;
                 printf("111Go to  presetPos= %d\r\n",MagMotorParameter.presetPos);
-                MagMotorState = MotorFSM_ManualControl;
+                MagMotorState = MotorFSM_AutoControl;
             }
             break;  
         case MotorFSM_ZERO_CONFIRMED:
+            MagForwardEncCounter = getEncodeValue(MOTOR_MAG);
+            if(MagMotorAutoControltimes % 500 == 0)
+            {
+                LOG_I("EncCounter = %d\r\n",MagForwardEncCounter);
+            }
             motorCtrlByPWM(MOTOR_MAG, PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorParameter.encoderValTarget, &MAGmotor_pid_para));
+            MagMotorAutoControltimes++;
             osDelay(1);
             break;
         case MotorFSM_StayAtPresetPos:
@@ -406,20 +431,32 @@ void MagMotorInitFSM(void)
             break;
         case MotorFSM_ManualControl:
             motorCtrlByPWM(MOTOR_MAG, PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorParameter.encoderValTarget, &MAGmotor_pid_para));
+            MagMotorAutoTarget = MagMotorParameter.encoderValTarget;
             osDelay(1);
             break;
         case MotorFSM_AutoControl:
-        // if(MagMotorAutoControltimes % 1000 == 0)
-        // {
-        //     // AutoControl_pid_output = PositionPIDCtrl(getEncodeValue(MOTOR_MAG),AFCApplicationParam.positionCalculated, &MAGmotor_pid_para);
-        //     AutoControl_pid_output = PositionPIDCtrl(getEncodeValue(MOTOR_MAG),25000, &MAGmotor_pid_para);
-        //     LOG_I("Calculated = %d\r\n",AFCApplicationParam.positionCalculated);
-        //     LOG_I("pid_output = %d\r\n",AutoControl_pid_output);
-        // }
-        AutoControl_pid_output = 0;
-
+        
+        if(MagMotorAutoControltimes % 500 == 0)
+        {
+            LOG_I("222MagMotorADCValue = %d\r\n",MagMotorADCValue[0]);
+            LOG_I("222MagMotorADCValue = %d\r\n",MagMotorADCValue[1]);
+            MagForwardEncCounter = getEncodeValue(MOTOR_MAG);
+            MagMotorAutoTarget = MagForwardEncCounter;
+            // LOG_I("EncCounter = %d\r\n",MagForwardEncCounter);
+            if(MagMotorADCValue[0] > MagMotorADCValue[1] + 100)
+            {
+                MagMotorAutoTarget = MagMotorAutoTarget + 20;
+            }
+            else if(MagMotorADCValue[0] < MagMotorADCValue[1] - 100)
+            {
+                MagMotorAutoTarget = MagMotorAutoTarget - 20;
+            }
+        }
             MagMotorAutoControltimes++;
+            AutoControl_pid_output = PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorAutoTarget, &MAGmotor_pid_para);
+            // LOG_I("pid_output = %f\r\n",AutoControl_pid_output);
             motorCtrlByPWM(MOTOR_MAG, AutoControl_pid_output);
+            // motorCtrlByPWM(MOTOR_MAG, PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorAutoTarget, &MAGmotor_pid_para));
             osDelay(1);
             break;
         case MotorFSM_ERROR_STATE:
@@ -567,8 +604,9 @@ static void MotorInitial_thread_entry(void *argument)
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
     gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
-    MagMotorParameter.presetPos = 25118;// 25495;
+    MagMotorParameter.presetPos = 22305;// 25118;
     MagMotorParameter.encoderValTarget = MagMotorParameter.presetPos;
+    AFCApplicationParam.positionCalculated = MagMotorParameter.presetPos;
     for (;;)
     {
         MagMotorInitFSM();
