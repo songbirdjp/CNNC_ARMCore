@@ -34,6 +34,7 @@ osStatus_t tcp_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout);
 int32_t tcp_data_send(uint8_t s, uint8_t *buf, uint16_t len);
 int8_t tcp_establish_cb_register(void (*fun_cb)(uint8_t sn));
 int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg));
+uint8_t tcp_socket_state_get(uint8_t sn); //the state defined in w5500.h
 
 #ifdef __cplusplus
 }

@@ -65,6 +65,11 @@ int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg))
     return device_w5500_rx_callback_register(fun_cb);
 }
 
+uint8_t tcp_socket_state_get(uint8_t sn)
+{
+    return getSn_SR(sn);
+}
+
 #ifdef IS_TCP_SERVER
 CLIENT_INFO client[MAX_CLIENT_NUM] = {-1};
 
