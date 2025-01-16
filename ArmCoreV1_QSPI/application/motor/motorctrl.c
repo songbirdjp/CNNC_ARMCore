@@ -411,7 +411,7 @@ void MagMotorInitFSM(void)
                 motorCtrlByPWM(MOTOR_MAG, 0);
                 MagMotorParameter.motorFindZeroOK = 0x01;
                 printf("111Go to  presetPos= %d\r\n",MagMotorParameter.presetPos);
-                MagMotorState = MotorFSM_AutoControl;
+                MagMotorState = MotorFSM_ManualControl;
             }
             break;  
         case MotorFSM_ZERO_CONFIRMED:
@@ -436,23 +436,31 @@ void MagMotorInitFSM(void)
             break;
         case MotorFSM_AutoControl:
         
-        if(MagMotorAutoControltimes % 500 == 0)
+        if(MagMotorAutoControltimes % 20 == 0)
         {
-            LOG_I("222MagMotorADCValue = %d\r\n",MagMotorADCValue[0]);
-            LOG_I("222MagMotorADCValue = %d\r\n",MagMotorADCValue[1]);
+            // LOG_I("ADC1 = %d\r\n",MagMotorADCValue[0]);
+            // LOG_I("ADC2 = %d\r\n",MagMotorADCValue[1]);
             MagForwardEncCounter = getEncodeValue(MOTOR_MAG);
             MagMotorAutoTarget = MagForwardEncCounter;
             // LOG_I("EncCounter = %d\r\n",MagForwardEncCounter);
-            if(MagMotorADCValue[0] > MagMotorADCValue[1] + 100)
+            if(MagMotorADCValue[0] > MagMotorADCValue[1] + 150)
             {
                 MagMotorAutoTarget = MagMotorAutoTarget + 20;
             }
-            else if(MagMotorADCValue[0] < MagMotorADCValue[1] - 100)
+            else if(MagMotorADCValue[0] < MagMotorADCValue[1] - 150)
             {
                 MagMotorAutoTarget = MagMotorAutoTarget - 20;
             }
         }
             MagMotorAutoControltimes++;
+            if(MagMotorAutoTarget > 21100)
+            {
+                MagMotorAutoTarget = 21050;
+            }
+            else if(MagMotorAutoTarget < 19000)
+            {
+                MagMotorAutoTarget = 19050;
+            }
             AutoControl_pid_output = PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorAutoTarget, &MAGmotor_pid_para);
             // LOG_I("pid_output = %f\r\n",AutoControl_pid_output);
             motorCtrlByPWM(MOTOR_MAG, AutoControl_pid_output);
@@ -604,7 +612,7 @@ static void MotorInitial_thread_entry(void *argument)
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
     gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
-    MagMotorParameter.presetPos = 22305;// 25118;
+    MagMotorParameter.presetPos = 20500;// 25118;
     MagMotorParameter.encoderValTarget = MagMotorParameter.presetPos;
     AFCApplicationParam.positionCalculated = MagMotorParameter.presetPos;
     for (;;)
