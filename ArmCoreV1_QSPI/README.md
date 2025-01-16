@@ -337,6 +337,8 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_iwdg.h
 │     │  ├─ stm32h7xx_hal_lptim.h
 │     │  ├─ stm32h7xx_hal_mdma.h
+│     │  ├─ stm32h7xx_hal_nand.h
+│     │  ├─ stm32h7xx_hal_nor.h
 │     │  ├─ stm32h7xx_hal_ospi.h
 │     │  ├─ stm32h7xx_hal_pwr.h
 │     │  ├─ stm32h7xx_hal_pwr_ex.h
@@ -347,6 +349,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_sdram.h
 │     │  ├─ stm32h7xx_hal_spi.h
 │     │  ├─ stm32h7xx_hal_spi_ex.h
+│     │  ├─ stm32h7xx_hal_sram.h
 │     │  ├─ stm32h7xx_hal_tim.h
 │     │  ├─ stm32h7xx_hal_tim_ex.h
 │     │  ├─ stm32h7xx_hal_uart.h
@@ -395,6 +398,8 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_iwdg.c
 │        ├─ stm32h7xx_hal_lptim.c
 │        ├─ stm32h7xx_hal_mdma.c
+│        ├─ stm32h7xx_hal_nand.c
+│        ├─ stm32h7xx_hal_nor.c
 │        ├─ stm32h7xx_hal_ospi.c
 │        ├─ stm32h7xx_hal_pwr.c
 │        ├─ stm32h7xx_hal_pwr_ex.c
@@ -405,6 +410,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_sdram.c
 │        ├─ stm32h7xx_hal_spi.c
 │        ├─ stm32h7xx_hal_spi_ex.c
+│        ├─ stm32h7xx_hal_sram.c
 │        ├─ stm32h7xx_hal_tim.c
 │        ├─ stm32h7xx_hal_tim_ex.c
 │        ├─ stm32h7xx_hal_uart.c

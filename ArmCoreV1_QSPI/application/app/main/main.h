@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -70,8 +70,6 @@ void Error_Handler(void);
 #define LAN9252_SYNC1_Pin GPIO_PIN_2
 #define LAN9252_SYNC1_GPIO_Port GPIOB
 #define LAN9252_SYNC1_EXTI_IRQn EXTI2_IRQn
-#define LAN9252_CSn_Pin GPIO_PIN_11
-#define LAN9252_CSn_GPIO_Port GPIOE
 #define W5500_RSTn_Pin GPIO_PIN_3
 #define W5500_RSTn_GPIO_Port GPIOD
 #define W5500_INTn_Pin GPIO_PIN_4

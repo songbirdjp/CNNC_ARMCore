@@ -23,10 +23,10 @@ static uint16_t remote_port_get(void)
 #endif
 
 static wiz_NetInfo local_net_info = {
-        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x72},
+        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x71},
         .ip =  {192, 168, 10, 71},
         .sn =  {255, 255, 255, 0},
-        .gw =  {192, 168, 0, 1},
+        .gw =  {192, 168, 10, 1},
         .dns = {180, 76, 76, 76},
         .dhcp = NETINFO_DHCP
 };
@@ -84,15 +84,14 @@ static int8_t do_tcp_server_send(uint8_t sn)
     switch (getSn_SR(sn))
     {
     case SOCK_INIT:
-        listen(sn);
-        //    if(s==1) printf("SERVER_SOCK_INIT\r\n");
+        ret = listen(sn);
         break;
     case SOCK_ESTABLISHED:
         tcp_establish_cb(sn); // period feedback here
         break;
     case SOCK_CLOSE_WAIT:
         osDelay(500);
-        close(sn);
+        ret = disconnect(sn);
         break;
     case SOCK_CLOSED:
         ret = socket(sn, Sn_MR_TCP, 80, 0);
@@ -177,7 +176,16 @@ static uint8_t tcp_link_detect(void)
 
 static int8_t tcp_link_state_recover(void)
 {
+#ifdef IS_TCP_SERVER
+    int8_t ret = 0;
+    for (uint8_t sn = 0; sn < MAX_CLIENT_NUM; sn++)
+    {
+        ret |= device_w5500_link_state_recover(sn);
+    }
+    return ret;
+#else
     return device_w5500_link_state_recover(socket_num_get());
+#endif
 }
 
 static int8_t tcp_data_recv_with_block(void)
@@ -222,7 +230,7 @@ static void TCPSendTask(void *argument)
         for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
         {
             ret = do_tcp_server_send(i);
-            if (ret != 0)
+            if (ret < 0)
             {
                 printf("do_tcp_server_send err:%d sn = %d\r\n", ret, i);
             }

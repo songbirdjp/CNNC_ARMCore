@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -58,9 +58,6 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LAN9252_CSn_GPIO_Port, LAN9252_CSn_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(W5500_RSTn_GPIO_Port, W5500_RSTn_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
@@ -72,52 +69,45 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, W5500_CSn_Pin|FM25V02_CSn_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin : PtPin */
+  /*Configure GPIO pin : LAN9252_IRQ_Pin */
   GPIO_InitStruct.Pin = LAN9252_IRQ_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(LAN9252_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PtPin */
+  /*Configure GPIO pin : LAN9252_SYNC0_Pin */
   GPIO_InitStruct.Pin = LAN9252_SYNC0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(LAN9252_SYNC0_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PCPin PCPin */
+  /*Configure GPIO pins : CHIP_RUN_LED_Pin SYSTEM_STATE_Pin */
   GPIO_InitStruct.Pin = CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PtPin */
+  /*Configure GPIO pin : LAN9252_SYNC1_Pin */
   GPIO_InitStruct.Pin = LAN9252_SYNC1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(LAN9252_SYNC1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = LAN9252_CSn_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LAN9252_CSn_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PDPin PDPin */
+  /*Configure GPIO pins : W5500_RSTn_Pin WATCHDOG2_Pin */
   GPIO_InitStruct.Pin = W5500_RSTn_Pin|WATCHDOG2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PtPin */
+  /*Configure GPIO pin : W5500_INTn_Pin */
   GPIO_InitStruct.Pin = W5500_INTn_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(W5500_INTn_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PGPin PGPin PGPin */
+  /*Configure GPIO pins : WATCHDOG1_Pin W5500_CSn_Pin FM25V02_CSn_Pin */
   GPIO_InitStruct.Pin = WATCHDOG1_Pin|W5500_CSn_Pin|FM25V02_CSn_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
