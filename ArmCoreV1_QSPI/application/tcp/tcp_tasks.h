@@ -25,6 +25,8 @@ int8_t tcp_establish_cb_register(void (*fun_cb)(uint8_t sn));
 int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg));
 uint8_t *remote_ip_get(void);
 uint16_t remote_port_get(void);
+uint8_t tcp_link_status_get(void);
+uint8_t socket_status_reg_get(uint8_t sn);
 
 #ifdef __cplusplus
 }

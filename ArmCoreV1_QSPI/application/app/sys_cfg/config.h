@@ -1,7 +1,7 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define GIT_BRANCH  "arm_core_master_restructure_temporary"
-#define GIT_HASH    "f1fa91ea24ae4ca820c9d59cde3591d3094abccb"
+#define GIT_BRANCH  "Branch_bsm_arm_io_develop"
+#define GIT_HASH    "64fd675b78122678f7352322d0714b083e3e7e87"
 
 #endif

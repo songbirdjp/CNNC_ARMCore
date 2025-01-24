@@ -789,7 +789,12 @@ static int8_t realtime_ethercat_data_process(void)
 #endif
     send->InU16_PlanCmdFB = recv->OutU16_PlanCmd;
     send->InU16_FaultInfo1 = rtFeedback.faultInfo1&0x00f0;
-   if(interlockFeedback.boardLoss&0x0007)  send->InU16_FaultInfo1 |= 0x0002;
+    if(interlockFeedback.boardLoss&0x0007)  send->InU16_FaultInfo1 |= 0x0002;
+    if(tcp_link_status_get() == false) 
+    {
+        send->InU16_FaultInfo1 |= 0x0001;
+    //   //  printf("tcp feedback\r\n");
+    }
    send->InU16_FaultInfo2 = rtFeedback.faultInfo2&0x00ff;
 
     memcpy(send->InAU16_LeafCrtPos, rtFeedback.rtPosUpload, sizeof(uint16_t) * (8 * 10 + 3));

@@ -230,7 +230,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 #endif
         }
         secondPosFeedback.packIndexInOneBeam = frameHead.packIndexInOneBeam;
-        secondPosFeedback.errorCode = 0; //ok
+        secondPosFeedback.errorCode = 0xF0; //ok
       //  printf("recv success #0!!! \r\n");
     }
     else if(frameHead.frmTag == PARAM_SETTING_TAG)
