@@ -38,6 +38,7 @@
 #include "console.h"
 #include "sys_cfg.h"
 #include "init_call.h"
+#include "hw_crc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -58,7 +59,17 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+#if configAPPLICATION_ALLOCATED_HEAP
+uint8_t ucHeap[configTOTAL_HEAP_SIZE] = {0};
+#ifdef USE_FreeRTOS_HEAP_5
+static HeapRegion_t xHeapRegions[] = 
+{
+    { ucHeap, configTOTAL_HEAP_SIZE },
+    { (uint8_t *)0xC0000000, 0x2000000},
+    { NULL,   0                     }
+};
+#endif
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -78,6 +89,7 @@ static void vector_table_init(void)
     SCB->VTOR = (uint32_t)&__isr_vector_start;
 }
 
+#if 0
 static void cmd_rtc_test(uint8_t argc, uint8_t **argv)
 {
     uint32_t bkp_data = 0;
@@ -156,7 +168,7 @@ static void rdp_test(uint8_t argc, uint8_t **argv)
 }
 MSH_CMD_EXPORT_ALIAS(rdp_test, rdp_test, rtc rdp);
 
-int8_t fpu_test(uint8_t argc, uint8_t **argv)
+static int8_t fpu_test(uint8_t argc, uint8_t **argv)
 {
 
     if (argc != 2)
@@ -193,6 +205,84 @@ int8_t fpu_test(uint8_t argc, uint8_t **argv)
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(fpu_test, fpu_test, test fpu);
+
+static int8_t hw_crc_test(uint8_t argc, uint8_t **argv)
+{
+    uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+    uint32_t res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
+
+    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc8 res = %#x\r\n", res);
+
+    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc16 res = %#x\r\n", res);
+
+    res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
+
+    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc8 res = %#x\r\n", res);
+
+    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc16 res = %#x\r\n", res);
+    
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(hw_crc_test, hw_crc_test, test crc);
+
+static int8_t ext_sdram_test(uint8_t argc, uint8_t **argv)
+{
+    uint16_t *ext_sdram_array = (uint16_t *)pvPortMalloc(1024 * 1024 * 32 - 16);
+    if (ext_sdram_array == NULL)
+    {
+        printf("malloc error\r\n");
+        return -1;
+    }
+
+    printf("ext sdram malloc ok: %p\r\n", ext_sdram_array);
+
+    for (int i = 0; i < 1024; i++)
+    {
+        if (i % 16 == 0 && i != 0)
+        {
+            printf("\r\n");
+        }
+        printf("%.4x ", ext_sdram_array[i]);
+    }
+
+    printf("\r\n");
+
+    for (int i = 0; i < 1024; i++)
+    {
+        ext_sdram_array[i] = i;
+    }
+
+    for (int i = 0; i < 1024; i++)
+    {
+        if (i % 16 == 0 && i != 0)
+        {
+            printf("\r\n");
+        }
+        printf("%.4x ", ext_sdram_array[i]);
+    }
+
+    printf("\r\n");
+
+    vPortFree(ext_sdram_array);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(ext_sdram_test, ext_sdram_test, test ext_sdram);
+#endif
+
+static int8_t system_heap_init(void)
+{
+#ifdef USE_FreeRTOS_HEAP_5
+    vPortDefineHeapRegions (xHeapRegions);
+#endif
+    return 0;
+}
 /* USER CODE END 0 */
 
 /**
@@ -250,6 +340,8 @@ int main(void)
 
   bank1_sdram_init();
 
+  system_heap_init();
+
   /* Console initialize */
   device_console_init(CONSOLE_NAME_DEFAULT);
   system_info_print();
@@ -270,28 +362,6 @@ int main(void)
   portENABLE_INTERRUPTS();
   extern int8_t app_valid_check_and_jump(void);
   app_valid_check_and_jump();
-#endif
-
-#if 0
-    uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-    uint32_t res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
-
-    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc8 res = %#x\r\n", res);
-
-    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc16 res = %#x\r\n", res);
-
-    res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
-
-    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc8 res = %#x\r\n", res);
-
-    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc16 res = %#x\r\n", res);
-    
 #endif
 
   /* USER CODE END 2 */
