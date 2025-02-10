@@ -318,6 +318,8 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_
     uint8_t wsPkg[DATA_BUF_SIZE] = {0};
     int32_t retLen;
     // 参数检查
+    if (s >= MAX_CLIENT_NUM)
+        return -1;
     if(client[s].connectStatus < 1) return 0;  //connect is not establish
     if ((buffLen < 0) || ((buffLen + headLen) > DATA_BUF_SIZE))
         return -1;

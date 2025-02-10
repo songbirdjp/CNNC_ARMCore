@@ -206,6 +206,75 @@ static int8_t fpu_test(uint8_t argc, uint8_t **argv)
 }
 MSH_CMD_EXPORT_ALIAS(fpu_test, fpu_test, test fpu);
 
+static uint32_t itcm[1024] __attribute__((section(".ram_itcm"))) = {0};
+static uint32_t dtcm[1024] __attribute__((section(".ram_dtcm"))) = {0};
+static uint32_t sdram[1024] __attribute__((section(".sdram_ext"))) = {0};
+static uint32_t sram[1024] = {0};
+#include "utilities.h"
+static int8_t ram_speed_test(uint8_t argc, uint8_t **argv)
+{
+    uint32_t loop = atoi(argv[1]);
+    struct system_time begin = {0};
+    struct system_time end = {0};
+
+    /* 1. itcm */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        itcm[i % 1024] = i;
+        itcm[i % 1024 + 1] = i + 1;
+        itcm[i % 1024 + 2] = i + 2;
+        itcm[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("itcm time: %u us\r\n", time_diff_us(&begin, &end));
+
+    osDelay(100);
+
+    /* 2. dtcm */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        dtcm[i % 1024] = i;
+        dtcm[i % 1024 + 1] = i + 1;
+        dtcm[i % 1024 + 2] = i + 2;
+        dtcm[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("dtcm time: %u us\r\n", time_diff_us(&begin, &end));
+
+    osDelay(100);
+
+    /* 3. sdram */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        sdram[i % 1024] = i;
+        sdram[i % 1024 + 1] = i + 1;
+        sdram[i % 1024 + 2] = i + 2;
+        sdram[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("sdram time: %u us\r\n", time_diff_us(&begin, &end));
+
+    osDelay(100);
+
+    /* 4. sram */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        sram[i % 1024] = i;
+        sram[i % 1024 + 1] = i + 1;
+        sram[i % 1024 + 2] = i + 2;
+        sram[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("sram time: %u us\r\n", time_diff_us(&begin, &end));
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(ram_speed_test, ram_speed_test, test ram);
+
 static int8_t hw_crc_test(uint8_t argc, uint8_t **argv)
 {
     uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
