@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -58,8 +58,11 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_adc3;
 extern SDRAM_HandleTypeDef hsdram1;
+extern DMA_HandleTypeDef hdma_i2c4_rx;
+extern DMA_HandleTypeDef hdma_i2c4_tx;
 extern MDMA_HandleTypeDef hmdma_mdma_channel1_dma1_stream2_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel2_dma1_stream5_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel3_sw_0;
@@ -478,6 +481,20 @@ void DMA2_Stream6_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA2 stream7 global interrupt.
+  */
+void DMA2_Stream7_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream7_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream7_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_adc1);
+  /* USER CODE BEGIN DMA2_Stream7_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream7_IRQn 1 */
+}
+
+/**
   * @brief This function handles MDMA global interrupt.
   */
 void MDMA_IRQHandler(void)
@@ -548,6 +565,34 @@ void BDMA_Channel2_IRQHandler(void)
   /* USER CODE BEGIN BDMA_Channel2_IRQn 1 */
 
   /* USER CODE END BDMA_Channel2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles BDMA channel3 global interrupt.
+  */
+void BDMA_Channel3_IRQHandler(void)
+{
+  /* USER CODE BEGIN BDMA_Channel3_IRQn 0 */
+
+  /* USER CODE END BDMA_Channel3_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_i2c4_rx);
+  /* USER CODE BEGIN BDMA_Channel3_IRQn 1 */
+
+  /* USER CODE END BDMA_Channel3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles BDMA channel4 global interrupt.
+  */
+void BDMA_Channel4_IRQHandler(void)
+{
+  /* USER CODE BEGIN BDMA_Channel4_IRQn 0 */
+
+  /* USER CODE END BDMA_Channel4_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_i2c4_tx);
+  /* USER CODE BEGIN BDMA_Channel4_IRQn 1 */
+
+  /* USER CODE END BDMA_Channel4_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -72,11 +72,14 @@ void DMA2_Stream0_IRQHandler(void);
 void DMA2_Stream2_IRQHandler(void);
 void DMA2_Stream4_IRQHandler(void);
 void DMA2_Stream6_IRQHandler(void);
+void DMA2_Stream7_IRQHandler(void);
 void MDMA_IRQHandler(void);
 void HSEM1_IRQHandler(void);
 void BDMA_Channel0_IRQHandler(void);
 void BDMA_Channel1_IRQHandler(void);
 void BDMA_Channel2_IRQHandler(void);
+void BDMA_Channel3_IRQHandler(void);
+void BDMA_Channel4_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

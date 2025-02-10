@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -18,12 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "cmsis_os.h"
-#include "adc.h"
 #include "bdma.h"
 #include "crc.h"
 #include "dma.h"
 #include "iwdg.h"
-#include "lptim.h"
 #include "mdma.h"
 #include "memorymap.h"
 #include "rtc.h"
@@ -241,8 +239,6 @@ int main(void)
   MX_IWDG1_Init();
   MX_RTC_Init();
   MX_TIM6_Init();
-  MX_ADC3_Init();
-  MX_LPTIM1_Init();
   /* USER CODE BEGIN 2 */
 #ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);

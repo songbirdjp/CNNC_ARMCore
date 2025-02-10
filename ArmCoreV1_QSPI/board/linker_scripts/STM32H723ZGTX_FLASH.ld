@@ -87,7 +87,7 @@ SECTIONS
     KEEP(*(.patch_functions_4))
     __patch_table_end = .;
   } >FLASH
-  
+
   /* The program code and other data goes into FLASH */
   .text :
   {

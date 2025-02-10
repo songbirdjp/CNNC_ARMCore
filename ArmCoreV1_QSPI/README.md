@@ -2,7 +2,6 @@
 ```
 ArmCoreV1_QSPI
 ├─ .cproject
-├─ .gitignore
 ├─ .mxproject
 ├─ .project
 ├─ application
@@ -34,6 +33,9 @@ ArmCoreV1_QSPI
 │  │     ├─ sys_cfg.c
 │  │     └─ sys_cfg.h
 │  ├─ bgm_app
+│  │  ├─ adc_app
+│  │  │  ├─ adc_app.c
+│  │  │  └─ adc_app.h
 │  │  ├─ afc_app
 │  │  │  ├─ afc_app.c
 │  │  │  └─ afc_app.h
@@ -75,6 +77,9 @@ ArmCoreV1_QSPI
 │  │  ├─ fpga_port.h
 │  │  ├─ fpga_rw.c
 │  │  └─ fpga_rw.h
+│  ├─ i2c
+│  │  ├─ i2c_port.c
+│  │  └─ i2c_port.h
 │  ├─ system_common
 │  │  ├─ memorymap.c
 │  │  ├─ memorymap.h
@@ -261,6 +266,11 @@ ArmCoreV1_QSPI
 │     │  ├─ drv_gpio.h
 │     │  ├─ gpio.c
 │     │  └─ gpio.h
+│     ├─ i2c
+│     │  ├─ drv_i2c.c
+│     │  ├─ drv_i2c.h
+│     │  ├─ i2c.c
+│     │  └─ i2c.h
 │     ├─ iwdg
 │     │  ├─ iwdg.c
 │     │  └─ iwdg.h
@@ -311,7 +321,9 @@ ArmCoreV1_QSPI
 │  │  │        │  ├─ stm32h723xx.h
 │  │  │        │  ├─ stm32h7xx.h
 │  │  │        │  └─ system_stm32h7xx.h
-│  │  │        └─ LICENSE.txt
+│  │  │        ├─ LICENSE.txt
+│  │  │        └─ Source
+│  │  │           └─ Templates
 │  │  ├─ Include
 │  │  │  ├─ cmsis_armcc.h
 │  │  │  ├─ cmsis_armclang.h
@@ -367,6 +379,8 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_iwdg.h
 │     │  ├─ stm32h7xx_hal_lptim.h
 │     │  ├─ stm32h7xx_hal_mdma.h
+│     │  ├─ stm32h7xx_hal_nand.h
+│     │  ├─ stm32h7xx_hal_nor.h
 │     │  ├─ stm32h7xx_hal_ospi.h
 │     │  ├─ stm32h7xx_hal_pwr.h
 │     │  ├─ stm32h7xx_hal_pwr_ex.h
@@ -377,6 +391,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_sdram.h
 │     │  ├─ stm32h7xx_hal_spi.h
 │     │  ├─ stm32h7xx_hal_spi_ex.h
+│     │  ├─ stm32h7xx_hal_sram.h
 │     │  ├─ stm32h7xx_hal_tim.h
 │     │  ├─ stm32h7xx_hal_tim_ex.h
 │     │  ├─ stm32h7xx_hal_uart.h
@@ -393,6 +408,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_ll_fmc.h
 │     │  ├─ stm32h7xx_ll_gpio.h
 │     │  ├─ stm32h7xx_ll_hsem.h
+│     │  ├─ stm32h7xx_ll_i2c.h
 │     │  ├─ stm32h7xx_ll_iwdg.h
 │     │  ├─ stm32h7xx_ll_lptim.h
 │     │  ├─ stm32h7xx_ll_lpuart.h
@@ -425,6 +441,8 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_iwdg.c
 │        ├─ stm32h7xx_hal_lptim.c
 │        ├─ stm32h7xx_hal_mdma.c
+│        ├─ stm32h7xx_hal_nand.c
+│        ├─ stm32h7xx_hal_nor.c
 │        ├─ stm32h7xx_hal_ospi.c
 │        ├─ stm32h7xx_hal_pwr.c
 │        ├─ stm32h7xx_hal_pwr_ex.c
@@ -435,6 +453,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_sdram.c
 │        ├─ stm32h7xx_hal_spi.c
 │        ├─ stm32h7xx_hal_spi_ex.c
+│        ├─ stm32h7xx_hal_sram.c
 │        ├─ stm32h7xx_hal_tim.c
 │        ├─ stm32h7xx_hal_tim_ex.c
 │        ├─ stm32h7xx_hal_uart.c

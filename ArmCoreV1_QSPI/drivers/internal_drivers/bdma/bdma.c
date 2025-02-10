@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -52,6 +52,12 @@ void MX_BDMA_Init(void)
   /* BDMA_Channel2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(BDMA_Channel2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(BDMA_Channel2_IRQn);
+  /* BDMA_Channel3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(BDMA_Channel3_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(BDMA_Channel3_IRQn);
+  /* BDMA_Channel4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(BDMA_Channel4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(BDMA_Channel4_IRQn);
 
 }
 
