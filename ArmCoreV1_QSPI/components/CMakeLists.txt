@@ -32,7 +32,7 @@ set(src_path ${src_path}
     "${current_path}/hw_wwdg/*.*" 
     "${current_path}/pid_ctrl/*.*" 
     "${current_path}/shell/*.*" 
-    "${current_path}/uart_frame/*.*" 
+    "${current_path}/uart_frame/*.*"
     "${current_path}/ulog/*.*" 
     "${current_path}/utilities/*.*" 
     "${current_path}/ymodem/*.*" 
