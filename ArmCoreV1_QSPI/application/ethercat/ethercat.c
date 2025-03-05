@@ -4,6 +4,7 @@
 #include "lan9252_app.h"
 #include "cmsis_os2.h"
 #include "init_call.h"
+#include "9252_HW.h"
 
 
 int8_t ethercat_slave_appl_cb_register(osEventFlagsId_t output_event, uint32_t event_flag, void (*fun_cb)(void))
@@ -137,6 +138,27 @@ uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len)
     osMutexRelease(lan9252_app_ops_get()->pdo_input_update_mutex);
 
     return buf;
+}
+
+uint64_t ethercat_get_system_time(void)
+{
+    uint32_t timeStamp_nsH, timeStamp_nsL;
+    uint64_t u64Stamp;
+
+    // system time high
+    HW_EscReadDWord(timeStamp_nsH, ESC_SYSTEMTIME_OFFSET + 4);
+    timeStamp_nsH = SWAPDWORD(timeStamp_nsH);
+
+    // system time low
+    HW_EscReadDWord(timeStamp_nsL, ESC_SYSTEMTIME_OFFSET);
+    timeStamp_nsL = SWAPDWORD(timeStamp_nsL);
+
+    u64Stamp = ((uint64_t)timeStamp_nsH << 32) + timeStamp_nsL;
+    u64Stamp /= 1000;
+
+  // printf("0x%llx 0x%x%x\r\n",u64Stamp,timeStamp_nsH,timeStamp_nsL);
+
+    return u64Stamp;
 }
 
 /*

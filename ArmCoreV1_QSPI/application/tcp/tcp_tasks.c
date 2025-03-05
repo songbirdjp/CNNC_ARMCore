@@ -4,6 +4,7 @@
 #include "stdbool.h"
 #include "init_call.h"
 #include "main.h"
+#include <stdio.h>
 
 #define SOCK_TCPS   0
 
@@ -78,8 +79,16 @@ static void tcp_server_init(void)
     for (uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
     {
         client[i].socketNum = -1;
-        client[i].clientType = -1;
+        client[i].clientType = 0;
     }
+}
+
+void clearClientInfo(uint8_t s)
+{
+    client[s].connectStatus = 0;
+    client[s].clientType = 0;
+    client[s].socketNum = -1;
+    client[s].loopCnt = 0; 
 }
 
 static int8_t do_tcp_server_send(uint8_t sn)
@@ -99,6 +108,7 @@ static int8_t do_tcp_server_send(uint8_t sn)
         ret = disconnect(sn);
         break;
     case SOCK_CLOSED:
+        clearClientInfo(sn);
         ret = socket(sn, Sn_MR_TCP, 80, 0);
         break;
     default:    break;
@@ -186,6 +196,7 @@ static int8_t tcp_link_state_recover(void)
     for (uint8_t sn = 0; sn < MAX_CLIENT_NUM; sn++)
     {
         ret |= device_w5500_link_state_recover(sn);
+		clearClientInfo(sn);
     }
     return ret;
 #else

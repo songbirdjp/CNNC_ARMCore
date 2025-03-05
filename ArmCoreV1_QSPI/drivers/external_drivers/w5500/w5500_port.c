@@ -150,7 +150,7 @@ static void W5500_interrupt_init(uint8_t max_interrupt)
 
     for(sn = 0; sn < max_interrupt; sn++)
     {
-        setSn_KPALVTR(sn, 1);
+        setSn_KPALVTR(sn, 12);// 1 minutes, to detect and release disconnected socket
     }
 }
 
@@ -399,7 +399,7 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
         return ret;
     }
 
-    return w5500_chip_init(net_info);;
+    return w5500_chip_init(net_info);
 }
 
 int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len)
