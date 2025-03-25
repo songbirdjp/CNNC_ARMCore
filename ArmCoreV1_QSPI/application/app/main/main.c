@@ -352,6 +352,33 @@ static int8_t system_heap_init(void)
 #endif
     return 0;
 }
+
+static int8_t system_reset_status_check(void)
+{
+    if (__HAL_RCC_GET_FLAG(RCC_FLAG_CPURST) != 0)
+    {
+        if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST) != 0)
+        {
+            __HAL_RCC_CLEAR_RESET_FLAGS();
+        }
+        else
+        {
+            printf("CPU reset checked\r\n");
+            printf("RCC_FLAG_D1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_D1RST));
+            printf("RCC_FLAG_D2RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_D2RST));
+            printf("RCC_FLAG_BORRST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_BORRST));
+            printf("RCC_FLAG_PINRST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_PINRST));
+            printf("RCC_FLAG_PORRST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_PORRST));
+            printf("RCC_FLAG_SFTRST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST));
+            printf("RCC_FLAG_IWDG1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_IWDG1RST));
+            printf("RCC_FLAG_WWDG1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_WWDG1RST));
+            printf("RCC_FLAG_LPWR1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_LPWR1RST));
+        }
+    }
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(system_reset_status_check, system_reset_status_check, system wdg check);
 /* USER CODE END 0 */
 
 /**
@@ -417,6 +444,8 @@ int main(void)
   system_fun_init(); 
 
 //   printf("----this is bootloader----\r\n");
+
+  system_reset_status_check();
 
   printf("Init ok\r\n");
 
