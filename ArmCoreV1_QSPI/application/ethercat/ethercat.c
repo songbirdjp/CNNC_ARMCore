@@ -139,7 +139,7 @@ uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len)
     return buf;
 }
 
-uint64_t ethercat_timestamp_get(void)
+static uint64_t ethercat_timestamp_get(void)
 {
     uint8_t count = 0;
     uint64_t timestamp = 0, timestamp_tmp = 0;

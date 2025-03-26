@@ -7,7 +7,6 @@ set(include_path ${include_path}
     "${current_path}/main" 
     "${current_path}/main_app" 
     "${current_path}/sys_cfg" 
-    "${current_path}/timestamp" 
     PARENT_SCOPE)
 
 set(src_path ${src_path}
@@ -17,5 +16,4 @@ set(src_path ${src_path}
     "${current_path}/main/*.*" 
     "${current_path}/main_app/*.*" 
     "${current_path}/sys_cfg/*.*" 
-    "${current_path}/timestamp/*.*" 
     PARENT_SCOPE)

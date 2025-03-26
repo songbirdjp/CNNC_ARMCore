@@ -212,14 +212,21 @@ struct msg_info
 
 static void ulog_output(ulog_level_t severity, char *msg)
 {
+    struct msg_info msg_info = {.level = severity};
+
+#ifdef USING_ULOG_TIMESTAMP
+#if 0
     uint32_t tick_pre_second = osKernelGetTickFreq();
     uint32_t ostick = osKernelGetTickCount();
     time_t time_s_cur =  ostick / tick_pre_second;
     uint32_t time_ms_left = ostick % tick_pre_second;
+#else
+    #include "timestamp.h"
+    uint64_t timestamp_ms = timestamp_ns_get() / 1000000;
+    time_t time_s_cur = (946684800000 + timestamp_ms) / 1000;
+    uint32_t time_ms_left = time_s_cur % 1000;
+#endif
 
-    struct msg_info msg_info = {.level = severity};
-
-#ifdef USING_ULOG_TIMESTAMP
     struct tm tm_temp, *tm;
     
     tm = localtime_r(&time_s_cur, &tm_temp);

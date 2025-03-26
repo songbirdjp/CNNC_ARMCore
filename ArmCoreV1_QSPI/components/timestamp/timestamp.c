@@ -2,7 +2,6 @@
 #include "tim.h"
 #include "init_call.h"
 #include "cmsis_os2.h"
-#include "ethercat.h"
 
 /**
   * @brief This function handles TIM24 global interrupt.
@@ -78,8 +77,7 @@ static int8_t timestamp_entry(void *argument)
         osEventFlagsWait(obj->event, TIMESTAMP_EVENT, osFlagsWaitAny, osWaitForever);
 
         osMutexAcquire(obj->mutex, osWaitForever);
-        obj->timestamp_ns = ethercat_timestamp_get();
-        __HAL_TIM_SET_COUNTER(&htim24, 0);
+        obj->timestamp_ns += (uint64_t)__HAL_TIM_GET_AUTORELOAD(&htim24) * 1000;
         osMutexRelease(obj->mutex);
     }
 
@@ -131,8 +129,8 @@ int8_t timestamp_ns_set(uint64_t timestamp_ns)
     struct timestamp_data *obj = timestamp_obj_get();
 
     osMutexAcquire(obj->mutex, osWaitForever);
-    obj->timestamp_ns = timestamp_ns;
     __HAL_TIM_SET_COUNTER(&htim24, 0);
+    obj->timestamp_ns = timestamp_ns;
     osMutexRelease(obj->mutex);
 
     return 0;
