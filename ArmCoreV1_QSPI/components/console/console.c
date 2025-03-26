@@ -1,13 +1,11 @@
+#include "console.h"
 #include "dev_uart.h"
 #include "drv_uart.h"
 #include "usart.h"
-#include "shell.h"
 #include "FreeRTOS.h"
-#include "task.h"
-#include "rtc.h"
+#include "shell.h"
 #include "init_call.h"
 #include "ulog.h"
-#include "console.h"
 
 #ifndef USING_COM1_FOR_YMODEM
 #define CONSOLE_CMD_MAX_LENGTH 128

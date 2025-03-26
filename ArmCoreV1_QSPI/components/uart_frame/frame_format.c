@@ -10,7 +10,9 @@
  */
 #include "frame_format.h"
 #include "hw_crc.h"
-#include "string.h"
+#include <string.h>
+#include "FreeRTOS.h"
+
 #define FRAME_HEADER_OFFSET 0
 #define FRAME_HEADER_LEN 2
 

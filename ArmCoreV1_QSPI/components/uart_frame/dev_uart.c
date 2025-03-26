@@ -10,8 +10,8 @@
  */
 
 #include "dev_uart.h"
-#include "string.h"
-#include "stdio.h"
+#include <string.h>
+#include <stdio.h>
 #define UART_DEV_MAX_NUM 10
 static uart_dev_t *uart_devs[UART_DEV_MAX_NUM] = {0};
 

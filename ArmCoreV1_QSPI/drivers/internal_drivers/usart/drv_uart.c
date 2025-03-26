@@ -8,13 +8,12 @@
  * @copyright Copyright (c) 2025
  *
  */
-#include "stm32h7xx_hal.h"
-#include "usart.h"
 #include "dev_uart.h"
-#include "stm32h723xx.h"
+#include "usart.h"
 #include "ulog.h"
-#include "string.h"
+#include <string.h>
 #include "init_call.h"
+
 #define USING_UART_OPTION_FUNCTION
 
 typedef struct uart_drv
@@ -97,6 +96,8 @@ static uart_drv_t *uart_drv_get(UART_HandleTypeDef *huart)
     {
         /* add other uart here */ /**<------ add other uart here*/
     }
+
+    return NULL;
 }
 static void ErrorCallback(UART_HandleTypeDef *huart)
 {

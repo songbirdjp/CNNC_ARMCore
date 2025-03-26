@@ -12,9 +12,8 @@
 #define __DEV_UART_H__
 
 #include <stdint.h>
-#include "stdbool.h"
+#include <stdbool.h>
 #include "cmsis_os2.h"
-#include "FreeRTOS.h"
 #ifdef __cplusplus
 extern "C"
 {
