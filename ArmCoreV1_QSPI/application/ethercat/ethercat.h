@@ -14,7 +14,7 @@ int8_t ethercat_recv_data_update_with_block(uint32_t timeout);
 int8_t ethercat_send_data_update(uint16_t *buf, uint16_t len);
 uint16_t *ethercat_recv_data_get(uint16_t *buf, uint16_t len);
 uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len);
-uint64_t ethercat_get_system_time(void);// return unit: us
+uint64_t ethercat_timestamp_get(void);
 
 #ifdef __cpuluplus
 }

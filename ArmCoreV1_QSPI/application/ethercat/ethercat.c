@@ -4,8 +4,7 @@
 #include "lan9252_app.h"
 #include "cmsis_os2.h"
 #include "init_call.h"
-#include "9252_HW.h"
-
+#include "timestamp.h"
 
 int8_t ethercat_slave_appl_cb_register(osEventFlagsId_t output_event, uint32_t event_flag, void (*fun_cb)(void))
 {
@@ -140,25 +139,51 @@ uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len)
     return buf;
 }
 
-uint64_t ethercat_get_system_time(void)
+uint64_t ethercat_timestamp_get(void)
 {
-    uint32_t timeStamp_nsH, timeStamp_nsL;
-    uint64_t u64Stamp;
+    uint8_t count = 0;
+    uint64_t timestamp = 0, timestamp_tmp = 0;
 
-    // system time high
-    HW_EscReadDWord(timeStamp_nsH, ESC_SYSTEMTIME_OFFSET + 4);
-    timeStamp_nsH = SWAPDWORD(timeStamp_nsH);
+    do
+    {
+        HW_EscRead((MEM_ADDR *)&timestamp, ESC_SYSTEMTIME_OFFSET, 8);
+        HW_EscRead((MEM_ADDR *)&timestamp_tmp, ESC_SYSTEMTIME_OFFSET, 8);
 
-    // system time low
-    HW_EscReadDWord(timeStamp_nsL, ESC_SYSTEMTIME_OFFSET);
-    timeStamp_nsL = SWAPDWORD(timeStamp_nsL);
+        if (timestamp < timestamp_tmp)
+        {
+            break;
+        }
 
-    u64Stamp = ((uint64_t)timeStamp_nsH << 32) + timeStamp_nsL;
-    u64Stamp /= 1000;
+        count++;
 
-  // printf("0x%llx 0x%x%x\r\n",u64Stamp,timeStamp_nsH,timeStamp_nsL);
+    }while (count < 10);
 
-    return u64Stamp;
+    if (count == 10)
+    {
+        return 0;
+    }
+
+    return timestamp;
+}
+
+static int8_t ethercat_timestamp_sync(void)
+{
+    uint64_t timestamp_local = timestamp_ns_get();
+    int64_t diff = timestamp_local - u64Timestamp;
+
+    if (llabs(diff) > 2000000)  /* -> ECAT_CheckTimer */
+    {
+        timestamp_ns_set(ethercat_timestamp_get());
+#if 0
+        #include "ulog.h"
+        LOG_I("------sync timestamp------\r\n");
+        LOG_I("u64Timestamp: %#.llx\r\n", u64Timestamp);
+        LOG_I("timestamp_local: %#.llx\r\n", timestamp_local);
+        LOG_I("diff: %lld\r\n", diff);
+#endif
+    }
+
+    return 0;
 }
 
 /*
@@ -175,7 +200,9 @@ static void Ethercatfunc(void *argument)
     for(;;)
     {
 
-        ethercat_slave_main_loop();        
+        ethercat_slave_main_loop();
+
+        ethercat_timestamp_sync();
 
         osDelay(1);
     }
