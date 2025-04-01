@@ -286,7 +286,7 @@ static int8_t tcp_thread_init(void)
 {
     osThreadAttr_t tcp_irq_thread_attributes = {
     .name = "tcp_irq_thread",
-    .stack_size = 1024 * 4,
+    .stack_size = 2048 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
      osThreadAttr_t tcp_send_attributes = {

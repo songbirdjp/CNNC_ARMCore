@@ -93,13 +93,14 @@ int8_t frame_format_parse(uint8_t *buf, uint16_t size, uint16_t *offset, uint16_
     }
 
     /* 2. check crc32 */
+    #if 0
     HAL_StatusTypeDef stat = hardware_crc_config(CRC32);
     if (stat != HAL_OK)
     {
         printf("hw crc32 config error\r\n");
         return -3;
     }
-
+#endif
     uint16_t len = buf[FRAME_DATA_LEN_OFFSET] | buf[FRAME_DATA_LEN_OFFSET + 1] << 8;
     if (size < len + FRAME_EXTRA_LEN)
     {
@@ -107,7 +108,7 @@ int8_t frame_format_parse(uint8_t *buf, uint16_t size, uint16_t *offset, uint16_
         ret = -4;
     }
 
-    uint32_t crc_cal = hardware_crc_calculate(&buf[FRAME_COUNT_OFFSET], len + FRAME_COUNT_LEN + FRAME_DATA_LEN) ^ 0xFFFFFFFF;
+    uint32_t crc_cal = hardware_crc_calculate(CRC32, &buf[FRAME_COUNT_OFFSET], len + FRAME_COUNT_LEN + FRAME_DATA_LEN) ^ 0xFFFFFFFF;
     uint32_t crc_recv = buf[len + FRAME_DATA_OFFSET] | buf[len + FRAME_DATA_OFFSET + 1] << 8 | buf[len + FRAME_DATA_OFFSET + 2] << 16 | buf[len + FRAME_DATA_OFFSET + 3] << 24;
     if (crc_cal != crc_recv)
     {
@@ -185,14 +186,15 @@ int8_t frame_format_pack(uint8_t *buf, uint16_t len)
     memcpy(&buf_send[FRAME_DATA_OFFSET], buf, len);
 
     /* 5. fill crc32 */
+    #if 0
     HAL_StatusTypeDef stat = hardware_crc_config(CRC32);
     if (stat != HAL_OK)
     {
         printf("hw crc32 config error\r\n");
         return -2;
     }
-
-    uint32_t crc_cal = hardware_crc_calculate(&buf_send[FRAME_COUNT_OFFSET], len + FRAME_COUNT_LEN + FRAME_DATA_LEN) ^ 0xFFFFFFFF;
+#endif
+    uint32_t crc_cal = hardware_crc_calculate(CRC32, &buf_send[FRAME_COUNT_OFFSET], len + FRAME_COUNT_LEN + FRAME_DATA_LEN) ^ 0xFFFFFFFF;
     buf_send[len + FRAME_DATA_OFFSET] = crc_cal & 0xFF;
     buf_send[len + FRAME_DATA_OFFSET + 1] = (crc_cal >> 8) & 0xFF;
     buf_send[len + FRAME_DATA_OFFSET + 2] = (crc_cal >> 16) & 0xFF;

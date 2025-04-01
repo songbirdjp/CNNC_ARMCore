@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#define DATA_BUF_SIZE  2048
+#define DATA_BUF_SIZE  4096
 
 typedef struct {
     uint8_t sn;

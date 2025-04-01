@@ -613,7 +613,7 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
     APP_DATA_RECV itemRecv;
     uint32_t retHeadLen = 0;
 
-    printf("recv length = %d\r\n", len);
+   // printf("recv length = %d\r\n", len);
     
     if (strncmp(data, "GET", 3) == 0)
     { // deal with handshake

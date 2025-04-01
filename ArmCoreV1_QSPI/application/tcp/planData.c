@@ -3,6 +3,7 @@
 #include "fpga_rw.h"
 #include <stdio.h>
 #include "main_app.h"
+#include "hw_crc.h"
 
 #define PARAM_SETTING_TAG 1
 #define PLAN_DATA_SETTING_TAG 2
@@ -167,6 +168,8 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
          //   for(i = 12; i < frameHead.frmLength; i++)  printf("0x%x ", info->gDATABUF[i]);
             crcCal = 0xffffffff;
             crcCal = Crc32Buffer(crcCal, &data[12], saveLength);//ok
+           // crcCal = hardware_crc_calculate(CRC32, &data[12], saveLength);
+          //  crcCal^= 0xFFFFFFFF;
         }
         else {
             saveLength = frameHead.frmLength;
@@ -187,6 +190,8 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             }
 
             crcCal = Crc32Buffer(crcCal, &data[16], saveLength);//ok
+          //  crcCal = hardware_crc_calculate(CRC32, &data[16], saveLength);
+          //  crcCal^= 0xFFFFFFFF;
         }
         pSDRAM += sdramLength;
 
@@ -249,6 +254,8 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         crcCal = 0xffffffff;
         crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
         crcCal ^= 0xffffffff;
+      //  crcCal = hardware_crc_calculate(CRC32, &data[6], frameHead.frmLength);
+      //  crcCal^= 0xFFFFFFFF;
         last = u8LenTotal - 1;
         frameEnd.crcHigh = (data[last-2] << 8) + data[last - 3];
         frameEnd.crcLow = (data[last] << 8) + data[last - 1];

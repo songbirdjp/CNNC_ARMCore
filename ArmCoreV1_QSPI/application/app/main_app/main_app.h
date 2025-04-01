@@ -1,6 +1,7 @@
 #ifndef __MAIN_APP_H__
 #define __MAIN_APP_H__
 #include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

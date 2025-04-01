@@ -994,7 +994,7 @@ static int8_t main_app_thread_init(void)
 {
     osThreadAttr_t recv_data_process_thread_attributes = {
     .name = "recv_data_process_thread",
-    .stack_size = 2048 * 4,
+    .stack_size = 3072 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
 
