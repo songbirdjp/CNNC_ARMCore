@@ -129,8 +129,11 @@ int8_t timestamp_ns_set(uint64_t timestamp_ns)
     struct timestamp_data *obj = timestamp_obj_get();
 
     osMutexAcquire(obj->mutex, osWaitForever);
+    __disable_irq();
+    __HAL_TIM_CLEAR_IT(&htim24, TIM_IT_UPDATE);
     __HAL_TIM_SET_COUNTER(&htim24, 0);
     obj->timestamp_ns = timestamp_ns;
+    __enable_irq();
     osMutexRelease(obj->mutex);
 
     return 0;

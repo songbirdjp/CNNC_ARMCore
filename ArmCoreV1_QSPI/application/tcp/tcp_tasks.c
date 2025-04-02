@@ -3,7 +3,6 @@
 #include "tcp_tasks.h"
 #include <stdbool.h>
 #include "init_call.h"
-#include "main.h"
 #include <stdio.h>
 
 #define SOCK_TCPS   0
