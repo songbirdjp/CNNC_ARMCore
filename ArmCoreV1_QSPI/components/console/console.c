@@ -46,6 +46,12 @@ int8_t device_console_init(void)
         return -1;
     }
 
+    ret = dev_uart_open(console);
+    if (ret != 0)
+    {
+        return -2;
+    }    
+
     return 0;
 }
 

@@ -158,7 +158,7 @@ device_err_t dev_uart_init(uart_dev_t *dev, uint16_t oflags, uint32_t queueSpace
     }
     dev->rx_buf_len = queueMsgSize;
 
-    if (dev->ops->open(dev) != 0)
+    if (dev->ops->init(dev) != 0)
     {
         return DEV_EIO;
     }
@@ -217,6 +217,24 @@ device_err_t dev_uart_deinit(uart_dev_t *dev)
     dev->state = UART_STATE_INIT;
 
     return DEV_EOK;
+}
+
+device_err_t dev_uart_open(uart_dev_t *dev)
+{
+    if (dev == NULL)
+    {
+        return DEV_EINVAL;
+    }
+
+    if (dev->ops->open(dev) != 0)
+    {
+        return DEV_EIO;
+    }
+    return DEV_EOK;
+}
+device_err_t dev_uart_close(uart_dev_t *dev)
+{
+    return dev_uart_deinit(dev);
 }
 
 device_err_t dev_uart_send(uart_dev_t *dev, uint8_t *buf, uint16_t len, uint32_t timeout)

@@ -98,6 +98,7 @@ extern "C"
 
     typedef struct device_ops
     {
+        device_err_t (*init)(uart_dev_t *const self);
         device_err_t (*open)(uart_dev_t *const self);
         device_err_t (*close)(uart_dev_t *const self);
         device_err_t (*read)(uart_dev_t *const self, void *const buffer, uint32_t size, uint32_t timeout);
@@ -130,6 +131,8 @@ extern "C"
 
     device_err_t dev_uart_init(uart_dev_t *dev, uint16_t oflags, uint32_t queueSpace, uint32_t queueMsgSize);
     device_err_t dev_uart_deinit(uart_dev_t *dev);
+    device_err_t dev_uart_open(uart_dev_t *dev);
+    device_err_t dev_uart_close(uart_dev_t *dev);
     device_err_t dev_uart_send(uart_dev_t *dev, uint8_t *buf, uint16_t len, uint32_t timeout);
     device_err_t dev_uart_recv(uart_dev_t *dev, uint8_t *buf, uint16_t len, uint32_t timeout);
 
