@@ -26,12 +26,13 @@
 
 #define FRAME_CRC_LEN 4
 #define FRAME_EXTRA_LEN (FRAME_DATA_OFFSET + FRAME_CRC_LEN)
+
+#define FRAME_ACTUAL_CRC_LEN (FRAME_COUNT_OFFSET + FRAME_CRC_LEN)
 typedef struct uart_frame
 {
     uint16_t header;
     uint16_t count;
     uint16_t data_len;
-    uint8_t data;
     uint32_t crc;
 } __attribute__((packed)) uart_frame_t;
 
@@ -62,7 +63,7 @@ static int32_t crc_calculate_callback(void *self, uint32_t *crc, uint8_t *data, 
         return -1;
     }
     /*TODO:根据self调用相应的硬件crc计算函数*/
-    *crc = hardware_crc_calculate(CRC32, data, size);
+    *crc = hardware_crc_calculate(CRC32, data, size) ^ 0xFFFFFFFF;
     return 0;
 }
 static void frame_format_timer_callback(void *arg)
@@ -74,16 +75,13 @@ static void frame_format_timer_callback(void *arg)
     {
         return;
     }
-
     if (self->tx_retry_count >= self->retry_count)
     {
         self->frame_format_statistics.send_error_count++;
-        self->frame_format_statistics.send_lose_rate =
-            (float)self->frame_format_statistics.send_error_count / (float)self->frame_format_statistics.send_total_count;
         return;
     }
 
-    ret = self->send_func(self->tx_buffer, self->tx_data_len, 1000, self->send_arg);
+    ret = self->send_func(self->tx_buffer, self->tx_retry_data_len, 1000, self->send_arg);
     if (ret != 0)
     {
         return;
@@ -124,20 +122,48 @@ int32_t frame_format_init(frame_format_t *self,
     }
     self->osSemaphoreId = osSemaphoreNew(1, 0, NULL);
 
-    self->rx_buffer = pvPortMalloc(rx_buffer_size + FRAME_EXTRA_LEN);
+    self->rx_buffer = pvPortMalloc(rx_buffer_size);
     if (self->rx_buffer == NULL)
     {
         return -3;
     }
     self->rx_buffer_size = rx_buffer_size;
 
-    self->tx_buffer = pvPortMalloc(tx_buffer_size + FRAME_EXTRA_LEN);
+    self->tx_buffer = pvPortMalloc(tx_buffer_size);
     if (self->tx_buffer == NULL)
     {
         return -4;
     }
+    self->tx_response_buffer = pvPortMalloc(tx_buffer_size);
+    if (self->tx_response_buffer == NULL)
+    {
+        return -5;
+    }
     self->tx_buffer_size = tx_buffer_size;
-
+    const osMutexAttr_t tx_retry_mutex_attr =
+        {
+            .name = "uart_protocol_tx_retry_mutex",
+            .attr_bits = osMutexPrioInherit | osMutexRecursive,
+            .cb_mem = NULL,
+            .cb_size = 0,
+        };
+    self->tx_mutex = osMutexNew(&tx_retry_mutex_attr);
+    if (self->tx_mutex == NULL)
+    {
+        return -6;
+    }
+    const osMutexAttr_t tx_mutex_attr =
+        {
+            .name = "uart_protocol_tx_mutex",
+            .attr_bits = osMutexPrioInherit | osMutexRecursive,
+            .cb_mem = NULL,
+            .cb_size = 0,
+        };
+    self->tx_response_mutex = osMutexNew(&tx_mutex_attr);
+    if (self->tx_response_mutex == NULL)
+    {
+        return -7;
+    }
     frame_format_set_format(self,
                             0xAA55,
                             CRC_TYPE_CRC_32,
@@ -148,7 +174,6 @@ int32_t frame_format_init(frame_format_t *self,
     self->crc_check_state = crc_check_state;
     self->retry_count = retry_count;
     self->timeout_ms = timeout_ms;
-    self->uart_state = UART_STATE_NORMAL;
     return 0;
 }
 int32_t frame_format_send_func_register(frame_format_t *self, uart_xfer_func_t send_func, void *arg)
@@ -181,43 +206,110 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
         return -1;
     }
 
-    self->frame_format_statistics.send_total_count++;
-    self->frame_format_statistics.send_lose_rate =
-        (float)self->frame_format_statistics.send_error_count / (float)self->frame_format_statistics.send_total_count;
-
-    memcpy(self->tx_buffer + FRAME_DATA_OFFSET, data, data_len);
-    *(uint16_t *)&(self->tx_buffer[FRAME_HEADER_OFFSET]) = self->format.header;
-    *(uint16_t *)&(self->tx_buffer[FRAME_COUNT_OFFSET]) = self->send_count;
-    *(uint16_t *)&(self->tx_buffer[FRAME_DATA_LEN_OFFSET]) = data_len;
-    ret = self->format.crc_func(&self->format, &crc, data, data_len);
-    if (ret != 0)
+    if (data[1] & 0x80) // send a response frame
     {
-        return -2;
-    }
-    *(uint32_t *)&(self->tx_buffer[FRAME_DATA_OFFSET + data_len]) = crc;
-    self->tx_data_len = FRAME_EXTRA_LEN + data_len;
+        status = osMutexAcquire(self->tx_response_mutex, timeout);
+        if (status != osOK)
+        {
+            return -2;
+        }
+        self->frame_format_statistics.send_total_count++;
 
-    ret = self->send_func(self->tx_buffer, data_len + FRAME_EXTRA_LEN, timeout, self->send_arg);
-    if (ret != 0)
+        memcpy(self->tx_response_buffer + FRAME_DATA_OFFSET, data, data_len);
+        *(uint16_t *)&(self->tx_response_buffer[FRAME_HEADER_OFFSET]) = self->format.header;
+        *(uint16_t *)&(self->tx_response_buffer[FRAME_COUNT_OFFSET]) = self->recv_count;
+        *(uint16_t *)&(self->tx_response_buffer[FRAME_DATA_LEN_OFFSET]) = data_len;
+
+        self->tx_data_len = FRAME_EXTRA_LEN + data_len;
+        ret = self->format.crc_func(&self->format, &crc, self->tx_response_buffer + FRAME_COUNT_OFFSET, self->tx_data_len - FRAME_ACTUAL_CRC_LEN);
+        if (ret != 0)
+        {
+            ret = -3;
+            goto err;
+        }
+        *(uint32_t *)&(self->tx_response_buffer[FRAME_DATA_OFFSET + data_len]) = crc;
+
+        ret = self->send_func(self->tx_response_buffer, data_len + FRAME_EXTRA_LEN, timeout, self->send_arg);
+        if (ret != 0)
+        {
+            ret = -4;
+            goto err;
+        }
+        osMutexRelease(self->tx_response_mutex);
+        return 0;
+    err:
+        osMutexRelease(self->tx_response_mutex);
+        return ret;
+    }
+    else
     {
-        return -3;
-    }
-    self->tx_retry_count = 0;
-    status = osTimerStart(self->osTimerId, self->timeout_ms / portTICK_RATE_MS);
-    if (status != osOK)
-    {
-        return -4;
-    }
+        status = osMutexAcquire(self->tx_mutex, timeout);
+        if (status != osOK)
+        {
+            return -5;
+        }
+        self->frame_format_statistics.send_total_count++;
 
-    status = osSemaphoreAcquire(self->osSemaphoreId, timeout);
+        memcpy(self->tx_buffer + FRAME_DATA_OFFSET, data, data_len);
+        *(uint16_t *)&(self->tx_buffer[FRAME_HEADER_OFFSET]) = self->format.header;
+        *(uint16_t *)&(self->tx_buffer[FRAME_COUNT_OFFSET]) = self->send_count;
+        *(uint16_t *)&(self->tx_buffer[FRAME_DATA_LEN_OFFSET]) = data_len;
+        self->tx_retry_data_len = FRAME_EXTRA_LEN + data_len;
+        ret = self->format.crc_func(&self->format, &crc, self->tx_buffer + FRAME_COUNT_OFFSET, self->tx_retry_data_len - FRAME_ACTUAL_CRC_LEN);
+        if (ret != 0)
+        {
+            ret = -6;
+            goto error;
+        }
+        *(uint32_t *)&(self->tx_buffer[FRAME_DATA_OFFSET + data_len]) = crc;
 
-    self->send_count++;
+        ret = self->send_func(self->tx_buffer, data_len + FRAME_EXTRA_LEN, timeout, self->send_arg);
+        if (ret != 0)
+        {
+            ret = -7;
+            goto error;
+        }
 
-    if (status != osOK)
-    {
-        return -5;
+        if (data[0] & 0x01) // send a request frame
+        {
+            if (self->retry_count > 0)
+            {
+                self->recv_response_count = *(uint16_t *)&(self->tx_buffer[FRAME_COUNT_OFFSET]);
+                self->tx_retry_count = 0;
+                status = osTimerStart(self->osTimerId, self->timeout_ms / portTICK_RATE_MS);
+                if (status != osOK)
+                {
+                    ret = -8;
+                    goto error;
+                }
+            }
+
+            status = osSemaphoreAcquire(self->osSemaphoreId, timeout);
+            if (status != osOK)
+            {
+                self->send_count++;
+                ret = -9;
+                goto error;
+            }
+            if (osTimerIsRunning(self->osTimerId) != 0)
+            {
+                status = osTimerStop(self->osTimerId);
+                if (status != osOK)
+                {
+                    self->send_count++;
+                    ret = -10;
+                    goto error;
+                }
+            }
+        }
+
+        self->send_count++;
+        osMutexRelease(self->tx_mutex);
+        return 0;
+    error:
+        osMutexRelease(self->tx_mutex);
+        return ret;
     }
-    
     return 0;
 }
 
@@ -231,8 +323,7 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t data_len
     {
         return -1;
     }
-recv_again:
-    ret = self->recv_func(self->rx_buffer, recv_len, timeout, self->recv_arg);
+    ret = self->recv_func(self->rx_buffer, data_len, timeout, self->recv_arg);
     if (ret != 0)
     {
         return -2;
@@ -243,76 +334,45 @@ recv_again:
     {
         return -3;
     }
-    if (recv_len == sizeof(uart_frame_t)) // receive a response frame
+
+    self->frame_format_statistics.recv_total_count++;
+
+    if (self->crc_check_state == true)
     {
-        self->format.crc_func(&self->format, &crc, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
-        if (crc != *(uint32_t *)&(self->rx_buffer[recv_len - sizeof(uint32_t)]))
+        self->format.crc_func(&self->format, &crc, self->rx_buffer + FRAME_COUNT_OFFSET, recv_len - FRAME_ACTUAL_CRC_LEN);
+        if (crc != *(uint32_t *)&(self->rx_buffer[recv_len - FRAME_CRC_LEN]))
         {
+            self->frame_format_statistics.recv_crc_error_count++;
             return -4;
         }
-        if (self->send_count != ((uart_frame_t *)self->rx_buffer)->count)
+    }
+
+    if (self->rx_buffer[FRAME_DATA_OFFSET + 1] & 0x80) // receive a response frame
+    {
+        if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)
         {
             return -5;
-        }
-        status = osTimerStop(self->osTimerId);
-        if (status != osOK)
-        {
-            return -6;
         }
         status = osSemaphoreRelease(self->osSemaphoreId);
         if (status != osOK)
         {
-            return -7;
+            return -6;
         }
-
-        goto recv_again;
     }
     else
     {
-        self->frame_format_statistics.recv_total_count++;
-        self->frame_format_statistics.recv_lose_rate =
-            (float)self->frame_format_statistics.recv_lose_count /
-            (float)(self->frame_format_statistics.recv_total_count + self->frame_format_statistics.recv_lose_count);
-            
-        if (self->crc_check_state == true)
+        uint16_t count = *(uint16_t *)(self->rx_buffer + FRAME_COUNT_OFFSET);
+
+        if (count > self->recv_count)
         {
-            self->format.crc_func(&self->format, &crc, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
-            if (crc != *(uint32_t *)&(self->rx_buffer[recv_len - FRAME_CRC_LEN]))
-            {
-                self->frame_format_statistics.recv_crc_error_count++;
-                return -8;
-            }
+            self->frame_format_statistics.recv_lose_count += count - self->recv_count - 1;
+        }
+        else if (count < self->recv_count)
+        {
+            self->frame_format_statistics.recv_lose_count += 0xFFFF - self->recv_count + count;
         }
 
-        uart_frame_t response_frame = {
-            .header = *(uint16_t *)(self->rx_buffer + FRAME_HEADER_OFFSET),
-            .count = *(uint16_t *)(self->rx_buffer + FRAME_COUNT_OFFSET),
-            .data_len = 1,
-            .data = self->rx_buffer[FRAME_DATA_OFFSET],
-            .crc = 0,
-        };
-        self->format.crc_func(&self->format,
-                              &response_frame.crc,
-                              (uint8_t *)&response_frame + FRAME_DATA_OFFSET,
-                              sizeof(uart_frame_t) - FRAME_EXTRA_LEN);
-        ret = self->send_func((uint8_t *)&response_frame, sizeof(uart_frame_t), timeout, (void *)self->send_arg);
-        if (ret != 0)
-        {
-            return -9;
-        }
-        if(response_frame.count > self->recv_count)
-        {
-            self->frame_format_statistics.recv_lose_count +=  response_frame.count - self->recv_count - 1;
-        }
-        else if(response_frame.count < self->recv_count)
-        {
-            self->frame_format_statistics.recv_lose_count +=  0xFFFF - self->recv_count + response_frame.count;
-        }
-        self->frame_format_statistics.recv_lose_rate =
-            (float)self->frame_format_statistics.recv_lose_count /
-            (float)(self->frame_format_statistics.recv_total_count + self->frame_format_statistics.recv_lose_count);
-
-        self->recv_count = response_frame.count;
+        self->recv_count = count;
     }
     memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
     return 0;
@@ -324,6 +384,13 @@ int32_t frame_format_get_statistics(frame_format_t *self, frame_format_statistic
     {
         return -1;
     }
+    self->frame_format_statistics.send_lose_rate =
+        (float)self->frame_format_statistics.send_error_count / (float)self->frame_format_statistics.send_total_count;
+
+    self->frame_format_statistics.recv_lose_rate =
+        (float)self->frame_format_statistics.recv_lose_count /
+        (float)(self->frame_format_statistics.recv_total_count + self->frame_format_statistics.recv_lose_count);
+
     memcpy(statistics, &self->frame_format_statistics, sizeof(frame_format_statistics_t));
     return 0;
 }

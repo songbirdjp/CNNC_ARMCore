@@ -47,7 +47,7 @@ static int8_t drv_uart_read_complete(uart_drv_t *uart);
 #endif
 
 static uart_drv_t *uart_drv_get(UART_HandleTypeDef *huart);
-
+static int8_t drv_uart_init(uart_dev_t *const self);
 static void ErrorCallback(UART_HandleTypeDef *huart)
 {
     uart_drv_t *uart_drv = uart_drv_get(huart);
@@ -92,50 +92,6 @@ static void TxCpltCallback(UART_HandleTypeDef *huart)
         return;
     }
     device_uart_send_handler(&uart_drv->dev);
-}
-
-static int8_t drv_uart_init(uart_dev_t *const self)
-{
-    if (self == NULL)
-    {
-        return -1;
-    }
-    uart_drv_t *uart_drv = (uart_drv_t *)self->user_data;
-    if (uart_drv->huart == NULL)
-    {
-        return -2;
-    }
-    __disable_irq();
-    if (!memcmp(uart_drv->dev.name, UART_DEV_NAME_CONSOLE, sizeof(UART_DEV_NAME_CONSOLE)))
-    {
-        MX_USART1_UART_Init();
-    }
-    else
-    {
-        /* add other uart here */ /**<------ add other uart here*/
-    }
-    __HAL_UART_DISABLE(uart_drv->huart);
-    __HAL_UART_DISABLE_IT(uart_drv->huart, UART_IT_ERR);
-    __HAL_UART_CLEAR_FLAG(uart_drv->huart, UART_CLEAR_PEF |
-                                               UART_CLEAR_FEF |
-                                               UART_CLEAR_NEF |
-                                               UART_CLEAR_OREF |
-                                               UART_CLEAR_IDLEF |
-                                               UART_CLEAR_TXFECF |
-                                               UART_CLEAR_TCF |
-                                               UART_CLEAR_LBDF |
-                                               UART_CLEAR_CTSF |
-                                               UART_CLEAR_CMF |
-                                               UART_CLEAR_WUF |
-                                               UART_CLEAR_RTOF);
-                                               
-    HAL_UART_RegisterCallback(uart_drv->huart, HAL_UART_ERROR_CB_ID, ErrorCallback);
-    HAL_UART_RegisterCallback(uart_drv->huart, HAL_UART_TX_COMPLETE_CB_ID, TxCpltCallback);
-    HAL_UART_RegisterRxEventCallback(uart_drv->huart, RxEventCallback);
-
-    __enable_irq();
-
-    return 0;
 }
 
 static int8_t drv_uart_open(uart_dev_t *const self)
@@ -303,7 +259,7 @@ static int32_t drv_uart_register(uart_drv_t *drv,
     drv->opt = &uart_opt;
 #endif
 
-    static device_ops_t const uart_ops = {
+    static device_uart_ops_t const uart_ops = {
         .init = drv_uart_init,
         .open = drv_uart_open,
         .close = drv_uart_close,
@@ -315,7 +271,7 @@ static int32_t drv_uart_register(uart_drv_t *drv,
     int32_t ret = device_uart_register(&drv->dev,
                                        name,
                                        uart_type,
-                                       (device_ops_t *const)&uart_ops,
+                                       (device_uart_ops_t *const)&uart_ops,
                                        drv);
     if (ret != 0)
     {
@@ -325,8 +281,50 @@ static int32_t drv_uart_register(uart_drv_t *drv,
     return 0;
 }
 
-
 /********************************************add user defined uart below******************************************************************/
+static int8_t drv_uart_init(uart_dev_t *const self)
+{
+    if (self == NULL)
+    {
+        return -1;
+    }
+    uart_drv_t *uart_drv = (uart_drv_t *)self->user_data;
+    if (uart_drv->huart == NULL)
+    {
+        return -2;
+    }
+    __disable_irq();
+    if (!memcmp(uart_drv->dev.name, UART_DEV_NAME_CONSOLE, sizeof(UART_DEV_NAME_CONSOLE)))
+    {
+        MX_USART1_UART_Init();
+    }
+    else
+    {
+        /* add other uart here */ /**<------ add other uart here*/
+    }
+    __HAL_UART_DISABLE(uart_drv->huart);
+    __HAL_UART_DISABLE_IT(uart_drv->huart, UART_IT_ERR);
+    __HAL_UART_CLEAR_FLAG(uart_drv->huart, UART_CLEAR_PEF |
+                                               UART_CLEAR_FEF |
+                                               UART_CLEAR_NEF |
+                                               UART_CLEAR_OREF |
+                                               UART_CLEAR_IDLEF |
+                                               UART_CLEAR_TXFECF |
+                                               UART_CLEAR_TCF |
+                                               UART_CLEAR_LBDF |
+                                               UART_CLEAR_CTSF |
+                                               UART_CLEAR_CMF |
+                                               UART_CLEAR_WUF |
+                                               UART_CLEAR_RTOF);
+                                               
+    HAL_UART_RegisterCallback(uart_drv->huart, HAL_UART_ERROR_CB_ID, ErrorCallback);
+    HAL_UART_RegisterCallback(uart_drv->huart, HAL_UART_TX_COMPLETE_CB_ID, TxCpltCallback);
+    HAL_UART_RegisterRxEventCallback(uart_drv->huart, RxEventCallback);
+
+    __enable_irq();
+
+    return 0;
+}
 static uart_drv_t usart1;
 /*static uart_drv_t usartx;*/ /**<------ add other uart here*/
 

@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cmsis_os2.h"
-
+#include "FreeRTOS.h"
 #ifdef __cplusplus
 extern "C"
 {
@@ -60,15 +60,6 @@ extern "C"
 
         crc_func_t crc_func;
     } format_t;
-
-    typedef enum frame_format_uart_state
-    {
-        UART_STATE_NULL = 0,
-        UART_STATE_NORMAL,
-        UART_STATE_SEND_FAULT,
-        UART_STATE_RECV_FAULT,
-        UART_STATE_SEND_RECV_FAULT,
-    } frame_format_uart_state_t;
     typedef struct frame_format_statistics
     {
         uint32_t send_total_count;
@@ -91,8 +82,13 @@ extern "C"
         osTimerId_t osTimerId;
         osSemaphoreId_t osSemaphoreId;
 
-
+        osMutexId_t tx_mutex;
         uint8_t *tx_buffer;
+        uint32_t tx_retry_data_len;
+
+        osMutexId_t tx_response_mutex;
+        uint8_t *tx_response_buffer;
+
         uint32_t tx_data_len;
         uint32_t tx_buffer_size;
         uart_xfer_func_t send_func;
@@ -103,11 +99,11 @@ extern "C"
         uint32_t rx_buffer_size;
         uart_xfer_func_t recv_func;
         void *recv_arg;
+        uint16_t recv_response_count;
 
         uint16_t send_count;
         uint16_t recv_count;
 
-        frame_format_uart_state_t uart_state;
         frame_format_statistics_t frame_format_statistics;
     } frame_format_t;
 

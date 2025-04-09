@@ -77,7 +77,7 @@ extern "C"
         uint16_t open_count;
         uart_state_t state;
 
-        struct device_ops const *ops; /**< Device operations */
+        struct device_uart_ops const *ops; /**< Device operations */
         void *user_data;              /**< Private data */
 #ifdef USE_FRAME_FORMAT
         bool use_frame_format;
@@ -88,6 +88,7 @@ extern "C"
     typedef enum uart_cmd
     {
         DEV_UART_IOCTL_MIN = 0,
+        DEV_UART_IOCTL_USED_FRAME,
 /* Add user ioctl commands here */
 #ifdef USE_FRAME_FORMAT
         DEV_UART_IOCTL_SET_FRAME_FORMAT,
@@ -96,7 +97,7 @@ extern "C"
         DEV_UART_IOCTL_MAX,
     } uart_cmd_t;
 
-    typedef struct device_ops
+    typedef struct device_uart_ops
     {
         device_err_t (*init)(uart_dev_t *const self);
         device_err_t (*open)(uart_dev_t *const self);
@@ -104,11 +105,11 @@ extern "C"
         device_err_t (*read)(uart_dev_t *const self, void *const buffer, uint32_t size, uint32_t timeout);
         device_err_t (*write)(uart_dev_t *const self, void const *const buffer, uint32_t size, uint32_t timeout);
         device_err_t (*ioctl)(uart_dev_t *const self, uint8_t cmd, void *const arg);
-    } device_ops_t;
+    } device_uart_ops_t;
     int32_t device_uart_register(uart_dev_t *const self,
                                  const char *name,
                                  uart_type_t uart_type,
-                                 device_ops_t const *const device_ops,
+                                 device_uart_ops_t const *const device_ops,
                                  void *const user_data);
     void device_uart_recv_handler(uart_dev_t *const self, void *const buffer, uint32_t size);
     void device_uart_send_handler(uart_dev_t *const self);
@@ -130,22 +131,16 @@ extern "C"
 #define DEV_UART_IOCTL_USE_BLOCKING 0x02 /* blocking mode, non-dma mode，not yet supported*/
 
     device_err_t dev_uart_init(uart_dev_t *dev, uint16_t oflags, uint32_t queueSpace, uint32_t queueMsgSize);
-    device_err_t dev_uart_deinit(uart_dev_t *dev);
     device_err_t dev_uart_open(uart_dev_t *dev);
     device_err_t dev_uart_close(uart_dev_t *dev);
     device_err_t dev_uart_send(uart_dev_t *dev, uint8_t *buf, uint16_t len, uint32_t timeout);
     device_err_t dev_uart_recv(uart_dev_t *dev, uint8_t *buf, uint16_t len, uint32_t timeout);
 
-#ifdef USE_FRAME_FORMAT
-#define DEV_UART_CMD_SET_FRAME_FORMAT DEV_UART_IOCTL_SET_FRAME_FORMAT
+#define DEV_UART_CMD_USED_FRAME_FORMAT DEV_UART_IOCTL_USED_FRAME
     typedef struct frame_format_arg
     {
         bool use_frame_format; /* enable or disable frame format */
-        bool crc_check_state;  /* enable or disable crc check */
-        uint8_t retry_count;   /* retry count */
-        uint32_t timeout_ms;   /* timeout in ms */
-    } frame_format_arg_t;
-#endif
+    } frame_used_arg_t;
     device_err_t dev_uart_config(uart_dev_t *dev, uint8_t cmd, void *arg);
 #ifdef __cplusplus
 }
