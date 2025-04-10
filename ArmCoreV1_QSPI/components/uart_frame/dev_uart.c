@@ -76,43 +76,39 @@ typedef struct
 static void uart_recv_buf_handle(uart_dev_t *const self, void *const buffer, uint32_t size)
 {
     osStatus_t ret = osOK;
-    uint8_t data[sizeof(uart_frame_t)] = {0};
     uint16_t frame_len = 0;
     if (self == NULL || buffer == NULL || size == 0)
     {
         return;
     }
-    for (uint8_t i = 0; i < size; i++)
+    for (uint32_t i = 0; i < size; i++)
     {
         if (*(uint16_t *)((uint8_t *)buffer + i) == 0xAA55)
         {
             frame_len = *(uint16_t *)((uint8_t *)buffer + i + 4) + 10;
             if (frame_len > size)
             {
-                goto ret;
+                break;
             }
-            memcpy(data, ((uint8_t *)buffer + i), frame_len);
-            *(uint16_t *)((uint8_t *)data + self->rx_buf_len - sizeof(uint16_t)) = frame_len;
-            ret = osMessageQueuePut(self->osMessageQueueId_rx, data, 0, 0);
+            memcpy(self->rx_buf_tmp, ((uint8_t *)buffer + i), frame_len);
+            *(uint16_t *)(self->rx_buf_tmp + self->rx_buf_len - sizeof(uint16_t)) = frame_len;
+            ret = osMessageQueuePut(self->osMessageQueueId_rx, self->rx_buf_tmp, 0, 0);
             if (ret != osOK)
             {
                 // TODO: handle error
-                goto ret;
+                break;
             }
             if (frame_len < size)
             {
                 i += frame_len - 1;
                 continue;
-                break;
             }
             else
             {
-                goto ret;
+                break;
             }
         }
     }
-ret:
-    memset(buffer, 0, self->rx_buf_len);
 }
 
 void device_uart_recv_handler(uart_dev_t *const self, void *const buffer, uint32_t size)
@@ -205,6 +201,12 @@ device_err_t dev_uart_init(uart_dev_t *dev, uint16_t oflags, uint32_t queueSpace
         return DEV_ENOMEM;
     }
     dev->rx_buf_len = queueMsgSize;
+
+    dev->rx_buf_tmp = (uint8_t *)pvPortMalloc(sizeof(uart_frame_t));
+    if (dev->rx_buf_tmp == NULL)
+    {
+        return DEV_ENOMEM;
+    }
 
     if (dev->ops->init(dev) != 0)
     {

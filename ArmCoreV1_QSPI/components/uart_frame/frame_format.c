@@ -235,11 +235,9 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
             ret = -4;
             goto err;
         }
-        osMutexRelease(self->tx_response_mutex);
-        return 0;
+
     err:
         osMutexRelease(self->tx_response_mutex);
-        return ret;
     }
     else
     {
@@ -284,13 +282,14 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
                 }
             }
 
-            status = osSemaphoreAcquire(self->osSemaphoreId, timeout);
+            status = osSemaphoreAcquire(self->osSemaphoreId, timeout);  /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
             if (status != osOK)
             {
                 self->send_count++;
                 ret = -9;
                 goto error;
             }
+            /* TODO： 收到应答帧后，此处可以返回应答状态给到应用层，在应用层可以选择是否等待该状态 */
             if (osTimerIsRunning(self->osTimerId) != 0)
             {
                 status = osTimerStop(self->osTimerId);
@@ -304,13 +303,11 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
         }
 
         self->send_count++;
-        osMutexRelease(self->tx_mutex);
-        return 0;
+
     error:
         osMutexRelease(self->tx_mutex);
-        return ret;
     }
-    return 0;
+    return ret;
 }
 
 int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t data_len, uint32_t timeout)
@@ -347,6 +344,8 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t data_len
         }
     }
 
+    memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
+
     if (self->rx_buffer[FRAME_DATA_OFFSET + 1] & 0x80) // receive a response frame
     {
         if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)
@@ -374,7 +373,6 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t data_len
 
         self->recv_count = count;
     }
-    memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
     return 0;
 }
 

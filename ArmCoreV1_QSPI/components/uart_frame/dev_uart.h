@@ -73,6 +73,8 @@ extern "C"
         uint8_t *rx_buf; /* used for dma */
         uint16_t rx_buf_len;
 
+        uint8_t *rx_buf_tmp;
+
         bool open_state;
         uint16_t open_count;
         uart_state_t state;

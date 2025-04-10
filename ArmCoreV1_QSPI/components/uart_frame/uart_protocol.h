@@ -27,16 +27,17 @@ extern "C"
 
     typedef enum
     {
-        UART_PROTOCOL_HEARTBEAT_RX_CB_ID = 0, /*!< heartbeat rx callback id */
-        UART_PROTOCOL_PNT_RX_CB_ID,           /*!< pnt rx callback id */
-        UART_PROTOCOL_CONFIG_SET_RX_CB_ID,    /*!< config set rx callback id */
-        UART_PROTOCOL_CONFIG_GET_RX_CB_ID,    /*!< config get rx callback id */
-        UART_PROTOCOL_SET_RX_CB_ID,           /*!< set rx callback id */
-        UART_PROTOCOL_GET_RX_CB_ID,           /*!< get rx callback id */
+        UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID = 0, /*!< heartbeat rx timeout callback id */
+        UART_PROTOCOL_HEARTBEAT_RX_CB_ID,       /*!< heartbeat rx callback id */
+        UART_PROTOCOL_PNT_RX_CB_ID,             /*!< pnt rx callback id */
+        UART_PROTOCOL_CONFIG_SET_RX_CB_ID,      /*!< config set rx callback id */
+        UART_PROTOCOL_CONFIG_GET_RX_CB_ID,      /*!< config get rx callback id */
+        UART_PROTOCOL_SET_RX_CB_ID,             /*!< set rx callback id */
+        UART_PROTOCOL_GET_RX_CB_ID,             /*!< get rx callback id */
+        UART_PROTOCOL_REBOOT_RX_CB_ID,          /*!< reset rx callback id */
         UART_PROTOCOL_MAX_RX_CB_ID,
 
-        UART_PROTOCOL_HEARTBEAT_TIMEOUT_CB_ID = 0, /*!< heartbeat timeout callback id */
-        UART_PROTOCOL_HEARTBEAT_TX_CB_ID,          /*!< heartbeat tx callback id */
+        UART_PROTOCOL_HEARTBEAT_TX_CB_ID = 0,      /*!< heartbeat tx callback id */
         UART_PROTOCOL_PNT_TX_CB_ID,                /*!< pnt tx callback id */
         UART_PROTOCOL_MAX_TX_CB_ID,
     } uart_protocol_CallbackIDTypeDef;
@@ -44,7 +45,7 @@ extern "C"
     typedef int32_t (*uart_protocol_rx_callback_t)(struct uart_protocol *const self,
                                                   uint8_t ID,
                                                   const uint8_t *data,
-                                                  uint16_t len,
+                                                  uint16_t *len,
                                                   void *arg); /*接收数据传入*/
     typedef int32_t (*uart_protocol_tx_callback_t)(struct uart_protocol *const self,
                                                   uint8_t *data,
@@ -134,12 +135,9 @@ extern "C"
                               const uint8_t *data,
                               uint16_t *len,
                               uint32_t timeout);
-    int32_t uart_protocol_get_response(uart_protocol_t *const self,
-                                       uint8_t ID,
-                                       uint8_t cmd,
-                                       const uint8_t *data,
-                                       uint16_t len,
-                                       uint32_t timeout);
+    int32_t uart_protocol_reboot(uart_protocol_t *const self,
+                                 uint8_t ID,
+                                 uint32_t timeout);
 #ifdef __cplusplus
 }
 #endif

@@ -50,7 +50,7 @@ int8_t device_console_init(void)
     if (ret != 0)
     {
         return -2;
-    }    
+    }
 
     return 0;
 }

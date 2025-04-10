@@ -85,20 +85,21 @@ static void uart_protocol_heartbeat_tx_timer_callback(void *arg)
         }
     }
 }
-static void uart_protocol_heartbeat_timeout_timer_callback(void *arg)
+static void uart_protocol_heartbeat_rx_timeout_timer_callback(void *arg)
 {
     if (arg == NULL)
     {
         return;
     }
     uart_protocol_t *uart_protocol = (uart_protocol_t *)arg;
-    if (uart_protocol->uart_protocol_tx_callback[UART_PROTOCOL_HEARTBEAT_TIMEOUT_CB_ID].pCallback != NULL)
+    if (uart_protocol->uart_protocol_rx_callback[UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID].pCallback != NULL)
     {
 
-        if (0 != uart_protocol->uart_protocol_tx_callback[UART_PROTOCOL_HEARTBEAT_TIMEOUT_CB_ID].pCallback(uart_protocol,
-                                                                                                           NULL,
-                                                                                                           0,
-                                                                                                           uart_protocol->uart_protocol_tx_callback[UART_PROTOCOL_HEARTBEAT_TIMEOUT_CB_ID].arg))
+        if (0 != uart_protocol->uart_protocol_rx_callback[UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID].pCallback(uart_protocol,
+                                                                                                                0,
+                                                                                                                NULL,
+                                                                                                                0,
+                                                                                                                uart_protocol->uart_protocol_rx_callback[UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID].arg))
         {
             return;
         }
@@ -197,48 +198,6 @@ int32_t uart_protocol_init(uart_protocol_t *const self,
         return -4;
     }
 
-    self->uart_protocol_heartbeat_timer = osTimerNew(uart_protocol_heartbeat_tx_timer_callback,
-                                                     osTimerPeriodic,
-                                                     self,
-                                                     NULL);
-    if (self->uart_protocol_heartbeat_timer == NULL)
-    {
-        return -5;
-    }
-    osStatus = osTimerStart(self->uart_protocol_heartbeat_timer, heartbeat_tx_timeout / portTICK_PERIOD_MS);
-    if (osStatus != osOK)
-    {
-        return -6;
-    }
-
-    self->uart_protocol_heartbeat_timeout_timer = osTimerNew(uart_protocol_heartbeat_timeout_timer_callback,
-                                                             osTimerOnce,
-                                                             self,
-                                                             NULL);
-    if (self->uart_protocol_heartbeat_timeout_timer == NULL)
-    {
-        return -7;
-    }
-    osStatus = osTimerStart(self->uart_protocol_heartbeat_timeout_timer, heartbeat_rx_timeout / portTICK_PERIOD_MS);
-    if (osStatus != osOK)
-    {
-        return -8;
-    }
-    self->uart_protocol_heartbeat_rx_timeout = heartbeat_rx_timeout;
-    self->uart_protocol_pnt_timer = osTimerNew(uart_protocol_pnt_timer_callback,
-                                               osTimerPeriodic,
-                                               self,
-                                               NULL);
-    if (self->uart_protocol_pnt_timer == NULL)
-    {
-        return -9;
-    }
-    osStatus = osTimerStart(self->uart_protocol_pnt_timer, pnt_timeout / portTICK_PERIOD_MS);
-    if (osStatus != osOK)
-    {
-        return -10;
-    }
-    /*TODO:开放配置接口 */
     ret = frame_format_init(&self->frame_format,
                             true,
                             3,
@@ -247,19 +206,19 @@ int32_t uart_protocol_init(uart_protocol_t *const self,
                             UART_PROTOCOL_FRAME_QUEUE_SIZE);
     if (ret != 0)
     {
-        return -12;
+        return -5;
     }
 
     ret = frame_format_send_func_register(&self->frame_format, uart_send_func, self);
     if (ret != 0)
     {
-        return -13;
+        return -6;
     }
 
     ret = frame_format_recv_func_register(&self->frame_format, uart_recv_func, self);
     if (ret != 0)
     {
-        return -14;
+        return -7;
     }
 
     queue_attributes.name = "get_rx_response_queue";
@@ -270,8 +229,51 @@ int32_t uart_protocol_init(uart_protocol_t *const self,
 
     if ((self->get_rx_response_queue == NULL) || (self->config_get_response_queue == NULL))
     {
-        return -15;
+        return -8;
     }
+
+    self->uart_protocol_heartbeat_timer = osTimerNew(uart_protocol_heartbeat_tx_timer_callback,
+                                                     osTimerPeriodic,
+                                                     self,
+                                                     NULL);
+    if (self->uart_protocol_heartbeat_timer == NULL)
+    {
+        return -9;
+    }
+    osStatus = osTimerStart(self->uart_protocol_heartbeat_timer, heartbeat_tx_timeout / portTICK_PERIOD_MS);
+    if (osStatus != osOK)
+    {
+        return -10;
+    }
+
+    self->uart_protocol_heartbeat_timeout_timer = osTimerNew(uart_protocol_heartbeat_rx_timeout_timer_callback,
+                                                             osTimerOnce,
+                                                             self,
+                                                             NULL);
+    if (self->uart_protocol_heartbeat_timeout_timer == NULL)
+    {
+        return -11;
+    }
+    osStatus = osTimerStart(self->uart_protocol_heartbeat_timeout_timer, heartbeat_rx_timeout / portTICK_PERIOD_MS);
+    if (osStatus != osOK)
+    {
+        return -12;
+    }
+    self->uart_protocol_heartbeat_rx_timeout = heartbeat_rx_timeout;
+    self->uart_protocol_pnt_timer = osTimerNew(uart_protocol_pnt_timer_callback,
+                                               osTimerPeriodic,
+                                               self,
+                                               NULL);
+    if (self->uart_protocol_pnt_timer == NULL)
+    {
+        return -13;
+    }
+    osStatus = osTimerStart(self->uart_protocol_pnt_timer, pnt_timeout / portTICK_PERIOD_MS);
+    if (osStatus != osOK)
+    {
+        return -14;
+    }
+
     return 0;
 }
 int32_t uart_protocol_open(uart_protocol_t *const self)
@@ -316,11 +318,11 @@ int32_t uart_protocol_recv(uart_protocol_t *const self,
     {
         return -1;
     }
-recv_again:
+
     ret = frame_format_recv(&self->frame_format, data, len, timeout);
     if (ret != 0)
     {
-        LOG_I("uart_protocol_recv error:%d\r\n", ret);
+        LOG_E("frame_format_recv error: %d\r\n", ret);
         return -2;
     }
 
@@ -345,7 +347,7 @@ recv_again:
             ret = self->uart_protocol_rx_callback[UART_PROTOCOL_HEARTBEAT_RX_CB_ID].pCallback(self,
                                                                                               id,
                                                                                               &data[4],
-                                                                                              data_len,
+                                                                                              &data_len,
                                                                                               self->uart_protocol_rx_callback[UART_PROTOCOL_HEARTBEAT_RX_CB_ID].arg);
             if (ret != 0)
             {
@@ -359,7 +361,7 @@ recv_again:
             ret = self->uart_protocol_rx_callback[UART_PROTOCOL_PNT_RX_CB_ID].pCallback(self,
                                                                                         id,
                                                                                         &data[4],
-                                                                                        data_len,
+                                                                                        &data_len,
                                                                                         self->uart_protocol_rx_callback[UART_PROTOCOL_PNT_RX_CB_ID].arg);
             if (ret != 0)
             {
@@ -375,23 +377,24 @@ recv_again:
             ret = self->uart_protocol_rx_callback[UART_PROTOCOL_CONFIG_SET_RX_CB_ID].pCallback(self,
                                                                                                id,
                                                                                                &data[4],
-                                                                                               data_len,
+                                                                                               &data_len,
                                                                                                self->uart_protocol_rx_callback[UART_PROTOCOL_CONFIG_SET_RX_CB_ID].arg);
             if (ret != 0)
             {
                 return -5;
             }
-            struct
-            {
-                uint8_t id_ack;
-                uint8_t type;
-                uint16_t length;
-            } __attribute__((packed)) format = {(id << 1 | 0x00), 0x83, 0x0000};
-            int32_t ret = uart_protocol_send(self, (uint8_t *)&format, sizeof(format), 100);
-            if (ret < 0)
-            {
-                return -6;
-            }
+        }
+
+        struct
+        {
+            uint8_t id_ack;
+            uint8_t type;
+            uint16_t length;
+        } __attribute__((packed)) format = {(id << 1 | 0x00), 0x83, 0x0000};
+        int32_t ret = uart_protocol_send(self, (uint8_t *)&format, sizeof(format), 100);    /* TODO: 参数配置帧是否需要添加状态回复，以判断参数配置有效性、正确性 */
+        if (ret < 0)
+        {
+            return -6;
         }
     }
     break;
@@ -402,7 +405,7 @@ recv_again:
             ret = self->uart_protocol_rx_callback[UART_PROTOCOL_CONFIG_GET_RX_CB_ID].pCallback(self,
                                                                                                id,
                                                                                                &data[4],
-                                                                                               data_len,
+                                                                                               &data_len,
                                                                                                self->uart_protocol_rx_callback[UART_PROTOCOL_CONFIG_GET_RX_CB_ID].arg);
             if (ret != 0)
             {
@@ -418,23 +421,24 @@ recv_again:
             ret = self->uart_protocol_rx_callback[UART_PROTOCOL_SET_RX_CB_ID].pCallback(self,
                                                                                         id,
                                                                                         &data[4],
-                                                                                        data_len,
+                                                                                        &data_len,
                                                                                         self->uart_protocol_rx_callback[UART_PROTOCOL_SET_RX_CB_ID].arg);
             if (ret != 0)
             {
                 return -8;
             }
-            struct
-            {
-                uint8_t id_ack;
-                uint8_t type;
-                uint16_t length;
-            } __attribute__((packed)) format = {(id << 1 | 0x00), 0x85, 0x0000};
-            int32_t ret = uart_protocol_send(self, (uint8_t *)&format, sizeof(format), 100);
-            if (ret < 0)
-            {
-                return -9;
-            }
+        }
+
+        struct
+        {
+            uint8_t id_ack;
+            uint8_t type;
+            uint16_t length;
+        } __attribute__((packed)) format = {(id << 1 | 0x00), 0x85, 0x0000};
+        int32_t ret = uart_protocol_send(self, (uint8_t *)&format, sizeof(format), 100);    /* TODO: 参数配置帧是否需要添加状态回复，以判断参数配置有效性、正确性 */
+        if (ret < 0)
+        {
+            return -9;
         }
     }
     break;
@@ -445,36 +449,61 @@ recv_again:
             ret = self->uart_protocol_rx_callback[UART_PROTOCOL_GET_RX_CB_ID].pCallback(self,
                                                                                         id,
                                                                                         &data[4],
-                                                                                        data_len,
+                                                                                        &data_len,
                                                                                         self->uart_protocol_rx_callback[UART_PROTOCOL_GET_RX_CB_ID].arg);
             if (ret != 0)
             {
                 return -10;
             }
         }
-    }
-    break;
-    case 0x84: /*参数获取应答*/
-        /*TODO:使用队列发送给uart_protocol_config_get*/
-        osStatus = osMessageQueuePut(self->config_get_response_queue, &data[4], 0, 100);
-        if (osStatus != osOK)
+
+        uint8_t send_data[UART_PROTOCOL_PAYLOAD_QUEUE_SIZE] = {0};
+        send_data[0] = (id << 1) | 0x00;      /*(ID << 1) | 0x00，不需要应答*/
+        send_data[1] = frame_type | 0x80;     /*0x86, 数据get 应答帧*/
+        *(uint16_t *)&send_data[2] = data_len; /*lenght*/
+        memcpy(&send_data[4], data, data_len);
+        ret = uart_protocol_send(self, send_data, data_len + 4, timeout);
+        if (ret < 0)
         {
             return -11;
         }
-        break;
-    case 0x86: /*数据get应答*/
-        /*TODO:使用队列发送给uart_protocol_get*/
-        osStatus = osMessageQueuePut(self->get_rx_response_queue, &data[5], 0, 100);
+    }
+    break;
+    case 0x84: /*参数获取应答*/
+        osStatus = osMessageQueuePut(self->config_get_response_queue, &data[4], 0, 100);
         if (osStatus != osOK)
         {
             return -12;
         }
         break;
+    case 0x86: /*数据get应答*/
+        osStatus = osMessageQueuePut(self->get_rx_response_queue, &data[5], 0, 100);
+        if (osStatus != osOK)
+        {
+            return -13;
+        }
+        break;
+    case 0xeb: /* 复位帧 */
+        if (self->uart_protocol_rx_callback[UART_PROTOCOL_REBOOT_RX_CB_ID].pCallback != NULL)
+        {
+            ret = self->uart_protocol_rx_callback[UART_PROTOCOL_REBOOT_RX_CB_ID].pCallback(self,
+                                                                                        id,
+                                                                                        &data[4],
+                                                                                        &data_len,
+                                                                                        self->uart_protocol_rx_callback[UART_PROTOCOL_REBOOT_RX_CB_ID].arg);
+            if (ret != 0)
+            {
+                return -14;
+            }
+        }
+        break;
     default:
-        goto recv_again;
+        ret = -15;
+        LOG_E("invalid frame type: %d\r\n", frame_type);
         break;
     }
-    return 0;
+
+    return ret;
 }
 
 int32_t uart_protocol_rx_RegisterCallback(uart_protocol_t *const self,
@@ -608,7 +637,23 @@ int32_t uart_protocol_get(uart_protocol_t *const self,
     }
     return 0;
 }
-int32_t uart_protocol_get_response(uart_protocol_t *const self,
+int32_t uart_protocol_reboot(uart_protocol_t *const self,
+                             uint8_t ID,
+                             uint32_t timeout)
+{
+    uint8_t send_data[4] = {0};
+    if (self == NULL)
+    {
+        return -1;
+    }
+    send_data[0] = (ID << 1) | 0x00;     /*(ID << 1) | 0x00，不需要应答*/
+    send_data[1] = 0xeb;                 /*0xeb, 复位帧*/
+    *(uint16_t *)&send_data[2] = 0x0000; /*lenght*/
+
+    return uart_protocol_send(self, send_data, 4, timeout);
+}
+
+static int32_t uart_protocol_get_response(uart_protocol_t *const self,
                                    uint8_t ID,
                                    uint8_t cmd,
                                    const uint8_t *data,
@@ -644,7 +689,7 @@ int8_t uart_test_statistics(uint8_t argc, uint8_t **argv)
 {
     if (argc < 1 || argc > 2)
     {
-        LOG_I("uart_test_statistics error\r\n");
+        LOG_E("uart_test_statistics error\r\n");
         goto Usage;
     }
 
@@ -657,18 +702,18 @@ int8_t uart_test_statistics(uint8_t argc, uint8_t **argv)
     {
         frame_format_get_statistics(&uart_protocol.frame_format, &statistics);
         LOG_I("frame_format_statistics:\r\n");
-        LOG_I("\tsend_total_count:%d\r\n", statistics.send_total_count);
-        LOG_I("\tsend_error_count:%d\r\n", statistics.send_error_count);
-        LOG_I("\tsend_retry_count:%d\r\n", statistics.send_retry_count);
+        LOG_I("\tsend_total_count: %d\r\n", statistics.send_total_count);
+        LOG_I("\tsend_error_count: %d\r\n", statistics.send_error_count);
+        LOG_I("\tsend_retry_count: %d\r\n", statistics.send_retry_count);
         LOG_I("\tsend_lose_rate:%f\r\n", statistics.send_lose_rate);
-        LOG_I("\trecv_total_count:%d\r\n", statistics.recv_total_count);
-        LOG_I("\trecv_lose_count:%d\r\n", statistics.recv_lose_count);
-        LOG_I("\trecv_crc_error_count:%d\r\n", statistics.recv_crc_error_count);
+        LOG_I("\trecv_total_count: %d\r\n", statistics.recv_total_count);
+        LOG_I("\trecv_lose_count: %d\r\n", statistics.recv_lose_count);
+        LOG_I("\trecv_crc_error_count: %d\r\n", statistics.recv_crc_error_count);
         LOG_I("\trecv_lose_rate:%f\r\n", statistics.recv_lose_rate);
     }
     else
     {
-        LOG_I("uart_test_statistics option error\r\n");
+        LOG_E("uart_test_statistics option error\r\n");
         goto Usage;
     }
     return 0;
@@ -696,7 +741,7 @@ static void uart_test_send_thread(void *argument)
     ret = uart_protocol_open(&uart_protocol);
     if (ret != 0)
     {
-        LOG_I("uart_protocol_open error:%d\r\n", ret);
+        LOG_E("uart_protocol_open error: %d\r\n", ret);
         goto thread_exit;
     }
     for (;;)
@@ -704,19 +749,19 @@ static void uart_test_send_thread(void *argument)
         ret = uart_protocol_config_set(&uart_protocol, 0x01, data, len, timeout);
         if (ret != DEV_EOK)
         {
-            LOG_I("config set error:%d\r\n", ret);
+            LOG_E("config set error: %d\r\n", ret);
             continue;
         }
         ret = uart_protocol_set(&uart_protocol, 0x02, 0x01, data, len, timeout);
         if (ret != DEV_EOK)
         {
-            LOG_I("set error:%d\r\n", ret);
+            LOG_E("set error: %d\r\n", ret);
             continue;
         }
         ret = uart_protocol_get(&uart_protocol, 0x02, 0x01, data, &length, timeout);
         if (ret != DEV_EOK)
         {
-            LOG_I("get error:%d\r\n", ret);
+            LOG_E("get error: %d\r\n", ret);
             continue;
         }
         osDelay(1);
@@ -740,7 +785,7 @@ int32_t uart_protocol_heartbeat_rx_callback(struct uart_protocol *const self,
                                             void *arg)
 {
     heartbeat_t *heartbeat = (heartbeat_t *)data;
-    LOG_E("recv heartbeat:%x board_id:%x HardwareVersion:%x FirmWareVersion:%x\r\n",
+    LOG_I("recv heartbeat:%x board_id:%x HardwareVersion:%x FirmWareVersion:%x\r\n",
           ID,
           heartbeat->board_id,
           heartbeat->HardwareVersion,
@@ -758,7 +803,7 @@ int32_t uart_protocol_heartbeat_tx_callback(struct uart_protocol *const self,
     *len = sizeof(heartbeat);
     return 0;
 }
-int32_t uart_protocol_heartbeat_tx_timeout_callback(struct uart_protocol *const self,
+int32_t uart_protocol_heartbeat_rx_timeout_callback(struct uart_protocol *const self,
                                                     const uint8_t *data,
                                                     uint16_t *len,
                                                     void *arg)
@@ -776,37 +821,31 @@ int32_t uart_protocol_set_rx_callback(struct uart_protocol *const self,
 }
 int32_t uart_protocol_get_rx_callback(struct uart_protocol *const self,
                                       uint8_t ID,
-                                      const uint8_t *data,
-                                      uint16_t len,
+                                      uint8_t *data,
+                                      uint16_t *len,
                                       void *arg)
 {
-    int32_t ret = 0;
-    uint8_t data_temp[128] = {0};
     uint8_t cmd = data[0];
     switch (cmd)
     {
-    case 0x01: /*参数配置应答*/
-        for (uint8_t i = 0; i < 128; i++)
+    case 0x01: 
+        for (uint8_t i = 1; i < 128; i++)
         {
-            data_temp[i] = i;
+            data[i] = i;
         }
-        ret = uart_protocol_get_response(self, ID, cmd, data_temp, 128, 1000);
-        if (ret != 0)
-        {
-            LOG_I("uart_protocol_get_response error:%d\r\n", ret);
-        }
+        *len = 128;
         break;
     default:
         break;
     }
+
     return 0;
 }
 
 static void uart_test_recv_thread(void *argument)
 {
-
     uint8_t data[UART_PROTOCOL_DATA_MAX_LENGTH] = {0x00};
-    uint16_t len = 10;
+    uint16_t len = UART_PROTOCOL_DATA_MAX_LENGTH;
     uint32_t timeout = 3000;
     int32_t ret = 0;
     ret = uart_protocol_rx_RegisterCallback(&uart_protocol,
@@ -825,18 +864,18 @@ static void uart_test_recv_thread(void *argument)
                                             UART_PROTOCOL_HEARTBEAT_RX_CB_ID,
                                             uart_protocol_heartbeat_rx_callback,
                                             NULL);
+    ret = uart_protocol_rx_RegisterCallback(&uart_protocol,
+                                            UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID,
+                                            uart_protocol_heartbeat_rx_timeout_callback,
+                                            NULL);
     ret = uart_protocol_tx_RegisterCallback(&uart_protocol,
                                             UART_PROTOCOL_HEARTBEAT_TX_CB_ID,
                                             uart_protocol_heartbeat_tx_callback,
                                             NULL);
-    ret = uart_protocol_tx_RegisterCallback(&uart_protocol,
-                                            UART_PROTOCOL_HEARTBEAT_TIMEOUT_CB_ID,
-                                            uart_protocol_heartbeat_tx_timeout_callback,
-                                            NULL);
     ret = uart_protocol_open(&uart_protocol);
     if (ret != 0)
     {
-        LOG_I("uart_protocol_open error:%d\r\n", ret);
+        LOG_E("uart_protocol_open error: %d\r\n", ret);
         goto thread_exit;
     }
     LOG_I("uart_test_recv_thread start\r\n");
@@ -845,7 +884,7 @@ static void uart_test_recv_thread(void *argument)
         ret = uart_protocol_recv(&uart_protocol, data, len, timeout);
         if (ret != 0)
         {
-            LOG_I("uart_test_recv_thread error:%d\r\n", ret);
+            LOG_E("uart_test_recv_thread error: %d\r\n", ret);
             continue;
         }
     }
@@ -870,7 +909,7 @@ int uart_test(void)
                              10000);
     if (ret != 0)
     {
-        LOG_I("uart_protocol_init error:%d\r\n", ret);
+        LOG_E("uart_protocol_init error: %d\r\n", ret);
         return -1;
     }
     osThreadId_t thread_id;
