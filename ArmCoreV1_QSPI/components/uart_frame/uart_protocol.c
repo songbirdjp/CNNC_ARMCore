@@ -641,7 +641,7 @@ static void uart_protocol_pnt_timer_callback(void *arg)
     }
 }
 
-static void uart_protocol_heartbeat_tx_timer_callback(void *arg)
+static void heartbeat_tx_timer_callback(void *arg)
 {
     uart_protocol_payload_t payload = {0};
     if (arg == NULL)
@@ -669,7 +669,7 @@ static void uart_protocol_heartbeat_tx_timer_callback(void *arg)
         }
     }
 }
-static void uart_protocol_heartbeat_rx_timeout_timer_callback(void *arg)
+static void heartbeat_rx_timeout_timer_callback(void *arg)
 {
     if (arg == NULL)
     {
@@ -689,7 +689,7 @@ static void uart_protocol_heartbeat_rx_timeout_timer_callback(void *arg)
         }
     }
 }
-static void uart_protocol_pnt_timer_callback(void *arg)
+static void pnt_timer_callback(void *arg)
 {
     uart_protocol_payload_t payload = {0};
     if (arg == NULL)
