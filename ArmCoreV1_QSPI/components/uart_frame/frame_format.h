@@ -14,7 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cmsis_os2.h"
-#include "FreeRTOS.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -119,7 +119,7 @@ extern "C"
 
     int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len, uint32_t timeout);
 
-    int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t data_len, uint32_t timeout);
+    int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_len, uint32_t timeout);
 
     int32_t frame_format_get_statistics(frame_format_t *self, frame_format_statistics_t *statistics);
 

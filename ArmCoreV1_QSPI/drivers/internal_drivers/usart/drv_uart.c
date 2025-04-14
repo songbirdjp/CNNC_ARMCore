@@ -457,7 +457,7 @@ static int8_t drv_uart_read_complete(uart_drv_t *uart)
 }
 #endif
 
-int drv_console_init(void)
+int32_t drv_console_init(void)
 {
     int32_t ret = drv_uart_register(uart_drv_get(&huart1),
                                     &huart1,
@@ -469,10 +469,10 @@ int drv_console_init(void)
     }
     return 0;
 }
-static int drv_uartx_init(void)
+static int32_t drv_uartx_init(void)
 {
 
     /* add other uart here */ /**<------ add other uart here*/
     return 0;
 }
-INIT_BOARD_EXPORT(drv_uartx_init);
+INIT_DEVICE_EXPORT(drv_uartx_init);

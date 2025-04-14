@@ -310,17 +310,17 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
     return ret;
 }
 
-int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t data_len, uint32_t timeout)
+int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_len, uint32_t timeout)
 {
     uint32_t crc = 0;
     int32_t ret = 0;
     osStatus_t status = osOK;
     uint32_t recv_len = 0;
-    if (self == NULL || data == NULL || data_len == 0)
+    if (self == NULL || data == NULL || data_len == NULL)
     {
         return -1;
     }
-    ret = self->recv_func(self->rx_buffer, data_len, timeout, self->recv_arg);
+    ret = self->recv_func(self->rx_buffer, 0xFFFF, timeout, self->recv_arg);
     if (ret != 0)
     {
         return -2;
@@ -343,7 +343,7 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t data_len
             return -4;
         }
     }
-
+	*data_len = recv_len - FRAME_EXTRA_LEN;
     memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
 
     if (self->rx_buffer[FRAME_DATA_OFFSET + 1] & 0x80) // receive a response frame
