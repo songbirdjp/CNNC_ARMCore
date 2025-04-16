@@ -612,7 +612,7 @@ static void MotorInitial_thread_entry(void *argument)
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
     gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
-    MagMotorParameter.presetPos = 20500;// 25118;
+    MagMotorParameter.presetPos = 19020;// 25118;
     MagMotorParameter.encoderValTarget = MagMotorParameter.presetPos;
     AFCApplicationParam.positionCalculated = MagMotorParameter.presetPos;
     for (;;)

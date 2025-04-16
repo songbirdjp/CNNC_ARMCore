@@ -100,14 +100,14 @@ void MagMotorCtrlbyADC(uint16_t *data)
     }
   
     
-    // if(obj->positionCurrent > 24972)
-    // {
-    //     obj->positionCalculated = 24965;
-    // }
-    // else if(obj->positionCurrent < 23983)
-    // {
-    //     obj->positionCalculated = 23990;
-    // }
+    if(obj->positionCurrent > 19900)
+    {
+        obj->positionCalculated = 19890;
+    }
+    else if(obj->positionCurrent < 18200)
+    {
+        obj->positionCalculated = 18210;
+    }
     LOG_I("posCalculated = %d\r\n\r\n",obj->positionCalculated);
     LOG_I("pos = %d\r\n\r\n",obj->positionCurrent);
 }
