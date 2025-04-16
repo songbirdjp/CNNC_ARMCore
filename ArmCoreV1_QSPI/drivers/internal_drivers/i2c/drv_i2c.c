@@ -1,269 +1,751 @@
-#include "drv_i2c.h"
+/**
+ * @file drv_i2c.c
+ * @author SI (siyunlong@cnncpm.com)
+ * @brief
+ * @version 0.1
+ * @date 2024-07-03
+ *
+ * @copyright Copyright (c) 2024
+ *
+ */
 #include "i2c.h"
+#include "init_call.h"
+#include "drv_i2c.h"
+#include "stm32h723xx.h"
+TAG("drv_i2c.c");
 
-#define I2C_SEND_SUCCEED_EVENT  (1 << 0)
-#define I2C_RECV_SUCCEED_EVENT  (1 << 1)
+extern I2C_HandleTypeDef hi2c2;
 
-static void MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
+typedef struct i2c_software_io
 {
-    DEVICE_I2C *i2c = (DEVICE_I2C *)hi2c;
-    osEventFlagsSet(i2c->event, I2C_SEND_SUCCEED_EVENT);
-}
-static void MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
-{
-    DEVICE_I2C *i2c = (DEVICE_I2C *)hi2c;
-    osEventFlagsSet(i2c->event, I2C_RECV_SUCCEED_EVENT);
-}
-static void MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
-{
-    DEVICE_I2C *i2c = (DEVICE_I2C *)hi2c;
-    osEventFlagsSet(i2c->event, I2C_SEND_SUCCEED_EVENT);
-}
-static void MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
-{
-    DEVICE_I2C *i2c = (DEVICE_I2C *)hi2c;
-    osEventFlagsSet(i2c->event, I2C_RECV_SUCCEED_EVENT);
-}
-static void ErrorCallback(I2C_HandleTypeDef *hi2c)
-{
-    DEVICE_I2C *i2c = (DEVICE_I2C *)hi2c;
-    printf("device %s err:%d\r\n", i2c->name, hi2c->ErrorCode);
-}
-static void AbortCpltCallback(I2C_HandleTypeDef *hi2c)
-{
-    DEVICE_I2C *i2c = (DEVICE_I2C *)hi2c;
-    printf("device %s abort\r\n", i2c->name);
-}
+    GPIO_TypeDef *i2c_gpio_sda;
+    uint16_t i2c_pin_sda;
+    GPIO_TypeDef *i2c_gpio_scl;
+    uint16_t i2c_pin_scl;
+} i2c_software_io_t;
 
-static int8_t i2c_open(DEVICE_I2C *i2c)
+typedef struct driver_i2c
 {
-    if (i2c->open_state)
+    device_i2c_t device_i2c;
+
+    I2C_HandleTypeDef *hi2cx;
+    i2c_software_io_t i2c_software_io;
+} driver_i2c_t;
+
+static driver_i2c_t driver_i2c1 = {0};
+// static driver_i2c_t driver_i2c2 = {0};
+// static driver_i2c_t driver_i2c3 = {0};
+/*software IO*/
+// static i2c_software_io_t i2c_software_io =
+// {
+//     GPIOx, GPIO_PIN_x
+// };
+static void I2C_Unlock(void)
+{
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+
+    /*Configure GPIO pin : PtPin */
+    GPIO_InitStruct.Pin = GPIO_PIN_6;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+    /*Unlock I2C*/
+    int8_t times = 9;
+    while (times--)
     {
-        printf("device %s already opened\r\n", i2c->name);
-        return -1;
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+        osDelay(1);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+        osDelay(1);
+    }
+}
+void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
+{
+    HAL_I2C_DeInit(hi2c);
+    I2C_Unlock();
+    MX_I2C1_Init();
+}
+void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1)
+    {
+        device_i2c_xfer_end((device_i2c_t *)&driver_i2c1);
+    }
+    // else if (hi2c->Instance == I2C2)
+    // {
+    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c2);
+    // }
+    // else if (hi2c->Instance == I2C3)
+    // {
+    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c3);
+    // }
+}
+
+void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1)
+    {
+        device_i2c_xfer_end((device_i2c_t *)&driver_i2c1);
+    }
+    // else if (hi2c->Instance == I2C2)
+    // {
+    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c2);
+    // }
+    // else if (hi2c->Instance == I2C3)
+    // {
+    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c3);
+    // }
+}
+
+void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1)
+    {
+        device_i2c_xfer_end((device_i2c_t *)&driver_i2c1);
+    }
+    // else if (hi2c->Instance == I2C2)
+    // {
+    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c2);
+    // }
+    // else if (hi2c->Instance == I2C3)
+    // {
+    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c3);
+    // }
+}
+
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1)
+    {
+        device_i2c_xfer_end((device_i2c_t *)&driver_i2c1);
+    }
+    // else if (hi2c->Instance == I2C2)
+    // {
+    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c2);
+    // }
+    // else if (hi2c->Instance == I2C3)
+    // {
+    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c3);
+    // }
+}
+
+static device_err_t driver_i2c_open(device_i2c_t *const self)
+{
+    dev_assert(self != NULL);
+
+    driver_i2c_t *driver = (driver_i2c_t *)self->super.user_data;
+
+    const char *name = driver->device_i2c.super.device_attr.name;
+
+    if (0 == strcmp(name, DEVICE_NAME_I2C1))
+    {
+        I2C_Unlock();
+        MX_I2C1_Init();
+    }
+    else if (0 == strcmp(name, DEVICE_NAME_I2C2))
+    {
+        // MX_I2C2_Init();
+    }
+    else if (0 == strcmp(name, DEVICE_NAME_I2C3))
+    {
+        // MX_I2C3_Init();
     }
     else
     {
-        i2c->open_state = 1;
+        return DEV_ENOTFOUND;
     }
 
-    return 0;
+    return DEV_EOK;
 }
 
-static int8_t i2c_close(DEVICE_I2C *i2c)
+static device_err_t driver_i2c_close(device_i2c_t *const self)
 {
-    HAL_StatusTypeDef ret = HAL_OK;
-    osStatus_t stat = osOK;
+    dev_assert(self != NULL);
 
-    if (i2c->open_state)
+    driver_i2c_t *driver = (driver_i2c_t *)self->super.user_data;
+
+    const char *name = driver->device_i2c.super.device_attr.name;
+
+    if ((0 == strcmp(name, DEVICE_NAME_I2C1)) ||
+        (0 == strcmp(name, DEVICE_NAME_I2C2)) ||
+        (0 == strcmp(name, DEVICE_NAME_I2C3)))
     {
-        ret = HAL_I2C_DeInit(&i2c->hi2c);
-        if (ret != HAL_OK)
-        {
-            printf("device %s deinit err:%d\r\n", i2c->name, ret);
-            return -1;
-        }
-
-        stat = osEventFlagsDelete(i2c->event);
-        if (stat != osOK)
-        {
-            printf("device %s delete event err:%d\r\n", i2c->name, stat);
-            return -2;
-        }
-
-        stat = osMutexDelete(i2c->mutex);
-        if (stat != osOK)
-        {
-            printf("device %s delete mutex err:%d\r\n", i2c->name, stat);
-            return -3;
-        }
-
-        i2c->open_state = 0;
+        HAL_I2C_DeInit(driver->hi2cx);
     }
     else
     {
-        /* device already closed */
+        return DEV_ENOTFOUND;
     }
 
-    return 0;
+    return DEV_EOK;
+}
+/**
+ * @brief
+ *
+ * @param i2c
+ * @param buf
+ * @param timeout
+ * @return int8_t
+ */
+static device_err_t driver_i2c_write(device_i2c_t *const self, i2c_msg_t const *const buf, uint32_t timeout)
+{
+    dev_assert(self != NULL);
+    dev_assert(buf != NULL);
+    dev_assert(buf->dataLen != 0);
+
+    HAL_StatusTypeDef HAL_Status = HAL_TIMEOUT;
+
+    driver_i2c_t *driver = (driver_i2c_t *)self->super.user_data;
+    i2c_mode_t i2c_mode = driver->device_i2c.i2c_mode;
+
+    if (HAL_I2C_GetState(driver->hi2cx) != HAL_I2C_STATE_READY)
+    {
+        return DEV_EBUSY;
+    }
+
+    switch (i2c_mode)
+    {
+    case I2C_MODE_HARDWARE_POLLING:
+    {
+        if (driver->device_i2c.i2c_type == I2C_TYPE_MEN)
+        {
+            if (driver->device_i2c.i2c_addr_len == I2C_ADDR_7BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Write(driver->hi2cx,
+                                               buf->dev_addr,
+                                               buf->reg_addr,
+                                               I2C_MEMADD_SIZE_8BIT,
+                                               buf->data,
+                                               buf->dataLen,
+                                               timeout);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else if (driver->device_i2c.i2c_addr_len == I2C_ADDR_10BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Write(driver->hi2cx,
+                                               buf->dev_addr,
+                                               buf->reg_addr,
+                                               I2C_MEMADD_SIZE_16BIT,
+                                               buf->data,
+                                               buf->dataLen,
+                                               timeout);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else
+            {
+                return DEV_EINVAL;
+            }
+        }
+        else if (driver->device_i2c.i2c_type == I2C_TYPE_BUS)
+        {
+            HAL_Status = HAL_I2C_Master_Transmit(driver->hi2cx,
+                                                 buf->dev_addr,
+                                                 buf->data,
+                                                 buf->dataLen,
+                                                 timeout);
+            if (HAL_Status != HAL_OK)
+            {
+                return DEV_EIO;
+            }
+        }
+        else
+        {
+            return DEV_EINVAL;
+        }
+        break;
+    }
+    case I2C_MODE_HARDWARE_INTERRUPT:
+    {
+        if (driver->device_i2c.i2c_type == I2C_TYPE_MEN)
+        {
+            if (driver->device_i2c.i2c_addr_len == I2C_ADDR_7BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Write_IT(driver->hi2cx,
+                                                  buf->dev_addr,
+                                                  buf->reg_addr,
+                                                  I2C_MEMADD_SIZE_8BIT,
+                                                  buf->data,
+                                                  buf->dataLen);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else if (driver->device_i2c.i2c_addr_len == I2C_ADDR_10BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Write_IT(driver->hi2cx,
+                                                  buf->dev_addr,
+                                                  buf->reg_addr,
+                                                  I2C_MEMADD_SIZE_16BIT,
+                                                  buf->data,
+                                                  buf->dataLen);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else
+            {
+                return DEV_EINVAL;
+            }
+        }
+        else if (driver->device_i2c.i2c_type == I2C_TYPE_BUS)
+        {
+            HAL_Status = HAL_I2C_Master_Transmit_IT(driver->hi2cx,
+                                                    buf->dev_addr,
+                                                    buf->data,
+                                                    buf->dataLen);
+            if (HAL_Status != HAL_OK)
+            {
+                return DEV_EIO;
+            }
+        }
+        else
+        {
+            return DEV_EINVAL;
+        }
+        break;
+    }
+    case I2C_MODE_HARDWARE_DMA:
+    {
+        if (driver->device_i2c.i2c_type == I2C_TYPE_MEN)
+        {
+            if (driver->device_i2c.i2c_addr_len == I2C_ADDR_7BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Write_DMA(driver->hi2cx,
+                                                   buf->dev_addr,
+                                                   buf->reg_addr,
+                                                   I2C_MEMADD_SIZE_8BIT,
+                                                   buf->data,
+                                                   buf->dataLen);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else if (driver->device_i2c.i2c_addr_len == I2C_ADDR_10BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Write_DMA(driver->hi2cx,
+                                                   buf->dev_addr,
+                                                   buf->reg_addr,
+                                                   I2C_MEMADD_SIZE_16BIT,
+                                                   buf->data,
+                                                   buf->dataLen);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else
+            {
+                return DEV_EINVAL;
+            }
+        }
+        else if (driver->device_i2c.i2c_type == I2C_TYPE_BUS)
+        {
+            HAL_Status = HAL_I2C_Master_Transmit_DMA(driver->hi2cx,
+                                                     buf->dev_addr,
+                                                     buf->data,
+                                                     buf->dataLen);
+            if (HAL_Status != HAL_OK)
+            {
+                return DEV_EIO;
+            }
+        }
+        else
+        {
+            return DEV_EINVAL;
+        }
+        break;
+    }
+
+    case I2C_MODE_SOFTWARE:
+        /* code */
+        break;
+    default:
+        break;
+    }
+    return DEV_EOK;
+}
+/**
+ * @brief
+ *
+ * @param i2c
+ * @param buf
+ * @param timeout
+ * @return int8_t
+ */
+static device_err_t driver_i2c_read(device_i2c_t *const self, i2c_msg_t *const buf, uint32_t timeout)
+{
+    dev_assert(self != NULL);
+    dev_assert(buf != NULL);
+    dev_assert(buf->dataLen != 0);
+
+    HAL_StatusTypeDef HAL_Status = HAL_TIMEOUT;
+
+    driver_i2c_t *driver = (driver_i2c_t *)self->super.user_data;
+    i2c_mode_t i2c_mode = driver->device_i2c.i2c_mode;
+
+    if (HAL_I2C_GetState(driver->hi2cx) != HAL_I2C_STATE_READY)
+    {
+        return DEV_EBUSY;
+    }
+    switch (i2c_mode)
+    {
+    case I2C_MODE_HARDWARE_POLLING:
+    {
+        if (driver->device_i2c.i2c_type == I2C_TYPE_MEN)
+        {
+            if (driver->device_i2c.i2c_addr_len == I2C_ADDR_7BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Read(driver->hi2cx,
+                                              buf->dev_addr,
+                                              buf->reg_addr,
+                                              I2C_MEMADD_SIZE_8BIT,
+                                              buf->data,
+                                              buf->dataLen,
+                                              timeout);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else if (driver->device_i2c.i2c_addr_len == I2C_ADDR_10BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Read(driver->hi2cx,
+                                              buf->dev_addr,
+                                              buf->reg_addr,
+                                              I2C_MEMADD_SIZE_16BIT,
+                                              buf->data,
+                                              buf->dataLen,
+                                              timeout);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else
+            {
+                return DEV_EINVAL;
+            }
+        }
+        else if (driver->device_i2c.i2c_type == I2C_TYPE_BUS)
+        {
+            HAL_Status = HAL_I2C_Master_Receive(driver->hi2cx,
+                                                buf->dev_addr,
+                                                buf->data,
+                                                buf->dataLen,
+                                                timeout);
+            if (HAL_Status != HAL_OK)
+            {
+                return DEV_EIO;
+            }
+        }
+        else
+        {
+            return DEV_EINVAL;
+        }
+        break;
+    }
+    case I2C_MODE_HARDWARE_INTERRUPT:
+    {
+        if (driver->device_i2c.i2c_type == I2C_TYPE_MEN)
+        {
+            if (driver->device_i2c.i2c_addr_len == I2C_ADDR_7BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Read_IT(driver->hi2cx,
+                                                 buf->dev_addr,
+                                                 buf->reg_addr,
+                                                 I2C_MEMADD_SIZE_8BIT,
+                                                 buf->data,
+                                                 buf->dataLen);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else if (driver->device_i2c.i2c_addr_len == I2C_ADDR_10BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Read_IT(driver->hi2cx,
+                                                 buf->dev_addr,
+                                                 buf->reg_addr,
+                                                 I2C_MEMADD_SIZE_16BIT,
+                                                 buf->data,
+                                                 buf->dataLen);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else
+            {
+                return DEV_EINVAL;
+            }
+        }
+        else if (driver->device_i2c.i2c_type == I2C_TYPE_BUS)
+        {
+            HAL_Status = HAL_I2C_Master_Receive_IT(driver->hi2cx,
+                                                   buf->dev_addr,
+                                                   buf->data,
+                                                   buf->dataLen);
+            if (HAL_Status != HAL_OK)
+            {
+                return DEV_EIO;
+            }
+        }
+        else
+        {
+            return DEV_EINVAL;
+        }
+        break;
+    }
+    case I2C_MODE_HARDWARE_DMA:
+    {
+        if (driver->device_i2c.i2c_type == I2C_TYPE_MEN)
+        {
+            if (driver->device_i2c.i2c_addr_len == I2C_ADDR_7BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Read_DMA(driver->hi2cx,
+                                                  buf->dev_addr,
+                                                  buf->reg_addr,
+                                                  I2C_MEMADD_SIZE_8BIT,
+                                                  buf->data,
+                                                  buf->dataLen);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else if (driver->device_i2c.i2c_addr_len == I2C_ADDR_10BIT)
+            {
+                HAL_Status = HAL_I2C_Mem_Read_DMA(driver->hi2cx,
+                                                  buf->dev_addr,
+                                                  buf->reg_addr,
+                                                  I2C_MEMADD_SIZE_16BIT,
+                                                  buf->data,
+                                                  buf->dataLen);
+                if (HAL_Status != HAL_OK)
+                {
+                    return DEV_EIO;
+                }
+            }
+            else
+            {
+                return DEV_EINVAL;
+            }
+        }
+        else if (driver->device_i2c.i2c_type == I2C_TYPE_BUS)
+        {
+            HAL_Status = HAL_I2C_Master_Transmit_DMA(driver->hi2cx,
+                                                     buf->dev_addr,
+                                                     buf->data,
+                                                     buf->dataLen);
+            if (HAL_Status != HAL_OK)
+            {
+                return DEV_EIO;
+            }
+        }
+        else
+        {
+            return DEV_EINVAL;
+        }
+        break;
+    }
+    case I2C_MODE_SOFTWARE:
+    {
+        break;
+    }
+    default:
+        break;
+    }
+    return DEV_EOK;
 }
 
-static int8_t i2c_write(DEVICE_I2C *i2c, uint16_t addr, uint8_t *buf, uint16_t size, uint32_t timeout)
+/**
+ * @brief
+ *
+ * @param i2c
+ * @param cmd
+ * @param arg
+ * @return int8_t
+ */
+static device_err_t driver_i2c_ioctl(device_i2c_t *const self, i2c_cmd_t cmd, void *const arg)
 {
-    osStatus_t ret = osOK;
-    HAL_StatusTypeDef status = HAL_OK;
+    dev_assert(self != NULL);
+    dev_assert((cmd > I2C_CMD_MIN) && (cmd < I2C_CMD_MAX));
 
-    if (!i2c->open_state)
-    {
-        printf("device %s is closed\r\n", i2c->name);
-        return -1;
-    }
+    HAL_StatusTypeDef HAL_Status = HAL_ERROR;
+    device_err_t device_err = DEV_EOK;
 
-    ret = osMutexAcquire(i2c->mutex, timeout);
-    if (ret != osOK)
-    {
-        printf("device %s acquire mutex err:%d\r\n", i2c->name, ret);
-        return -2;
-    }
-
-    status = HAL_I2C_Master_Transmit_DMA(&i2c->hi2c, addr, buf, size);
-    if (status != HAL_OK)
-    {
-        printf("device %s write data err:%d\r\n", i2c->name, status);
-        ret = -3;
-        goto err;
-    }
-
-    uint32_t ret_val = osEventFlagsWait(i2c->event, I2C_SEND_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-    if (ret_val != I2C_SEND_SUCCEED_EVENT)
-    {
-        printf("device %s wait event flag err: %#.8x\r\n", i2c->name, ret_val);
-        ret = -4;
-        goto err;
-    }
-
-err:
-    osMutexRelease(i2c->mutex);
-
-    return ret;
-}
-
-static int8_t i2c_read(DEVICE_I2C *i2c, uint16_t addr, uint8_t *buf, uint16_t size, uint32_t timeout)
-{
-    osStatus_t ret = osOK;
-    HAL_StatusTypeDef status = HAL_OK;
-
-    if (!i2c->open_state)
-    {
-        printf("device %s is closed\r\n", i2c->name);
-        return -1;
-    }
-
-    ret = osMutexAcquire(i2c->mutex, timeout);
-    if (ret != osOK)
-    {
-        printf("device %s acquire mutex err:%d\r\n", i2c->name, ret);
-        return -2;
-    }
-
-    status = HAL_I2C_Master_Receive_DMA(&i2c->hi2c, addr, buf, size);
-    if (status != HAL_OK)
-    {
-        printf("device %s read data err:%d\r\n", i2c->name, status);
-        ret = -3;
-        goto err;
-    }
-
-    uint32_t ret_val = osEventFlagsWait(i2c->event, I2C_RECV_SUCCEED_EVENT, osFlagsWaitAny, timeout);
-    if (ret_val != I2C_RECV_SUCCEED_EVENT)
-    {
-        printf("device %s wait event flag err: %#.8x\r\n", i2c->name, ret_val);
-        ret = -4;
-        goto err;
-    }
-
-err:
-    osMutexRelease(i2c->mutex);
-
-    return ret;
-}
-
-static int8_t i2c_ioctl(DEVICE_I2C *i2c, uint8_t cmd, void *arg)
-{
-    int8_t ret = 0;
-
-    if (i2c == NULL)
-    {
-        printf("ptr is null\r\n");
-        return -1;
-    }
+    driver_i2c_t *driver = (driver_i2c_t *)self->super.user_data;
 
     switch (cmd)
     {
+    case I2C_CMD_SET_ADDR_LEN:
+        dev_assert((*(i2c_addr_len_t *)arg == I2C_ADDR_7BIT) ||
+                   (*(i2c_addr_len_t *)arg == I2C_ADDR_10BIT));
+
+        driver->device_i2c.i2c_addr_len = *((i2c_addr_len_t *)arg);
+
+        if (driver->device_i2c.i2c_addr_len == I2C_ADDR_10BIT)
+        {
+            (driver->hi2cx->Instance->CR2) |= (I2C_CR2_ADD10);
+        }
+        else
+        {
+            (driver->hi2cx->Instance->CR2) &= ~(I2C_CR2_ADD10);
+        }
+        break;
+    case I2C_CMD_SET_MODE:
+        dev_assert((*(i2c_mode_t *)arg == I2C_MODE_HARDWARE_POLLING) ||
+                   (*(i2c_mode_t *)arg == I2C_MODE_HARDWARE_INTERRUPT) ||
+                   (*(i2c_mode_t *)arg == I2C_MODE_HARDWARE_DMA) ||
+                   (*(i2c_mode_t *)arg == I2C_MODE_SOFTWARE));
+
+        driver->device_i2c.i2c_mode = *((i2c_mode_t *)arg);
+        break;
+    case I2C_CMD_SET_TYPE:
+        dev_assert((*(i2c_type_t *)arg == I2C_TYPE_MEN) ||
+                   (*(i2c_type_t *)arg == I2C_TYPE_BUS));
+
+        driver->device_i2c.i2c_type = *((i2c_type_t *)arg);
+        break;
+    case I2C_CMD_GET_ACK_POLLING:
+        HAL_Status = HAL_I2C_IsDeviceReady(driver->hi2cx,
+                                           ((i2c_ack_polling_arg_t *)arg)->device_addr,
+                                           1,
+                                           1);
+        if (HAL_Status == HAL_OK)
+        {
+            ((i2c_ack_polling_arg_t *)arg)->i2c_ack_polling_state = I2C_ACK_POLLING_READY;
+        }
+        else
+        {
+            ((i2c_ack_polling_arg_t *)arg)->i2c_ack_polling_state = I2C_ACK_POLLING_BUSY;
+        }
+        break;
+    case I2C_CMD_INIT:
+        HAL_I2C_DeInit(driver->hi2cx);
+        if (driver->hi2cx == &hi2c1)
+        {
+            I2C_Unlock();
+            MX_I2C1_Init();
+        }
+        break;
     default:
-        printf("i2c ioctl cmd %d is not supported\r\n", cmd);
-        return -2;
+        device_err = DEV_EINVAL;
+        break;
     }
-
-    return ret;
+    return device_err;
 }
-
-int8_t i2c_init(DEVICE_I2C *i2c, uint8_t *device_name)
+/**
+ * @brief
+ *
+ * @param i2c
+ * @param name
+ * @param i2c_mode
+ * @return uint8_t
+ */
+static void driver_i2c_register(driver_i2c_t *const self, I2C_HandleTypeDef *const hi2cx, char const *name)
 {
-    if (i2c == NULL || device_name == NULL)
+    dev_assert(self != NULL);
+    dev_assert(!strcmp(name, DEVICE_NAME_I2C1) ||
+               !strcmp(name, DEVICE_NAME_I2C2) ||
+               !strcmp(name, DEVICE_NAME_I2C3));
+
+    memset(self, 0, sizeof(driver_i2c_t));
+
+    self->hi2cx = hi2cx;
+
+    static device_i2c_ops_t device_i2c_ops = {
+        .open = driver_i2c_open,
+        .close = driver_i2c_close,
+        .read = driver_i2c_read,
+        .write = driver_i2c_write,
+        .ioctl = driver_i2c_ioctl};
+
+    device_i2c_register((device_i2c_t *)self, name, &device_i2c_ops, self);
+}
+void driver_i2c_init(void)
+{
+    driver_i2c_register(&driver_i2c1, &hi2c1, DEVICE_NAME_I2C1);
+    //    driver_i2c_register(&driver_i2c2, &hi2c2, DEVICE_NAME_I2C2);
+    // driver_i2c_register(&driver_i2c3, &hi2c3, DEVICE_NAME_I2C3);
+}
+INIT_BOARD_EXPORT(driver_i2c_init);
+int8_t i2c_test(void)
+{
+    int8_t ret = 0;
+    device_t *device_i2c1 = NULL;
+    uint8_t data_w[8] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+    uint8_t data_r[8] = {0x00};
+    uint8_t deviceID = 0xA0;
+    i2c_ack_polling_arg_t i2c_ack_polling_arg = {
+        .device_addr = deviceID,
+        .i2c_ack_polling_state = I2C_ACK_POLLING_BUSY};
+    i2c_msg_t i2c_w_msg = {
+        .dev_addr = deviceID,
+        .reg_addr = 0x00,
+        .data = data_w,
+        .dataLen = 8};
+
+    i2c_msg_t i2c_r_msg = {
+        .dev_addr = deviceID,
+        .reg_addr = 0x00,
+        .data = data_r,
+        .dataLen = 8};
+
+    i2c_addr_len_t i2c_addr_len = I2C_ADDR_7BIT;
+    printf("i2c test\r\n");
+    driver_i2c_init();
+
+    device_i2c1 = device_find(DEVICE_NAME_I2C1);
+
+    if (device_i2c1 == NULL)
     {
-        printf("ptr is null\r\n");
         return -1;
     }
-
-    if (i2c->open_state)
+    ret = device_open(device_i2c1);
+    if (ret != 0)
     {
-        printf("device %s is opened\r\n", i2c->name);
         return -2;
     }
-
-    /* 1. init hardware */
-    if (!memcmp(device_name, DEVICE_NAME_I2C1, sizeof(DEVICE_NAME_I2C1)))
+    ret = device_ioctl(device_i2c1, I2C_CMD_SET_ADDR_LEN, &i2c_addr_len);
+    if (ret != 0)
     {
-
+        return -3;
     }
-    else if (!memcmp(device_name, DEVICE_NAME_I2C2, sizeof(DEVICE_NAME_I2C2)))
+    ret = device_write(device_i2c1, &i2c_w_msg, 0, 1000);
+    if (ret != 0)
     {
-
+        return -4;
     }
-    else if (!memcmp(device_name, DEVICE_NAME_I2C3, sizeof(DEVICE_NAME_I2C3)))
+    do
     {
-
-    }
-    else if (!memcmp(device_name, DEVICE_NAME_I2C4, sizeof(DEVICE_NAME_I2C4)))
+        ret = device_ioctl(device_i2c1, I2C_CMD_GET_ACK_POLLING, &i2c_ack_polling_arg);
+        if (ret != 0)
+        {
+            return -5;
+        }
+    } while (i2c_ack_polling_arg.i2c_ack_polling_state != I2C_ACK_POLLING_READY);
+    ret = device_read(device_i2c1, &i2c_r_msg, 0, 1000);
+    if (ret != 0)
     {
-        MX_I2C4_Init();
-        memcpy(i2c, &hi2c4, sizeof(I2C_HandleTypeDef));
-        extern DMA_HandleTypeDef hdma_i2c4_rx;
-        extern DMA_HandleTypeDef hdma_i2c4_tx;
-        hdma_i2c4_tx.Parent = (void *)i2c;
-        hdma_i2c4_rx.Parent = (void *)i2c;
+        return -6;
     }
-    else if (!memcmp(device_name, DEVICE_NAME_I2C5, sizeof(DEVICE_NAME_I2C5)))
+    ret = device_close(device_i2c1);
+    if (ret != 0)
     {
+        return -7;
     }
-    else
-    {
-        /* add other i2c here */
-    }
-
-    /* 2. create event and mutex for device */
-    osMutexAttr_t i2c_mutex_attributes = {
-    .name = "i2c_mutex",
-    .attr_bits = osMutexRecursive | osMutexPrioInherit
-    };
-    i2c->mutex = osMutexNew(&i2c_mutex_attributes);
-
-    const osEventFlagsAttr_t i2c_event_attributes = {
-    .name = "i2c_event"
-    };
-    i2c->event = osEventFlagsNew(&i2c_event_attributes);
-
-    /* 3. register callback function */
-    HAL_I2C_RegisterCallback((I2C_HandleTypeDef *)i2c, HAL_I2C_MASTER_TX_COMPLETE_CB_ID, MasterTxCpltCallback);
-    HAL_I2C_RegisterCallback((I2C_HandleTypeDef *)i2c, HAL_I2C_MASTER_RX_COMPLETE_CB_ID, MasterRxCpltCallback);
-    HAL_I2C_RegisterCallback((I2C_HandleTypeDef *)i2c, HAL_I2C_MEM_TX_COMPLETE_CB_ID, MemTxCpltCallback);
-    HAL_I2C_RegisterCallback((I2C_HandleTypeDef *)i2c, HAL_I2C_MEM_RX_COMPLETE_CB_ID, MemRxCpltCallback);
-    HAL_I2C_RegisterCallback((I2C_HandleTypeDef *)i2c, HAL_I2C_ERROR_CB_ID, ErrorCallback);
-    HAL_I2C_RegisterCallback((I2C_HandleTypeDef *)i2c, HAL_I2C_ABORT_CB_ID, AbortCpltCallback);
-
-    /* 4. device rename */
-    memcpy(i2c->name, device_name, DEVICE_NAME_LENGTH);
-
-    /* 5. register operation function */
-    i2c->open = i2c_open;
-    i2c->close = i2c_close;
-    i2c->write = i2c_write;
-    i2c->read = i2c_read;
-    i2c->ioctl = i2c_ioctl;
-
-    /* 6. set open state */
-    i2c->open_state = 1;
-
+    printf("i2c test succeed!\r\n");
     return 0;
 }

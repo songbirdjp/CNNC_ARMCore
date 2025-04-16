@@ -206,7 +206,7 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
         return -1;
     }
 
-    if (data[1] & 0x80) // send a response frame
+    if (data[4] & 0x80) // send a response frame
     {
         status = osMutexAcquire(self->tx_response_mutex, timeout);
         if (status != osOK)
@@ -346,7 +346,7 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
 	*data_len = recv_len - FRAME_EXTRA_LEN;
     memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
 
-    if (self->rx_buffer[FRAME_DATA_OFFSET + 1] & 0x80) // receive a response frame
+    if (self->rx_buffer[FRAME_DATA_OFFSET + 4] & 0x80) // receive a response frame
     {
         if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)
         {

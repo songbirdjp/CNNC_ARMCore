@@ -1,40 +1,31 @@
-#ifndef __DRV_I2C_H__
-#define __DRV_I2C_H__
+/**
+ * @file drv_i2c.h
+ * @author SI (siyunlong@cnncpm.com)
+ * @brief 
+ * @version 0.1
+ * @date 2024-07-03
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
 
-#include "stm32h7xx_hal.h"
-#include "cmsis_os2.h"
+#ifndef _DRV_I2C_H_
+#define _DRV_I2C_H_
 
+#include "dev_i2c.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define DEVICE_NAME_I2C1 "i2c1"
+#define DEVICE_NAME_I2C2 "i2c2"
+#define DEVICE_NAME_I2C3 "i2c3"
 
-#define DEVICE_NAME_LENGTH      16
+void driver_i2c_init(void);
 
-#define DEVICE_NAME_I2C1       "i2c1"
-#define DEVICE_NAME_I2C2       "i2c2"
-#define DEVICE_NAME_I2C3       "i2c3"
-#define DEVICE_NAME_I2C4       "i2c4"
-#define DEVICE_NAME_I2C5       "i2c5"
+int8_t i2c_test(void);
 
+#ifdef __cplusplus
+}
+#endif
 
-struct drv_i2c
-{
-    I2C_HandleTypeDef hi2c;
-    uint8_t name[DEVICE_NAME_LENGTH];
-    uint8_t open_state;
-    osMutexId_t mutex;
-    osEventFlagsId_t event;
-
-    int8_t (*open)(struct drv_i2c *i2c);
-    int8_t (*close)(struct drv_i2c *i2c);
-    int8_t (*write)(struct drv_i2c *i2c, uint16_t addr, uint8_t *buf, uint16_t size, uint32_t timeout);
-    int8_t (*read)(struct drv_i2c *i2c, uint16_t addr, uint8_t *buf, uint16_t size, uint32_t timeout);
-    int8_t (*ioctl)(struct drv_i2c *i2c, uint8_t cmd, void *arg);
-};
-
-typedef struct drv_i2c DEVICE_I2C;
-
-int8_t i2c_init(DEVICE_I2C *i2c, uint8_t *device_name);
-
-
-#endif /* __DRV_I2C_H__ */
+#endif

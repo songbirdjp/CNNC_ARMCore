@@ -10,6 +10,7 @@ set(include_path ${include_path}
     # "${current_path}/fpga" 
     "${current_path}/system_common" 
     "${current_path}/tcp" 
+    "${current_path}/rtm" 
     PARENT_SCOPE)
 
 set(src_path ${src_path}
@@ -20,4 +21,5 @@ set(src_path ${src_path}
     # "${current_path}/fpga/*.*" 
     "${current_path}/system_common/*.*" 
     "${current_path}/tcp/*.*" 
+    "${current_path}/rtm/*.*" 
     PARENT_SCOPE)

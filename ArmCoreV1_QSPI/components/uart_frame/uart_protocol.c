@@ -12,6 +12,7 @@
 #include "ulog.h"
 #include <string.h>
 #include <stdlib.h>
+#include "init_call.h"
 typedef struct
 {
     uint8_t data[UART_PROTOCOL_DATA_MAX_LENGTH];
@@ -33,9 +34,9 @@ typedef struct
 typedef struct
 {
     uint16_t len;
-    uint16_t SOF : 1;
-    uint16_t EOF : 1;
-    uint16_t SN : 14;
+    uint16_t sof : 1;
+    uint16_t eof : 1;
+    uint16_t sn : 14;
 } __attribute__((aligned(1), packed)) config_msg_t;
 
 typedef struct
@@ -382,12 +383,7 @@ int32_t uart_protocol_recv(uart_protocol_t *const self,
         }
     }
     break;
-    case 0x84: /*参数获取应答*/
-        osStatus = osMessageQueuePut(self->config_get_response_queue, payload->data, 0, 100);
-        if (osStatus != osOK)
-        {
-            return -12;
-        }
+    case 0x85: /*数据set应答*/
         break;
     case 0x86: /*数据get应答*/
         osStatus = osMessageQueuePut(self->get_rx_response_queue, payload->data + 1, 0, 100);
@@ -476,9 +472,9 @@ int32_t uart_protocol_config_set(uart_protocol_t *const self,
 
         config_msg_t config_msg = {
             .len = len,
-            .SOF = 0x01,
-            .EOF = 0x01,
-            .SN = 0x0000,
+            .sof = 0x01,
+            .eof = 0x01,
+            .sn = 0x0000,
         };
         *(uint32_t *)payload.data = *(uint32_t *)&config_msg;
         memcpy(payload.data + sizeof(config_msg_t), data, len);

@@ -13,18 +13,19 @@ static osEventFlagsId_t data_process_eventHandle = NULL;
 
 static int8_t realtime_ethercat_data_process(void)
 {
-    TOBJ7010 recv_data = {0};
-    TOBJ6000 send_data = {0};
+    app_rtm_event_output_set();
+    // TOBJ7010 recv_data = {0};
+    // TOBJ6000 send_data = {0};
 
-    TOBJ7010 *recv = (TOBJ7010 *)ethercat_recv_data_get((uint16_t *)&recv_data, sizeof(recv_data));
-    TOBJ6000 *send = (TOBJ6000 *)ethercat_send_data_get((uint16_t *)&send_data, sizeof(send_data));
-    if (recv == NULL || send == NULL)
-    {
-        printf("ethercat data get failed\r\n");
-        return -1;
-    }
+    // TOBJ7010 *recv = (TOBJ7010 *)ethercat_recv_data_get((uint16_t *)&recv_data, sizeof(recv_data));
+    // TOBJ6000 *send = (TOBJ6000 *)ethercat_send_data_get((uint16_t *)&send_data, sizeof(send_data));
+    // if (recv == NULL || send == NULL)
+    // {
+    //     printf("ethercat data get failed\r\n");
+    //     return -1;
+    // }
 
-    return ethercat_send_data_update(send, sizeof(send_data));
+    // return ethercat_send_data_update(send, sizeof(send_data));
 }
 
 static int8_t non_realtime_tcp_callback(uint8_t sn)

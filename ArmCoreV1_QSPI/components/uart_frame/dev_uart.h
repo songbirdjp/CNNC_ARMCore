@@ -14,26 +14,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "cmsis_os2.h"
+#include "dev_base.h"
 #ifdef __cplusplus
 extern "C"
 {
 #endif
     /**************************************private*********************************/
-    typedef enum device_err
-    {
-        DEV_EOK = 0,        /**< No error */
-        DEV_ENOMEM = -7,    /**< No enough memory */
-        DEV_EIO = -8,       /**< I/O error */
-        DEV_ENOTFOUND = -9, /**< Not found */
-        DEV_EBUSY = -10,    /**< Resource busy */
-        DEV_EEXIST = -11,   /**< Exists */
-        DEV_ENOTSUP = -12,  /**< Operation not supported */
-        DEV_EINVAL = -13,   /**< Invalid argument */
-        DEV_ETIMEOUT = -14, /**< Timeout */
-        DEV_EREPTD = -15,   /**< Repeated*/
-        DEV_ENOTOPEN = -16, /**< Not OPEN */
-    } device_err_t;
-
     typedef enum uart_type
     {
         UART_TYPE_NULL = 0,

@@ -15,6 +15,7 @@ int8_t ethercat_send_data_update(uint16_t *buf, uint16_t len);
 uint16_t *ethercat_recv_data_get(uint16_t *buf, uint16_t len);
 uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len);
 
+int8_t ethercat_thread_init(void);
 #ifdef __cpuluplus
 }
 #endif

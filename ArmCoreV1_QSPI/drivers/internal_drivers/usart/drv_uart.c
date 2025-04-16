@@ -298,6 +298,22 @@ static int8_t drv_uart_init(uart_dev_t *const self)
     {
         MX_USART1_UART_Init();
     }
+    else if (!memcmp(uart_drv->dev.name, UART_DEV_NAME_USART2, sizeof(UART_DEV_NAME_USART2)))
+    {
+        MX_USART2_UART_Init();
+    }
+    else if (!memcmp(uart_drv->dev.name, UART_DEV_NAME_USART3, sizeof(UART_DEV_NAME_USART3)))
+    {
+        MX_USART3_UART_Init();
+    }
+    else if (!memcmp(uart_drv->dev.name, UART_DEV_NAME_UART4, sizeof(UART_DEV_NAME_UART4)))
+    {
+        MX_UART4_Init();
+    }
+    else if (!memcmp(uart_drv->dev.name, UART_DEV_NAME_UART5, sizeof(UART_DEV_NAME_UART5)))
+    {
+        MX_UART5_Init();
+    }
     else
     {
         /* add other uart here */ /**<------ add other uart here*/
@@ -316,7 +332,7 @@ static int8_t drv_uart_init(uart_dev_t *const self)
                                                UART_CLEAR_CMF |
                                                UART_CLEAR_WUF |
                                                UART_CLEAR_RTOF);
-                                               
+
     HAL_UART_RegisterCallback(uart_drv->huart, HAL_UART_ERROR_CB_ID, ErrorCallback);
     HAL_UART_RegisterCallback(uart_drv->huart, HAL_UART_TX_COMPLETE_CB_ID, TxCpltCallback);
     HAL_UART_RegisterRxEventCallback(uart_drv->huart, RxEventCallback);
@@ -326,6 +342,10 @@ static int8_t drv_uart_init(uart_dev_t *const self)
     return 0;
 }
 static uart_drv_t usart1;
+static uart_drv_t usart2;
+static uart_drv_t usart3;
+static uart_drv_t uart4;
+static uart_drv_t uart5;
 /*static uart_drv_t usartx;*/ /**<------ add other uart here*/
 
 static uart_drv_t *uart_drv_get(UART_HandleTypeDef *huart)
@@ -337,6 +357,22 @@ static uart_drv_t *uart_drv_get(UART_HandleTypeDef *huart)
     if (huart == &huart1)
     {
         return &usart1;
+    }
+    else if (huart == &huart2)
+    {
+        return &usart2;
+    }
+    else if (huart == &huart3)
+    {
+        return &usart3;
+    }
+    else if (huart == &huart4)
+    {
+        return &uart4;
+    }
+    else if (huart == &huart5)
+    {
+        return &uart5;
     }
     else
     {
@@ -472,6 +508,38 @@ int32_t drv_console_init(void)
 static int32_t drv_uartx_init(void)
 {
 
+    int32_t ret = drv_uart_register(uart_drv_get(&huart2),
+                                    &huart2,
+                                    UART_DEV_NAME_USART2,
+                                    UART_TYPE_FULL_DUPLEX);
+    if (ret != 0)
+    {
+        return -1;
+    }
+    ret = drv_uart_register(uart_drv_get(&huart3),
+                                    &huart3,
+                                    UART_DEV_NAME_USART3,
+                                    UART_TYPE_FULL_DUPLEX);
+    if (ret != 0)
+    {
+        return -2;
+    }
+    ret = drv_uart_register(uart_drv_get(&huart4),
+                                    &huart4,
+                                    UART_DEV_NAME_UART4,
+                                    UART_TYPE_FULL_DUPLEX);
+    if (ret != 0)
+    {
+        return -3;
+    }
+    ret = drv_uart_register(uart_drv_get(&huart5),
+                                    &huart5,
+                                    UART_DEV_NAME_UART5,
+                                    UART_TYPE_FULL_DUPLEX);
+    if (ret != 0)
+    {
+        return -4;
+    }
     /* add other uart here */ /**<------ add other uart here*/
     return 0;
 }

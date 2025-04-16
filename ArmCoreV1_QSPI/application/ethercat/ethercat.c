@@ -204,7 +204,7 @@ static void Ethercatfunc(void *argument)
 
         ethercat_timestamp_sync();
 
-        osDelay(1);
+        osDelay(2);
     }
   /* USER CODE END Ethercatfunc */
 }
@@ -228,7 +228,7 @@ static void ethercat_slave_entry(void *argument)
   /* USER CODE END ethercat_slave_entry */
 }
 
-static int8_t ethercat_thread_init(void)
+int8_t ethercat_thread_init(void)
 {
     osThreadAttr_t EthercatSlave_attributes = {
     .name = "EthercatSlave",
@@ -258,4 +258,4 @@ static int8_t ethercat_thread_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(ethercat_thread_init);
+// INIT_APP_EXPORT(ethercat_thread_init);
