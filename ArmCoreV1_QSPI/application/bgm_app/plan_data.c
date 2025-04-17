@@ -408,7 +408,7 @@ static int8_t ExecuteConsoleCmd(uint16_t _consoleCmd, uint8_t _consoleInt)
             memcpy(&sdFixData, beam_info.info, sdFixDataLen);
 
             printf("beam:\r\n");
-            printf("%d %f %f %d %d\r\n", sdFixData.beamID,sdFixData.doseRateSet,sdFixData.beamMeterSet,sdFixData.CPQuantityInBeam,sdFixData.RIQuantityInBeam);
+            printf("%d %d %f %f %d %d\r\n", sdFixData.beamID,sdFixData.beamType,sdFixData.deliveryType,sdFixData.doseRateSet,sdFixData.beamMeterSet,sdFixData.CPQuantityInBeam,sdFixData.RIQuantityInBeam);
 
             memcpy(cp, beam_info.cp_ri_map, MAX_CP_IN_BEAM*2);
 

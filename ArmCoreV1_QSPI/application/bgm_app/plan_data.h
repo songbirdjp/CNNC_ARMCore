@@ -52,7 +52,8 @@ typedef struct {
 
 typedef struct {
     uint16_t beamID;
-    uint16_t reserved;
+    uint8_t beamType;
+    uint8_t deliveryType;
     float doseRateSet;
     float beamMeterSet;
     uint16_t CPQuantityInBeam;
