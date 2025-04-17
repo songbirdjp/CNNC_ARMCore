@@ -12,6 +12,23 @@ extern "C" {
 #define MAX_CP_IN_BEAM 256
 #define CP_IN_PACK 32
 
+typedef enum{
+    MV_MODE,
+    KV_SURVIEW_MODE,
+    KV_SPIRAL_MODE
+}BEAM_TYPE;
+
+typedef enum{
+    No_Defined,
+    VMAT,
+    SWIMRT,
+    SSIMRT,
+    CRT,
+    HiMAT,
+    SURVIEW,
+    CT
+}DELIVERY_TYPE;
+
 typedef struct {
     uint16_t frmTag;
     uint16_t frmType;
