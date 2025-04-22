@@ -111,28 +111,21 @@ static int8_t mcu_adc_sample_start(uint16_t sample_interval_10ns)
     return 0;
 }
 
-osEventFlagsId_t adc_event = NULL;
+static osEventFlagsId_t adc_event = NULL;
 static int8_t mcu_adc_init(void)
 {
-    adc_event = osEventFlagsNew(NULL);
-    if (adc_event == NULL)
-    {
-        LOG_E("adc_event create failed\r\n");
-        return -1;
-    }
-
     int8_t ret = adc_init(DEVICE_NAME_ADC1_DEFAULT, adc_event);
     if (ret != 0)
     {
         LOG_E("%s init err: %d\r\n", DEVICE_NAME_ADC1_DEFAULT, ret);
-        return -2;
+        return -1;
     }
 
     ret = adc_init(DEVICE_NAME_ADC3_DEFAULT, adc_event);
     if (ret != 0)
     {
         LOG_E("%s init err: %d\r\n", DEVICE_NAME_ADC3_DEFAULT, ret);
-        return -3;
+        return -2;
     }
 
     return 0;
@@ -220,6 +213,13 @@ static int8_t mcu_adc_data_convert_entry(void *argument)
 
 static int8_t mcu_adc_thread_init(void)
 {
+    adc_event = osEventFlagsNew(NULL);
+    if (adc_event == NULL)
+    {
+        LOG_E("adc_event create failed\r\n");
+        return -1;
+    }
+
     osThreadAttr_t attr = {
         .name = "mcu_adc_data_convert_thread",
         .stack_size = 1024 * 4,
@@ -230,7 +230,7 @@ static int8_t mcu_adc_thread_init(void)
     if (tid == NULL)
     {
         LOG_E("thread mcu adc data convert create failed\r\n");
-        return -1;
+        return -2;
     }
 
     return 0;

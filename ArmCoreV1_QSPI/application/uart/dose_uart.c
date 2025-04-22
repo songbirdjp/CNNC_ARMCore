@@ -427,17 +427,18 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
     switch (state)
     {
     case FSM_STATE_INIT:
-        if (new_state != FSM_STATE_IDLE)
+        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_TERMINATE)
         {
             ret = -1;
         }
         break;
     case FSM_STATE_IDLE:
-        if (new_state == FSM_STATE_INIT || new_state == FSM_STATE_PREPARE)
+        if (new_state == FSM_STATE_INIT || new_state == FSM_STATE_TERMINATE || new_state == FSM_STATE_PARK || 
+            new_state == FSM_STATE_MANUAL || new_state == FSM_STATE_POWERSAVER || new_state == FSM_STATE_SHUTDOWN)
         {
             /* do nothing */
         }
-        else if (new_state == FSM_STATE_DUMMY)
+        else if (new_state == FSM_STATE_PRELIMINARY_BEGIN)
         {
             /* check lock status */
             struct control_para *obj = control_data_get();
@@ -458,20 +459,17 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
             ret = -1;
         }
         break;
-    case FSM_STATE_DUMMY:
-        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_FAULT)
-        {
-            ret = -1;
-        }
+    case FSM_STATE_PRELIMINARY_BEGIN:
+        ret = -1;
         break;
-    case FSM_STATE_DUMMY_END:
-        if (new_state != FSM_STATE_PREPARE)
+    case FSM_STATE_PRELIMINARY:
+        if (new_state != FSM_STATE_PREPARE && new_state != FSM_STATE_TERMINATE)
         {
             ret = -1;
         }
         break;
     case FSM_STATE_PREPARE:
-        if (new_state == FSM_STATE_IDLE || new_state == FSM_STATE_FAULT)
+        if (new_state == FSM_STATE_TERMINATE)
         {
 
         }
@@ -499,12 +497,12 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
         }
         break;
     case FSM_STATE_READY:
-        if (new_state != FSM_STATE_RADIATION && new_state != FSM_STATE_FAULT)
+        if (new_state != FSM_STATE_WORK && new_state != FSM_STATE_INTERRUPT && new_state != FSM_STATE_TERMINATE)
         {
             ret = -1;
         }
         break;
-    case FSM_STATE_RADIATION:
+    case FSM_STATE_WORK:
         struct control_para *obj = control_data_get();
         osMutexAcquire(obj->mutex, osWaitForever);
         enum dose_board board = obj->board_id;
@@ -512,19 +510,32 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
         switch (board)
         {
         case DOSE_BOARD_TRIGGER_OUT:
-            if (new_state != FSM_STATE_FAULT)
+            if (new_state != FSM_STATE_TERMINATE && new_state != FSM_STATE_INTERRUPT)
             {
                 ret = -1;
             }
             break;
         case DOSE_BOARD_NO_TRIGGER_OUT:
-            if (new_state != FSM_STATE_FAULT && new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE)
+            if (new_state != FSM_STATE_TERMINATE && new_state != FSM_STATE_INTERRUPT && new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE)
             {
                 ret = -1;
             }
             break;
         default:
+            ret = -1;
             break;
+        }
+        break;
+    case FSM_STATE_PARK:
+        if (new_state != FSM_STATE_IDLE)
+        {
+            ret = -1;
+        }
+        break;
+    case FSM_STATE_MANUAL:
+        if (new_state != FSM_STATE_IDLE)
+        {
+            ret = -1;
         }
         break;
     case FSM_STATE_COMPLETE:
@@ -533,8 +544,23 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
             ret = -1;
         }
         break;
-    case FSM_STATE_FAULT:
-        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_READY)
+    case FSM_STATE_SHUTDOWN:
+        ret = -1;
+        break;
+    case FSM_STATE_POWERSAVER:
+        if (new_state != FSM_STATE_IDLE)
+        {
+            ret = -1;
+        }
+        break;
+    case FSM_STATE_INTERRUPT:
+        if (new_state != FSM_STATE_TERMINATE && new_state != FSM_STATE_READY)
+        {
+            ret = -1;
+        }
+        break;
+    case FSM_STATE_TERMINATE:
+        if (new_state != FSM_STATE_IDLE)
         {
             ret = -1;
         }
@@ -719,7 +745,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
         {
             /* emergency stop, just change machine state */
             LOG_I("emergency stop\r\n");
-            ret = fsm_state_switch(FSM_STATE_FAULT);
+            ret = fsm_state_switch(FSM_STATE_TERMINATE);
             if (ret != 0)
             {
                 LOG_E("fsm state switch err: %d\r\n", ret);
@@ -770,7 +796,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
             osMutexAcquire(data->mutex, osWaitForever);
             stat.interlock = (value == 0) ? 0 : 1;
             stat.complete = dose_value_status_get(ONE_BEAM_COMPLETE);
-            stat.radiation = fsm_state_get() == FSM_STATE_RADIATION;
+            stat.radiation = fsm_state_get() == FSM_STATE_WORK;
             stat.ready = fsm_state_get() == FSM_STATE_READY;
             stat.local_ri = data->treatment.ri_src == 1;
             stat.beam_lock = data->treatment.status.bits.lock;

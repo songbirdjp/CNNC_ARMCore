@@ -35,6 +35,7 @@
 #include "console.h"
 #include "sys_cfg.h"
 #include "init_call.h"
+#include "hw_crc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,7 +56,17 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+#if configAPPLICATION_ALLOCATED_HEAP
+uint8_t ucHeap[configTOTAL_HEAP_SIZE] = {0};
+#ifdef USE_FreeRTOS_HEAP_5
+static HeapRegion_t xHeapRegions[] = 
+{
+    { ucHeap, configTOTAL_HEAP_SIZE },
+    { (uint8_t *)0xC0000000, 0x2000000},
+    { NULL,   0                     }
+};
+#endif
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,6 +86,7 @@ static void vector_table_init(void)
     SCB->VTOR = (uint32_t)&__isr_vector_start;
 }
 
+#if 0
 static void cmd_rtc_test(uint8_t argc, uint8_t **argv)
 {
     uint32_t bkp_data = 0;
@@ -153,8 +165,7 @@ static void rdp_test(uint8_t argc, uint8_t **argv)
 }
 MSH_CMD_EXPORT_ALIAS(rdp_test, rdp_test, rtc rdp);
 
-#if 0
-int8_t fpu_test(uint8_t argc, uint8_t **argv)
+static int8_t fpu_test(uint8_t argc, uint8_t **argv)
 {
 
     if (argc != 2)
@@ -191,7 +202,180 @@ int8_t fpu_test(uint8_t argc, uint8_t **argv)
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(fpu_test, fpu_test, test fpu);
+
+static uint32_t itcm[1024] __attribute__((section(".ram_itcm"))) = {0};
+static uint32_t dtcm[1024] __attribute__((section(".ram_dtcm"))) = {0};
+static uint32_t sdram[1024] __attribute__((section(".sdram_ext"))) = {0};
+static uint32_t sram[1024] = {0};
+#include "utilities.h"
+static int8_t ram_speed_test(uint8_t argc, uint8_t **argv)
+{
+    uint32_t loop = atoi(argv[1]);
+    struct system_time begin = {0};
+    struct system_time end = {0};
+
+    /* 1. itcm */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        itcm[i % 1024] = i;
+        itcm[i % 1024 + 1] = i + 1;
+        itcm[i % 1024 + 2] = i + 2;
+        itcm[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("itcm time: %u us\r\n", time_diff_us(&begin, &end));
+
+    osDelay(100);
+
+    /* 2. dtcm */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        dtcm[i % 1024] = i;
+        dtcm[i % 1024 + 1] = i + 1;
+        dtcm[i % 1024 + 2] = i + 2;
+        dtcm[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("dtcm time: %u us\r\n", time_diff_us(&begin, &end));
+
+    osDelay(100);
+
+    /* 3. sdram */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        sdram[i % 1024] = i;
+        sdram[i % 1024 + 1] = i + 1;
+        sdram[i % 1024 + 2] = i + 2;
+        sdram[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("sdram time: %u us\r\n", time_diff_us(&begin, &end));
+
+    osDelay(100);
+
+    /* 4. sram */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        sram[i % 1024] = i;
+        sram[i % 1024 + 1] = i + 1;
+        sram[i % 1024 + 2] = i + 2;
+        sram[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("sram time: %u us\r\n", time_diff_us(&begin, &end));
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(ram_speed_test, ram_speed_test, test ram);
+
+static int8_t hw_crc_test(uint8_t argc, uint8_t **argv)
+{
+    uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+    uint32_t res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
+
+    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc8 res = %#x\r\n", res);
+
+    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc16 res = %#x\r\n", res);
+
+    res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
+
+    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc8 res = %#x\r\n", res);
+
+    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc16 res = %#x\r\n", res);
+    
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(hw_crc_test, hw_crc_test, test crc);
+
+static int8_t ext_sdram_test(uint8_t argc, uint8_t **argv)
+{
+    uint16_t *ext_sdram_array = (uint16_t *)pvPortMalloc(1024 * 1024 * 32 - 16);
+    if (ext_sdram_array == NULL)
+    {
+        printf("malloc error\r\n");
+        return -1;
+    }
+
+    printf("ext sdram malloc ok: %p\r\n", ext_sdram_array);
+
+    for (int i = 0; i < 1024; i++)
+    {
+        if (i % 16 == 0 && i != 0)
+        {
+            printf("\r\n");
+        }
+        printf("%.4x ", ext_sdram_array[i]);
+    }
+
+    printf("\r\n");
+
+    for (int i = 0; i < 1024; i++)
+    {
+        ext_sdram_array[i] = i;
+    }
+
+    for (int i = 0; i < 1024; i++)
+    {
+        if (i % 16 == 0 && i != 0)
+        {
+            printf("\r\n");
+        }
+        printf("%.4x ", ext_sdram_array[i]);
+    }
+
+    printf("\r\n");
+
+    vPortFree(ext_sdram_array);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(ext_sdram_test, ext_sdram_test, test ext_sdram);
 #endif
+
+static int8_t system_heap_init(void)
+{
+#ifdef USE_FreeRTOS_HEAP_5
+    vPortDefineHeapRegions (xHeapRegions);
+#endif
+    return 0;
+}
+
+static int8_t system_reset_status_check(void)
+{
+    if (__HAL_RCC_GET_FLAG(RCC_FLAG_CPURST) != 0)
+    {
+        if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST) != 0)
+        {
+            __HAL_RCC_CLEAR_RESET_FLAGS();
+        }
+        else
+        {
+            printf("CPU reset checked\r\n");
+            printf("RCC_FLAG_D1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_D1RST));
+            printf("RCC_FLAG_D2RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_D2RST));
+            printf("RCC_FLAG_BORRST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_BORRST));
+            printf("RCC_FLAG_PINRST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_PINRST));
+            printf("RCC_FLAG_PORRST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_PORRST));
+            printf("RCC_FLAG_SFTRST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST));
+            printf("RCC_FLAG_IWDG1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_IWDG1RST));
+            printf("RCC_FLAG_WWDG1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_WWDG1RST));
+            printf("RCC_FLAG_LPWR1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_LPWR1RST));
+        }
+    }
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(system_reset_status_check, system_reset_status_check, system wdg check);
 /* USER CODE END 0 */
 
 /**
@@ -245,12 +429,16 @@ int main(void)
 
 //   bank1_sdram_init();
 
+  system_heap_init();
+
   /* Console initialize */
   device_console_init(CONSOLE_NAME_DEFAULT);
   system_info_print();
   system_fun_init(); 
 
 //   printf("----this is bootloader----\r\n");
+
+  system_reset_status_check();
 
   printf("Init ok\r\n");
 
@@ -265,28 +453,6 @@ int main(void)
   portENABLE_INTERRUPTS();
   extern int8_t app_valid_check_and_jump(void);
   app_valid_check_and_jump();
-#endif
-
-#if 0
-    uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-    uint32_t res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
-
-    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc8 res = %#x\r\n", res);
-
-    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc16 res = %#x\r\n", res);
-
-    res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
-
-    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc8 res = %#x\r\n", res);
-
-    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc16 res = %#x\r\n", res);
-    
 #endif
 
   /* USER CODE END 2 */

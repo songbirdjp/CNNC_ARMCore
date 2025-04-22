@@ -1,6 +1,7 @@
 #include "shell.h"
 #include "stddef.h"
 #include "utilities.h"
+#include "ulog.h"
 
 typedef int (*fun_ptr)(int8_t argc, uint8_t **argv);
 
@@ -74,6 +75,6 @@ static int8_t shell_exec(uint8_t *cmd, uint16_t length)
 
 int8_t shell_cmd_parse_entry(uint8_t *cmd_buf, uint16_t len)
 {
-    printf("shell >\r\n");
+    LOG_I("shell >\r\n");
     shell_exec(cmd_buf, len);
 }
