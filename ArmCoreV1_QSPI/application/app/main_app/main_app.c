@@ -26,7 +26,7 @@ static int8_t bgm_fsm_state_ctrl_switch(uint8_t argc, char *argv[])
 }
 MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_ctrl_switch, bgm_fsm_state_ctrl_switch, set bgm fsm state ctrl);
 
-static int8_t bgm_fsm_state_set(uint8_t argc, char *argv[])
+static int8_t bgm_fsm_state_request_set(uint8_t argc, char *argv[])
 {
     struct bgm_data_info *obj = bgm_data_info_get();
 
@@ -36,7 +36,7 @@ static int8_t bgm_fsm_state_set(uint8_t argc, char *argv[])
 
     return 0;
 }
-MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_set, bgm_fsm_state_set, set bgm fsm state);
+MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_request_set, bgm_fsm_state_request_set, set bgm fsm state request);
 
 static int8_t bgm_fsm_state_set_pre(uint8_t argc, char *argv[])
 {
@@ -97,9 +97,11 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
     osMutexRelease(obj->mutex);
 
     send->InU16_NotReadyEvent = 0;
-    send->InU32_WaringInterlock = 0;
-    send->InU32_MinorInterlock = 0;
-    send->InU32_SeriousInterlock = interlock_status_get().exGPIODetect.expandGpioData;
+
+    struct interlocks interlock = interlock_status_get();
+    send->InU32_WaringInterlock = interlock.detect_status.bytes;
+    send->InU32_MinorInterlock = interlock.extend_status.interrupt_flag << 16 | interlock.extend_status.interrupt_capture;
+    send->InU32_SeriousInterlock = interlock.extend_status.current.bytes;
 
 
     send->InF_BeamOnTime = 0;

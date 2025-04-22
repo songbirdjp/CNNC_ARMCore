@@ -3,6 +3,16 @@
 #include "init_call.h"
 #include "tim.h"
 #include "ulog.h"
+#include "adc_app.h"
+
+// #define BGM_FSM_STATE_SIMULATION
+#ifdef BGM_FSM_STATE_SIMULATION
+static enum dose_fsm_state dose1_fsm_state = DOSE_FSM_STATE_MAX, dose2_fsm_state = DOSE_FSM_STATE_MAX;
+#endif
+
+#define DOSE_NONE_FLAG          (0 << 0)
+#define DOSE_PRELIMINARY_FLAG   (1 << 0)
+#define DOSE_COMPLETE_FLAG      (1 << 1)
 
 void TriggerConfig_SetARR(TIM_HandleTypeDef *htim, uint32_t arr_value)
 {
@@ -49,11 +59,19 @@ static void trigger_out_distribute_init(void)
         LOG_E("HAL_TIM_RegisterCallback err: %d\r\n", status);
     }
 
-    HAL_TIM_Base_Start(&htim1);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim23, TIM_CHANNEL_3);
-    HAL_TIM_Base_Start_IT(&htim5);
+    status |= HAL_TIM_Base_Stop(&htim1);
+    status |= HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+    status |= HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+    status |= HAL_TIM_PWM_Start(&htim23, TIM_CHANNEL_3);
+    status |= HAL_TIM_Base_Start_IT(&htim5);
+    if (status != HAL_OK)
+    {
+        LOG_E("trigger out distribute init err: %d\r\n", status);
+    }
+}
+static void trigger_out_enable(uint8_t en)
+{
+    en == 0 ? HAL_TIM_Base_Stop(&htim1) : HAL_TIM_Base_Start(&htim1);
 }
 static int8_t trigger_out_entry(void *argument)
 {
@@ -83,7 +101,7 @@ enum fsm_source_t
     FSM_SOURCE_MAX
 };
 
-static int8_t fsm_switch_check(enum bgm_fsm_state state_request, enum bgm_fsm_state state_current)
+static int8_t fsm_switch_check(enum bgm_fsm_state state_current, enum bgm_fsm_state state_request)
 {
     if (state_request >= BGM_STATE_MAX)
     {
@@ -91,93 +109,95 @@ static int8_t fsm_switch_check(enum bgm_fsm_state state_request, enum bgm_fsm_st
         return -1;
     }
 
+    if (state_request == state_current)
+    {
+        return 0;
+    }
+
     int8_t ret = 0;
 
-    switch (state_request)
+    switch (state_current)
     {
     case BGM_STATE_INIT:
-        if (state_current != BGM_STATE_IDLE)
+        if (state_request != BGM_STATE_IDLE && state_request != BGM_STATE_TERMINATE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_IDLE:
-        if (state_current != BGM_STATE_INIT && state_current != BGM_STATE_POWERSAVER 
-            && state_current != BGM_STATE_TERMINATE && state_current != BGM_STATE_COMPLETE
-            && state_current != BGM_STATE_MANUAL && state_current != BGM_STATE_PARK)
+        if (state_request != BGM_STATE_INIT && state_request != BGM_STATE_PRELIMINARY && 
+            state_request != BGM_STATE_PARK && state_request != BGM_STATE_MANUAL && 
+            state_request != BGM_STATE_POWERSAVER && state_request != BGM_STATE_SHUTDOWN && 
+            state_request != BGM_STATE_TERMINATE)
         {
-            ret = -1;
+                ret = -1;
         }
         break;
     case BGM_STATE_PRELIMINARY:
-        if (state_current != BGM_STATE_IDLE)
+        if (state_request != BGM_STATE_PREPARE && state_request != BGM_STATE_TERMINATE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_PREPARE:
-        if (state_current != BGM_STATE_PRELIMINARY && state_current != BGM_STATE_COMPLETE)
+        if (state_request != BGM_STATE_READY && state_request != BGM_STATE_TERMINATE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_READY:
-        if (state_current != BGM_STATE_PREPARE && state_current != BGM_STATE_INTERRUPT)
+        if (state_request != BGM_STATE_WORK && state_request != BGM_STATE_INTERRUPT && state_request != BGM_STATE_TERMINATE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_WORK:
-        if (state_current != BGM_STATE_READY)
+        if (state_request != BGM_STATE_COMPLETE && state_request != BGM_STATE_INTERRUPT && state_request != BGM_STATE_TERMINATE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_PARK:
-        if (state_current != BGM_STATE_IDLE)
+        if (state_request != BGM_STATE_IDLE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_MANUAL:
-        if (state_current != BGM_STATE_IDLE)
+        if (state_request != BGM_STATE_IDLE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_COMPLETE:
-        if (state_current != BGM_STATE_WORK)
+        if (state_request != BGM_STATE_IDLE && state_request != BGM_STATE_PREPARE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_SHUTDOWN:
-        if (state_current != BGM_STATE_IDLE && state_current != BGM_STATE_POWERSAVER)
-        {
-            ret = -1;
-        }
+        ret = -1;
         break;
     case BGM_STATE_POWERSAVER:
-        if (state_current != BGM_STATE_IDLE)
+        if (state_request != BGM_STATE_IDLE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_TERMINATE:
-        if (state_current != BGM_STATE_PRELIMINARY && state_current != BGM_STATE_PREPARE
-            && state_current != BGM_STATE_READY && state_current != BGM_STATE_WORK
-            && state_current != BGM_STATE_INTERRUPT)
+        if (state_request != BGM_STATE_IDLE)
         {
             ret = -1;
         }
         break;
     case BGM_STATE_INTERRUPT:
-        if (state_current != BGM_STATE_READY && state_current != BGM_STATE_WORK)
+        if (state_request != BGM_STATE_READY && state_request != BGM_STATE_TERMINATE)
         {
             ret = -1;
         }
         break;
     default:
+        ret = -1;
         break;
     }
 
@@ -241,8 +261,8 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         ret |= dose_meter_value_set(BGM_UART_DOSE1, info.dose_meter_dummy);
         ret |= dose_meter_value_set(BGM_UART_DOSE2, info.dose_meter_dummy);
         /* 6. set dose board to dummy */
-        ret |= dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_DUMMY);
-        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_DUMMY);
+        ret |= dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
+        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
         break;
     case BGM_STATE_PREPARE:
         LOG_I("---remote set to prepare---\r\n");
@@ -274,8 +294,8 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         {
             ret |= dose_beam_parameter_set(BGM_UART_DOSE1, info.beam_id);
             ret |= dose_beam_parameter_set(BGM_UART_DOSE2, info.beam_id);
-            // ret |= dose_radiation_index_set(BGM_UART_DOSE1, info.radiation_index, 0);
-            // ret |= dose_radiation_index_set(BGM_UART_DOSE2, info.radiation_index, 0);
+            ret |= dose_radiation_index_set(BGM_UART_DOSE1, info.radiation_index, 0);
+            ret |= dose_radiation_index_set(BGM_UART_DOSE2, info.radiation_index, 0);
         }
         /* 5. set dose board to prepare */
         ret |= dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_PREPARE);
@@ -288,32 +308,45 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         break;
     case BGM_STATE_WORK:
         /* 1. set dose board to radiation */
-        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_RADIATION);
-        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_RADIATION);
+        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_WORK);
+        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_WORK);
         break;
     case BGM_STATE_PARK:
+        /* 1. set dose board to park */
+        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_PARK);
+        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_PARK);
         break;
     case BGM_STATE_MANUAL:
+        /* 1. set dose board to manual */
+        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_MANUAL);
+        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_MANUAL);
         break;
     case BGM_STATE_COMPLETE:
         LOG_E("illegal state request: %d\r\n", state_request);
         ret = -1;
         break;
     case BGM_STATE_SHUTDOWN:
+        /* set dose board to shutdown */
+        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_SHUTDOWN);
+        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_SHUTDOWN);
         break;
     case BGM_STATE_POWERSAVER:
+        /* set dose board to power saver */
+        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_POWERSAVER);
+        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_POWERSAVER);
         break;
     case BGM_STATE_TERMINATE:
-        /* set dose board to fault */
-        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_FAULT);
-        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_FAULT);
+        /* set dose board to terminate */
+        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_TERMINATE);
+        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_TERMINATE);
         break;
     case BGM_STATE_INTERRUPT:
-        /* set dose board to fault */
-        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_FAULT);
-        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_FAULT);
+        /* set dose board to interrupt */
+        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_INTERRUPT);
+        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_INTERRUPT);
         break;
     default:
+        ret = -1;
         break;
     }
 
@@ -334,71 +367,94 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
 static int8_t fsm_state_set(enum bgm_fsm_state state_request, enum fsm_source_t source)
 {
     int8_t ret = 0;
-    uint8_t dummy_end_flag = 0;
-    enum bgm_fsm_state state_current = BGM_STATE_MAX, state_request_already = BGM_STATE_MAX;
-    struct bgm_data_info *obj = bgm_data_info_get();
 
-    osMutexAcquire(obj->mutex, osWaitForever);
-    state_current = obj->fsm_state;
-    dummy_end_flag = obj->dummy_end_flag;
-    state_request_already = obj->fsm_state_request_already;
-    osMutexRelease(obj->mutex);
-
-    if (dummy_end_flag == 0)
-    {
-        if (state_request == state_current)
-        {
-            return 0;
-        }
-
-        if (state_request_already == BGM_STATE_PRELIMINARY && source == FSM_SOURCE_REMOTE)
-        {
-            return 0;
-        }
-    }
-    else
-    {
-        if (state_request == state_current && state_request == BGM_STATE_PREPARE && source == FSM_SOURCE_REMOTE)
-        {
-            osMutexAcquire(obj->mutex, osWaitForever);
-            obj->dummy_end_flag = 0;
-            osMutexRelease(obj->mutex);
-            goto except;
-        }
-        else if (state_request == state_current)
-        {
-            return 0;
-        }
-    }
-
-    ret = fsm_switch_check(state_request, state_current);
-    if (ret != 0)
-    {
-        // LOG_E("fsm_switch_check err: %d\r\n", ret);
-        return ret;
-    }
-
-except:
     if (source >= FSM_SOURCE_MAX)
     {
         LOG_E("invalid source: %d\r\n", source);
         return -1;
     }
 
+    uint8_t dose_fsm_state_flag = 0;
+    enum bgm_fsm_state state_current = BGM_STATE_MAX, state_request_already = BGM_STATE_MAX, state_request_pre = BGM_STATE_MAX;
+    struct bgm_data_info *obj = bgm_data_info_get();
+
+    osMutexAcquire(obj->mutex, osWaitForever);
+    state_current = obj->fsm_state;
+    state_request_pre = obj->fsm_state_request_pre;
+    state_request_already = obj->fsm_state_request_already;
+    dose_fsm_state_flag = obj->dose_fsm_state_flag;
+    osMutexRelease(obj->mutex);
+
+    ret = fsm_switch_check(state_current, state_request);
+    if (ret != 0)
+    {
+        // LOG_E("fsm_switch_check err: %d\r\n", ret);
+        return ret;
+    }
+
     switch (source)
     {
     case FSM_SOURCE_REMOTE:
+        if (state_request == BGM_STATE_PREPARE)
+        {
+            switch (dose_fsm_state_flag)
+            {
+            case DOSE_NONE_FLAG:    /* just wait for dummy or beam end */
+                return 0;
+                break;
+            case DOSE_PRELIMINARY_FLAG:
+                osMutexAcquire(obj->mutex, osWaitForever);
+                obj->dose_fsm_state_flag &= ~DOSE_PRELIMINARY_FLAG;
+                osMutexRelease(obj->mutex);
+                break;
+            case DOSE_COMPLETE_FLAG:
+                osMutexAcquire(obj->mutex, osWaitForever);
+                obj->dose_fsm_state_flag &= ~DOSE_COMPLETE_FLAG;
+                osMutexRelease(obj->mutex);
+                break;
+            default:
+                LOG_E("dose fsm flag err: %d\r\n", dose_fsm_state_flag);
+                return 0;
+                break;
+            }
+        }
+        else
+        {
+            if (state_request == state_current)
+            {
+                break;
+            }
+        }
+
         if (state_request != state_request_already)
         {
             ret = fsm_state_remote_set(state_request);
         }
         break;
     case FSM_SOURCE_LOCAL:
+        if (state_request == state_current)
+        {
+            break;
+        }
         osMutexAcquire(obj->mutex, osWaitForever);
         obj->fsm_state = state_request;
         osMutexRelease(obj->mutex);
+
+        switch (state_request)
+        {
+        case BGM_STATE_IDLE:
+            trigger_out_enable(0);
+            break;
+        case BGM_STATE_PREPARE:
+            trigger_out_enable(1);
+            break;
+        default:
+            break;
+        }
         break;
     default:
+        LOG_E("invalid source: %d\r\n", source);
+        ret = -2;
         break;
     }
 
@@ -414,17 +470,20 @@ static int8_t fsm_state_update_from_local(void)
 {
     int8_t ret = 0;
     static enum dose_fsm_state dose_state_set = DOSE_FSM_STATE_MAX;
-    enum dose_fsm_state fsm_state_dose1 = 0, fsm_state_dose2 = 0;
-
-    enum bgm_fsm_state state_request = BGM_STATE_MAX, state_request_pre = BGM_STATE_MAX;
+    enum dose_fsm_state fsm_state_dose1 = DOSE_FSM_STATE_MAX, fsm_state_dose2 = DOSE_FSM_STATE_MAX;
     struct bgm_data_info *obj = bgm_data_info_get();
+    enum bgm_fsm_state state_current = BGM_STATE_MAX;
 
     osMutexAcquire(obj->mutex, osWaitForever);
-    state_request = obj->fsm_state_request;
-    state_request_pre = obj->fsm_state_request_pre;
+    state_current = obj->fsm_state;
     osMutexRelease(obj->mutex);
 
+
     /* 0. polling dose board fsm */
+#ifdef BGM_FSM_STATE_SIMULATION
+    fsm_state_dose1 = dose1_fsm_state;
+    fsm_state_dose2 = dose2_fsm_state;
+#else
     ret = dose_state_polling(BGM_UART_DOSE1);
     ret |= dose_state_polling(BGM_UART_DOSE2);
     if (ret != 0)
@@ -435,47 +494,35 @@ static int8_t fsm_state_update_from_local(void)
     /* 1. get dose fsm state */
     fsm_state_dose1 = dose_fsm_state_get(BGM_UART_DOSE1);
     fsm_state_dose2 = dose_fsm_state_get(BGM_UART_DOSE2);
-    if (ret != 0)
-    {
-        LOG_E("dose fsm get err: %d\r\n", ret);
-    }
 
     if (fsm_state_dose1 == DOSE_FSM_STATE_INIT || fsm_state_dose2 == DOSE_FSM_STATE_INIT)
     {
-        ret = dose_handshake(BGM_UART_DOSE1);
-        ret |= dose_handshake(BGM_UART_DOSE2);
-        if (ret != 0)
+        switch (state_current)
         {
-            LOG_E("dose handshake err: %d\r\n", ret);
+        case BGM_STATE_INIT:
+            ret = fsm_state_dose1 == DOSE_FSM_STATE_INIT ? dose_handshake(BGM_UART_DOSE1) : 0;
+            ret |= fsm_state_dose2 == DOSE_FSM_STATE_INIT ? dose_handshake(BGM_UART_DOSE2) : 0;
+            if (ret != 0)
+            {
+                LOG_E("dose handshake err: %d\r\n", ret);
+            }
+            break;
+        default:
+            fsm_state_dose1 == DOSE_FSM_STATE_INIT ? LOG_E("dose1 abnormal reboot\r\n") : NULL;
+            fsm_state_dose2 == DOSE_FSM_STATE_INIT ? LOG_E("dose2 abnormal reboot\r\n") : NULL;
+            ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_TERMINATE);
+            ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_TERMINATE);
+            if (ret != 0)
+            {
+                LOG_E("dose fsm set err: %d\r\n", ret);
+            }
+            break;
         }
     }
+#endif
 
     /* 2. update fsm state current from local */
-    if (state_request == BGM_STATE_INTERRUPT || state_request == BGM_STATE_TERMINATE)
-    {
-        if (fsm_state_dose1 == DOSE_FSM_STATE_FAULT && fsm_state_dose2 == DOSE_FSM_STATE_FAULT)
-        {
-            ret = fsm_state_set(state_request, FSM_SOURCE_LOCAL);
-            if (ret != 0)
-            {
-                LOG_E("fsm state set err: %d\r\n", ret);
-            }
-        }
-    }
-    else if (state_request == BGM_STATE_READY && state_request_pre == BGM_STATE_INTERRUPT)
-    {
-        if (fsm_state_dose1 == DOSE_FSM_STATE_READY && fsm_state_dose2 == DOSE_FSM_STATE_READY)
-        {
-            dose_state_set = DOSE_FSM_STATE_READY;
-
-            ret = fsm_state_set(BGM_STATE_READY, FSM_SOURCE_LOCAL);
-            if (ret != 0)
-            {
-                LOG_E("fsm state set err: %d\r\n", ret);
-            }
-        }
-    }
-    else if (fsm_state_dose1 == DOSE_FSM_STATE_FAULT && fsm_state_dose2 == DOSE_FSM_STATE_FAULT)
+    if (fsm_state_dose1 == DOSE_FSM_STATE_TERMINATE && fsm_state_dose2 == DOSE_FSM_STATE_TERMINATE)
     {
         ret = fsm_state_set(BGM_STATE_TERMINATE, FSM_SOURCE_LOCAL);
         if (ret != 0)
@@ -483,16 +530,16 @@ static int8_t fsm_state_update_from_local(void)
             LOG_E("fsm state set err: %d\r\n", ret);
         }
     }
-    else if (fsm_state_dose1 == DOSE_FSM_STATE_FAULT || fsm_state_dose2 == DOSE_FSM_STATE_FAULT)
+    else if (fsm_state_dose1 == DOSE_FSM_STATE_TERMINATE || fsm_state_dose2 == DOSE_FSM_STATE_TERMINATE)
     {
-        if (dose_state_set == DOSE_FSM_STATE_FAULT)
+        if (dose_state_set == DOSE_FSM_STATE_TERMINATE)
         {
             return 0;
         }
-        dose_state_set = DOSE_FSM_STATE_FAULT;
+        dose_state_set = DOSE_FSM_STATE_TERMINATE;
 
-        ret = fsm_state_dose1 == DOSE_FSM_STATE_FAULT ? dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_FAULT) : 0;
-        ret |= fsm_state_dose2 == DOSE_FSM_STATE_FAULT ? dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_FAULT) : 0;
+        ret = fsm_state_dose1 == DOSE_FSM_STATE_TERMINATE ? dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_TERMINATE) : 0;
+        ret |= fsm_state_dose2 == DOSE_FSM_STATE_TERMINATE ? dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_TERMINATE) : 0;
         if (ret != 0)
         {
             LOG_E("dose fsm set err: %d\r\n", ret);
@@ -508,7 +555,7 @@ static int8_t fsm_state_update_from_local(void)
             LOG_E("fsm state set err: %d\r\n", ret);
         }
     }
-    else if (fsm_state_dose1 == DOSE_FSM_STATE_DUMMY && fsm_state_dose2 == DOSE_FSM_STATE_DUMMY)
+    else if (fsm_state_dose1 == DOSE_FSM_STATE_PRELIMINARY_BEGIN && fsm_state_dose2 == DOSE_FSM_STATE_PRELIMINARY_BEGIN)
     {
         ret = fsm_state_set(BGM_STATE_PRELIMINARY, FSM_SOURCE_LOCAL);
         if (ret != 0)
@@ -516,27 +563,19 @@ static int8_t fsm_state_update_from_local(void)
             LOG_E("fsm state set err: %d\r\n", ret);
         }
     }
-    else if (fsm_state_dose1 == DOSE_FSM_STATE_DUMMY_END && fsm_state_dose2 == DOSE_FSM_STATE_DUMMY_END)
+    else if (fsm_state_dose1 == DOSE_FSM_STATE_PRELIMINARY && fsm_state_dose2 == DOSE_FSM_STATE_PRELIMINARY)
     {
-        if (dose_state_set == DOSE_FSM_STATE_PREPARE)
+        if (dose_state_set == DOSE_FSM_STATE_PRELIMINARY)
         {
             return 0;
         }
-        dose_state_set = DOSE_FSM_STATE_PREPARE;
-
-        struct bgm_data_info *obj = bgm_data_info_get();
+        dose_state_set = DOSE_FSM_STATE_PRELIMINARY;
 
         osMutexAcquire(obj->mutex, osWaitForever);
-        obj->dummy_end_flag = 1;
+        obj->dose_fsm_state_flag = DOSE_PRELIMINARY_FLAG;
         osMutexRelease(obj->mutex);
 
-        osDelay(3000);
-        ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_PREPARE);
-        ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_PREPARE);
-        if (ret != 0)
-        {
-            LOG_E("dose fsm set err: %d\r\n", ret);
-        }
+        LOG_I("---dummy end---\r\n");
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_PREPARE && fsm_state_dose2 == DOSE_FSM_STATE_PREPARE)
     {
@@ -548,7 +587,7 @@ static int8_t fsm_state_update_from_local(void)
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_READY && fsm_state_dose2 == DOSE_FSM_STATE_READY)
     {
-        dose_state_set = DOSE_FSM_STATE_READY;
+        // dose_state_set = DOSE_FSM_STATE_READY;
 
         ret = fsm_state_set(BGM_STATE_READY, FSM_SOURCE_LOCAL);
         if (ret != 0)
@@ -556,7 +595,7 @@ static int8_t fsm_state_update_from_local(void)
             LOG_E("fsm state set err: %d\r\n", ret);
         }
     }
-    else if (fsm_state_dose1 == DOSE_FSM_STATE_RADIATION && fsm_state_dose2 == DOSE_FSM_STATE_RADIATION)
+    else if (fsm_state_dose1 == DOSE_FSM_STATE_WORK && fsm_state_dose2 == DOSE_FSM_STATE_WORK)
     {
         ret = fsm_state_set(BGM_STATE_WORK, FSM_SOURCE_LOCAL);
         if (ret != 0)
@@ -566,7 +605,57 @@ static int8_t fsm_state_update_from_local(void)
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_COMPLETE || fsm_state_dose2 == DOSE_FSM_STATE_COMPLETE)
     {
+        if (dose_state_set == DOSE_FSM_STATE_COMPLETE)
+        {
+            return 0;
+        }
+        dose_state_set = DOSE_FSM_STATE_COMPLETE;
+
+        osMutexAcquire(obj->mutex, osWaitForever);
+        obj->dose_fsm_state_flag = DOSE_COMPLETE_FLAG;
+        osMutexRelease(obj->mutex);
+
         ret = fsm_state_set(BGM_STATE_COMPLETE, FSM_SOURCE_LOCAL);
+        if (ret != 0)
+        {
+            LOG_E("fsm state set err: %d\r\n", ret);
+        }
+    }
+    else if (fsm_state_dose1 == DOSE_FSM_STATE_INTERRUPT && fsm_state_dose2 == DOSE_FSM_STATE_INTERRUPT)
+    {
+        ret = fsm_state_set(BGM_STATE_INTERRUPT, FSM_SOURCE_LOCAL);
+        if (ret != 0)
+        {
+            LOG_E("fsm state set err: %d\r\n", ret);
+        }
+    }
+    else if (fsm_state_dose1 == DOSE_FSM_STATE_PARK && fsm_state_dose2 == DOSE_FSM_STATE_PARK)
+    {
+        ret = fsm_state_set(BGM_STATE_PARK, FSM_SOURCE_LOCAL);
+        if (ret != 0)
+        {
+            LOG_E("fsm state set err: %d\r\n", ret);
+        }
+    }
+    else if (fsm_state_dose1 == DOSE_FSM_STATE_MANUAL && fsm_state_dose2 == DOSE_FSM_STATE_MANUAL)
+    {
+        ret = fsm_state_set(BGM_STATE_MANUAL, FSM_SOURCE_LOCAL);
+        if (ret != 0)
+        {
+            LOG_E("fsm state set err: %d\r\n", ret);
+        }
+    }
+    else if (fsm_state_dose1 == DOSE_FSM_STATE_SHUTDOWN && fsm_state_dose2 == DOSE_FSM_STATE_SHUTDOWN)
+    {
+        ret = fsm_state_set(BGM_STATE_SHUTDOWN, FSM_SOURCE_LOCAL);
+        if (ret != 0)
+        {
+            LOG_E("fsm state set err: %d\r\n", ret);
+        }
+    }
+    else if (fsm_state_dose1 == DOSE_FSM_STATE_POWERSAVER && fsm_state_dose2 == DOSE_FSM_STATE_POWERSAVER)
+    {
+        ret = fsm_state_set(BGM_STATE_POWERSAVER, FSM_SOURCE_LOCAL);
         if (ret != 0)
         {
             LOG_E("fsm state set err: %d\r\n", ret);
@@ -588,30 +677,10 @@ static int8_t fsm_state_update_from_remote(void)
     return fsm_state_set(state_request, FSM_SOURCE_REMOTE);
 }
 
-static int8_t handshake_with_slave(void)
-{
-    int8_t ret = 0;
-
-    ret = dose_handshake(BGM_UART_DOSE1);
-    ret |= dose_handshake(BGM_UART_DOSE2);
-    if (ret != 0)
-    {
-        LOG_E("dose handshake err: %d\r\n", ret);
-    }
-
-    return ret;
-}
-
 static void system_fsm_state_entry(void *argument)
 {
     int8_t ret = 0;
-
-    ret = handshake_with_slave();
-    if (ret != 0)
-    {
-        LOG_E("handshake with slave err: %d\r\n", ret);
-    }
-    
+  
     for (;;)
     {
         osDelay(50);
@@ -722,6 +791,47 @@ static int8_t fsm_thread_init(void)
 }
 INIT_APP_EXPORT(fsm_thread_init);
 
+static int8_t SF6_analog_value_get(float *value)
+{
+#define SF6_FACTOR  0.25f
+#define SF6_OFFSET  -0.25f
+
+    *value = mcu_adc_value_get(MCU_ADC_CHANNEL_SF6) / 1000 * SF6_FACTOR + SF6_OFFSET;
+
+    return 0;
+}
+
+#ifdef BGM_FSM_STATE_SIMULATION
+#include "shell.h"
+static int8_t dose_fsm_state_update(uint8_t argc, char **argv)
+{
+    if (argc != 3)
+    {
+        LOG_E("invalid args\r\n");
+        return -1;
+    }
+
+    uint8_t uart_id = atoi(argv[1]);
+    uint8_t state = atoi(argv[2]);
+
+    switch (uart_id)
+    {
+    case 1:
+        dose1_fsm_state = state;
+        break;
+    case 2:
+        dose2_fsm_state = state;
+        break;
+    default:
+        break;
+    }
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(dose_fsm_state_update, dose_fsm_state_update, update dose fsm state);
+#endif
+
+
 #ifndef BGM_STATE_TEST
 #include "shell.h"
 static int8_t bgm_info_get(uint8_t argc, char **argv)
@@ -745,15 +855,20 @@ static int8_t bgm_info_get(uint8_t argc, char **argv)
     LOG_I("cali_dose2_adc: %d\r\n", info.cali_dose2_adc);
     LOG_I("dose_meter: %f\r\n", info.dose_meter);
     LOG_I("dose_meter_dummy: %f\r\n", info.dose_meter_dummy);
-    LOG_I("dummy_end_flag: %d\r\n", info.dummy_end_flag);
+    LOG_I("dose_fsm_state_flag: %d\r\n", info.dose_fsm_state_flag);
 
     LOG_I("fsm_state: %d\r\n", info.fsm_state);
     LOG_I("fsm_state_request: %d\r\n", info.fsm_state_request);
     LOG_I("fsm_state_request_pre: %d\r\n", info.fsm_state_request_pre);
     LOG_I("fsm_state_request_already: %d\r\n", info.fsm_state_request_already);
 
+#ifdef BGM_FSM_STATE_SIMULATION
+    LOG_I("state_dose1: %d\r\n", dose1_fsm_state);
+    LOG_I("state_dose2: %d\r\n", dose2_fsm_state);
+#else
     LOG_I("state_dose1: %d\r\n", dose_fsm_state_get(BGM_UART_DOSE1));
     LOG_I("state_dose2: %d\r\n", dose_fsm_state_get(BGM_UART_DOSE2));
+#endif
 
     LOG_I("interlock_dose1: %d\r\n", dose_interlock_get(BGM_UART_DOSE1));
     LOG_I("interlock_dose2: %d\r\n", dose_interlock_get(BGM_UART_DOSE2));
@@ -764,4 +879,35 @@ static int8_t bgm_info_get(uint8_t argc, char **argv)
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(bgm_info_get, bgm_info_get, get bgm info);
+
+static int8_t bgm_fsm_state_current_set(uint8_t argc, char **argv)
+{
+    int8_t ret = 0;
+    struct bgm_data_info *obj = bgm_data_info_get();
+
+    osMutexAcquire(obj->mutex, osWaitForever);
+    obj->fsm_state = atoi(argv[1]);
+    osMutexRelease(obj->mutex);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_current_set, bgm_fsm_state_current_set, set bgm fsm state current);
+
+static int8_t bgm_sf6_analog_value_get(uint8_t argc, char **argv)
+{
+    float value = 0;
+    int8_t ret = 0;
+
+    ret = SF6_analog_value_get(&value);
+    if (ret != 0)
+    {
+        LOG_E("SF6 analog value get err: %d\r\n", ret);
+        return -1;
+    }
+
+    LOG_I("SF6 analog value: %f\r\n", value);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(bgm_sf6_analog_value_get, bgm_sf6_analog_value_get, get bgm sf6 analog value);
 #endif

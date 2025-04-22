@@ -187,8 +187,8 @@ static int8_t dose_handshake_frame_parse(enum uart_id id, struct cmd_object *cmd
 
     osMutexRelease(obj->mutex);
 
-    LOG_I("[%d] hw version: %d\r\n", id, obj->status.hw_version);
-    LOG_I("[%d] sw version: %s\r\n", id, obj->status.sw_version);
+    // LOG_I("[%d] hw version: %d\r\n", id, obj->status.hw_version);
+    // LOG_I("[%d] sw version: %s\r\n", id, obj->status.sw_version);
 
     return ret;
 }

@@ -285,7 +285,7 @@ int8_t websocket_cmd_parse(APP_DATA_RECV *info)
 {
     int8_t ret = 0;
 
-    switch (info->tcpData[1] << 8 |info->tcpData[0])
+    switch (info->tcpData[1] << 8 | info->tcpData[0])
     {
     case TAG_PLAN_DATA_SETTING:
         osDelay(1);

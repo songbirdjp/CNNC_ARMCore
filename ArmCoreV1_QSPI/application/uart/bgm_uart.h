@@ -34,8 +34,8 @@ int8_t uart_init_callback_register(enum uart_id id, int8_t (*callback)(void));
 /************************modbus cmd define**************************************/
 enum modbus_cmd
 {
-    READ_HOLDING_REGISTERS = 0x03,
-    READ_INPUT_REGISTERS = 0x04,
+    READ_HOLDING_REGISTERS = 0x03,  /* read/write register */
+    READ_INPUT_REGISTERS = 0x04,    /* read only register */
     WRITE_SINGLE_REGISTER = 0x06,
     WRITE_MULTIPLE_REGISTERS = 0x10,
     // READ_DEVICE_IDENTIFICATION = 0x2B,

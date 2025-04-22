@@ -79,7 +79,7 @@ int32_t planFeedback(uint8_t sn, uint8_t tag_fb)
     return (ret <= 0 ? -1 : 0);
 }
 
-int8_t nrtRecvPlan(APP_DATA_RECV* info)
+int8_t nrtRecvPlan(APP_DATA_RECV *info)
 {
     uint16_t u8LenTotal = 0, i;
     uint32_t crcInData;
@@ -173,7 +173,9 @@ int8_t nrtRecvPlan(APP_DATA_RECV* info)
             return -1;
         }
         pBeamData = pSDRAM;
-        memcpy(pBeamData, &data[saveDataIndex], sdFixDataLen);
+        sdFixData.beamType = frameHead.beamType;
+        sdFixData.deliveryType = frameHead.deliveryType;
+        memcpy(pBeamData, &sdFixData, sdFixDataLen);
         pBeamData += sdFixDataLen;
         nrtBeamData.pCPData = pBeamData;
         nrtBeamData.pRIData = nrtBeamData.pCPData +  MAX_CP_IN_BEAM*2;
