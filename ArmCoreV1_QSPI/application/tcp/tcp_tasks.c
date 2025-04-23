@@ -23,8 +23,8 @@ static uint16_t remote_port_get(void)
 #endif
 
 static wiz_NetInfo local_net_info = {
-        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x71},
-        .ip =  {192, 168, 10, 71},
+        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x70},
+        .ip =  {192, 168, 10, 70},
         .sn =  {255, 255, 255, 0},
         .gw =  {192, 168, 10, 1},
         .dns = {180, 76, 76, 76},

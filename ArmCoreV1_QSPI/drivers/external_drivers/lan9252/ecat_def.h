@@ -897,13 +897,13 @@ If your company is not listed, please assign an ID for free at www.ethercat.org/
 /** 
 PRODUCT_CODE: Object 0x1018 SI2 (EtherCAT product code) */
 #ifndef PRODUCT_CODE
-#define PRODUCT_CODE                              0x00009252
+#define PRODUCT_CODE                              0x92520206
 #endif
 
 /** 
 REVISION_NUMBER: Object 0x1018 SI3 (EtherCAT product revision number) */
 #ifndef REVISION_NUMBER
-#define REVISION_NUMBER                           0x1
+#define REVISION_NUMBER                           0x2
 #endif
 
 /** 

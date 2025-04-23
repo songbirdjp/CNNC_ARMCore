@@ -260,7 +260,7 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
             goto error;
         }
         *(uint32_t *)&(self->tx_buffer[FRAME_DATA_OFFSET + data_len]) = crc;
-
+        self->recv_response_count = *(uint16_t *)&(self->tx_buffer[FRAME_COUNT_OFFSET]);
         ret = self->send_func(self->tx_buffer, data_len + FRAME_EXTRA_LEN, timeout, self->send_arg);
         if (ret != 0)
         {
@@ -272,7 +272,6 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
         {
             if (self->retry_count > 0)
             {
-                self->recv_response_count = *(uint16_t *)&(self->tx_buffer[FRAME_COUNT_OFFSET]);
                 self->tx_retry_count = 0;
                 status = osTimerStart(self->osTimerId, self->timeout_ms / portTICK_RATE_MS);
                 if (status != osOK)

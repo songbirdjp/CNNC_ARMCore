@@ -306,9 +306,9 @@ void rtm_state_machine_ctor(stateTable_t *self)
 
     /* 5 STATE_MACHINE_READY */
     state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_READY] = rtm_state_machine_ready;
-    state_table[STATE_MACHINE_READY][STATE_MACHINE_WORK] = rtm_state_machine_work;
-    state_table[STATE_MACHINE_READY][STATE_MACHINE_TERMINATE] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_READY][STATE_MACHINE_INTERRUPT] = rtm_state_machine_interrupt;
+    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_RADIATION] = rtm_state_machine_work;
+    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_TERMINATE] = rtm_state_machine_terminate;
+    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_INTERRUPT] = rtm_state_machine_interrupt;
 
     /* 6 STATE_MACHINE_WORK */
     state_table[STATE_MACHINE_WORK][SYSTEM_STATE_MV_RADIATION] = rtm_state_machine_work;

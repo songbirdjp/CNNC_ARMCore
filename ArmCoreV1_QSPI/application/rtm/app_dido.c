@@ -195,7 +195,7 @@ static void app_di_poll_entry(void *argument)
         .driver_tca9535_reg = DRIVER_TCA9535_REG_INPUT_PORT_1,
         .dataLen = 1};
     pin_msg_t pin_msg = PIN_STATE_NONE;
-
+    osDelay(100);//规避内部I2C解锁延时切换打断ethercat初始化过程，造成safe op
     int32_t retVal = di_device_init(self);
     if (retVal != 0)
     {
@@ -292,6 +292,7 @@ static void app_do_entry(void *argument)
     memset(&dido_value, 0, sizeof(dido_structure_t));
     pin_msg_t gpio_msg = PIN_STATE_NONE;
     uint32_t ret = 0;
+    osDelay(100);//规避内部I2C解锁延时切换打断ethercat初始化过程，造成safe op
     int32_t retVal = do_device_init(self);
     if (retVal != 0)
     {
