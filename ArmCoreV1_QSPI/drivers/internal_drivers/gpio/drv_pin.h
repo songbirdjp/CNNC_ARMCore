@@ -16,13 +16,18 @@
 extern "C" {
 #endif
 
-#define DEVICE_NAME_PIN_DO_PULSE_INHIBIT "doPulseInhibit"
-#define DEVICE_NAME_PIN_DO_EMERGENCY "doEmergency"
-#define DEVICE_NAME_PIN_DO_KV_TREATMENT_EN "doKvTreatment"
-#define DEVICE_NAME_PIN_DO_MV_TREATMENT_EN "doMvTreatment"
+#define DEVICE_NAME_PIN_DO_SOFTWARE_MV_TREATMENT_EN "DO_SoftwareMVTreatmentEn"
+#define DEVICE_NAME_PIN_DO_SOFTWARE_KV_TREATMENT_EN "DO_SoftwareKVTreatmentEn"
+#define DEVICE_NAME_PIN_DO_SOFTWARE_MOVE_EN "DO_softwareMoveEN"
+#define DEVICE_NAME_PIN_DO_SOFTWARE_HV_EN "DO_SoftwareHvEn"
+#define DEVICE_NAME_PIN_DO_TREATMENT_MOTION_ENABLE "DO_TreatmentMotionEnable"
+#define DEVICE_NAME_PIN_DO_THREE_PHASE_POWER_ON "DO_ThreePhasePowerOn"
+#define DEVICE_NAME_PIN_DO_ASU_MOTION_ENABLE "DO_AsuMotionEnable"
 
-#define DEVICE_NAME_PIN_DI_INT "diInt"
-#define DEVICE_NAME_PIN_DI_GATING "diGating"
+#define DEVICE_NAME_PIN_DI_INT1 "INT1"
+#define DEVICE_NAME_PIN_DI_INT2 "INT2"
+#define DEVICE_NAME_PIN_DI_INT3 "INT3"
+#define DEVICE_NAME_PIN_DI_GATING "DI_GATING"
 
 #define DEVICE_NAME_PIN_RUN_LED_1 "RUN_LED1"
 #define DEVICE_NAME_PIN_RUN_LED_2 "RUN_LED2"
@@ -30,7 +35,6 @@ extern "C" {
 #define DEVICE_NAME_PIN_RUN_LED_4 "RUN_LED4"
 #define DEVICE_NAME_PIN_RUN_LED_5 "RUN_LED5"
 #define DEVICE_NAME_PIN_RUN_LED_6 "RUN_LED6"
-
 void driver_pin_init(void);
 int8_t pin_test(void);
 

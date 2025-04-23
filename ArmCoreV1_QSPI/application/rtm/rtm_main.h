@@ -26,14 +26,13 @@ void app_rtm_event_output_set(void);
 typedef enum
 {
 
-    RTM_MODULE_RTM_ON_PLC = 0,
-    RTM_MODULE_RTM_ON_ARM,
-    RTM_MODULE_ICM,
-    RTM_MODULE_BGM,
-    RTM_MODULE_QAM,
-    // RTM_MODULE_BSM,
-
-    RTM_MODULE_RTM_OFF,
+    RTM_MODULE_RTM_ON = 0,
+    // RTM_MODULE_GMM,
+    // RTM_MODULE_PSM,
+    RTM_MODULE_FKP,
+    // RTM_MODULE_CPG,
+    RTM_MODULE_RTM_OFF_ARM,
+    RTM_MODULE_RTM_OFF_PLC,
 
     RTM_MODULE_MAX
 } rtm_module_t;
@@ -56,23 +55,31 @@ typedef struct rtm_module_info
 
 typedef struct app_fault_table
 {
-    uint32_t serial_fault : 1;
-    uint32_t ethercat_fault : 1;
-    uint32_t dido_fault : 1;
-    uint32_t reserved : 6;
-} app_fault_table_t;
+    uint32_t emergency_stop : 1; // emergency stop, 0: normal, 1: emergency stop
+    uint32_t door_open : 1; // door open, 0: door open, 1: door close
+    uint32_t reserved : 30;
+} app_not_ready_event_table_t;
 
 typedef struct app_rtm_main
 {
     manage_info_t manage_info;
 
-    app_fault_table_t fault_table;
+    app_not_ready_event_table_t not_ready_event;
+    uint32_t warning_interlock;
+    uint32_t minor_interlock;
+    uint32_t serious_interlock;
+
+    uint32_t interlock_override;
+    uint32_t unready_override;
+    uint16_t led_belt;
+
     rtm_state_machine_t state_machine;
 
     rtm_module_info_t rtm_module_info[RTM_MODULE_MAX];
 
     osEventFlagsId_t ethercat_Event;
     app_dido_t app_dido;
+    uart_dev_t *uart_fkp;
 } app_rtm_main_t;
 
 typedef struct rtm_event

@@ -27,6 +27,10 @@ typedef struct driver_tca9535
 } driver_tca9535_t;
 
 static driver_tca9535_t driver_tca9535_0 = {0};
+static driver_tca9535_t driver_tca9535_1 = {0};
+static driver_tca9535_t driver_tca9535_2 = {0};
+static driver_tca9535_t driver_tca9535_3 = {0};
+static driver_tca9535_t driver_tca9535_4 = {0};
 
 static device_err_t driver_tca9535_open(device_t *const self)
 {
@@ -255,5 +259,25 @@ void driver_tca9535_init(void)
                             DEVICE_NAME_TCA9535_0,
                             DEVICE_NAME_I2C1,
                             TCA9535_BOARD_ID_ADDR);
+#define TCA9535_1_ADDR (0x21 << 1)
+    driver_tca9535_register(&driver_tca9535_1,
+                            DEVICE_NAME_TCA9535_1,
+                            DEVICE_NAME_I2C1,
+                            TCA9535_1_ADDR);
+#define TCA9535_2_ADDR (0x22 << 1)
+    driver_tca9535_register(&driver_tca9535_2,
+                            DEVICE_NAME_TCA9535_2,
+                            DEVICE_NAME_I2C1,
+                            TCA9535_2_ADDR);
+#define TCA9535_3_ADDR (0x23 << 1)
+    driver_tca9535_register(&driver_tca9535_3,
+                            DEVICE_NAME_TCA9535_3,
+                            DEVICE_NAME_I2C1,
+                            TCA9535_3_ADDR);
+#define TCA9535_4_ADDR (0x24 << 1)
+    driver_tca9535_register(&driver_tca9535_4,
+                            DEVICE_NAME_TCA9535_4,
+                            DEVICE_NAME_I2C1,
+                            TCA9535_4_ADDR);
 }
 INIT_DEVICE_EXPORT(driver_tca9535_init);

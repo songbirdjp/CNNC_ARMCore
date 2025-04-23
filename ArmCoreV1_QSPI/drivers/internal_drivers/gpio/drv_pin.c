@@ -23,27 +23,30 @@ typedef struct driver_pin
     uint16_t GPIO_Pin;
 } driver_pin_t;
 
-static driver_pin_t driver_pin_A8 = {0};
-static driver_pin_t driver_pin_C7 = {0};
-static driver_pin_t driver_pin_C8 = {0};
-static driver_pin_t driver_pin_C9 = {0};
-
-static driver_pin_t driver_pin_B1 = {0};
+static driver_pin_t driver_pin_B15 = {0};
+static driver_pin_t driver_pin_B14 = {0};
+static driver_pin_t driver_pin_C5 = {0};
 static driver_pin_t driver_pin_B0 = {0};
-
-static driver_pin_t driver_pin_E6 = {0};
-static driver_pin_t driver_pin_E5 = {0};
-static driver_pin_t driver_pin_E4 = {0};
-static driver_pin_t driver_pin_E2 = {0};
+static driver_pin_t driver_pin_B1 = {0};
+static driver_pin_t driver_pin_A2 = {0};
 static driver_pin_t driver_pin_B10 = {0};
-static driver_pin_t driver_pin_B11 = {0};
+
+static driver_pin_t driver_pin_C6 = {0};
+static driver_pin_t driver_pin_E4 = {0};
+static driver_pin_t driver_pin_E5 = {0};
+static driver_pin_t driver_pin_G7 = {0};
+
+static driver_pin_t driver_pin_A15 = {0};
+static driver_pin_t driver_pin_G14 = {0};
+static driver_pin_t driver_pin_B3 = {0};
+static driver_pin_t driver_pin_B4 = {0};
+static driver_pin_t driver_pin_D12 = {0};
+static driver_pin_t driver_pin_D11 = {0};
 void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
 {
-
 }
 void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
 {
-
 }
 static device_err_t driver_pin_open(device_pin_t *const self)
 {
@@ -84,7 +87,7 @@ static device_err_t driver_pin_write(device_pin_t *const self,
     driver_pin_t *driver = (driver_pin_t *)self->super.user_data;
 
     HAL_GPIO_WritePin(driver->GPIOx, driver->GPIO_Pin, (GPIO_PinState)(*buf));
-
+    
     return DEV_EOK;
 }
 static device_err_t driver_pin_ioctl(device_pin_t *const self,
@@ -116,23 +119,27 @@ static void driver_pin_register(driver_pin_t *const self,
 
     device_pin_register((device_pin_t *)self, name, &device_pin_ops, self);
 }
-
 void driver_pin_init(void)
 {
-    driver_pin_register(&driver_pin_A8, GPIOA, GPIO_PIN_8, DEVICE_NAME_PIN_DO_PULSE_INHIBIT);
-    driver_pin_register(&driver_pin_C7, GPIOC, GPIO_PIN_7, DEVICE_NAME_PIN_DO_MV_TREATMENT_EN);
-    driver_pin_register(&driver_pin_C8, GPIOC, GPIO_PIN_8, DEVICE_NAME_PIN_DO_KV_TREATMENT_EN);
-    driver_pin_register(&driver_pin_C9, GPIOC, GPIO_PIN_9, DEVICE_NAME_PIN_DO_EMERGENCY);
+    driver_pin_register(&driver_pin_B15, GPIOB, GPIO_PIN_15, DEVICE_NAME_PIN_DO_SOFTWARE_MV_TREATMENT_EN);
+    driver_pin_register(&driver_pin_B14, GPIOB, GPIO_PIN_14, DEVICE_NAME_PIN_DO_SOFTWARE_KV_TREATMENT_EN);
+    driver_pin_register(&driver_pin_C5, GPIOC, GPIO_PIN_5, DEVICE_NAME_PIN_DO_SOFTWARE_MOVE_EN);
+    driver_pin_register(&driver_pin_B0, GPIOB, GPIO_PIN_0, DEVICE_NAME_PIN_DO_SOFTWARE_HV_EN);
+    driver_pin_register(&driver_pin_B1, GPIOB, GPIO_PIN_1, DEVICE_NAME_PIN_DO_TREATMENT_MOTION_ENABLE);
+    driver_pin_register(&driver_pin_A2, GPIOA, GPIO_PIN_2, DEVICE_NAME_PIN_DO_THREE_PHASE_POWER_ON);
+    driver_pin_register(&driver_pin_B10, GPIOB, GPIO_PIN_10, DEVICE_NAME_PIN_DO_ASU_MOTION_ENABLE);
 
-    driver_pin_register(&driver_pin_B1, GPIOB, GPIO_PIN_1, DEVICE_NAME_PIN_DI_INT);
-    driver_pin_register(&driver_pin_B0, GPIOB, GPIO_PIN_0, DEVICE_NAME_PIN_DI_GATING);
+    driver_pin_register(&driver_pin_C6, GPIOC, GPIO_PIN_6, DEVICE_NAME_PIN_DI_GATING);
+    driver_pin_register(&driver_pin_E4, GPIOE, GPIO_PIN_4, DEVICE_NAME_PIN_DI_INT1);
+    driver_pin_register(&driver_pin_E5, GPIOE, GPIO_PIN_5, DEVICE_NAME_PIN_DI_INT2);
+    driver_pin_register(&driver_pin_G7, GPIOG, GPIO_PIN_7, DEVICE_NAME_PIN_DI_INT3);
 
-    driver_pin_register(&driver_pin_E6, GPIOE, GPIO_PIN_6, DEVICE_NAME_PIN_RUN_LED_1);
-    driver_pin_register(&driver_pin_E5, GPIOE, GPIO_PIN_5, DEVICE_NAME_PIN_RUN_LED_2);
-    driver_pin_register(&driver_pin_E4, GPIOE, GPIO_PIN_4, DEVICE_NAME_PIN_RUN_LED_3);
-    driver_pin_register(&driver_pin_E2, GPIOE, GPIO_PIN_2, DEVICE_NAME_PIN_RUN_LED_4);
-    driver_pin_register(&driver_pin_B10, GPIOB, GPIO_PIN_10, DEVICE_NAME_PIN_RUN_LED_5);
-    driver_pin_register(&driver_pin_B11, GPIOB, GPIO_PIN_11, DEVICE_NAME_PIN_RUN_LED_6);
+    driver_pin_register(&driver_pin_A15, GPIOA, GPIO_PIN_15, DEVICE_NAME_PIN_RUN_LED_1);
+    driver_pin_register(&driver_pin_G14, GPIOG, GPIO_PIN_14, DEVICE_NAME_PIN_RUN_LED_2);
+    driver_pin_register(&driver_pin_B3, GPIOB, GPIO_PIN_3, DEVICE_NAME_PIN_RUN_LED_3);
+    driver_pin_register(&driver_pin_B4, GPIOB, GPIO_PIN_4, DEVICE_NAME_PIN_RUN_LED_4);
+    driver_pin_register(&driver_pin_D12, GPIOD, GPIO_PIN_12, DEVICE_NAME_PIN_RUN_LED_5);
+    driver_pin_register(&driver_pin_D11, GPIOD, GPIO_PIN_11, DEVICE_NAME_PIN_RUN_LED_6);
 }
 INIT_BOARD_EXPORT(driver_pin_init);
 /********************************TEST******************************************/

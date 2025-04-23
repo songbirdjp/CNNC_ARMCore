@@ -19,7 +19,10 @@ extern "C"
 #endif
 
 #define DEVICE_NAME_TCA9535_0 "tca9535.0"
-
+#define DEVICE_NAME_TCA9535_1 "tca9535.1"
+#define DEVICE_NAME_TCA9535_2 "tca9535.2"
+#define DEVICE_NAME_TCA9535_3 "tca9535.3"
+#define DEVICE_NAME_TCA9535_4 "tca9535.4"
     typedef enum driver_tca9535_reg
     {
         DRIVER_TCA9535_REG_INPUT_PORT_0 = 0x00,              /**< Input Port 0,Read byte*/

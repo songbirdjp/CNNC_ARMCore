@@ -41,6 +41,41 @@
 * SubIndex 5 - Reference to 0x7010.5<br>
 * SubIndex 6 - Reference to 0x7010.6<br>
 * SubIndex 7 - Reference to 0x7010.7<br>
+* SubIndex 8 - Reference to 0x7010.8<br>
+* SubIndex 9 - Reference to 0x7010.9<br>
+* SubIndex 10 - Reference to 0x7010.10<br>
+* SubIndex 11 - Reference to 0x7010.11<br>
+* SubIndex 12 - Reference to 0x7010.12<br>
+* SubIndex 13 - Reference to 0x7010.13<br>
+* SubIndex 14 - Reference to 0x7010.14<br>
+* SubIndex 15 - Reference to 0x7010.15<br>
+* SubIndex 16 - Reference to 0x7010.16<br>
+* SubIndex 17 - Reference to 0x7010.17<br>
+* SubIndex 18 - Reference to 0x7010.18<br>
+* SubIndex 19 - Reference to 0x7010.19<br>
+* SubIndex 20 - Reference to 0x7010.20<br>
+* SubIndex 21 - Reference to 0x7010.21<br>
+* SubIndex 22 - Reference to 0x7010.22<br>
+* SubIndex 23 - Reference to 0x7010.23<br>
+* SubIndex 24 - Reference to 0x7010.24<br>
+* SubIndex 25 - Reference to 0x7010.25<br>
+* SubIndex 26 - Reference to 0x7010.26<br>
+* SubIndex 27 - Reference to 0x7010.27<br>
+* SubIndex 28 - Reference to 0x7010.28<br>
+* SubIndex 29 - Reference to 0x7010.29<br>
+* SubIndex 30 - Reference to 0x7010.30<br>
+* SubIndex 31 - Reference to 0x7010.31<br>
+* SubIndex 32 - Reference to 0x7010.32<br>
+* SubIndex 33 - Reference to 0x7010.33<br>
+* SubIndex 34 - Reference to 0x7010.34<br>
+* SubIndex 35 - Reference to 0x7010.35<br>
+* SubIndex 36 - Reference to 0x7010.36<br>
+* SubIndex 37 - Reference to 0x7010.37<br>
+* SubIndex 38 - Reference to 0x7010.38<br>
+* SubIndex 39 - Reference to 0x7010.39<br>
+* SubIndex 40 - Reference to 0x7010.40<br>
+* SubIndex 41 - Reference to 0x7010.41<br>
+* SubIndex 42 - Reference to 0x7010.42<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -50,7 +85,42 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex4 - Reference to 0x7010.4 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex5 - Reference to 0x7010.5 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex6 - Reference to 0x7010.6 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex7 - Reference to 0x7010.7 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex7 - Reference to 0x7010.7 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex8 - Reference to 0x7010.8 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex9 - Reference to 0x7010.9 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex10 - Reference to 0x7010.10 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex11 - Reference to 0x7010.11 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex12 - Reference to 0x7010.12 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex13 - Reference to 0x7010.13 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex14 - Reference to 0x7010.14 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - Reference to 0x7010.15 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex16 - Reference to 0x7010.16 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex17 - Reference to 0x7010.17 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex18 - Reference to 0x7010.18 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex19 - Reference to 0x7010.19 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex20 - Reference to 0x7010.20 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex21 - Reference to 0x7010.21 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex22 - Reference to 0x7010.22 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex23 - Reference to 0x7010.23 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex24 - Reference to 0x7010.24 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex25 - Reference to 0x7010.25 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex26 - Reference to 0x7010.26 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex27 - Reference to 0x7010.27 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex28 - Reference to 0x7010.28 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex29 - Reference to 0x7010.29 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex30 - Reference to 0x7010.30 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex31 - Reference to 0x7010.31 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex32 - Reference to 0x7010.32 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex33 - Reference to 0x7010.33 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex34 - Reference to 0x7010.34 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex35 - Reference to 0x7010.35 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex36 - Reference to 0x7010.36 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex37 - Reference to 0x7010.37 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex38 - Reference to 0x7010.38 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex39 - Reference to 0x7010.39 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex40 - Reference to 0x7010.40 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex41 - Reference to 0x7010.41 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex42 - Reference to 0x7010.42 */
 
 /**
 * \brief Object/Entry names
@@ -62,7 +132,42 @@ OBJCONST UCHAR OBJMEM aName0x1601[] = "OutputData process data mapping\000"
 "SubIndex 004\000"
 "SubIndex 005\000"
 "SubIndex 006\000"
-"SubIndex 007\000\377";
+"SubIndex 007\000"
+"SubIndex 008\000"
+"SubIndex 009\000"
+"SubIndex 010\000"
+"SubIndex 011\000"
+"SubIndex 012\000"
+"SubIndex 013\000"
+"SubIndex 014\000"
+"SubIndex 015\000"
+"SubIndex 016\000"
+"SubIndex 017\000"
+"SubIndex 018\000"
+"SubIndex 019\000"
+"SubIndex 020\000"
+"SubIndex 021\000"
+"SubIndex 022\000"
+"SubIndex 023\000"
+"SubIndex 024\000"
+"SubIndex 025\000"
+"SubIndex 026\000"
+"SubIndex 027\000"
+"SubIndex 028\000"
+"SubIndex 029\000"
+"SubIndex 030\000"
+"SubIndex 031\000"
+"SubIndex 032\000"
+"SubIndex 033\000"
+"SubIndex 034\000"
+"SubIndex 035\000"
+"SubIndex 036\000"
+"SubIndex 037\000"
+"SubIndex 038\000"
+"SubIndex 039\000"
+"SubIndex 040\000"
+"SubIndex 041\000"
+"SubIndex 042\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -78,6 +183,41 @@ UINT32 SI4; /* Subindex4 - Reference to 0x7010.4 */
 UINT32 SI5; /* Subindex5 - Reference to 0x7010.5 */
 UINT32 SI6; /* Subindex6 - Reference to 0x7010.6 */
 UINT32 SI7; /* Subindex7 - Reference to 0x7010.7 */
+UINT32 SI8; /* Subindex8 - Reference to 0x7010.8 */
+UINT32 SI9; /* Subindex9 - Reference to 0x7010.9 */
+UINT32 SI10; /* Subindex10 - Reference to 0x7010.10 */
+UINT32 SI11; /* Subindex11 - Reference to 0x7010.11 */
+UINT32 SI12; /* Subindex12 - Reference to 0x7010.12 */
+UINT32 SI13; /* Subindex13 - Reference to 0x7010.13 */
+UINT32 SI14; /* Subindex14 - Reference to 0x7010.14 */
+UINT32 SI15; /* Subindex15 - Reference to 0x7010.15 */
+UINT32 SI16; /* Subindex16 - Reference to 0x7010.16 */
+UINT32 SI17; /* Subindex17 - Reference to 0x7010.17 */
+UINT32 SI18; /* Subindex18 - Reference to 0x7010.18 */
+UINT32 SI19; /* Subindex19 - Reference to 0x7010.19 */
+UINT32 SI20; /* Subindex20 - Reference to 0x7010.20 */
+UINT32 SI21; /* Subindex21 - Reference to 0x7010.21 */
+UINT32 SI22; /* Subindex22 - Reference to 0x7010.22 */
+UINT32 SI23; /* Subindex23 - Reference to 0x7010.23 */
+UINT32 SI24; /* Subindex24 - Reference to 0x7010.24 */
+UINT32 SI25; /* Subindex25 - Reference to 0x7010.25 */
+UINT32 SI26; /* Subindex26 - Reference to 0x7010.26 */
+UINT32 SI27; /* Subindex27 - Reference to 0x7010.27 */
+UINT32 SI28; /* Subindex28 - Reference to 0x7010.28 */
+UINT32 SI29; /* Subindex29 - Reference to 0x7010.29 */
+UINT32 SI30; /* Subindex30 - Reference to 0x7010.30 */
+UINT32 SI31; /* Subindex31 - Reference to 0x7010.31 */
+UINT32 SI32; /* Subindex32 - Reference to 0x7010.32 */
+UINT32 SI33; /* Subindex33 - Reference to 0x7010.33 */
+UINT32 SI34; /* Subindex34 - Reference to 0x7010.34 */
+UINT32 SI35; /* Subindex35 - Reference to 0x7010.35 */
+UINT32 SI36; /* Subindex36 - Reference to 0x7010.36 */
+UINT32 SI37; /* Subindex37 - Reference to 0x7010.37 */
+UINT32 SI38; /* Subindex38 - Reference to 0x7010.38 */
+UINT32 SI39; /* Subindex39 - Reference to 0x7010.39 */
+UINT32 SI40; /* Subindex40 - Reference to 0x7010.40 */
+UINT32 SI41; /* Subindex41 - Reference to 0x7010.41 */
+UINT32 SI42; /* Subindex42 - Reference to 0x7010.42 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1601;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -87,7 +227,7 @@ TOBJ1601;
 */
 PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={7,0x70100108,0x70100201,0x70100307,0x70100410,0x70100520,0x70100620,0x70100740}
+={42,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100910,0x70100A08,0x70100B08,0x70100C10,0x70100D20,0x70100E20,0x70100F20,0x70101020,0x70101120,0x70101220,0x70101320,0x70101408,0x70101508,0x70101610,0x70101708,0x70101808,0x70101910,0x70101A20,0x70101B20,0x70101C20,0x70101D20,0x70101E20,0x70101F20,0x70102020,0x70102120,0x70102220,0x70102320,0x70102420,0x70102520,0x70102620,0x70102720,0x70102820,0x70102920,0x70102A20}
 #endif
 ;
 /** @}*/
@@ -114,6 +254,37 @@ PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 * SubIndex 5 - Reference to 0x6000.5<br>
 * SubIndex 6 - Reference to 0x6000.6<br>
 * SubIndex 7 - Reference to 0x6000.7<br>
+* SubIndex 8 - Reference to 0x6000.8<br>
+* SubIndex 9 - Reference to 0x6000.9<br>
+* SubIndex 10 - Reference to 0x6000.10<br>
+* SubIndex 11 - Reference to 0x6000.11<br>
+* SubIndex 12 - Reference to 0x6000.12<br>
+* SubIndex 13 - Reference to 0x6000.13<br>
+* SubIndex 14 - Reference to 0x6000.14<br>
+* SubIndex 15 - Reference to 0x6000.15<br>
+* SubIndex 16 - Reference to 0x6000.16<br>
+* SubIndex 17 - Reference to 0x6000.17<br>
+* SubIndex 18 - Reference to 0x6000.18<br>
+* SubIndex 19 - Reference to 0x6000.19<br>
+* SubIndex 20 - Reference to 0x6000.20<br>
+* SubIndex 21 - Reference to 0x6000.21<br>
+* SubIndex 22 - Reference to 0x6000.22<br>
+* SubIndex 23 - Reference to 0x6000.23<br>
+* SubIndex 24 - Reference to 0x6000.24<br>
+* SubIndex 25 - Reference to 0x6000.25<br>
+* SubIndex 26 - Reference to 0x6000.26<br>
+* SubIndex 27 - Reference to 0x6000.27<br>
+* SubIndex 28 - Reference to 0x6000.28<br>
+* SubIndex 29 - Reference to 0x6000.29<br>
+* SubIndex 30 - Reference to 0x6000.30<br>
+* SubIndex 31 - Reference to 0x6000.31<br>
+* SubIndex 32 - Reference to 0x6000.32<br>
+* SubIndex 33 - Reference to 0x6000.33<br>
+* SubIndex 34 - Reference to 0x6000.34<br>
+* SubIndex 35 - Reference to 0x6000.35<br>
+* SubIndex 36 - Reference to 0x6000.36<br>
+* SubIndex 37 - Reference to 0x6000.37<br>
+* SubIndex 38 - Reference to 0x6000.38<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -123,7 +294,38 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex4 - Reference to 0x6000.4 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex5 - Reference to 0x6000.5 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex6 - Reference to 0x6000.6 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex7 - Reference to 0x6000.7 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex7 - Reference to 0x6000.7 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex8 - Reference to 0x6000.8 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex9 - Reference to 0x6000.9 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex10 - Reference to 0x6000.10 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex11 - Reference to 0x6000.11 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex12 - Reference to 0x6000.12 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex13 - Reference to 0x6000.13 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex14 - Reference to 0x6000.14 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - Reference to 0x6000.15 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex16 - Reference to 0x6000.16 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex17 - Reference to 0x6000.17 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex18 - Reference to 0x6000.18 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex19 - Reference to 0x6000.19 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex20 - Reference to 0x6000.20 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex21 - Reference to 0x6000.21 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex22 - Reference to 0x6000.22 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex23 - Reference to 0x6000.23 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex24 - Reference to 0x6000.24 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex25 - Reference to 0x6000.25 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex26 - Reference to 0x6000.26 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex27 - Reference to 0x6000.27 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex28 - Reference to 0x6000.28 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex29 - Reference to 0x6000.29 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex30 - Reference to 0x6000.30 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex31 - Reference to 0x6000.31 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex32 - Reference to 0x6000.32 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex33 - Reference to 0x6000.33 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex34 - Reference to 0x6000.34 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex35 - Reference to 0x6000.35 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex36 - Reference to 0x6000.36 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex37 - Reference to 0x6000.37 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex38 - Reference to 0x6000.38 */
 
 /**
 * \brief Object/Entry names
@@ -135,7 +337,38 @@ OBJCONST UCHAR OBJMEM aName0x1A00[] = "InputData process data mapping\000"
 "SubIndex 004\000"
 "SubIndex 005\000"
 "SubIndex 006\000"
-"SubIndex 007\000\377";
+"SubIndex 007\000"
+"SubIndex 008\000"
+"SubIndex 009\000"
+"SubIndex 010\000"
+"SubIndex 011\000"
+"SubIndex 012\000"
+"SubIndex 013\000"
+"SubIndex 014\000"
+"SubIndex 015\000"
+"SubIndex 016\000"
+"SubIndex 017\000"
+"SubIndex 018\000"
+"SubIndex 019\000"
+"SubIndex 020\000"
+"SubIndex 021\000"
+"SubIndex 022\000"
+"SubIndex 023\000"
+"SubIndex 024\000"
+"SubIndex 025\000"
+"SubIndex 026\000"
+"SubIndex 027\000"
+"SubIndex 028\000"
+"SubIndex 029\000"
+"SubIndex 030\000"
+"SubIndex 031\000"
+"SubIndex 032\000"
+"SubIndex 033\000"
+"SubIndex 034\000"
+"SubIndex 035\000"
+"SubIndex 036\000"
+"SubIndex 037\000"
+"SubIndex 038\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -151,6 +384,37 @@ UINT32 SI4; /* Subindex4 - Reference to 0x6000.4 */
 UINT32 SI5; /* Subindex5 - Reference to 0x6000.5 */
 UINT32 SI6; /* Subindex6 - Reference to 0x6000.6 */
 UINT32 SI7; /* Subindex7 - Reference to 0x6000.7 */
+UINT32 SI8; /* Subindex8 - Reference to 0x6000.8 */
+UINT32 SI9; /* Subindex9 - Reference to 0x6000.9 */
+UINT32 SI10; /* Subindex10 - Reference to 0x6000.10 */
+UINT32 SI11; /* Subindex11 - Reference to 0x6000.11 */
+UINT32 SI12; /* Subindex12 - Reference to 0x6000.12 */
+UINT32 SI13; /* Subindex13 - Reference to 0x6000.13 */
+UINT32 SI14; /* Subindex14 - Reference to 0x6000.14 */
+UINT32 SI15; /* Subindex15 - Reference to 0x6000.15 */
+UINT32 SI16; /* Subindex16 - Reference to 0x6000.16 */
+UINT32 SI17; /* Subindex17 - Reference to 0x6000.17 */
+UINT32 SI18; /* Subindex18 - Reference to 0x6000.18 */
+UINT32 SI19; /* Subindex19 - Reference to 0x6000.19 */
+UINT32 SI20; /* Subindex20 - Reference to 0x6000.20 */
+UINT32 SI21; /* Subindex21 - Reference to 0x6000.21 */
+UINT32 SI22; /* Subindex22 - Reference to 0x6000.22 */
+UINT32 SI23; /* Subindex23 - Reference to 0x6000.23 */
+UINT32 SI24; /* Subindex24 - Reference to 0x6000.24 */
+UINT32 SI25; /* Subindex25 - Reference to 0x6000.25 */
+UINT32 SI26; /* Subindex26 - Reference to 0x6000.26 */
+UINT32 SI27; /* Subindex27 - Reference to 0x6000.27 */
+UINT32 SI28; /* Subindex28 - Reference to 0x6000.28 */
+UINT32 SI29; /* Subindex29 - Reference to 0x6000.29 */
+UINT32 SI30; /* Subindex30 - Reference to 0x6000.30 */
+UINT32 SI31; /* Subindex31 - Reference to 0x6000.31 */
+UINT32 SI32; /* Subindex32 - Reference to 0x6000.32 */
+UINT32 SI33; /* Subindex33 - Reference to 0x6000.33 */
+UINT32 SI34; /* Subindex34 - Reference to 0x6000.34 */
+UINT32 SI35; /* Subindex35 - Reference to 0x6000.35 */
+UINT32 SI36; /* Subindex36 - Reference to 0x6000.36 */
+UINT32 SI37; /* Subindex37 - Reference to 0x6000.37 */
+UINT32 SI38; /* Subindex38 - Reference to 0x6000.38 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1A00;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -160,7 +424,7 @@ TOBJ1A00;
 */
 PROTO TOBJ1A00 InputDataProcessDataMapping0x1A00
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={7,0x60000108,0x60000201,0x60000307,0x60000410,0x60000520,0x60000620,0x60000740}
+={38,0x60000108,0x60000208,0x60000320,0x60000408,0x60000508,0x60000610,0x60000708,0x60000808,0x60000920,0x60000A20,0x60000B20,0x60000C20,0x60000D08,0x60000E08,0x60000F08,0x60001008,0x60001108,0x60001208,0x60001320,0x60001420,0x60001520,0x60001620,0x60001720,0x60001820,0x60001920,0x60001A20,0x60001B20,0x60001C20,0x60001D20,0x60001E20,0x60001F20,0x60002020,0x60002108,0x60002208,0x60002308,0x60002408,0x60002510,0x60002620}
 #endif
 ;
 /** @}*/
@@ -278,35 +542,128 @@ PROTO TOBJ1C13 sTxPDOassign
 * \brief Object entry descriptions<br>
 * <br>
 * SubIndex 0<br>
-* SubIndex 1 - InU8_Test1<br>
-* SubIndex 2 - InB1_Test2<br>
-* SubIndex 3 - InB7_Test3<br>
-* SubIndex 4 - InU16_Test4<br>
-* SubIndex 5 - InF_Test5<br>
-* SubIndex 6 - InU32_Test6<br>
-* SubIndex 7 - InD_Test7<br>
+* SubIndex 1 - InU8_BoardID<br>
+* SubIndex 2 - InU8_Reserved0<br>
+* SubIndex 3 - InU32_FirmWareVersion<br>
+* SubIndex 4 - InU8_beam_id<br>
+* SubIndex 5 - InU8_reserved1<br>
+* SubIndex 6 - InU16_radiation_index<br>
+* SubIndex 7 - InU8_gmm_require_state<br>
+* SubIndex 8 - InU8_gmm_require_ctrl_mode<br>
+* SubIndex 9 - InU32_gmm_interlock_override<br>
+* SubIndex 10 - InU32_gmm_unready_override<br>
+* SubIndex 11 - InF_gmm_position_tar<br>
+* SubIndex 12 - InF_gmm_velocity_tar<br>
+* SubIndex 13 - InU8_gmm_move_ctrl<br>
+* SubIndex 14 - InU8_reserved2<br>
+* SubIndex 15 - InU8_reserved3<br>
+* SubIndex 16 - InU8_reserved4<br>
+* SubIndex 17 - InU8_psm_require_state<br>
+* SubIndex 18 - InU8_psm_require_ctrl_mode<br>
+* SubIndex 19 - InU32_psm_interlock_override<br>
+* SubIndex 20 - InU32_psm_unready_override<br>
+* SubIndex 21 - InF_psm_position_x_tar<br>
+* SubIndex 22 - InF_psm_position_y_tar<br>
+* SubIndex 23 - InF_psm_position_z_tar<br>
+* SubIndex 24 - InF_psm_position_x_r_tar<br>
+* SubIndex 25 - InF_psm_position_y_r_tar<br>
+* SubIndex 26 - InF_psm_position_z_r_tar<br>
+* SubIndex 27 - InF_psm_velocity_x_tar<br>
+* SubIndex 28 - InF_psm_velocity_y_tar<br>
+* SubIndex 29 - InF_psm_velocity_z_tar<br>
+* SubIndex 30 - InF_psm_velocity_x_r_tar<br>
+* SubIndex 31 - InF_psm_velocity_y_r_tar<br>
+* SubIndex 32 - InF_psm_velocity_z_r_tar<br>
+* SubIndex 33 - InU8_psm_move_ctrl<br>
+* SubIndex 34 - InU8_reserved5<br>
+* SubIndex 35 - InU8_reserved6<br>
+* SubIndex 36 - InU8_reserved7<br>
+* SubIndex 37 - InU16_FkpButton<br>
+* SubIndex 38 - InU32_CpgButton<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex1 - InU8_Test1 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex2 - InB1_Test2 */
-{ DEFTYPE_BIT7 , 0x07 , ACCESS_READ }, /* Subindex3 - InB7_Test3 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex4 - InU16_Test4 */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex5 - InF_Test5 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex6 - InU32_Test6 */
-{ DEFTYPE_REAL64 , 0x40 , ACCESS_READ }}; /* Subindex7 - InD_Test7 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex1 - InU8_BoardID */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex2 - InU8_Reserved0 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex3 - InU32_FirmWareVersion */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex4 - InU8_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex5 - InU8_reserved1 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex6 - InU16_radiation_index */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex7 - InU8_gmm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex8 - InU8_gmm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex9 - InU32_gmm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex10 - InU32_gmm_unready_override */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex11 - InF_gmm_position_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex12 - InF_gmm_velocity_tar */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex13 - InU8_gmm_move_ctrl */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex14 - InU8_reserved2 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex15 - InU8_reserved3 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex16 - InU8_reserved4 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex17 - InU8_psm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex18 - InU8_psm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex19 - InU32_psm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex20 - InU32_psm_unready_override */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex21 - InF_psm_position_x_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex22 - InF_psm_position_y_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex23 - InF_psm_position_z_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex24 - InF_psm_position_x_r_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex25 - InF_psm_position_y_r_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex26 - InF_psm_position_z_r_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex27 - InF_psm_velocity_x_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex28 - InF_psm_velocity_y_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex29 - InF_psm_velocity_z_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex30 - InF_psm_velocity_x_r_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex31 - InF_psm_velocity_y_r_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex32 - InF_psm_velocity_z_r_tar */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex33 - InU8_psm_move_ctrl */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex34 - InU8_reserved5 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex35 - InU8_reserved6 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex36 - InU8_reserved7 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex37 - InU16_FkpButton */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex38 - InU32_CpgButton */
 
 /**
 * \brief Object/Entry names
 */
 OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
-"InU8_Test1\000"
-"InB1_Test2\000"
-"InB7_Test3\000"
-"InU16_Test4\000"
-"InF_Test5\000"
-"InU32_Test6\000"
-"InD_Test7\000\377";
+"InU8_BoardID\000"
+"InU8_Reserved0\000"
+"InU32_FirmWareVersion\000"
+"InU8_beam_id\000"
+"InU8_reserved1\000"
+"InU16_radiation_index\000"
+"InU8_gmm_require_state\000"
+"InU8_gmm_require_ctrl_mode\000"
+"InU32_gmm_interlock_override\000"
+"InU32_gmm_unready_override\000"
+"InF_gmm_position_tar\000"
+"InF_gmm_velocity_tar\000"
+"InU8_gmm_move_ctrl\000"
+"InU8_reserved2\000"
+"InU8_reserved3\000"
+"InU8_reserved4\000"
+"InU8_psm_require_state\000"
+"InU8_psm_require_ctrl_mode\000"
+"InU32_psm_interlock_override\000"
+"InU32_psm_unready_override\000"
+"InF_psm_position_x_tar\000"
+"InF_psm_position_y_tar\000"
+"InF_psm_position_z_tar\000"
+"InF_psm_position_x_r_tar\000"
+"InF_psm_position_y_r_tar\000"
+"InF_psm_position_z_r_tar\000"
+"InF_psm_velocity_x_tar\000"
+"InF_psm_velocity_y_tar\000"
+"InF_psm_velocity_z_tar\000"
+"InF_psm_velocity_x_r_tar\000"
+"InF_psm_velocity_y_r_tar\000"
+"InF_psm_velocity_z_r_tar\000"
+"InU8_psm_move_ctrl\000"
+"InU8_reserved5\000"
+"InU8_reserved6\000"
+"InU8_reserved7\000"
+"InU16_FkpButton\000"
+"InU32_CpgButton\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -315,13 +672,44 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 */
 typedef struct OBJ_STRUCT_PACKED_START {
 UINT16 u16SubIndex0;
-UINT8 InU8_Test1; /* Subindex1 - InU8_Test1 */
-BOOLEAN(InB1_Test2); /* Subindex2 - InB1_Test2 */
-BIT7(InB7_Test3); /* Subindex3 - InB7_Test3 */
-UINT16 InU16_Test4; /* Subindex4 - InU16_Test4 */
-REAL32 InF_Test5; /* Subindex5 - InF_Test5 */
-UINT32 InU32_Test6; /* Subindex6 - InU32_Test6 */
-REAL64 InD_Test7; /* Subindex7 - InD_Test7 */
+UINT8 InU8_BoardID; /* Subindex1 - InU8_BoardID */
+UINT8 InU8_Reserved0; /* Subindex2 - InU8_Reserved0 */
+UINT32 InU32_FirmWareVersion; /* Subindex3 - InU32_FirmWareVersion */
+UINT8 InU8_beam_id; /* Subindex4 - InU8_beam_id */
+UINT8 InU8_reserved1; /* Subindex5 - InU8_reserved1 */
+UINT16 InU16_radiation_index; /* Subindex6 - InU16_radiation_index */
+UINT8 InU8_gmm_require_state; /* Subindex7 - InU8_gmm_require_state */
+UINT8 InU8_gmm_require_ctrl_mode; /* Subindex8 - InU8_gmm_require_ctrl_mode */
+UINT32 InU32_gmm_interlock_override; /* Subindex9 - InU32_gmm_interlock_override */
+UINT32 InU32_gmm_unready_override; /* Subindex10 - InU32_gmm_unready_override */
+REAL32 InF_gmm_position_tar; /* Subindex11 - InF_gmm_position_tar */
+REAL32 InF_gmm_velocity_tar; /* Subindex12 - InF_gmm_velocity_tar */
+UINT8 InU8_gmm_move_ctrl; /* Subindex13 - InU8_gmm_move_ctrl */
+UINT8 InU8_reserved2; /* Subindex14 - InU8_reserved2 */
+UINT8 InU8_reserved3; /* Subindex15 - InU8_reserved3 */
+UINT8 InU8_reserved4; /* Subindex16 - InU8_reserved4 */
+UINT8 InU8_psm_require_state; /* Subindex17 - InU8_psm_require_state */
+UINT8 InU8_psm_require_ctrl_mode; /* Subindex18 - InU8_psm_require_ctrl_mode */
+UINT32 InU32_psm_interlock_override; /* Subindex19 - InU32_psm_interlock_override */
+UINT32 InU32_psm_unready_override; /* Subindex20 - InU32_psm_unready_override */
+REAL32 InF_psm_position_x_tar; /* Subindex21 - InF_psm_position_x_tar */
+REAL32 InF_psm_position_y_tar; /* Subindex22 - InF_psm_position_y_tar */
+REAL32 InF_psm_position_z_tar; /* Subindex23 - InF_psm_position_z_tar */
+REAL32 InF_psm_position_x_r_tar; /* Subindex24 - InF_psm_position_x_r_tar */
+REAL32 InF_psm_position_y_r_tar; /* Subindex25 - InF_psm_position_y_r_tar */
+REAL32 InF_psm_position_z_r_tar; /* Subindex26 - InF_psm_position_z_r_tar */
+REAL32 InF_psm_velocity_x_tar; /* Subindex27 - InF_psm_velocity_x_tar */
+REAL32 InF_psm_velocity_y_tar; /* Subindex28 - InF_psm_velocity_y_tar */
+REAL32 InF_psm_velocity_z_tar; /* Subindex29 - InF_psm_velocity_z_tar */
+REAL32 InF_psm_velocity_x_r_tar; /* Subindex30 - InF_psm_velocity_x_r_tar */
+REAL32 InF_psm_velocity_y_r_tar; /* Subindex31 - InF_psm_velocity_y_r_tar */
+REAL32 InF_psm_velocity_z_r_tar; /* Subindex32 - InF_psm_velocity_z_r_tar */
+UINT8 InU8_psm_move_ctrl; /* Subindex33 - InU8_psm_move_ctrl */
+UINT8 InU8_reserved5; /* Subindex34 - InU8_reserved5 */
+UINT8 InU8_reserved6; /* Subindex35 - InU8_reserved6 */
+UINT8 InU8_reserved7; /* Subindex36 - InU8_reserved7 */
+UINT16 InU16_FkpButton; /* Subindex37 - InU16_FkpButton */
+UINT32 InU32_CpgButton; /* Subindex38 - InU32_CpgButton */
 } OBJ_STRUCT_PACKED_END
 TOBJ6000;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -331,7 +719,7 @@ TOBJ6000;
 */
 PROTO TOBJ6000 InputData0x6000
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={7,0,0,0,0,0,0,0}
+={38,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -351,35 +739,140 @@ PROTO TOBJ6000 InputData0x6000
 * \brief Object entry descriptions<br>
 * <br>
 * SubIndex 0<br>
-* SubIndex 1 - OutU8_Test1<br>
-* SubIndex 2 - OutB1_Test2<br>
-* SubIndex 3 - OutB7_Test3<br>
-* SubIndex 4 - OutU16_Test4<br>
-* SubIndex 5 - OutF_Test5<br>
-* SubIndex 6 - OutU32_Test6<br>
-* SubIndex 7 - OutD_Test7<br>
+* SubIndex 1 - OutU8_BoardID<br>
+* SubIndex 2 - OutU8_Reserved0<br>
+* SubIndex 3 - OutU32_FirmWareVersion<br>
+* SubIndex 4 - OutU8_beam_id<br>
+* SubIndex 5 - OutU8_reserved1<br>
+* SubIndex 6 - OutU16_radiation_index<br>
+* SubIndex 7 - OutU8_gmm_fsm_state_current<br>
+* SubIndex 8 - OutU8_gmm_ctrl_mode_cur<br>
+* SubIndex 9 - OutU16_reserved2<br>
+* SubIndex 10 - OutU8_gmm_beam_id<br>
+* SubIndex 11 - OutU8_reserved3<br>
+* SubIndex 12 - OutU16_gmm_radiation_index<br>
+* SubIndex 13 - OutU32_gmm_not_ready_event<br>
+* SubIndex 14 - OutU32_gmm_warning_interlock<br>
+* SubIndex 15 - OutU32_gmm_minor_interlock<br>
+* SubIndex 16 - OutU32_gmm_serious_interlock<br>
+* SubIndex 17 - OutU32_gmm_move_status<br>
+* SubIndex 18 - OutF_gmm_position_cur<br>
+* SubIndex 19 - OutF_gmm_velocity_cur<br>
+* SubIndex 20 - OutU8_psm_fsm_state_current<br>
+* SubIndex 21 - OutU8_psm_ctrl_mode_cur<br>
+* SubIndex 22 - OutU16_reserved4<br>
+* SubIndex 23 - OutU8_psm_beam_id<br>
+* SubIndex 24 - OutU8_reserved5<br>
+* SubIndex 25 - OutU16_psm_radiation_Outdex<br>
+* SubIndex 26 - OutU32_psm_not_ready_event<br>
+* SubIndex 27 - OutU32_psm_warnOutg_Outterlock<br>
+* SubIndex 28 - OutU32_psm_mOutor_Outterlock<br>
+* SubIndex 29 - OutU32_psm_serious_Outterlock<br>
+* SubIndex 30 - OutU32_psm_move_status<br>
+* SubIndex 31 - OutF_psm_position_x_cur<br>
+* SubIndex 32 - OutF_psm_position_y_cur<br>
+* SubIndex 33 - OutF_psm_position_z_cur<br>
+* SubIndex 34 - OutF_psm_position_x_r_cur<br>
+* SubIndex 35 - OutF_psm_position_y_r_cur<br>
+* SubIndex 36 - OutF_psm_position_z_r_cur<br>
+* SubIndex 37 - OutF_psm_velocity_x_cur<br>
+* SubIndex 38 - OutF_psm_velocity_y_cur<br>
+* SubIndex 39 - OutF_psm_velocity_z_cur<br>
+* SubIndex 40 - OutF_psm_velocity_x_r_cur<br>
+* SubIndex 41 - OutF_psm_velocity_y_r_cur<br>
+* SubIndex 42 - OutF_psm_velocity_z_r_cur<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex1 - OutU8_Test1 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex2 - OutB1_Test2 */
-{ DEFTYPE_BIT7 , 0x07 , ACCESS_READ }, /* Subindex3 - OutB7_Test3 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex4 - OutU16_Test4 */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex5 - OutF_Test5 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex6 - OutU32_Test6 */
-{ DEFTYPE_REAL64 , 0x40 , ACCESS_READ }}; /* Subindex7 - OutD_Test7 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex1 - OutU8_BoardID */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex2 - OutU8_Reserved0 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex3 - OutU32_FirmWareVersion */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex4 - OutU8_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex5 - OutU8_reserved1 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex6 - OutU16_radiation_index */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex7 - OutU8_gmm_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex8 - OutU8_gmm_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex9 - OutU16_reserved2 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex10 - OutU8_gmm_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex11 - OutU8_reserved3 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex12 - OutU16_gmm_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex13 - OutU32_gmm_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex14 - OutU32_gmm_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - OutU32_gmm_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex16 - OutU32_gmm_serious_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex17 - OutU32_gmm_move_status */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex18 - OutF_gmm_position_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex19 - OutF_gmm_velocity_cur */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex20 - OutU8_psm_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex21 - OutU8_psm_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex22 - OutU16_reserved4 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex23 - OutU8_psm_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex24 - OutU8_reserved5 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex25 - OutU16_psm_radiation_Outdex */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex26 - OutU32_psm_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex27 - OutU32_psm_warnOutg_Outterlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex28 - OutU32_psm_mOutor_Outterlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex29 - OutU32_psm_serious_Outterlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex30 - OutU32_psm_move_status */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex31 - OutF_psm_position_x_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex32 - OutF_psm_position_y_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex33 - OutF_psm_position_z_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex34 - OutF_psm_position_x_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex35 - OutF_psm_position_y_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex36 - OutF_psm_position_z_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex37 - OutF_psm_velocity_x_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex38 - OutF_psm_velocity_y_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex39 - OutF_psm_velocity_z_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex40 - OutF_psm_velocity_x_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex41 - OutF_psm_velocity_y_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }}; /* Subindex42 - OutF_psm_velocity_z_r_cur */
 
 /**
 * \brief Object/Entry names
 */
 OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
-"OutU8_Test1\000"
-"OutB1_Test2\000"
-"OutB7_Test3\000"
-"OutU16_Test4\000"
-"OutF_Test5\000"
-"OutU32_Test6\000"
-"OutD_Test7\000\377";
+"OutU8_BoardID\000"
+"OutU8_Reserved0\000"
+"OutU32_FirmWareVersion\000"
+"OutU8_beam_id\000"
+"OutU8_reserved1\000"
+"OutU16_radiation_index\000"
+"OutU8_gmm_fsm_state_current\000"
+"OutU8_gmm_ctrl_mode_cur\000"
+"OutU16_reserved2\000"
+"OutU8_gmm_beam_id\000"
+"OutU8_reserved3\000"
+"OutU16_gmm_radiation_index\000"
+"OutU32_gmm_not_ready_event\000"
+"OutU32_gmm_warning_interlock\000"
+"OutU32_gmm_minor_interlock\000"
+"OutU32_gmm_serious_interlock\000"
+"OutU32_gmm_move_status\000"
+"OutF_gmm_position_cur\000"
+"OutF_gmm_velocity_cur\000"
+"OutU8_psm_fsm_state_current\000"
+"OutU8_psm_ctrl_mode_cur\000"
+"OutU16_reserved4\000"
+"OutU8_psm_beam_id\000"
+"OutU8_reserved5\000"
+"OutU16_psm_radiation_Outdex\000"
+"OutU32_psm_not_ready_event\000"
+"OutU32_psm_warnOutg_Outterlock\000"
+"OutU32_psm_mOutor_Outterlock\000"
+"OutU32_psm_serious_Outterlock\000"
+"OutU32_psm_move_status\000"
+"OutF_psm_position_x_cur\000"
+"OutF_psm_position_y_cur\000"
+"OutF_psm_position_z_cur\000"
+"OutF_psm_position_x_r_cur\000"
+"OutF_psm_position_y_r_cur\000"
+"OutF_psm_position_z_r_cur\000"
+"OutF_psm_velocity_x_cur\000"
+"OutF_psm_velocity_y_cur\000"
+"OutF_psm_velocity_z_cur\000"
+"OutF_psm_velocity_x_r_cur\000"
+"OutF_psm_velocity_y_r_cur\000"
+"OutF_psm_velocity_z_r_cur\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -388,13 +881,48 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 */
 typedef struct OBJ_STRUCT_PACKED_START {
 UINT16 u16SubIndex0;
-UINT8 OutU8_Test1; /* Subindex1 - OutU8_Test1 */
-BOOLEAN(OutB1_Test2); /* Subindex2 - OutB1_Test2 */
-BIT7(OutB7_Test3); /* Subindex3 - OutB7_Test3 */
-UINT16 OutU16_Test4; /* Subindex4 - OutU16_Test4 */
-REAL32 OutF_Test5; /* Subindex5 - OutF_Test5 */
-UINT32 OutU32_Test6; /* Subindex6 - OutU32_Test6 */
-REAL64 OutD_Test7; /* Subindex7 - OutD_Test7 */
+UINT8 OutU8_BoardID; /* Subindex1 - OutU8_BoardID */
+UINT8 OutU8_Reserved0; /* Subindex2 - OutU8_Reserved0 */
+UINT32 OutU32_FirmWareVersion; /* Subindex3 - OutU32_FirmWareVersion */
+UINT8 OutU8_beam_id; /* Subindex4 - OutU8_beam_id */
+UINT8 OutU8_reserved1; /* Subindex5 - OutU8_reserved1 */
+UINT16 OutU16_radiation_index; /* Subindex6 - OutU16_radiation_index */
+UINT8 OutU8_gmm_fsm_state_current; /* Subindex7 - OutU8_gmm_fsm_state_current */
+UINT8 OutU8_gmm_ctrl_mode_cur; /* Subindex8 - OutU8_gmm_ctrl_mode_cur */
+UINT16 OutU16_reserved2; /* Subindex9 - OutU16_reserved2 */
+UINT8 OutU8_gmm_beam_id; /* Subindex10 - OutU8_gmm_beam_id */
+UINT8 OutU8_reserved3; /* Subindex11 - OutU8_reserved3 */
+UINT16 OutU16_gmm_radiation_index; /* Subindex12 - OutU16_gmm_radiation_index */
+UINT32 OutU32_gmm_not_ready_event; /* Subindex13 - OutU32_gmm_not_ready_event */
+UINT32 OutU32_gmm_warning_interlock; /* Subindex14 - OutU32_gmm_warning_interlock */
+UINT32 OutU32_gmm_minor_interlock; /* Subindex15 - OutU32_gmm_minor_interlock */
+UINT32 OutU32_gmm_serious_interlock; /* Subindex16 - OutU32_gmm_serious_interlock */
+UINT32 OutU32_gmm_move_status; /* Subindex17 - OutU32_gmm_move_status */
+REAL32 OutF_gmm_position_cur; /* Subindex18 - OutF_gmm_position_cur */
+REAL32 OutF_gmm_velocity_cur; /* Subindex19 - OutF_gmm_velocity_cur */
+UINT8 OutU8_psm_fsm_state_current; /* Subindex20 - OutU8_psm_fsm_state_current */
+UINT8 OutU8_psm_ctrl_mode_cur; /* Subindex21 - OutU8_psm_ctrl_mode_cur */
+UINT16 OutU16_reserved4; /* Subindex22 - OutU16_reserved4 */
+UINT8 OutU8_psm_beam_id; /* Subindex23 - OutU8_psm_beam_id */
+UINT8 OutU8_reserved5; /* Subindex24 - OutU8_reserved5 */
+UINT16 OutU16_psm_radiation_Outdex; /* Subindex25 - OutU16_psm_radiation_Outdex */
+UINT32 OutU32_psm_not_ready_event; /* Subindex26 - OutU32_psm_not_ready_event */
+UINT32 OutU32_psm_warnOutg_Outterlock; /* Subindex27 - OutU32_psm_warnOutg_Outterlock */
+UINT32 OutU32_psm_mOutor_Outterlock; /* Subindex28 - OutU32_psm_mOutor_Outterlock */
+UINT32 OutU32_psm_serious_Outterlock; /* Subindex29 - OutU32_psm_serious_Outterlock */
+UINT32 OutU32_psm_move_status; /* Subindex30 - OutU32_psm_move_status */
+REAL32 OutF_psm_position_x_cur; /* Subindex31 - OutF_psm_position_x_cur */
+REAL32 OutF_psm_position_y_cur; /* Subindex32 - OutF_psm_position_y_cur */
+REAL32 OutF_psm_position_z_cur; /* Subindex33 - OutF_psm_position_z_cur */
+REAL32 OutF_psm_position_x_r_cur; /* Subindex34 - OutF_psm_position_x_r_cur */
+REAL32 OutF_psm_position_y_r_cur; /* Subindex35 - OutF_psm_position_y_r_cur */
+REAL32 OutF_psm_position_z_r_cur; /* Subindex36 - OutF_psm_position_z_r_cur */
+REAL32 OutF_psm_velocity_x_cur; /* Subindex37 - OutF_psm_velocity_x_cur */
+REAL32 OutF_psm_velocity_y_cur; /* Subindex38 - OutF_psm_velocity_y_cur */
+REAL32 OutF_psm_velocity_z_cur; /* Subindex39 - OutF_psm_velocity_z_cur */
+REAL32 OutF_psm_velocity_x_r_cur; /* Subindex40 - OutF_psm_velocity_x_r_cur */
+REAL32 OutF_psm_velocity_y_r_cur; /* Subindex41 - OutF_psm_velocity_y_r_cur */
+REAL32 OutF_psm_velocity_z_r_cur; /* Subindex42 - OutF_psm_velocity_z_r_cur */
 } OBJ_STRUCT_PACKED_END
 TOBJ7010;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -404,7 +932,7 @@ TOBJ7010;
 */
 PROTO TOBJ7010 OutputData0x7010
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={7,0,0,0,0,0,0,0}
+={42,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -418,17 +946,17 @@ PROTO TOBJ7010 OutputData0x7010
 #ifdef _OBJD_
 TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1601 */
-{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 7 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 42 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
 /* Object 0x1A00 */
-{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 7 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 38 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
 /* Object 0x1C12 */
 {NULL , NULL ,  0x1C12 , {DEFTYPE_UNSIGNED16 , 1 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C12 , aName0x1C12 , &sRxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x1C13 */
 {NULL , NULL ,  0x1C13 , {DEFTYPE_UNSIGNED16 , 1 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C13 , aName0x1C13 , &sTxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x6000 */
-{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 7 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 38 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
 /* Object 0x7010 */
-{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 7 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 42 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
 {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL}};
 #endif    //#ifdef _OBJD_
 

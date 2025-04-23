@@ -87,8 +87,11 @@ static void rtm_state_machine_idle(stateTable_t *self, Event_t const *e)
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
 
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
 
     TRAN(signal, SYSTEM_STATE_SYSTEM_ON);
     TRAN(state, STATE_MACHINE_IDLE);
@@ -98,9 +101,12 @@ static void rtm_state_machine_power_saver(stateTable_t *self, Event_t const *e)
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
 
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
 
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_POWER_SAVER);
 }
@@ -109,8 +115,11 @@ static void rtm_state_machine_shutdown(stateTable_t *self, Event_t const *e)
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
 
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
 
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_SHUTDOWN);
@@ -119,6 +128,12 @@ static void rtm_state_machine_manual(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
+
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
 
     TRAN(signal, SYSTEM_STATE_SYSTEM_ON);
     TRAN(state, STATE_MACHINE_MANUAL);
@@ -132,6 +147,12 @@ static void rtm_state_machine_preliminary(stateTable_t *self, Event_t const *e)
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_PRELIMINARY);
 
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
+
     rtm_event->super.sig = SYSTEM_STATE_MV_PREPARE;
     stateTable_dispatch(self, (Event_t *)rtm_event);
 }
@@ -139,7 +160,11 @@ static void rtm_state_machine_prepare(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_PREPARE);
 }
@@ -148,8 +173,7 @@ static void rtm_state_machine_ready(stateTable_t *self, Event_t const *e)
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
 
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 1;
+
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_READY);
 }
@@ -172,10 +196,13 @@ static void rtm_state_machine_interrupt(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_INTERRUPT);
+
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+
     if( e->sig == SYSTEM_STATE_MV_READY)
     {
         //TODO:无故障，自发跳转到STATE_MACHINE_INTERRUPT状态，需要处理
@@ -189,8 +216,11 @@ static void rtm_state_machine_terminate(stateTable_t *self, Event_t const *e)
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
     
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
 
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_TERMINATE);
@@ -199,6 +229,13 @@ static void rtm_state_machine_kv_preliminary(stateTable_t *self, Event_t const *
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
+
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
+
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_KV_PRELIMINARY);
 }
@@ -206,6 +243,13 @@ static void rtm_state_machine_kv_prepare(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
+    
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
+
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_KV_PREPARE);
 }
@@ -214,8 +258,7 @@ static void rtm_state_machine_surview_ready(stateTable_t *self, Event_t const *e
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
 
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 1;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+
 
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_SURVIEW_READY);
@@ -231,8 +274,7 @@ static void rtm_state_machine_ct_ready(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 1;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+
 
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_CT_READY);
@@ -260,8 +302,14 @@ static void rtm_state_machine_initial(stateTable_t *self, Event_t const *e)
 
     TRAN(state, STATE_MACHINE_IDLE);
     TRAN(signal, SYSTEM_STATE_INITIALIZATION);
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+
+    rtm_event->dido_structure->tca9535_0x04_u.tca9535_0x04_bit.DO_STAND_RESERVE = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
     // retval = osThreadFlagsWait(APP_RTM_THREAD_FLAG_ALL, osFlagsWaitAll | osFlagsNoClear, 3000);
     // if (retval < 0)
     // {
@@ -306,9 +354,9 @@ void rtm_state_machine_ctor(stateTable_t *self)
 
     /* 5 STATE_MACHINE_READY */
     state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_READY] = rtm_state_machine_ready;
-    state_table[STATE_MACHINE_READY][STATE_MACHINE_WORK] = rtm_state_machine_work;
-    state_table[STATE_MACHINE_READY][STATE_MACHINE_TERMINATE] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_READY][STATE_MACHINE_INTERRUPT] = rtm_state_machine_interrupt;
+    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_RADIATION] = rtm_state_machine_work;
+    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_TERMINATE] = rtm_state_machine_terminate;
+    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_INTERRUPT] = rtm_state_machine_interrupt;
 
     /* 6 STATE_MACHINE_WORK */
     state_table[STATE_MACHINE_WORK][SYSTEM_STATE_MV_RADIATION] = rtm_state_machine_work;

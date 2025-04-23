@@ -260,7 +260,7 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
             goto error;
         }
         *(uint32_t *)&(self->tx_buffer[FRAME_DATA_OFFSET + data_len]) = crc;
-
+        self->recv_response_count = *(uint16_t *)&(self->tx_buffer[FRAME_COUNT_OFFSET]);
         ret = self->send_func(self->tx_buffer, data_len + FRAME_EXTRA_LEN, timeout, self->send_arg);
         if (ret != 0)
         {
@@ -272,7 +272,6 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
         {
             if (self->retry_count > 0)
             {
-                self->recv_response_count = *(uint16_t *)&(self->tx_buffer[FRAME_COUNT_OFFSET]);
                 self->tx_retry_count = 0;
                 status = osTimerStart(self->osTimerId, self->timeout_ms / portTICK_RATE_MS);
                 if (status != osOK)
@@ -282,7 +281,7 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
                 }
             }
 
-            status = osSemaphoreAcquire(self->osSemaphoreId, timeout);  /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
+            status = osSemaphoreAcquire(self->osSemaphoreId, timeout); /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
             if (status != osOK)
             {
                 self->send_count++;
@@ -343,7 +342,7 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
             return -4;
         }
     }
-	*data_len = recv_len - FRAME_EXTRA_LEN;
+    *data_len = recv_len - FRAME_EXTRA_LEN;
     memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
 
     if (self->rx_buffer[FRAME_DATA_OFFSET + 4] & 0x80) // receive a response frame
