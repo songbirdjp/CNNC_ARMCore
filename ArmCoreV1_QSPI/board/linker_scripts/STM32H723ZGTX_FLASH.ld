@@ -225,7 +225,19 @@ SECTIONS
     . = ALIGN(4);
     KEEP(*(.ram_d3))
   } >RAM_D3
-  
+
+  .ram_itcm (NOLOAD) :
+  {
+    . = ALIGN(4);
+    KEEP(*(.ram_itcm))
+  } >ITCMRAM
+
+  .ram_dtcm (NOLOAD) :
+  {
+    . = ALIGN(4);
+    KEEP(*(.ram_dtcm))
+  } >DTCMRAM
+
   /* Remove information from the standard libraries */
   /DISCARD/ :
   {

@@ -318,6 +318,8 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_
     uint8_t wsPkg[DATA_BUF_SIZE] = {0};
     int32_t retLen;
     // 参数检查
+    if (s >= MAX_CLIENT_NUM)
+        return -1;
     if(client[s].connectStatus < 1) return 0;  //connect is not establish
     if ((buffLen < 0) || ((buffLen + headLen) > DATA_BUF_SIZE))
         return -1;
@@ -377,8 +379,7 @@ static int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* ret
             if (retPkgType == WDT_PING)
             {
                 //自动 ping-pong
-                ws_send(s, NULL, 0, true, false, WDT_PONG);
-                // WS_INFO("ws_recv: WDT_PING\r\n");
+              //  ws_send(s, NULL, 0, true, false, WDT_PONG);
                 retFinal = 0;
             }
             //收到 PONG 包
@@ -409,8 +410,10 @@ static void sha1_hash(const char *source, char *buff)
     uint8_t Message_Digest[64], i;
     uint32_t len;
     
-   if(crypto_sha1_cal(source, strlen(source), Message_Digest, &len))
+    if(crypto_sha1_cal(source, strlen(source), Message_Digest, &len) != 0)
+    {
         printf("SHA1 ERROR: Could not compute message digest \r\n");
+    }
     else
     {
         for(i = 0; i < len; i++)    sprintf(buff+2*i, "%02X", Message_Digest[i]);
@@ -624,8 +627,8 @@ int8_t ws_data_process_callback_register(void (*cb)(APP_DATA_RECV *info))
 int32_t ws_recv_data_process(TCP_DATA_t *recvData)
 {
     uint8_t s = recvData->sn;
-    uint8_t *data = recvData->gDATABUF, *controllerIP;
-    uint16_t len = recvData->Len, i, controllerPORT;
+    uint8_t *data = recvData->gDATABUF;
+    uint16_t len = recvData->Len, i;
     Ws_DataType retPkgType = WDT_NULL;
     int32_t ret = 0;
     APP_DATA_RECV itemRecv = {0};
@@ -691,12 +694,19 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
                 uint8_t closeFrame[] = {0x88, 0x02, 0x03, 0xe8}; // status code:1000    close normal
                 ws_send(s, closeFrame, sizeof(closeFrame), true, false, WDT_NULL);
                 close(s);
-                client[s].connectStatus = 0;
-                client[s].clientType = 0;
-                client[s].socketNum = -1;
-				client[s].loopCnt = 0;	
+                clearClientInfo(s);	
                 if(client[s].clientType == SERVICE) serviceNumber--;
-                break;		 
+                break;	
+             case WDT_PING:	
+                uint16_t payloadLen = len - retHeadLen;
+                uint8_t *pdata = NULL;
+                printf("recv ping and reply pong %d\r\n",payloadLen);
+                //  for(i=0; i< payloadLen; i++)
+                //     printf("%x ",data[i]);
+                // printf("\r\n");
+                if(payloadLen > 0)  pdata = data;
+                ws_send(s, pdata, payloadLen, true, false, WDT_PONG);
+                break;
             case WDT_TXTDATA:
                 // printf("%s\r\n", (char*)data);
             case WDT_BINDATA:

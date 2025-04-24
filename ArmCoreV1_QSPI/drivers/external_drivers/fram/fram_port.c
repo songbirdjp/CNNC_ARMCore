@@ -1,7 +1,7 @@
 #include "fram_port.h"
 #include "drv_spi.h"
 #include "shell.h"
-#include "stdarg.h"
+#include <stdarg.h>
 #include "init_call.h"
 #include "ulog.h"
 
@@ -401,7 +401,7 @@ static int8_t device_fram_test(void)
     }
     printf("\r\n");
 }
-MSH_CMD_EXPORT_ALIAS(device_fram_test, fram_test,  fram function test);
+MSH_CMD_EXPORT_ALIAS(device_fram_test, fram_test, fram function test);
 #endif
 struct fram_log
 {
@@ -627,7 +627,7 @@ MSH_CMD_EXPORT_ALIAS(fram_log_test_2, fram_log_test_2, fram log record test2);
 
 static int8_t fram_log_init(void)
 {
-#ifdef USING_ULOG_FLASH
+#ifdef USING_ULOG_FRAM
     struct ulog_write_func_info info = {
         .func_init = NULL,//fram_log_info_self_detect,
         .func_callback = fram_log_write,

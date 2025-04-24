@@ -110,7 +110,7 @@ static int8_t device_fdcan_init(struct device_fdcan *fdcan, uint8_t *device_name
     }
 
     /* 3. register rx queue */
-    osMessageQueueId_t fdcan_QueueHandle = osMessageQueueNew(10, sizeof(struct fdcan_rx_msg), NULL);
+    osMessageQueueId_t fdcan_QueueHandle = osMessageQueueNew(16, sizeof(struct fdcan_rx_msg), NULL);
     if (fdcan_QueueHandle == NULL)
     {
         printf("device %s create rx queue failed\r\n", device_name);
@@ -167,15 +167,6 @@ static int8_t device_fdcan_init(struct device_fdcan *fdcan, uint8_t *device_name
         return ret;
     }
 
-    /* 7. start device */
-    uint32_t en = 1;
-    ret = fdcan->ioctl(fdcan, FDCAN_CMD_SET_START, (void *)&en);
-    if (ret != 0)
-    {
-        printf("device %s start err: %d\r\n", device_name, ret);
-        return ret;
-    }
-
     return 0;
 }
 
@@ -185,6 +176,11 @@ static int8_t fdcan1_init(void)
 }
 INIT_APP_EXPORT(fdcan1_init);
 
+int8_t fdcan1_enable_switch(uint32_t enable)
+{
+    uint32_t en = enable == 0 ? 0 : 1;
+    return device_fdcan1_get()->ioctl(device_fdcan1_get(), FDCAN_CMD_SET_START, (void *)&en);
+}
 
 int8_t fdcan1_data_write(uint32_t id, uint8_t *buf, uint8_t len)
 {

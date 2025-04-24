@@ -62,7 +62,6 @@ uint8_t ucHeap[configTOTAL_HEAP_SIZE] = {0};
 static HeapRegion_t xHeapRegions[] = 
 {
     { ucHeap, configTOTAL_HEAP_SIZE },
-    { (uint8_t *)0xC0000000, 0x2000000},
     { NULL,   0                     }
 };
 #endif
@@ -205,7 +204,6 @@ MSH_CMD_EXPORT_ALIAS(fpu_test, fpu_test, test fpu);
 
 static uint32_t itcm[1024] __attribute__((section(".ram_itcm"))) = {0};
 static uint32_t dtcm[1024] __attribute__((section(".ram_dtcm"))) = {0};
-static uint32_t sdram[1024] __attribute__((section(".sdram_ext"))) = {0};
 static uint32_t sram[1024] = {0};
 #include "utilities.h"
 static int8_t ram_speed_test(uint8_t argc, uint8_t **argv)
@@ -243,18 +241,6 @@ static int8_t ram_speed_test(uint8_t argc, uint8_t **argv)
     osDelay(100);
 
     /* 3. sdram */
-    system_time_get(&begin);
-    for (int i = 0; i < loop; i+=4)
-    {
-        sdram[i % 1024] = i;
-        sdram[i % 1024 + 1] = i + 1;
-        sdram[i % 1024 + 2] = i + 2;
-        sdram[i % 1024 + 3] = i + 3;
-    }
-    system_time_get(&end);
-    printf("sdram time: %u us\r\n", time_diff_us(&begin, &end));
-
-    osDelay(100);
 
     /* 4. sram */
     system_time_get(&begin);
@@ -296,50 +282,6 @@ static int8_t hw_crc_test(uint8_t argc, uint8_t **argv)
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(hw_crc_test, hw_crc_test, test crc);
-
-static int8_t ext_sdram_test(uint8_t argc, uint8_t **argv)
-{
-    uint16_t *ext_sdram_array = (uint16_t *)pvPortMalloc(1024 * 1024 * 32 - 16);
-    if (ext_sdram_array == NULL)
-    {
-        printf("malloc error\r\n");
-        return -1;
-    }
-
-    printf("ext sdram malloc ok: %p\r\n", ext_sdram_array);
-
-    for (int i = 0; i < 1024; i++)
-    {
-        if (i % 16 == 0 && i != 0)
-        {
-            printf("\r\n");
-        }
-        printf("%.4x ", ext_sdram_array[i]);
-    }
-
-    printf("\r\n");
-
-    for (int i = 0; i < 1024; i++)
-    {
-        ext_sdram_array[i] = i;
-    }
-
-    for (int i = 0; i < 1024; i++)
-    {
-        if (i % 16 == 0 && i != 0)
-        {
-            printf("\r\n");
-        }
-        printf("%.4x ", ext_sdram_array[i]);
-    }
-
-    printf("\r\n");
-
-    vPortFree(ext_sdram_array);
-
-    return 0;
-}
-MSH_CMD_EXPORT_ALIAS(ext_sdram_test, ext_sdram_test, test ext_sdram);
 #endif
 
 static int8_t system_heap_init(void)
@@ -426,8 +368,6 @@ int main(void)
 #ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);
 #endif
-
-//   bank1_sdram_init();
 
   system_heap_init();
 

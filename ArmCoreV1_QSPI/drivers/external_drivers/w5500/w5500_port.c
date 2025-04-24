@@ -1,5 +1,5 @@
 #include "drv_spi.h"
-#include "stdbool.h"
+#include <stdbool.h>
 #include "socket.h"
 
 static DEVICE_SPI device_w5500 = {0};
@@ -125,15 +125,21 @@ static void W5500_interrupt_init(uint8_t max_interrupt)
 {
     uint8_t sn;
 
-    intr_kind int_mask = IK_WOL | IK_PPPOE_TERMINATED | IK_DEST_UNREACH | IK_IP_CONFLICT ;
-    for(sn = 0; sn < max_interrupt; sn++)  int_mask |= (1 << (8 + sn));
+    intr_kind int_mask = IK_WOL | IK_PPPOE_TERMINATED | IK_DEST_UNREACH | IK_IP_CONFLICT;
+    for(sn = 0; sn < max_interrupt; sn++)
+    {
+        int_mask |= (1 << (8 + sn));
+    }
     ctlwizchip(CW_SET_INTRMASK, (void *)&int_mask);
     
+    for (sn = 0; sn < max_interrupt; sn++)
+    {
 #ifdef USING_SENDOK_INTERRUPT
-    setSn_IMR(sn, Sn_IR_SENDOK | Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
+        setSn_IMR(sn, Sn_IR_SENDOK | Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
 #else
-    setSn_IMR(sn, Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
+        setSn_IMR(sn, Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
 #endif
+    }
 
     uint16_t intlevel = 2000;
     ctlwizchip(CW_SET_INTRTIME, (void *)&intlevel);
@@ -142,7 +148,10 @@ static void W5500_interrupt_init(uint8_t max_interrupt)
     wiz_NetTimeout net_timeout = {1, 16384};
     wizchip_settimeout(&net_timeout);
 
-    for(sn = 0; sn < max_interrupt; sn++)   setSn_KPALVTR(sn, 1);
+    for(sn = 0; sn < max_interrupt; sn++)
+    {
+        setSn_KPALVTR(sn, 12);// 1 minutes, to detect and release disconnected socket
+    }
 }
 
 static void W5500_interrupt_status_print(uint8_t sn)
@@ -197,10 +206,10 @@ static int32_t w5500_irq_process(void)
     if (reg_sn_ir) // 清除中断标志位
     {
         // printf("reg_sn_ir:%x\r\n", reg_sn_ir);
-        (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: Connected to peer succeed\r\n", sn) : NULL;
-        (reg_sn_ir & Sn_IR_DISCON) ? printf("disconnect to peer\r\n") : NULL;
+        (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: connect to peer succeed\r\n", sn) : NULL;
+        (reg_sn_ir & Sn_IR_DISCON) ? printf("socket %d: disconnect to peer\r\n", sn) : NULL;
         // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp recv interrupt\r\n") : NULL;
-        (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("tcp timeout interrupt\r\n") : NULL;
+        (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("socket %d: tcp timeout interrupt\r\n", sn) : NULL;
         // (reg_sn_ir & Sn_IR_SENDOK) ? socket_sending_status_set(socket_sending_status_get() & (~(1<<sn))) : NULL;
 
         if (reg_sn_ir & Sn_IR_SENDOK)
@@ -390,7 +399,7 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
         return ret;
     }
 
-    return w5500_chip_init(net_info);;
+    return w5500_chip_init(net_info);
 }
 
 int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len)
@@ -433,7 +442,7 @@ uint8_t device_w5500_phy_link_status_get(void)
 
 int8_t device_w5500_link_state_recover(uint8_t sn)
 {
-    if (sn > 7)
+    if (sn >= _WIZCHIP_SOCK_NUM_)
     {
         return -1;
     }

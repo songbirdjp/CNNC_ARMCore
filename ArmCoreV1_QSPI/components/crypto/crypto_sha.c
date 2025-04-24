@@ -1,5 +1,6 @@
 #include "cmox_crypto.h"
 #include "crc.h"
+#include "hw_crc.h"
 
 int8_t crypto_sha1_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *hash_len)
 {
@@ -9,6 +10,12 @@ int8_t crypto_sha1_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *hash
         return -1;
     }
 
+    int8_t ret = 0;
+
+    extern int8_t hw_crc_mutex_take(void);
+    hw_crc_mutex_take();
+
+    hardware_crc_calculate(CRC32, NULL, 0);
     uint32_t hw_crc_cfg[sizeof(CRC_TypeDef) / sizeof(uint32_t)] = {0};
     memcpy(hw_crc_cfg, &hcrc.Instance->DR, sizeof(CRC_TypeDef));
 
@@ -16,7 +23,8 @@ int8_t crypto_sha1_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *hash
     if (cmox_initialize(NULL) != CMOX_INIT_SUCCESS)
     {
         printf("cryptographic library initialization failed\r\n");
-        return -2;
+        ret = -2;
+        goto err;
     }
 
     /* --------------------------------------------------------------------------
@@ -39,25 +47,32 @@ int8_t crypto_sha1_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *hash
     if (retval != CMOX_HASH_SUCCESS)
     {
         printf("hash computation error %d\r\n", retval);
-        return -3;
+        ret = -3;
+        goto err;
     }
 
     /* Verify generated data size is the expected one */
     if (computed_size != CMOX_SHA1_SIZE)
     {
-        return -4;
+        ret = -4;
+        goto err;
     }
 
     /* No more need of cryptographic services, finalize cryptographic library */
     if (cmox_finalize(NULL) != CMOX_INIT_SUCCESS)
     {
         printf("cryptographic library finalization failed\r\n");
-        return -5;
+        ret = -5;
+        goto err;
     }
 
+err:
     memcpy(&hcrc.Instance->DR, hw_crc_cfg, sizeof(CRC_TypeDef));
 
-    return 0;
+    extern int8_t hw_crc_mutex_give(void);
+    hw_crc_mutex_give();
+
+    return ret;
 }
 
 int8_t crypto_sha256_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *hash_len)
@@ -68,6 +83,12 @@ int8_t crypto_sha256_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *ha
         return -1;
     }
 
+    int8_t ret = 0;
+
+    extern int8_t hw_crc_mutex_take(void);
+    hw_crc_mutex_take();
+
+    hardware_crc_calculate(CRC32, NULL, 0);
     uint32_t hw_crc_cfg[sizeof(CRC_TypeDef) / sizeof(uint32_t)] = {0};
     memcpy(hw_crc_cfg, &hcrc.Instance->DR, sizeof(CRC_TypeDef));
 
@@ -75,7 +96,8 @@ int8_t crypto_sha256_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *ha
     if (cmox_initialize(NULL) != CMOX_INIT_SUCCESS)
     {
         printf("cryptographic library initialization failed\r\n");
-        return -2;
+        ret = -2;
+        goto err;
     }
 
     /* --------------------------------------------------------------------------
@@ -98,13 +120,15 @@ int8_t crypto_sha256_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *ha
     if (retval != CMOX_HASH_SUCCESS)
     {
         printf("hash computation error %d\r\n", retval);
-        return -3;
+        ret = -3;
+        goto err;
     }
 
     /* Verify generated data size is the expected one */
     if (computed_size != CMOX_SHA256_SIZE)
     {
-        return -4;
+        ret = -4;
+        goto err;
     }
 
 #if 0
@@ -219,12 +243,17 @@ int8_t crypto_sha256_cal(uint8_t *buf, uint32_t len, uint8_t *hash, uint32_t *ha
     if (cmox_finalize(NULL) != CMOX_INIT_SUCCESS)
     {
         printf("cryptographic library finalization failed\r\n");
-        return -5;
+        ret = -5;
+        goto err;
     }
 
+err:
     memcpy(&hcrc.Instance->DR, hw_crc_cfg, sizeof(CRC_TypeDef));
 
-    return 0;
+    extern int8_t hw_crc_mutex_give(void);
+    hw_crc_mutex_give();
+
+    return ret;
 }
 
 #ifdef CRYPTO_TEST

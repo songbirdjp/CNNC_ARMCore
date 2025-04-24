@@ -56,6 +56,16 @@ static int8_t hw_crc_init(void)
 INIT_ENV_EXPORT(hw_crc_init);
 
 /* note: user must ^0xFFFFFFFF with below functions to get final result */
+int8_t hw_crc_mutex_take(void)
+{
+    return osMutexAcquire(crc_mutex, osWaitForever);
+}
+
+int8_t hw_crc_mutex_give(void)
+{
+    return osMutexRelease(crc_mutex);
+}
+
 uint32_t hardware_crc_calculate(enum hardware_crc_default index, uint8_t pBuffer[], uint32_t size)
 {
     static enum hardware_crc_default index_last = CRC_MAX;
@@ -69,14 +79,19 @@ uint32_t hardware_crc_calculate(enum hardware_crc_default index, uint8_t pBuffer
         status = hardware_crc_config(index);
         if (status != HAL_OK)
         {
-            printf("hardware_crc_config failed\r\n");
+            osMutexRelease(crc_mutex);
+            printf("hardware_crc_config err: %d\r\n", status);
             return -1;
         }
         
         index_last = index;
     }
 
-    crc_result = HAL_CRC_Calculate(&hcrc, (uint32_t *)pBuffer, size);
+    if (pBuffer != NULL && size > 0)
+    {
+        crc_result = HAL_CRC_Calculate(&hcrc, (uint32_t *)pBuffer, size);
+    }
+
     osMutexRelease(crc_mutex);
 
     return crc_result;

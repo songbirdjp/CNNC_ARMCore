@@ -208,14 +208,14 @@ void StartDefaultTask(void *argument)
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
     /* Infinite loop */
 
-    uint32_t count = 0;
+    uint8_t count = 0;
     for(;;)
     {
         HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_4);
 
-        osDelay(10);
+        osDelay(100);
 
-        if (count++ % 50 == 0)
+        if (count++ % 5 == 0)
         {
             HAL_GPIO_TogglePin(GPIOE, GPIO_PIN_2);
         }

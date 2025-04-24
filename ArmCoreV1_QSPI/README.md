@@ -2,7 +2,6 @@
 ```
 ArmCoreV1_QSPI
 ├─ .cproject
-├─ .gitignore
 ├─ .mxproject
 ├─ .project
 ├─ application
@@ -158,6 +157,9 @@ ArmCoreV1_QSPI
 │  ├─ shell
 │  │  ├─ shell.c
 │  │  └─ shell.h
+│  ├─ timestamp
+│  │  ├─ timestamp.c
+│  │  └─ timestamp.h
 │  ├─ uart_frame
 │  │  ├─ frame_format.c
 │  │  ├─ frame_format.h
@@ -254,6 +256,11 @@ ArmCoreV1_QSPI
 │     │  ├─ drv_gpio.h
 │     │  ├─ gpio.c
 │     │  └─ gpio.h
+│     ├─ i2c
+│     │  ├─ drv_i2c.c
+│     │  ├─ drv_i2c.h
+│     │  ├─ i2c.c
+│     │  └─ i2c.h
 │     ├─ iwdg
 │     │  ├─ iwdg.c
 │     │  └─ iwdg.h
@@ -292,6 +299,8 @@ ArmCoreV1_QSPI
 ├─ ETHERCAT_CNNCPM.ioc
 ├─ file_reorganize
 ├─ file_reorganize.exe
+├─ file_time_update
+├─ file_time_update.exe
 ├─ info_generation
 ├─ info_generation.exe
 ├─ libraries
@@ -304,7 +313,9 @@ ArmCoreV1_QSPI
 │  │  │        │  ├─ stm32h723xx.h
 │  │  │        │  ├─ stm32h7xx.h
 │  │  │        │  └─ system_stm32h7xx.h
-│  │  │        └─ LICENSE.txt
+│  │  │        ├─ LICENSE.txt
+│  │  │        └─ Source
+│  │  │           └─ Templates
 │  │  ├─ Include
 │  │  │  ├─ cmsis_armcc.h
 │  │  │  ├─ cmsis_armclang.h
@@ -589,7 +600,7 @@ ArmCoreV1_QSPI
 │     └─ sdoserv.h
 ├─ st_link.cfg
 └─ 使用说明
-   ├─ ARM CORE固件模块复用使用指南V1.1.pdf
+   ├─ ARM CORE固件模块复用使用指南V1.2.pdf
    └─ 工程修改说明
       ├─ demo1
       │  ├─ Demo1.md
