@@ -86,8 +86,6 @@ void Error_Handler(void);
 #define LAN9252_SYNC1_Pin GPIO_PIN_2
 #define LAN9252_SYNC1_GPIO_Port GPIOB
 #define LAN9252_SYNC1_EXTI_IRQn EXTI2_IRQn
-#define LAN9252_CSn_Pin GPIO_PIN_11
-#define LAN9252_CSn_GPIO_Port GPIOE
 #define LvOKDetect_Pin GPIO_PIN_10
 #define LvOKDetect_GPIO_Port GPIOB
 #define TrigFB_Pin GPIO_PIN_11

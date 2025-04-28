@@ -209,11 +209,6 @@ static int8_t sdram_init(struct dev_sdram *device, uint8_t *name)
         return -2;
     }
 
-    if (!memcmp(name, SDRAM_BANK1_DEVICE_NAME, sizeof(SDRAM_BANK1_DEVICE_NAME)))
-    {
-        SDRAM_Init();
-    }
-
     osMutexAttr_t sdram_mutex_attributes = {
     .name = "bank1_sdram_mutex",
     .attr_bits = osMutexRecursive | osMutexPrioInherit
@@ -249,11 +244,31 @@ static int8_t sdram_init(struct dev_sdram *device, uint8_t *name)
     return device->open(device);
 }
 
-int8_t bank1_sdram_init(void)
+static int8_t device_sdram_init()
 {
     return sdram_init(bank1_sdram_get(), SDRAM_BANK1_DEVICE_NAME);
 }
+INIT_APP_EXPORT(device_sdram_init);
 
+static int8_t sdram_cfg_init(struct dev_sdram *device, uint8_t *name)
+{
+    if (device == NULL || name == NULL)
+    {
+        return -1;
+    }
+
+    if (!memcmp(name, SDRAM_BANK1_DEVICE_NAME, sizeof(SDRAM_BANK1_DEVICE_NAME)))
+    {
+        SDRAM_Init();
+    }
+
+    return 0;
+}
+
+int8_t bank1_sdram_init(void)
+{
+    return sdram_cfg_init(bank1_sdram_get(), SDRAM_BANK1_DEVICE_NAME);
+}
 
 #ifndef SDRAM_TEST
 #include "shell.h"

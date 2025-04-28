@@ -458,28 +458,6 @@ int main(void)
   app_valid_check_and_jump();
 #endif
 
-#if 0
-    uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-    uint32_t res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
-
-    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc8 res = %#x\r\n", res);
-
-    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc16 res = %#x\r\n", res);
-
-    res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
-
-    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc8 res = %#x\r\n", res);
-
-    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc16 res = %#x\r\n", res);
-    
-#endif
-
   /* USER CODE END 2 */
 
   /* Init scheduler */

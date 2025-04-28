@@ -1,6 +1,5 @@
 #include "pid_ctrl.h"
 #include "arm_math.h"
-#include "cmsis_os2.h"
 #include "FreeRTOS.h"
 
 int8_t pid_para_init(struct pid_instance *pid)
@@ -69,7 +68,6 @@ int8_t pid_state_reset(struct pid_instance *pid)
 
 #ifndef PID_TEST
 #include "shell.h"
-#include "cmsis_os2.h"
 #include <stdlib.h>
 
 #define OUTPUT_MAX 100

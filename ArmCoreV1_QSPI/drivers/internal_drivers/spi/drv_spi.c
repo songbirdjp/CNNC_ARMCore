@@ -27,10 +27,13 @@ static void RxCpltCallback(SPI_HandleTypeDef *hspi)
     }
     else
     {
-        ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
-        if (ret != osOK)
+        if (spi->rx_queue != NULL)
         {
-            printf("%s queue put err:%d\r\n", spi->name, ret);
+            ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
+            if (ret != osOK)
+            {
+                printf("%s queue put err:%d\r\n", spi->name, ret);
+            }
         }
 
         if (spi->rx_cb != NULL)
@@ -47,6 +50,20 @@ static void TxRxCpltCallback(SPI_HandleTypeDef *hspi)
     if (spi->master_or_slave == SPI_MASTER)
     {
         osEventFlagsSet(spi->rx_event, SPI_RECV_SUCCEED_EVENT);
+
+        if (spi->rx_queue != NULL)
+        {
+            ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
+            if (ret != osOK)
+            {
+                printf("%s queue put err:%d\r\n", spi->name, ret);
+            }
+        }
+
+        if (spi->rx_cb != NULL)
+        {
+            spi->rx_cb((void *)spi);
+        }
     }
     else
     {

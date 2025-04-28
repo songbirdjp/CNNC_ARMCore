@@ -50,9 +50,9 @@ struct system_time *system_time_get(struct system_time *t)
 uint32_t time_diff_us(struct system_time *begin, struct system_time *end)
 {
     uint64_t ostick_diff = ((uint64_t)end->ostick + UINT32_MAX - begin->ostick) % UINT32_MAX;
-    uint32_t diff_systick = (ostick_diff * (SysTick->LOAD + 1) + begin->systick - end->systick);
+    uint64_t diff_systick = (ostick_diff * (SysTick->LOAD + 1) + begin->systick - end->systick);
 
-    return diff_systick / (HAL_RCC_GetSysClockFreq() / 1000000);
+    return (uint32_t)(diff_systick / (HAL_RCC_GetSysClockFreq() / 1000000));
 }
 
 static GPIO_TypeDef *gpio_handle_get(uint8_t *str)

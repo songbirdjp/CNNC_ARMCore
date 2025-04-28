@@ -61,9 +61,6 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin|ModTriggerInhibitCtrl_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LAN9252_CSn_GPIO_Port, LAN9252_CSn_Pin, GPIO_PIN_SET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, UART3_DE_Pin|WATCHDOG2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
@@ -78,10 +75,8 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, W5500_CSn_Pin|FM25V02_CSn_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : ModPRF_Pin LvInterlockEn_Pin HvInterlockEn_Pin VPSEnable_Pin
-                           LAN9252_CSn_Pin */
-  GPIO_InitStruct.Pin = ModPRF_Pin|LvInterlockEn_Pin|HvInterlockEn_Pin|VPSEnable_Pin
-                          |LAN9252_CSn_Pin;
+  /*Configure GPIO pins : ModPRF_Pin LvInterlockEn_Pin HvInterlockEn_Pin VPSEnable_Pin */
+  GPIO_InitStruct.Pin = ModPRF_Pin|LvInterlockEn_Pin|HvInterlockEn_Pin|VPSEnable_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

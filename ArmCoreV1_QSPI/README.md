@@ -171,6 +171,9 @@ ArmCoreV1_QSPI
 │  ├─ shell
 │  │  ├─ shell.c
 │  │  └─ shell.h
+│  ├─ timestamp
+│  │  ├─ timestamp.c
+│  │  └─ timestamp.h
 │  ├─ uart_frame
 │  │  ├─ frame_format.c
 │  │  ├─ frame_format.h
@@ -309,6 +312,8 @@ ArmCoreV1_QSPI
 ├─ ETHERCAT_CNNCPM.ioc
 ├─ file_reorganize
 ├─ file_reorganize.exe
+├─ file_time_update
+├─ file_time_update.exe
 ├─ info_generation
 ├─ info_generation.exe
 ├─ libraries
@@ -621,7 +626,7 @@ ArmCoreV1_QSPI
 │     └─ sdoserv.h
 ├─ st_link.cfg
 └─ 使用说明
-   ├─ ARM CORE固件模块复用使用指南V1.1.pdf
+   ├─ ARM CORE固件模块复用使用指南V1.2.pdf
    └─ 工程修改说明
       ├─ demo1
       │  ├─ Demo1.md

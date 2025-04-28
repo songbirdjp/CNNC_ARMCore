@@ -77,7 +77,7 @@ struct code_info
     uint32_t info_len;              /* info长度 */
     uint32_t patch_flag;            /* 补丁标志 */
     struct patch_info patch[4];     /* 补丁信息 */
-    uint8_t  code_name[16];         /* code名称 */
+    uint8_t  code_name[32];         /* code名称 */
     uint32_t code_type;             /* code类型：0：全包  1：差分包 */
     uint32_t code_offset;           /* code起始地址，相对于info的偏移 */
     uint32_t boot_offset;           /* 引导程序起始地址，相对于code的偏移 */
