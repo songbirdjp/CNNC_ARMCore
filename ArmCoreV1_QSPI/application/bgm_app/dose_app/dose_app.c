@@ -1033,6 +1033,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0xB0;
         buf[offset++] = 0x00;
         ret = dose_cmd_write(id, 0x02, buf, offset);
+        break;
     case DOSE_INFO_CUMULATED_CLEAR:
         buf[offset++] = 0xC1;
         buf[offset++] = 0x02;

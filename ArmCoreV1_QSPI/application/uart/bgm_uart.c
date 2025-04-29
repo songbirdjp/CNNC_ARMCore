@@ -103,7 +103,7 @@ static int8_t uart_cmd_process(enum uart_id id, struct cmd_object *obj)
         return -2;
     }
 
-#if 1
+#if 0
     LOG_I("[%d]: recv id: %d, type: %d, len: %d\r\n", id, obj->id.byte, obj->type, *obj->len);
     for (uint8_t i = 0; i < *obj->len; i++)
     {
