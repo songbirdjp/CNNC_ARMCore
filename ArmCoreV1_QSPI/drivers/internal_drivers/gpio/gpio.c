@@ -88,11 +88,11 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(LAN9252_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LAN9252_SYNC0_Pin */
-  GPIO_InitStruct.Pin = LAN9252_SYNC0_Pin;
+  /*Configure GPIO pin : LAN9252_SYNC1_Pin */
+  GPIO_InitStruct.Pin = LAN9252_SYNC1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(LAN9252_SYNC0_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LAN9252_SYNC1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : CHIP_RUN_LED_Pin SYSTEM_STATE_Pin ModTriggerInhibitCtrl_Pin */
   GPIO_InitStruct.Pin = CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin|ModTriggerInhibitCtrl_Pin;
@@ -121,11 +121,11 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LAN9252_SYNC1_Pin */
-  GPIO_InitStruct.Pin = LAN9252_SYNC1_Pin;
+  /*Configure GPIO pin : LAN9252_SYNC0_Pin */
+  GPIO_InitStruct.Pin = LAN9252_SYNC0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(LAN9252_SYNC1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LAN9252_SYNC0_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ModSumDetect_Pin */
   GPIO_InitStruct.Pin = ModSumDetect_Pin;

@@ -122,7 +122,7 @@ int8_t dose_state_polling(enum uart_id id)
     int8_t ret = 0;
 
     ret = dose_data_info_set(id, DOSE_INFO_FSM_STATE_GET, NULL, 0);
-    ret = dose_data_info_set(id, DOSE_INFO_INTERLOCK_GET, NULL, 0);
+    ret |= dose_data_info_set(id, DOSE_INFO_INTERLOCK_GET, NULL, 0);
     if(ret != 0)
     {
         LOG_E("dose info set err: %d\r\n", ret);
@@ -275,13 +275,13 @@ MSH_CMD_EXPORT_ALIAS(dose_cmd_test, dose_cmd_test, test dose cmd);
 
 
 /* 2. bgm with afc board communication interface */
-void BGM_SendCmd(enum uart_id uartID, UARTCmdType_t cmdType, uint8_t *cmdData,uint8_t len)
+void BGM_SendCmd(enum uart_id uartID, UARTCmdType_t cmdType, uint8_t *cmdData, uint8_t len)
 {
     struct cmd_object BGMCmdToSend;
     BGMCmdToSend.id.bits.cmd_id = 0;
     BGMCmdToSend.id.bits.cmd_ack = 1;
     BGMCmdToSend.type = cmdType;
-    BGMCmdToSend.len = len;
+    BGMCmdToSend.len = &len;
     BGMCmdToSend.data = cmdData;
     uart_cmd_write(uartID,&BGMCmdToSend);
 }

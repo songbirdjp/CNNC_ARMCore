@@ -68,9 +68,9 @@ void Error_Handler(void);
 #define HvInterlockEn_GPIO_Port GPIOE
 #define VPSEnable_Pin GPIO_PIN_6
 #define VPSEnable_GPIO_Port GPIOE
-#define LAN9252_SYNC0_Pin GPIO_PIN_13
-#define LAN9252_SYNC0_GPIO_Port GPIOC
-#define LAN9252_SYNC0_EXTI_IRQn EXTI15_10_IRQn
+#define LAN9252_SYNC1_Pin GPIO_PIN_13
+#define LAN9252_SYNC1_GPIO_Port GPIOC
+#define LAN9252_SYNC1_EXTI_IRQn EXTI15_10_IRQn
 #define CHIP_RUN_LED_Pin GPIO_PIN_1
 #define CHIP_RUN_LED_GPIO_Port GPIOC
 #define SYSTEM_STATE_Pin GPIO_PIN_2
@@ -83,9 +83,9 @@ void Error_Handler(void);
 #define ModTrigONDetect_GPIO_Port GPIOB
 #define ModArcDetect_Pin GPIO_PIN_1
 #define ModArcDetect_GPIO_Port GPIOB
-#define LAN9252_SYNC1_Pin GPIO_PIN_2
-#define LAN9252_SYNC1_GPIO_Port GPIOB
-#define LAN9252_SYNC1_EXTI_IRQn EXTI2_IRQn
+#define LAN9252_SYNC0_Pin GPIO_PIN_2
+#define LAN9252_SYNC0_GPIO_Port GPIOB
+#define LAN9252_SYNC0_EXTI_IRQn EXTI2_IRQn
 #define LvOKDetect_Pin GPIO_PIN_10
 #define LvOKDetect_GPIO_Port GPIOB
 #define TrigFB_Pin GPIO_PIN_11

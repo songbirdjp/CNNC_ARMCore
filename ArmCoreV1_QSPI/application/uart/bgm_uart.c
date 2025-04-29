@@ -1,111 +1,9 @@
 #include "bgm_uart.h"
-#include "init_call.h"
 #include "cmsis_os2.h"
+#include "timestamp.h"
+#include "sys_cfg.h"
 #include "ulog.h"
-
-static int8_t (*uart_cmd_parse[BGM_UART_MAX])(enum uart_id id, struct cmd_object *cmd) = {NULL};
-
-int8_t uart_cmd_parse_callback_register(enum uart_id id, int8_t (*callback)(enum uart_id id, struct cmd_object *cmd))
-{
-    if (id >= BGM_UART_MAX)
-    {
-        LOG_E("invalid uart id: %d\r\n", id);
-        return -1;
-    }
-
-    uart_cmd_parse[id] = callback;
-
-    return 0;
-}
-
-static int8_t uart_cmd_parse_func(enum uart_id id, struct cmd_object *cmd)
-{
-    if (id >= BGM_UART_MAX)
-    {
-        LOG_E("invalid uart id: %d\r\n", id);
-        return -1;
-    }
-
-    if (uart_cmd_parse[id] != NULL)
-    {
-        return uart_cmd_parse[id](id, cmd);
-    }
-
-    return 0;
-}
-
-static int8_t uart_init(enum uart_id id)
-{
-    if (id >= BGM_UART_MAX)
-    {
-        LOG_E("invalid uart id: %d\r\n", id);
-        return -1;
-    }
-
-    int8_t ret = device_uart_init(id);
-    if (ret != 0)
-    {
-        LOG_E("uart[%d] init err: %d\r\n", id, ret);
-        return -2;
-    }
-
-    ret = device_uart_open(id);
-    if (ret != 0)
-    {
-        LOG_E("uart[%d] open err: %d\r\n", id, ret);
-        return -3;
-    }
-
-    return 0;
-}
-
-static int8_t uart_cmd_process(enum uart_id id, struct bgm_uart *buf)
-{
-    if (id >= BGM_UART_MAX)
-    {
-        LOG_E("invalid uart id: %d\r\n", id);
-        return -1;
-    }
-
-    if (buf == NULL)
-    {
-        LOG_E("buf is NULL\r\n");
-        return -2;
-    }
-
-#if 0
-    LOG_I("recv_buf len: %d\r\n", buf->len);
-    for (uint8_t i = 0; i < buf->len; i++)
-    {
-        LOG_I("%02x ", buf->buf[i]);
-    }
-    LOG_I("\r\n");
-#endif
-
-    struct cmd_object cmd = {0};
-
-    if (id == BGM_UART_EPS || id == BGM_UART_VPS)
-    {
-        cmd.id.byte = buf->buf[0];
-        cmd.type = buf->buf[1];
-        cmd.len = buf->len - 2;
-        cmd.data = &buf->buf[2];
-#if 0
-        for (uint8_t i = 0; i < cmd.len; i++)
-        {
-            LOG_I("%02x ", cmd.data[i]);
-        }
-        LOG_I("\r\n");
-#endif
-    }
-    else
-    {
-        memcpy(&cmd, buf->buf, sizeof(struct cmd_object));
-        cmd.data = &buf->buf[sizeof(struct cmd_object) - sizeof(uint8_t *)];
-    }
-
-    return uart_cmd_parse_func(id, &cmd);
-}
+#include "init_call.h"
 
 uint16_t modbus_crc16_cal(const uint8_t *data, uint16_t length)
 {
@@ -132,8 +30,9 @@ uint16_t modbus_crc16_cal(const uint8_t *data, uint16_t length)
     return (crc >> 8 | crc << 8);
 }
 
-osMessageQueueId_t uart_send_queue[BGM_UART_MAX] = {NULL};
-int8_t uart_cmd_write(enum uart_id id, struct cmd_object *cmd)
+static int8_t (*uart_cmd_parse[BGM_UART_MAX])(enum uart_id id, struct cmd_object *cmd) = {NULL};
+
+int8_t uart_cmd_parse_callback_register(enum uart_id id, int8_t (*callback)(enum uart_id id, struct cmd_object *cmd))
 {
     if (id >= BGM_UART_MAX)
     {
@@ -141,40 +40,11 @@ int8_t uart_cmd_write(enum uart_id id, struct cmd_object *cmd)
         return -1;
     }
 
-    osStatus_t stat = osOK;
-    struct bgm_uart send_buf = {0};
-
-    if (id == BGM_UART_EPS || id == BGM_UART_VPS)
-    {
-        send_buf.buf[0] = cmd->id.byte;
-        send_buf.buf[1] = cmd->type;
-
-        memcpy(&send_buf.buf[2], cmd->data, cmd->len);
-        uint16_t crc = modbus_crc16_cal(send_buf.buf, 2 + cmd->len);
-        send_buf.buf[2 + cmd->len] = crc >> 8;
-        send_buf.buf[3 + cmd->len] = crc & 0xFF;
-        send_buf.len = 2 + cmd->len + sizeof(uint16_t);
-    }
-    else
-    {
-        uint8_t offset = sizeof(struct cmd_object) - sizeof(uint8_t *);
-
-        memcpy(send_buf.buf, cmd, sizeof(struct cmd_object));
-        memcpy(&send_buf.buf[offset], cmd->data, cmd->len);
-        send_buf.len = offset + cmd->len;
-    }
-
-    stat = osMessageQueuePut(uart_send_queue[id], &send_buf, 0, 1000);
-    if (stat != osOK)
-    {
-        LOG_E("dose uart send queue put err: %d\r\n", stat);
-        return -2;
-    }
+    uart_cmd_parse[id] = callback;
 
     return 0;
 }
-
-int8_t uart_modbus_cmd_write(enum uart_id id, struct modbus_cmd_object *buf)
+static int8_t uart_cmd_parse_func(enum uart_id id, struct cmd_object *cmd)
 {
     if (id >= BGM_UART_MAX)
     {
@@ -182,13 +52,9 @@ int8_t uart_modbus_cmd_write(enum uart_id id, struct modbus_cmd_object *buf)
         return -1;
     }
 
-    int8_t ret = 0;
-
-    ret = uart_cmd_write(id, buf);
-    if (ret != 0)
+    if (uart_cmd_parse[id] != NULL)
     {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -2;
+        return uart_cmd_parse[id](id, cmd);
     }
 
     return 0;
@@ -207,7 +73,6 @@ int8_t uart_init_callback_register(enum uart_id id, int8_t (*callback)(void))
 
     return 0;
 }
-
 static int8_t uart_init_func(enum uart_id id)
 {
     if (id >= BGM_UART_MAX)
@@ -224,33 +89,280 @@ static int8_t uart_init_func(enum uart_id id)
     return 0;
 }
 
+static int8_t uart_cmd_process(enum uart_id id, struct cmd_object *obj)
+{
+    if (id >= BGM_UART_MAX)
+    {
+        LOG_E("invalid uart id: %d\r\n", id);
+        return -1;
+    }
+
+    if (obj == NULL)
+    {
+        LOG_E("[%d]: obj is NULL\r\n", id);
+        return -2;
+    }
+
+#if 1
+    LOG_I("[%d]: recv id: %d, type: %d, len: %d\r\n", id, obj->id.byte, obj->type, *obj->len);
+    for (uint8_t i = 0; i < *obj->len; i++)
+    {
+        LOG_I("%02x ", obj->data[i]);
+    }
+    LOG_I("\r\n");
+#endif
+
+    struct cmd_object cmd = {0};
+
+    if (id < UART_PROTOCOL_NUM)
+    {
+        cmd.id.byte = obj->data[1];
+        cmd.type = obj->data[2];
+        cmd.len = (uint16_t *)&obj->data[3];
+        cmd.data = obj->data + 5;
+    }
+    else if (id >= UART_PROTOCOL_NUM && id < BGM_UART_MAX)
+    {
+        *obj->len -= 2;
+        memcpy(&cmd, obj, sizeof(struct cmd_object));
+    }
+
+    return uart_cmd_parse_func(id, &cmd);
+}
+
+/* ***************************************************************************************************************************************** */
+
+
+enum uart_cmd_type
+{
+    UART_CMD_HEAERBEAT = 1,
+    UART_CMD_TIME_SYNC,
+    UART_CMD_PARA_SET,
+    UART_CMD_PARA_GET,
+    UART_CMD_DATA_SET,
+    UART_CMD_DATA_GET,
+    UART_CMD_PARA_SET_ACK = 0x80 | UART_CMD_PARA_SET,
+    UART_CMD_PARA_GET_ACK = 0x80 | UART_CMD_PARA_GET,
+    UART_CMD_DATA_SET_ACK = 0x80 | UART_CMD_DATA_SET,
+    UART_CMD_DATA_GET_ACK = 0x80 | UART_CMD_DATA_GET,
+    UART_CMD_SYSTEM_RESRT = 0xEB,
+};
+
+static osEventFlagsId_t uart_rx_event_id[UART_PROTOCOL_NUM] = {NULL};
+static osMessageQueueId_t uart_send_queue[BGM_UART_MAX] = {NULL};
+#define UART_RX_HEARTBEAT_TIMEOUT_EVENT (1 << 0)
+#define UART_RX_HEARTBEAT_CMD_EVENT     (1 << 1)
+#define UART_RX_REBOOT_CMD_EVENT        (1 << 2)
+static enum uart_id uart_protocol_id_get(struct uart_protocol *const self)
+{
+    uint8_t *name = self->uart_dev->name;
+
+    if (strcmp(name, UART_DEV_NAME_UART7) == 0)
+    {
+        return BGM_UART_AFC;
+    }
+    else if (strcmp(name, UART_DEV_NAME_UART5) == 0)
+    {
+        return BGM_UART_DOSE1;
+    }
+    else if (strcmp(name, UART_DEV_NAME_USART2) == 0)
+    {
+        return BGM_UART_DOSE2;
+    }
+
+    return BGM_UART_MAX;
+}
+static int8_t uart_recv_heartbeat_timeout_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    return osEventFlagsSet(uart_rx_event_id[uart_protocol_id_get(self)], UART_RX_HEARTBEAT_TIMEOUT_EVENT);
+}
+static int8_t uart_recv_heartbeat_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    return osEventFlagsSet(uart_rx_event_id[uart_protocol_id_get(self)], UART_RX_HEARTBEAT_CMD_EVENT);
+}
+static int8_t uart_recv_time_sync_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    return timestamp_ns_set(*(uint64_t *)data);
+}
+static int8_t uart_recv_set_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    struct cmd_object obj = {.id.byte = id, .type = UART_CMD_DATA_SET, .len = len, .data = data};
+    return uart_cmd_process(uart_protocol_id_get(self), &obj);
+}
+static int8_t uart_recv_get_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    struct cmd_object obj = {.id.byte = id, .type = UART_CMD_DATA_GET, .len = len, .data = data};
+    return uart_cmd_process(uart_protocol_id_get(self), &obj);
+}
+static int8_t uart_recv_reboot_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    return osEventFlagsSet(uart_rx_event_id[uart_protocol_id_get(self)], UART_RX_REBOOT_CMD_EVENT);
+}
+static int8_t uart_send_heartbeat_cmd_callback(struct uart_protocol *const self, uint8_t *data, uint16_t *len, void *arg)
+{
+    enum uart_id id = uart_protocol_id_get(self);
+
+    /* TODO：只对rtm发送心跳包 */
+
+    uint8_t *fw_ver = system_info_get()->fw_version;
+
+    *len = 5;
+    data[0] = 0xFF; /* TODO: board id + hardware version */
+    data[1] = 0x00; /* software version */
+    data[2] = strtoul(&fw_ver[0], NULL, 10);
+    data[3] = strtoul(&fw_ver[3], NULL, 10);
+    data[4] = strtoul(&fw_ver[6], NULL, 10);
+
+    return 0;
+}
+
 static int8_t uart_recv_entry(void *argument)
 {
     int8_t ret = 0;
-    struct bgm_uart recv_buf = {0};
-    enum uart_id uart_id = *(enum uart_id *)argument;
+    enum uart_id id = *(enum uart_id *)argument;
+    uint8_t buf[UART_FRAME_SIZE_MAX] = {0};
 
-    ret = uart_init(uart_id);
+    if (id < UART_PROTOCOL_NUM)
+    {
+        // ret = uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID, uart_recv_heartbeat_timeout_callback, NULL);
+        ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_HEARTBEAT_RX_CB_ID, uart_recv_heartbeat_cmd_callback,  NULL);
+        ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_PNT_RX_CB_ID, uart_recv_time_sync_cmd_callback, NULL);
+        ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_SET_RX_CB_ID, uart_recv_set_cmd_callback, NULL);
+        ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_GET_RX_CB_ID, uart_recv_get_cmd_callback, NULL);
+        ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_REBOOT_RX_CB_ID, uart_recv_reboot_cmd_callback, NULL);
+        // ret |= uart_protocol_tx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_HEARTBEAT_TX_CB_ID, uart_send_heartbeat_cmd_callback, NULL);
+        if (ret != 0)
+        {
+            LOG_E("[%d]: uart_protocol_rx_RegisterCallback err: %d\r\n", id, ret);
+            osThreadExit();
+        }
+    }
+
+    ret = uart_open(id);
     if (ret != 0)
     {
-        LOG_E("uart init err: %d\r\n", ret);
-        return -1;
+        LOG_E("[%d]: uart open err: %d\r\n", id, ret);
+        osThreadExit();
+    }
+
+    ret = uart_init_func(id);
+    if (ret != 0)
+    {
+        LOG_E("[%d]: init function err: %d\r\n", id, ret);
+        osThreadExit();
     }
 
     for (;;)
     {
-        ret = device_uart_data_read(uart_id, &recv_buf, osWaitForever);
+        ret = uart_data_recv_with_block(id, buf, sizeof(buf), osWaitForever);
         if (ret != 0)
         {
-            LOG_E("uart[%d] data read err: %d\r\n", uart_id, ret);
-            continue;
+            LOG_E("[%d]: uart data recv with block err: %d\r\n", id, ret);
         }
 
-        ret = uart_cmd_process(uart_id, &recv_buf);
-        if (ret!= 0)
+        if (id >= UART_PROTOCOL_NUM && id < BGM_UART_MAX)   /* modbus连接 */
         {
-            LOG_E("uart cmd process err: %d\r\n", ret);
+            struct cmd_object obj = {0};
+            obj.id.byte = buf[0];
+            obj.type = buf[1];
+            obj.len = (uint16_t *)&buf[UART_FRAME_SIZE_MAX - sizeof(uint16_t)];
+            obj.data = &buf[2];
+
+            ret = uart_cmd_process(id, &obj);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: uart cmd process err: %d\r\n", id, ret);
+            }
         }
+    }
+
+    return 0;
+}
+
+static int8_t link_status_entry(void *argument)
+{
+    int8_t ret = 0;
+    enum uart_id id = *(enum uart_id *)argument;
+    int32_t event_flags = 0;
+
+    for (;;)
+    {
+        event_flags = osEventFlagsWait(uart_rx_event_id[id], UART_RX_HEARTBEAT_TIMEOUT_EVENT | UART_RX_HEARTBEAT_CMD_EVENT | UART_RX_REBOOT_CMD_EVENT, osFlagsWaitAny, osWaitForever);
+        if (event_flags > 0)
+        {
+            if (event_flags & UART_RX_HEARTBEAT_TIMEOUT_EVENT)
+            {
+
+            }
+            else if (event_flags & UART_RX_HEARTBEAT_CMD_EVENT)
+            {
+   
+            }
+            else if (event_flags & UART_RX_REBOOT_CMD_EVENT)
+            {
+                HAL_NVIC_SystemReset();
+            }
+        }
+    }
+
+    return 0;
+}
+
+int8_t uart_cmd_write(enum uart_id id, struct cmd_object *cmd)
+{
+    if (id >= BGM_UART_MAX)
+    {
+        LOG_E("invalid uart id: %d\r\n", id);
+        return -1;
+    }
+
+    uint8_t buf[UART_FRAME_SIZE_MAX] = {0};
+
+    buf[0] = cmd->id.byte;
+    buf[1] = cmd->type;
+    buf[2] = *cmd->len & 0xFF;
+    buf[3] = *cmd->len >> 8;
+    memcpy(&buf[4], cmd->data, *cmd->len);
+
+    osStatus_t stat = osMessageQueuePut(uart_send_queue[id], buf, 0, 0);
+    if (stat != osOK)
+    {
+        LOG_E("[%d]: uart send queue put err: %d\r\n", id, stat);
+    }
+
+    return stat;
+}
+
+int8_t uart_modbus_cmd_write(enum uart_id id, struct modbus_cmd_object *obj)
+{
+    if (id >= BGM_UART_MAX)
+    {
+        LOG_E("invalid uart id: %d\r\n", id);
+        return -1;
+    }
+
+    int8_t ret = 0;
+    uint8_t buf[UART_FRAME_SIZE_MAX] = {0};
+
+    buf[0] = obj->addr;
+    buf[1] = obj->type;
+    memcpy(&buf[2], obj->data, obj->len);
+    uint16_t crc = modbus_crc16_cal(buf, 2 + obj->len);
+    buf[2 + obj->len] = crc >> 8;
+    buf[3 + obj->len] = crc & 0xFF;
+    uint16_t len = obj->len + 2;
+
+    struct cmd_object cmd = {0};
+    cmd.id.byte = obj->addr;
+    cmd.type = obj->type;
+    cmd.len = &len;
+    cmd.data = &buf[2];
+
+    ret = uart_cmd_write(id, &cmd);
+    if (ret != 0)
+    {
+        LOG_E("uart cmd write err: %d\r\n", ret);
+        return -2;
     }
 
     return 0;
@@ -259,317 +371,118 @@ static int8_t uart_recv_entry(void *argument)
 static int8_t uart_send_entry(void *argument)
 {
     int8_t ret = 0;
-    uint8_t send_retry_cnt = 0;
-    struct bgm_uart send_buf = {0}, recv_buf = {0};
-    enum uart_id uart_id = *(enum uart_id *)argument;
+    enum uart_id id = *(enum uart_id *)argument;
 
-    osDelay(1000);
-
-    ret = uart_init(uart_id);
-    if (ret != 0)
-    {
-        LOG_E("uart[%d] init err: %d\r\n", uart_id, ret);
-        return -1;
-    }
-
-    ret = uart_init_func(uart_id);
-    if (ret != 0)
-    {
-        LOG_E("uart[%d] init function err: %d\r\n", uart_id, ret);
-        return -2;
-    }
+    uint8_t buf[UART_FRAME_SIZE_MAX] = {0};
+    struct uart_data obj = {0};
 
     for (;;)
     {
-        osMessageQueueGet(uart_send_queue[uart_id], &send_buf, NULL, osWaitForever);
+        osMessageQueueGet(uart_send_queue[id], buf, NULL, osWaitForever);
+
+        /* NOTE:
+         * 1. 针对rtm连接，需要按照协议格式进行组包
+         * 2. 针对bgm内部连接，需要将所发送数据打包到data字段中
+         * 3. 针对modbus连接，需要将所发送数据打包到data字段中
+         */
+
+        if (id < UART_PROTOCOL_NUM)
+        {
+            obj.id = 0;
+            obj.cmd = 0;
+            obj.len = (buf[2] | buf[3] << 8) + 4;
+            obj.data = buf;
+        }
+        else if (id >= UART_PROTOCOL_NUM && id < BGM_UART_MAX)
+        {
+            obj.id = 0;
+            obj.cmd = 0;
+            obj.len = buf[2] | buf[3] << 8;
+            memcpy(&buf[2], &buf[4], obj.len);
+            obj.len += 2;
+            obj.data = buf;
+        }
+        else
+        {
+            /* TODO: rtm连接 */
+        }
 
 #if 0
-        LOG_I("[uart%d] send_buf len: %d -> ", uart_id, send_buf.len);
-        for (uint8_t i = 0; i < send_buf.len; i++)
+        LOG_I("current id: %d\r\n", id);
+        LOG_I("send id: %d, cmd: %d, len: %d\r\n", obj.id, obj.cmd, obj.len);
+        for (uint8_t i = 0; i < obj.len; i++)
         {
-            LOG_I("%02x ", send_buf.buf[i]);
+            LOG_I("%02x ", obj.data[i]);
         }
         LOG_I("\r\n");
 #endif
 
-send_data:
-        #define TIMEOUT_MS  1000
-        ret = device_uart_data_write(uart_id, &send_buf, send_buf.len, TIMEOUT_MS);
+        ret = uart_data_write(id, &obj, obj.len, 100);
         if (ret != 0)
         {
-            LOG_E("uart[%d] data write err: %d\r\n", uart_id, ret);
-        }
-
-        ret = device_uart_data_read(uart_id, &recv_buf, TIMEOUT_MS);
-        if (ret != 0)
-        {
-            send_retry_cnt++;
-            if (send_retry_cnt < 3)
-            {
-                LOG_I("uart[%d] data read err: %d, try cnt: %d\r\n", uart_id, ret, send_retry_cnt);
-                goto send_data;
-            }
-            else
-            {
-                LOG_E("uart[%d] data read err: %d, try cnt: %d\r\n", uart_id, ret, send_retry_cnt);
-                send_retry_cnt = 0;
-                continue;
-            }
-        }
-
-        ret = uart_cmd_process(uart_id, &recv_buf);
-        if (ret!= 0)
-        {
-            LOG_E("uart[%d] cmd process err: %d\r\n", uart_id, ret);
+            LOG_E("[%d]: uart data write err: %d\r\n", id, ret);
         }
     }
 
     return 0;
 }
 
-static int8_t bgm_uart_thread_init(void)
+static int8_t uart_thread_init(void)
 {
     static enum uart_id uart_id[BGM_UART_MAX] = {BGM_UART_AFC, BGM_UART_DOSE1, BGM_UART_DOSE2, BGM_UART_EPS, BGM_UART_VPS};
 
-    osThreadAttr_t thread_attr = {
-    .name = "bgm_uart_thread",
-    .stack_size = 1024 * 4,
-    .priority = osPriorityAboveNormal7,
+    osThreadId_t thread_id = NULL;
+    osThreadAttr_t attr = {
+        .name = "link_status_thread",
+        .stack_size = 256 * 4,
+        .priority = osPriorityNormal,
     };
 
-    // osThreadId_t thread_id = osThreadNew(bgm_uart_recv_entry, NULL, &thread_attr);
-    // if (thread_id == NULL)
-    // {
-    //     LOG_E("thread dose uart create failed\r\n");
-    //     return -1;
-    // }
-
-    // thread_id = osThreadNew(bgm_uart_recv_entry, NULL, &thread_attr);
-    // if (thread_id == NULL)
-    // {
-    //     LOG_E("thread dose uart create failed\r\n");
-    //     return -1;
-    // }
-
-    // thread_id = osThreadNew(bgm_uart_recv_entry, NULL, &thread_attr);
-    // if (thread_id == NULL)
-    // {
-    //     LOG_E("thread dose uart create failed\r\n");
-    //     return -1;
-    // }
-
-    osThreadId_t thread_id = NULL;
-
-    for (uint8_t i = BGM_UART_AFC; i < BGM_UART_MAX; i++)
+    for (uint8_t i = 0; i < UART_PROTOCOL_NUM; i++)
     {
-        uart_send_queue[i] = osMessageQueueNew(16, sizeof(struct bgm_uart), NULL);
-        if (uart_send_queue[i] == NULL)
+        uart_rx_event_id[i] = osEventFlagsNew(NULL);
+        if (uart_rx_event_id[i] == NULL)
         {
-            LOG_E("message queue create failed\r\n");
+            LOG_E("osEventFlagsNew err\r\n");
             return -1;
         }
 
-        thread_id = osThreadNew(uart_send_entry, &uart_id[i], &thread_attr);
+        thread_id = osThreadNew(link_status_entry, &uart_id[i], &attr);
         if (thread_id == NULL)
         {
-            LOG_E("thread uart send create failed\r\n");
+            LOG_E("thread link status create failed\r\n");
             return -2;
         }
     }
 
-    return 0;
-}
-INIT_APP_EXPORT(bgm_uart_thread_init);
-
-
-#ifdef BGM_UART_TEST
-#include "shell.h"
-
-static int8_t bgm_uart_cmd_send(uint8_t argc, char **argv)
-{
-    int8_t ret = 0;
-    struct cmd_object cmd = {0};
-    uint8_t data[10] = {0};
-
-    #define CMD_ID_AFC      0
-    #define CMD_ID_DOSE1    0
-    #define CMD_ID_DOSE2    0
-
-    cmd.id.bits.cmd_id = CMD_ID_AFC;
-    cmd.id.bits.cmd_ack = 1;
-    cmd.type = 0x40;
-    cmd.len = 10;
-    cmd.data = data;
-
-    for (uint8_t i = 0; i < cmd.len; i++)
+    for (uint8_t i = 0; i < BGM_UART_MAX; i++)
     {
-        cmd.data[i] = i;
-    }
+        attr.name = "uart_recv_thread";
+        attr.stack_size = 1024 * 4;
+        attr.priority = osPriorityAboveNormal;
+        thread_id = osThreadNew(uart_recv_entry, &uart_id[i], &attr);
+        if (thread_id == NULL)
+        {
+            LOG_E("thread uart recv create failed\r\n");
+            return -2;
+        }
 
-    ret = uart_cmd_write(BGM_UART_DOSE1, &cmd);
-    if (ret != 0)
-    {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -1;
+        uart_send_queue[i] = osMessageQueueNew(5, UART_FRAME_SIZE_MAX, NULL);
+        if (uart_send_queue[i] == NULL)
+        {
+            LOG_E("queue uart send create failed\r\n");
+            return -4;
+        }
+
+        attr.name = "uart_send_thread";
+        thread_id = osThreadNew(uart_send_entry, &uart_id[i], &attr);
+        if (thread_id == NULL)
+        {
+            LOG_E("thread uart tx create failed\r\n");
+            return -5;
+        }
     }
 
     return 0;
 }
-MSH_CMD_EXPORT_ALIAS(bgm_uart_cmd_send, bgm_uart_cmd_send, send bgm uart cmd);
-
-static int8_t bgm_uart_modbus_cmd_vps(uint8_t argc, char **argv)
-{
-    int8_t ret = 0;
-    struct cmd_object cmd = {0};
-    uint8_t data[10] = {0x01, 0xF4, 0x00, 0x01};
-
-    cmd.id.byte = DEVICE_ADDRESS_VPS;
-    cmd.type = READ_HOLDING_REGISTERS;
-    cmd.len = 4;
-    cmd.data = data;
-
-    ret = uart_cmd_write(BGM_UART_VPS, &cmd);
-    if (ret != 0)
-    {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -1;
-    }
-
-    /* 1. set 205 is remote */
-    cmd.type = WRITE_SINGLE_REGISTER;
-    cmd.len = 4;
-    cmd.data = data;
-    data[0] = 0x00;
-    data[1] = 0xCC;
-    data[2] = 0x00;
-    data[3] = 0x01;
-
-    ret = uart_cmd_write(BGM_UART_VPS, &cmd);
-    if (ret != 0)
-    {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -1;
-    }
-
-    /* 2. set 203 is remote */
-    cmd.type = WRITE_SINGLE_REGISTER;
-    cmd.len = 4;
-    cmd.data = data;
-    data[0] = 0x00;
-    data[1] = 0xCA;
-    data[2] = 0x00;
-    data[3] = 0x01;
-
-    ret = uart_cmd_write(BGM_UART_VPS, &cmd);
-    if (ret != 0)
-    {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -1;
-    }
-
-    /* 3. set 207 is remote voltage */
-    // cmd.type = WRITE_SINGLE_REGISTER;
-    // cmd.len = 4;
-    // cmd.data = data;
-    // data[0] = 0x00;
-    // data[1] = 0xCE;
-    // data[2] = 0x0F;
-    // data[3] = 0xA0;
-
-    // ret = uart_cmd_write(BGM_UART_VPS, &cmd);
-    // if (ret != 0)
-    // {
-    //     LOG_E("uart cmd write err: %d\r\n", ret);
-    //     return -1;
-    // }
-
-    /* 4. set 202 is remote start */
-    cmd.type = WRITE_SINGLE_REGISTER;
-    cmd.len = 4;
-    cmd.data = data;
-    data[0] = 0x00;
-    data[1] = 0xC9;
-    data[2] = 0x00;
-    data[3] = 0x01;
-
-    ret = uart_cmd_write(BGM_UART_VPS, &cmd);
-    if (ret != 0)
-    {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -1;
-    }
-
-    return 0;
-}
-MSH_CMD_EXPORT_ALIAS(bgm_uart_modbus_cmd_vps, bgm_uart_modbus_cmd_vps, vps bgm uart modbus cmd);
-
-static int8_t bgm_uart_modbus_cmd_eps(uint8_t argc, char **argv)
-{
-    int8_t ret = 0;
-    struct cmd_object cmd = {0};
-    uint8_t data[10] = {0x01, 0x2C, 0x00, 0x01};
-
-    cmd.id.byte = DEVICE_ADDRESS_EPS;
-    cmd.type = READ_HOLDING_REGISTERS;
-    cmd.len = 4;
-    cmd.data = data;
-
-    ret = uart_cmd_write(BGM_UART_EPS, &cmd);
-    if (ret != 0)
-    {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -1;
-    }
-
-    /* 1. read 001: status */
-    cmd.type = READ_HOLDING_REGISTERS;
-    cmd.len = 4;
-    cmd.data = data;
-    data[0] = 0x00;
-    data[1] = 0x00;
-    data[2] = 0x00;
-    data[3] = 0x01;
-
-    ret = uart_cmd_write(BGM_UART_EPS, &cmd);
-    if (ret != 0)
-    {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -1;
-    }
-
-    /* 2. read 002: voltage */
-    cmd.type = READ_HOLDING_REGISTERS;
-    cmd.len = 4;
-    cmd.data = data;
-    data[0] = 0x00;
-    data[1] = 0x01;
-    data[2] = 0x00;
-    data[3] = 0x01;
-
-    ret = uart_cmd_write(BGM_UART_EPS, &cmd);
-    if (ret != 0)
-    {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -1;
-    }
-
-    /* 3. read 003: current */
-    cmd.type = READ_HOLDING_REGISTERS;
-    cmd.len = 4;
-    cmd.data = data;
-    data[0] = 0x00;
-    data[1] = 0x02;
-    data[2] = 0x00;
-    data[3] = 0x01;
-
-    ret = uart_cmd_write(BGM_UART_EPS, &cmd);
-    if (ret != 0)
-    {
-        LOG_E("uart cmd write err: %d\r\n", ret);
-        return -1;
-    }
-
-    return 0;
-}
-MSH_CMD_EXPORT_ALIAS(bgm_uart_modbus_cmd_eps, bgm_uart_modbus_cmd_eps, eps bgm uart modbus cmd);
-#endif
+INIT_APP_EXPORT(uart_thread_init);

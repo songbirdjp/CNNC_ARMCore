@@ -1,7 +1,6 @@
 #ifndef __BGM_UART_H__
 #define __BGM_UART_H__
 
-#include <stdint.h>
 #include "bgm_uart_port.h"
 
 #ifdef __cplusplus
@@ -23,7 +22,7 @@ struct cmd_object
     }id;    /* device rs422 id */
 
     uint8_t type;   /* cmd type */
-    uint16_t len;   /* data length */
+    uint16_t *len;   /* data length */
     uint8_t *data;  /* data pointer */
 };
 
@@ -50,7 +49,7 @@ struct modbus_cmd_object
 };
 
 uint16_t modbus_crc16_cal(const uint8_t *data, uint16_t length);
-int8_t uart_modbus_cmd_write(enum uart_id id, struct modbus_cmd_object *buf);
+int8_t uart_modbus_cmd_write(enum uart_id id, struct modbus_cmd_object *obj);
 
 #ifdef __cplusplus
 }

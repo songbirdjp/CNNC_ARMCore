@@ -706,22 +706,29 @@ static int8_t dose_rate_calculate(void *argument)
     int8_t ret = 0;
 
     static float dose1_meter_pre = 0, dose2_meter_pre = 0;
+    float dose1_meter_cur = 0, dose2_meter_cur = 0;
+    float dose1_rate = 0, dose2_rate = 0;
 
-    float dose1_meter_cur = dose_meter_value_get(BGM_UART_DOSE1);
-    float dose2_meter_cur = dose_meter_value_get(BGM_UART_DOSE2);
-
-    float dose1_rate = (dose1_meter_cur - dose1_meter_pre) * 2 * 60;  /* calculate period is 500ms */
-    float dose2_rate = (dose2_meter_cur - dose2_meter_pre) * 2 * 60;
-
-    ret = dose_rate_value_set(BGM_UART_DOSE1, &dose1_rate);
-    ret |= dose_rate_value_set(BGM_UART_DOSE2, &dose2_rate);
-    if (ret != 0)
+    for (;;)
     {
-        LOG_E("dose rate set err: %d\r\n", ret);
-    }
+        osDelay(500);
 
-    dose1_meter_pre = dose1_meter_cur;
-    dose2_meter_pre = dose2_meter_cur;
+        dose1_meter_cur = dose_meter_value_get(BGM_UART_DOSE1);
+        dose2_meter_cur = dose_meter_value_get(BGM_UART_DOSE2);
+    
+        dose1_rate = (dose1_meter_cur - dose1_meter_pre) * 2 * 60;  /* calculate period is 500ms */
+        dose2_rate = (dose2_meter_cur - dose2_meter_pre) * 2 * 60;
+    
+        ret = dose_rate_value_set(BGM_UART_DOSE1, &dose1_rate);
+        ret |= dose_rate_value_set(BGM_UART_DOSE2, &dose2_rate);
+        if (ret != 0)
+        {
+            LOG_E("dose rate set err: %d\r\n", ret);
+        }
+    
+        dose1_meter_pre = dose1_meter_cur;
+        dose2_meter_pre = dose2_meter_cur;
+    }
 
     return 0;
 }
@@ -773,18 +780,17 @@ static int8_t fsm_thread_init(void)
         return -4;
     }
 
-    osTimerId_t timer_id = osTimerNew(dose_rate_calculate, osTimerPeriodic, NULL, NULL);
-    if (timer_id == NULL)
-    {
-        printf("timer create failed\r\n");
-        return -5;
-    }
+    osThreadAttr_t dose_rate_calculate_attributes = {
+    .name = "dose_rate_calculate_thread",
+    .stack_size = 256 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
+    };
 
-    osStatus_t stat = osTimerStart(timer_id, 500);
-    if (stat != osOK)
+    osThreadId_t dose_rate_calculateHandle = osThreadNew(dose_rate_calculate, NULL, &dose_rate_calculate_attributes);
+    if (dose_rate_calculateHandle == NULL)
     {
-        printf("timer start failed\r\n");
-        return -6;
+        printf("thread dose rate calculate create failed\r\n");
+        return -5;
     }
 
     return 0;

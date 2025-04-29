@@ -187,8 +187,8 @@ static int8_t dose_handshake_frame_parse(enum uart_id id, struct cmd_object *cmd
 
     osMutexRelease(obj->mutex);
 
-    // LOG_I("[%d] hw version: %d\r\n", id, obj->status.hw_version);
-    // LOG_I("[%d] sw version: %s\r\n", id, obj->status.sw_version);
+    // LOG_I("[%d]: hw version: %d\r\n", id, obj->status.hw_version);
+    // LOG_I("[%d]: sw version: %s\r\n", id, obj->status.sw_version);
 
     return ret;
 }
@@ -207,11 +207,11 @@ static int8_t dose_calibration_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            cmd->data[2] == 0 ? LOG_I("[%d] dose calibration data lock opened\r\n", id) : LOG_I("[%d] dose calibration data lock closed\r\n", id);
+            cmd->data[2] == 0 ? LOG_I("[%d]: dose calibration data lock opened\r\n", id) : LOG_I("[%d]: dose calibration data lock closed\r\n", id);
             obj->calibration.status.bits.lock = cmd->data[2];
             break;
         case 0x01:
-            cmd->data[2] == 0 ? LOG_I("[%d] dose calibration data invalid\r\n", id) : LOG_I("[%d] dose calibration data valid\r\n", id);
+            cmd->data[2] == 0 ? LOG_I("[%d]: dose calibration data invalid\r\n", id) : LOG_I("[%d]: dose calibration data valid\r\n", id);
             obj->calibration.status.bits.valid = cmd->data[2];
             break;
         default:
@@ -227,7 +227,7 @@ static int8_t dose_calibration_parse(enum uart_id id, struct cmd_object *cmd)
         case 0x02:
         case 0x03:
         case 0x04:
-            LOG_I("[%d] dose adc factor set (1MU == %d code)\r\n", id, cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("[%d]: dose adc factor set (1MU == %d code)\r\n", id, cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
             obj->calibration.adc_factor[cmd->data[1]] = cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
             break;
         default:
@@ -236,15 +236,15 @@ static int8_t dose_calibration_parse(enum uart_id id, struct cmd_object *cmd)
         }
         break;
     case 0x03:
-        LOG_I("[%d] dose dac factor set : %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
+        LOG_I("[%d]: dose dac factor set : %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
         obj->calibration.dac_factor = cmd->data[3] << 8 | cmd->data[2];
         break;
     case 0x04:
-        LOG_I("[%d] dose trigger interval set: %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
+        LOG_I("[%d]: dose trigger interval set: %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
         obj->calibration.trig_interval_min = cmd->data[3] << 8 | cmd->data[2];
         break;
     default:
-        LOG_E("[%d] invalid calibration cmd type: %x\r\n", id, cmd->data[0]);
+        LOG_E("[%d]: invalid calibration cmd type: %x\r\n", id, cmd->data[0]);
         ret = -1;
         break;
     }
@@ -264,19 +264,19 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
     switch (cmd->data[0])
     {
     case 0x40:
-        cmd->data[2] == 0 ? LOG_I("[%d] dose dummy mode set\r\n", id) : LOG_I("[%d] dose normal mode set\r\n", id);
+        cmd->data[2] == 0 ? LOG_I("[%d]: dose dummy mode set\r\n", id) : LOG_I("[%d]: dose normal mode set\r\n", id);
         obj->treatment.dose_mode = cmd->data[2];
         break;
     case 0x41:
         switch (cmd->data[1])
         {
         case 0x00:
-            LOG_I("[%d] pulse generation mode set %d\r\n", id, cmd->data[2]);
+            LOG_I("[%d]: pulse generation mode set %d\r\n", id, cmd->data[2]);
             obj->treatment.pulse_mode = cmd->data[2];
             break;
             break;
         case 0x01:
-            LOG_I("[%d] dose prf set %u ok\r\n", id, cmd->data[2]);
+            LOG_I("[%d]: dose prf set %u ok\r\n", id, cmd->data[2]);
             obj->treatment.prf_hz = cmd->data[2];
             break;
         default:
@@ -291,7 +291,7 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
             obj->treatment.ri_src = cmd->data[2];
             break;
         case 0x01:
-            LOG_I("[%d] dose meter set %d ok\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("[%d]: dose meter set %d ok\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
             break;
         case 0x02:
         case 0x03:
@@ -307,11 +307,11 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            cmd->data[2] == 0 ? LOG_I("[%d] beam data lock opened\r\n", id) : LOG_I("[%d] beam data lock closed\r\n", id);
+            cmd->data[2] == 0 ? LOG_I("[%d]: beam data lock opened\r\n", id) : LOG_I("[%d]: beam data lock closed\r\n", id);
             obj->treatment.status.bits.lock = cmd->data[2];
             break;
         case 0x01:
-            cmd->data[2] == 0 ? LOG_I("[%d] beam data valid\r\n", id) : LOG_I("[%d] beam data invalid\r\n", id);
+            cmd->data[2] == 0 ? LOG_I("[%d]: beam data valid\r\n", id) : LOG_I("[%d]: beam data invalid\r\n", id);
             obj->treatment.status.bits.check = cmd->data[2];
             break;
         default:
@@ -320,7 +320,7 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
         }
         break;
     default:
-        LOG_E("[%d] invalid treatment cmd type: %x\r\n", id, cmd->data[0]);
+        LOG_E("[%d]: invalid treatment cmd type: %x\r\n", id, cmd->data[0]);
         ret = -1;
         break;
     }
@@ -392,23 +392,23 @@ static int8_t dose_interlock_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            LOG_I("[%d] ionization chamber voltage get: %d\r\n", id, (cmd->data[3] << 8 | cmd->data[2]) / 100);
+            LOG_I("[%d]: ionization chamber voltage get: %d\r\n", id, (cmd->data[3] << 8 | cmd->data[2]) / 100);
             obj->status.voltage_ionization_chamber = (float)(cmd->data[3] << 8 | cmd->data[2]) / 100.0f;
             break;
         case 0x01:
-            LOG_I("[%d] P5V voltage get: %d\r\n", id, (cmd->data[3] << 8 | cmd->data[2]) / 100);
+            LOG_I("[%d]: P5V voltage get: %d\r\n", id, (cmd->data[3] << 8 | cmd->data[2]) / 100);
             obj->status.voltage_p5v = (float)(cmd->data[3] << 8 | cmd->data[2]) / 100.0f;
             break;
         case 0x02:
-            LOG_I("[%d] N5V voltage get: %d\r\n", id, (cmd->data[3] << 8 | cmd->data[2]) / 100);
+            LOG_I("[%d]: N5V voltage get: %d\r\n", id, (cmd->data[3] << 8 | cmd->data[2]) / 100);
             obj->status.voltage_n5v = (float)(cmd->data[3] << 8 | cmd->data[2]) / 100.0f;
             break;
         case 0x03:
-            LOG_I("[%d] dac1 channelA offset code get: %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("[%d]: dac1 channelA offset code get: %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
             obj->status.dac_ch1_offset = cmd->data[3] << 8 | cmd->data[2];
             break;
         case 0x04:
-            LOG_I("[%d] dac1 channelB offset code get: %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("[%d]: dac1 channelB offset code get: %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
             obj->status.dac_ch2_offset = cmd->data[3] << 8 | cmd->data[2];
             break;
         default:
@@ -417,13 +417,13 @@ static int8_t dose_interlock_parse(enum uart_id id, struct cmd_object *cmd)
         }
         break;
     case 0xB0:
-        // LOG_I("[%d] dose interlock get %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
+        // LOG_I("[%d]: dose interlock get %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
         obj->status.interlock.bytes = cmd->data[3] << 8 | cmd->data[2];
         break;
     case 0xB1:
         break;
     default:
-        LOG_E("[%d] invalid interlock cmd type: %x\r\n", id, cmd->data[0]);
+        LOG_E("[%d]: invalid interlock cmd type: %x\r\n", id, cmd->data[0]);
         ret = -1;
         break;
     }
@@ -444,10 +444,10 @@ static int8_t dose_state_control_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:  /* dose state switch result */
-            cmd->data[2] == 0 ? LOG_I("[%d] dose state switch success\r\n", id) : LOG_I("[%d] dose state switch fail\r\n", id);
+            cmd->data[2] == 0 ? LOG_I("[%d]: dose state switch success\r\n", id) : LOG_I("[%d]: dose state switch fail\r\n", id);
             break;
         case 0x01:  /* dose current state */
-            // LOG_I("[%d] dose current state: %d\r\n", id, cmd->data[2]);
+            // LOG_I("[%d]: dose current state: %d\r\n", id, cmd->data[2]);
             osMutexAcquire(obj->mutex, osWaitForever);
             obj->fsm_state = cmd->data[2];
             osMutexRelease(obj->mutex);
@@ -461,19 +461,19 @@ static int8_t dose_state_control_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            LOG_I("[%d] pulse abnormal cleanup ok\r\n", id);
+            LOG_I("[%d]: pulse abnormal cleanup ok\r\n", id);
             break;
         case 0x01:
-            LOG_I("[%d] beam data cleanup ok\r\n", id);
+            LOG_I("[%d]: beam data cleanup ok\r\n", id);
             break;
         case 0x02:
-            LOG_I("[%d] dose cumulative data cleanup ok\r\n", id);
+            LOG_I("[%d]: dose cumulative data cleanup ok\r\n", id);
             break;
         case 0x03:
-            LOG_I("[%d] interlock cleanup ok\r\n", id);
+            LOG_I("[%d]: interlock cleanup ok\r\n", id);
             break;
         case 0x04:
-            LOG_I("[%d] one pulse valid flag cleanup ok\r\n", id);
+            LOG_I("[%d]: one pulse valid flag cleanup ok\r\n", id);
             break;
         default:
             ret = -1;
@@ -484,10 +484,10 @@ static int8_t dose_state_control_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            LOG_I("[%d] dose reset wdt ok\r\n", id);
+            LOG_I("[%d]: dose reset wdt ok\r\n", id);
             break;
         case 0x01:
-            LOG_I("[%d] dose reset ok\r\n", id);
+            LOG_I("[%d]: dose reset ok\r\n", id);
             break;
         default:
             ret = -1;
@@ -495,7 +495,7 @@ static int8_t dose_state_control_parse(enum uart_id id, struct cmd_object *cmd)
         }
         break;
     default:
-        LOG_E("[%d] invalid state control cmd type: %x\r\n", id, cmd->data[0]);
+        LOG_E("[%d]: invalid state control cmd type: %x\r\n", id, cmd->data[0]);
         ret = -1;
         break;
     }
@@ -534,7 +534,7 @@ static int8_t dose_command_frame_parse(enum uart_id id, struct cmd_object *cmd)
         ret = dose_state_control_parse(id, cmd);
         break;    
     default:
-        LOG_E("[%d] invalid cmd type: %x\r\n", id, cmd->data[0]);
+        LOG_E("[%d]: invalid cmd type: %x\r\n", id, cmd->data[0]);
         ret = -1;
         break;
     }
@@ -555,24 +555,24 @@ static int8_t dose_realtime_frame_parse(enum uart_id id, struct cmd_object *cmd)
     case 0x00:
         if (cmd->data[3] == 0x01)
         {
-            LOG_I("[%d] set emergency stop\r\n", id);
+            LOG_I("[%d]: set emergency stop\r\n", id);
         }
         else
         {
-            LOG_I("[%d] set radiation index: %d\r\n", id, cmd->data[2] << 8 | cmd->data[1]);
+            LOG_I("[%d]: set radiation index: %d\r\n", id, cmd->data[2] << 8 | cmd->data[1]);
         }
         break;
     case 0x01:
 #if 0
-        LOG_I("[%d] dose state: %#.2x\r\n", id, cmd->data[1]);
-        LOG_I("[%d] dose interlock: %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
-        LOG_I("[%d] dose current cp: %d\r\n", id, cmd->data[4]);
-        LOG_I("[%d] dose current radiation index: %d\r\n", id, cmd->data[6] << 8 | cmd->data[5]);
-        LOG_I("[%d] dose current cumulative: %d (0.1MU)\r\n", id, cmd->data[8] << 8 | cmd->data[7]);
-        LOG_I("[%d] dose current prf: %d\r\n", id, cmd->data[9]);
-        LOG_I("[%d] dose abnormal pulse count: %d\r\n", id, cmd->data[11] << 8 | cmd->data[10]);
-        LOG_I("[%d] dose one pulse valid flag: %d\r\n", id, cmd->data[12]);
-        LOG_I("[%d] dose one pulse code: %d\r\n", id, cmd->data[14] << 8 | cmd->data[13]);
+        LOG_I("[%d]: dose state: %#.2x\r\n", id, cmd->data[1]);
+        LOG_I("[%d]: dose interlock: %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
+        LOG_I("[%d]: dose current cp: %d\r\n", id, cmd->data[4]);
+        LOG_I("[%d]: dose current radiation index: %d\r\n", id, cmd->data[6] << 8 | cmd->data[5]);
+        LOG_I("[%d]: dose current cumulative: %d (0.1MU)\r\n", id, cmd->data[8] << 8 | cmd->data[7]);
+        LOG_I("[%d]: dose current prf: %d\r\n", id, cmd->data[9]);
+        LOG_I("[%d]: dose abnormal pulse count: %d\r\n", id, cmd->data[11] << 8 | cmd->data[10]);
+        LOG_I("[%d]: dose one pulse valid flag: %d\r\n", id, cmd->data[12]);
+        LOG_I("[%d]: dose one pulse code: %d\r\n", id, cmd->data[14] << 8 | cmd->data[13]);
 #endif
         obj->realtime.state.byte = cmd->data[1];
         obj->status.interlock.bytes = cmd->data[3] << 8 | cmd->data[2];
@@ -585,7 +585,7 @@ static int8_t dose_realtime_frame_parse(enum uart_id id, struct cmd_object *cmd)
         obj->realtime.one_pulse_dose = cmd->data[14] << 8 | cmd->data[13];
         break;
     default:
-        LOG_E("[%d] invalid realtime cmd type: %x\r\n", id, cmd->data[0]);
+        LOG_E("[%d]: invalid realtime cmd type: %x\r\n", id, cmd->data[0]);
         ret = -1;
         break;
     }
@@ -599,14 +599,14 @@ static int8_t dose_cmd_parse(enum uart_id id, struct cmd_object *cmd)
 {
     if (cmd == NULL)
     {
-        LOG_E("[%d] cmd is NULL\r\n", id);
+        LOG_E("[%d]: cmd is NULL\r\n", id);
         return -1;
     }
 
     /* 1. check cmd id */
     if (cmd->id.bits.cmd_id != BGM_UART_ID)
     {
-        LOG_E("[%d] BGM_UART_ID Wrong!\r\n", id);
+        LOG_E("[%d]: cmd id err: %d\r\n", id, cmd->id.bits.cmd_id);
         return 0;
     }
 
@@ -619,7 +619,7 @@ static int8_t dose_cmd_parse(enum uart_id id, struct cmd_object *cmd)
         ret = dose_handshake_frame_parse(id, cmd);
         if (ret != 0)
         {
-            LOG_E("[%d] bgm_uart_handshake_parse err: %d\r\n", id, ret);
+            LOG_E("[%d]: bgm_uart_handshake_parse err: %d\r\n", id, ret);
             return -2;
         }
         break;
@@ -627,7 +627,7 @@ static int8_t dose_cmd_parse(enum uart_id id, struct cmd_object *cmd)
         ret = dose_command_frame_parse(id, cmd);
         if (ret != 0)
         {
-            LOG_E("[%d] dose_command_frame_parse err: %d\r\n", id, ret);
+            LOG_E("[%d]: dose_command_frame_parse err: %d\r\n", id, ret);
             return -2;
         }
         break;
@@ -635,12 +635,12 @@ static int8_t dose_cmd_parse(enum uart_id id, struct cmd_object *cmd)
         ret = dose_realtime_frame_parse(id, cmd);
         if (ret != 0)
         {
-            LOG_E("[%d] bgm_uart_realtime_parse err: %d\r\n", id, ret);
+            LOG_E("[%d]: bgm_uart_realtime_parse err: %d\r\n", id, ret);
             return -2;
         }
         break;
     default:
-        LOG_E("[%d] invalid cmd type: %x\r\n", id, cmd->type);
+        LOG_E("[%d]: invalid cmd type: %x\r\n", id, cmd->type);
         return -2;
         break;
     }
@@ -665,7 +665,7 @@ static int8_t dose_functions_init(void)
         obj->mutex = osMutexNew(&mutex_attributes);
         if (obj->mutex == NULL)
         {
-            LOG_E("[%d] dose mutex create failed\r\n", i);
+            LOG_E("[%d]: dose mutex create failed\r\n", i);
             return -1;
         }
     }
@@ -745,7 +745,7 @@ float dose_data_info_get(enum uart_id id, enum dose_info_index index, void *data
         value = obj->status.interlock.bytes;
         break;
     default:
-        LOG_E("[%d] invalid dose info index: %d\r\n", id, index);
+        LOG_E("[%d]: invalid dose info index: %d\r\n", id, index);
         break;
     }
     osMutexRelease(obj->mutex);
@@ -761,7 +761,7 @@ static int8_t dose_cmd_write(enum uart_id id, uint8_t type, void *data, uint16_t
     cmd.id.bits.cmd_id = 0;
     cmd.id.bits.cmd_ack = 1;
     cmd.type = type;
-    cmd.len = len;
+    cmd.len = &len;
     cmd.data = data;
 
 #if 0
@@ -791,19 +791,19 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
 
     if (index >= DOSE_INFO_MAX)
     {
-        LOG_E("[%d] invalid dose index: %d\r\n", id, index);
+        LOG_E("[%d]: invalid dose index: %d\r\n", id, index);
         return -2;
     }
 
     // if (data == NULL)
     // {
-    //     LOG_E("[%d] data is NULL\r\n", id);
+    //     LOG_E("[%d]: data is NULL\r\n", id);
     //     return -3;
     // }
 
     // if (len == 0)
     // {
-    //     LOG_E("[%d] len is 0\r\n", id);
+    //     LOG_E("[%d]: len is 0\r\n", id);
     //     return -4;
     // }
 
@@ -883,7 +883,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = beam_meter;
         buf[offset++] = beam_meter >> 8;
         ret = dose_cmd_write(id, 0x02, buf, offset);
-        LOG_I("[%d] beam meter set: %d\r\n", id, beam_meter);
+        LOG_I("[%d]: beam meter set: %d\r\n", id, beam_meter);
         /* 3. beam cp & ri num */
         offset = 0;
         buf[offset++] = 0x42;
@@ -892,7 +892,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = beam_info->info->RIQuantityInBeam;          /* ri num low */
         buf[offset++] = beam_info->info->RIQuantityInBeam >> 8;     /* ri num high */
         ret = dose_cmd_write(id, 0x02, buf, offset);
-        LOG_I("[%d] beam cp num: %d, ri num: %d\r\n", id, beam_info->info->CPQuantityInBeam, beam_info->info->RIQuantityInBeam);
+        LOG_I("[%d]: beam cp num: %d, ri num: %d\r\n", id, beam_info->info->CPQuantityInBeam, beam_info->info->RIQuantityInBeam);
         /* 4. beam cp & ri map */
         offset = 0;
         buf[offset++] = 0x42;

@@ -1,17 +1,27 @@
 #ifndef __BGM_UART_PORT_H__
 #define __BGM_UART_PORT_H__
 
-#include <stdint.h>
+#include "uart_protocol.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define BGM_UART_MAX_LENGTH      128
-struct bgm_uart
+#define UART_PROTOCOL_NUM      3
+#define UART_FRAME_SIZE_MAX    128
+
+enum uart_protocol_id
 {
-    uint8_t buf[BGM_UART_MAX_LENGTH];
-    uint16_t len;
+    UART_PROTOCOL_AFC = 0,
+    UART_PROTOCOL_DOSE1,
+    UART_PROTOCOL_DOSE2,
+    UART_PROTOCOL_MAX,
+};
+enum uart_dev_id
+{
+    UART_DEV_EPS = 0,
+    UART_DEV_VPS,
+    UART_DEV_MAX,
 };
 
 enum uart_id
@@ -24,10 +34,19 @@ enum uart_id
     BGM_UART_MAX
 };
 
-int8_t device_uart_init(enum uart_id id);
-int8_t device_uart_open(enum uart_id id);
-int8_t device_uart_data_read(enum uart_id id, struct bgm_uart *buf, uint32_t timeout);
-int8_t device_uart_data_write(enum uart_id id, struct bgm_uart *buf, uint16_t size, uint32_t timeout);
+struct uart_data
+{
+    uint32_t id;
+    uint8_t cmd;
+    uint16_t len;
+    uint8_t *data;
+};
+
+uart_protocol_t *uart_protocal_get(enum uart_protocol_id id);
+int8_t uart_open(enum uart_id id);
+int8_t uart_data_recv_with_block(enum uart_id id, uint8_t *buf, uint16_t size, uint32_t timeout);
+int8_t uart_data_write(enum uart_id id, struct uart_data *cmd, uint16_t size, uint32_t timeout);
+int8_t uart_data_read(enum uart_id id, struct uart_data *cmd, uint32_t timeout);
 
 #ifdef __cplusplus
 }

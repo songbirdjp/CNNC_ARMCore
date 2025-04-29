@@ -8,10 +8,7 @@
 extern "C" {
 #endif
 
-#define CONSOLE_NAME_DEFAULT        "uart1"
-
-
-int8_t device_console_init(uint8_t *device_name);
+int8_t device_console_init(void);
 
 
 #define USING_COM1_FOR_YMODEM

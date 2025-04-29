@@ -25,10 +25,10 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     uint8_t buf[128] = {0};
     buf[0] = cmd->id.byte;
     buf[1] = cmd->type;
-    memcpy(&buf[2], cmd->data, cmd->len);
+    memcpy(&buf[2], cmd->data, *cmd->len);
 
-    uint16_t crc = buf[cmd->len] << 8 | buf[cmd->len + 1];
-    uint16_t crc_cal = modbus_crc16_cal(buf, cmd->len);
+    uint16_t crc = buf[*cmd->len] << 8 | buf[*cmd->len + 1];
+    uint16_t crc_cal = modbus_crc16_cal(buf, *cmd->len);
     if (crc_cal != crc)
     {
         LOG_E("[%d] crc err: %x, %x \r\n", id, crc_cal, crc);
