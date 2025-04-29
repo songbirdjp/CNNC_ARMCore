@@ -10,6 +10,7 @@
 #include "interlock_app.h"
 #include "radiation_app.h"
 #include "ulog.h"
+#include "timestamp.h"
 
 static struct control_para control_data = 
 {
@@ -51,22 +52,21 @@ int8_t radiation_index_update_callback(int8_t (*cb)(void))
 osMessageQueueId_t dose_uart_send_queue = NULL;
 static int8_t dose_uart_cmd_write(struct dose_object *cmd)
 {
-    osStatus_t stat = osOK;
-    struct dose_uart send_buf = {0};
-    uint8_t offset = sizeof(struct dose_object) - sizeof(uint8_t *);
+    uint8_t buf[DOSE_UART_FRAME_SIZE_MAX] = {0};
 
-    memcpy(send_buf.buf, cmd, sizeof(struct dose_object));
-    memcpy(&send_buf.buf[offset], cmd->data, cmd->len);
-    send_buf.len = offset + cmd->len;
+    buf[0] = cmd->id.byte;
+    buf[1] = cmd->type;
+    buf[2] = *cmd->len & 0xff;
+    buf[3] = *cmd->len >> 8;
+    memcpy(&buf[4], cmd->data, *cmd->len);
 
-    stat = osMessageQueuePut(dose_uart_send_queue, &send_buf, 0, 0);
+    osStatus_t stat = osMessageQueuePut(dose_uart_send_queue, buf, 0, 0);
     if (stat != osOK)
     {
         LOG_E("dose uart send queue put err: %d\r\n", stat);
-        return -1;
     }
 
-    return 0;
+    return stat;
 }
 
 static int8_t dose_handshake_frame_parse(struct dose_object *cmd)
@@ -80,7 +80,7 @@ static int8_t dose_handshake_frame_parse(struct dose_object *cmd)
     osMutexRelease(obj->mutex);
 
 #if 1
-    LOG_I("bgm arm core handshake frame parse: %d\r\n", cmd->len);
+    LOG_I("bgm arm core handshake frame parse: %d\r\n", *cmd->len);
     LOG_I("hardware version: %#.2x\r\n", cmd->data[0]);
     LOG_I("software version: %u.%u.%u\r\n", cmd->data[1], cmd->data[2], cmd->data[3]);
     LOG_I("dose id: %u\r\n", cmd->data[4]);
@@ -88,7 +88,7 @@ static int8_t dose_handshake_frame_parse(struct dose_object *cmd)
 
     uint8_t *fw_ver = system_info_get()->fw_version;
 
-    cmd->len = 5;
+    *cmd->len = 5;
     cmd->data[0] = 0x01;    /* 0: dose1     1: dose2 */
     cmd->data[1] = 0x00;    /* hardware version */
     cmd->data[2] = strtoul(&fw_ver[0], NULL, 10);  /* software version */
@@ -255,13 +255,13 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
         {
         case 0x00:
             obj->treatment.status.bits.lock = (cmd->data[2] == 0) ? 0 : 1;
-            cmd->len = 3;
+            *cmd->len = 3;
             break;
         case 0x01:
             obj->treatment.status.bits.check = 1;
             obj->treatment.status.bits.lock = 1;
             cmd->data[2] = obj->treatment.status.bits.check ^ obj->treatment.status.bits.lock;
-            cmd->len = 3;
+            *cmd->len = 3;
             break;
         default:
             ret = -1;
@@ -325,17 +325,17 @@ static int8_t dose_interlock_parse(struct dose_object *cmd)
         case 0x00:
             cmd->data[2] = obj->interlock.one_pulse.count_high;
             cmd->data[3] = obj->interlock.one_pulse.count_high >> 8;
-            cmd->len = 4;
+            *cmd->len = 4;
             break;
         case 0x01:
             cmd->data[2] = obj->interlock.one_pulse.count_low;
             cmd->data[3] = obj->interlock.one_pulse.count_low >> 8;
-            cmd->len = 4;
+            *cmd->len = 4;
             break;
         case 0x02:
             cmd->data[2] = obj->interlock.one_pulse.count_abnormal;
             cmd->data[3] = obj->interlock.one_pulse.count_abnormal >> 8;
-            cmd->len = 4;
+            *cmd->len = 4;
             break;
         default:
             ret = -1;
@@ -349,31 +349,31 @@ static int8_t dose_interlock_parse(struct dose_object *cmd)
             value = mcu_adc_value_get(MCU_ADC_CHANNEL_N500V) / 10;
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
-            cmd->len = 4;
+            *cmd->len = 4;
             break;
         case 0x01:
             value = mcu_adc_value_get(MCU_ADC_CHANNEL_P5V) / 10;
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
-            cmd->len = 4;
+            *cmd->len = 4;
             break;
         case 0x02:
             value = mcu_adc_value_get(MCU_ADC_CHANNEL_N5V) / 10;
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
-            cmd->len = 4;
+            *cmd->len = 4;
             break;
         case 0x03:
             value = ltc2632_data_value_get(LTC2632_CHANNEL_OUTA);
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
-            cmd->len = 4;
+            *cmd->len = 4;
             break;
         case 0x04:
             value = ltc2632_data_value_get(LTC2632_CHANNEL_OUTB);
             cmd->data[2] = value;
             cmd->data[3] = value >> 8;
-            cmd->len = 4;
+            *cmd->len = 4;
             break;
         default:
             ret = -1;
@@ -384,7 +384,7 @@ static int8_t dose_interlock_parse(struct dose_object *cmd)
         value = interlock_status_get();
         cmd->data[2] = value;
         cmd->data[3] = value >> 8;
-        cmd->len = 4;
+        *cmd->len = 4;
         break;
     case 0xB1:
         switch (cmd->data[1])
@@ -595,11 +595,11 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
                 LOG_E("fsm state switch err: %d\r\n", ret);
                 break;
             }
-            cmd->len = 3;
+            *cmd->len = 3;
             break;
         case 0x01:
             cmd->data[2] = fsm_state_get();
-            cmd->len = 3;
+            *cmd->len = 3;
             break;
         default:
             break;
@@ -829,7 +829,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
 
             osMutexRelease(data->mutex);
 
-            cmd->len = 15;
+            *cmd->len = 15;
         }
         break;
     default:
@@ -841,27 +841,44 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
     return ret;
 }
 
-static int8_t dose_cmd_parse(struct dose_object *cmd)
+static int8_t dose_cmd_parse(struct dose_object *obj)
 {
-    if (cmd == NULL)
+    if (obj == NULL)
     {
         LOG_E("cmd is NULL\r\n");
         return -1;
     }
 
-    /* 1. check cmd id */
-    if (cmd->id.bits.cmd_id != DOSE_UART_ID)
+    /* 0. get valid data in object */
+    struct dose_object cmd = {0};
+
+    cmd.id.byte = obj->data[1];
+    cmd.type = obj->data[2];
+    cmd.len = (uint16_t *)&obj->data[3];
+    cmd.data = obj->data + 5;
+    
+#if 0
+    for (uint8_t i = 0; i < *(cmd.len); i++)
     {
+        LOG_I("%02x ", cmd.data[i]);
+    }
+    LOG_I("\r\n");
+#endif
+
+    /* 1. check cmd id */
+    if (cmd.id.bits.cmd_id != DOSE_UART_ID)
+    {
+        LOG_E("cmd id err: %d\r\n", cmd.id.bits.cmd_id);
         return 0;
     }
 
     int8_t ret = 0;
 
     /* 2. parse cmd type */
-    switch (cmd->type)
+    switch (cmd.type)
     {
     case 0x01:  /* handshake frame */
-        ret = dose_handshake_frame_parse(cmd);
+        ret = dose_handshake_frame_parse(&cmd);
         if (ret != 0)
         {
             LOG_E("dose_handshake_frame_parse err: %d\r\n", ret);
@@ -869,7 +886,7 @@ static int8_t dose_cmd_parse(struct dose_object *cmd)
         }
         break;
     case 0x02:  /* command frame */
-        ret = dose_command_frame_parse(cmd);
+        ret = dose_command_frame_parse(&cmd);
         if (ret != 0)
         {
             LOG_E("dose_command_frame_parse err: %d\r\n", ret);
@@ -877,7 +894,7 @@ static int8_t dose_cmd_parse(struct dose_object *cmd)
         }
         break;
     case 0x03:  /* realtime frame */
-        ret = dose_realtime_frame_parse(cmd);
+        ret = dose_realtime_frame_parse(&cmd);
         if (ret != 0)
         {
             LOG_E("dose_realtime_frame_parse err: %d\r\n", ret);
@@ -885,95 +902,103 @@ static int8_t dose_cmd_parse(struct dose_object *cmd)
         }
         break;
     default:
-        LOG_E("invalid cmd type: %d\r\n", cmd->type);
+        LOG_E("invalid cmd type: %d\r\n", cmd.type);
         return -2;
         break;
     }
 
-    if (cmd->id.bits.cmd_ack != 0)  /* need ack */
+    *obj->len = *cmd.len + 5;
+
+    if (cmd.id.bits.cmd_ack != 0)  /* need ack */
     {
-        cmd->id.bits.cmd_ack = 0;
+        obj->data[1] &= ~(1 << 7);
 
-        cmd->type |= 0x80;
+        obj->data[2] |= 0x80;
 
-        ret = dose_uart_cmd_write(cmd);
-        if (ret != 0)
-        {
-            LOG_E("dose uart cmd write err: %d\r\n", ret);
-        }
+        // ret = dose_uart_cmd_write(cmd);
+        // if (ret != 0)
+        // {
+        //     LOG_E("dose uart cmd write err: %d\r\n", ret);
+        // }
     }
 
     return ret;
 }
 
-
-
-static int8_t dose_uart_send_entry(void *argument)
+static int8_t dose_uart_cmd_process(struct dose_object *obj)
 {
-    int8_t ret = 0;
-    struct dose_uart send_buf = {0};
-
-    for (;;)
-    {
-        osMessageQueueGet(dose_uart_send_queue, &send_buf, NULL, osWaitForever);
-
-#if 0
-        LOG_I("send_buf len: %d\r\n", send_buf.len);
-        for (uint8_t i = 0; i < send_buf.len; i++)
-        {
-            LOG_I("%02x ", send_buf.buf[i]);
-        }
-        LOG_I("\r\n");
-#endif
-
-        ret = device_dose_uart_data_write(&send_buf, send_buf.len, 1000);
-        if (ret != 0)
-        {
-            LOG_E("device_dose_uart_data_write err: %d\r\n", ret);
-        }
-    }
-
-    return 0;
-}
-
-static int8_t dose_uart_cmd_process(struct dose_uart *buf)
-{
-    if (buf == NULL)
+    if (obj == NULL)
     {
         return -1;
     }
 
-#if 0
-    LOG_I("recv_buf len: %d\r\n", buf->len);
-    for (uint8_t i = 0; i < buf->len; i++)
+#if 1
+    LOG_I("recv len: %d\r\n", *obj->len);
+    for (uint8_t i = 0; i < *obj->len; i++)
     {
-        LOG_I("%02x ", buf->buf[i]);
+        LOG_I("%02x ", obj->data[i]);
     }
     LOG_I("\r\n");
 #endif
 
-    struct dose_object cmd = {0};
-    memcpy(&cmd, buf->buf, sizeof(struct dose_object));
-    cmd.data = &buf->buf[sizeof(struct dose_object) - sizeof(uint8_t *)];
-
-    return dose_cmd_parse(&cmd);
+    return dose_cmd_parse(obj);
 }
 
-static int8_t dose_uart_init(void)
+enum uart_cmd_type
 {
-    int8_t ret = device_dose_uart_init(DEVICE_DOSE_UART_NAME_DEFAULT);
-    if (ret != 0)
-    {
-        LOG_E("device_dose_uart_init err: %d\r\n", ret);
-        return -1;
-    }
+    UART_CMD_HEAERBEAT = 1,
+    UART_CMD_TIME_SYNC,
+    UART_CMD_PARA_SET,
+    UART_CMD_PARA_GET,
+    UART_CMD_DATA_SET,
+    UART_CMD_DATA_GET,
+    UART_CMD_PARA_SET_ACK = 0x80 | UART_CMD_PARA_SET,
+    UART_CMD_PARA_GET_ACK = 0x80 | UART_CMD_PARA_GET,
+    UART_CMD_DATA_SET_ACK = 0x80 | UART_CMD_DATA_SET,
+    UART_CMD_DATA_GET_ACK = 0x80 | UART_CMD_DATA_GET,
+    UART_CMD_SYSTEM_RESRT = 0xEB,
+};
 
-    ret = device_dose_uart_open();
-    if (ret != 0)
-    {
-        LOG_E("device_dose_uart_open err: %d\r\n", ret);
-        return -2;
-    }
+static osEventFlagsId_t uart_rx_event_id = NULL;
+#define UART_RX_HEARTBEAT_TIMEOUT_EVENT (1 << 0)
+#define UART_RX_HEARTBEAT_CMD_EVENT     (1 << 1)
+#define UART_RX_REBOOT_CMD_EVENT        (1 << 2)
+static int8_t uart_recv_heartbeat_timeout_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    return osEventFlagsSet(uart_rx_event_id, UART_RX_HEARTBEAT_TIMEOUT_EVENT);
+}
+static int8_t uart_recv_heartbeat_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    return osEventFlagsSet(uart_rx_event_id, UART_RX_HEARTBEAT_CMD_EVENT);
+}
+static int8_t uart_recv_time_sync_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    return timestamp_ns_set(*(uint64_t *)data);
+}
+static int8_t uart_recv_set_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    struct dose_object obj = {.id.byte = id, .type = UART_CMD_DATA_SET, .len = len, .data = data};
+    return dose_uart_cmd_process(&obj);
+}
+static int8_t uart_recv_get_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    struct dose_object obj = {.id.byte = id, .type = UART_CMD_DATA_GET, .len = len, .data = data};
+    return dose_uart_cmd_process(&obj);
+}
+static int8_t uart_recv_reboot_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
+{
+    return osEventFlagsSet(uart_rx_event_id, UART_RX_REBOOT_CMD_EVENT);
+}
+static int8_t uart_send_heartbeat_cmd_callback(struct uart_protocol *const self, uint8_t *data, uint16_t *len, void *arg)
+{
+    uint8_t *fw_ver = system_info_get()->fw_version;
+
+    *len = 5;
+    data[0] = 0xFF; /* TODO: board id + hardware version */
+    data[1] = 0x00; /* software version */
+    data[2] = strtoul(&fw_ver[0], NULL, 10);
+    data[3] = strtoul(&fw_ver[3], NULL, 10);
+    data[4] = strtoul(&fw_ver[6], NULL, 10);
 
     return 0;
 }
@@ -981,28 +1006,97 @@ static int8_t dose_uart_init(void)
 static int8_t dose_uart_recv_entry(void *argument)
 {
     int8_t ret = 0;
-    struct dose_uart recv_buf = {0};
+    uint8_t buf[DOSE_UART_FRAME_SIZE_MAX] = {0};
 
-    ret = dose_uart_init();
+    // ret = uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID, uart_recv_heartbeat_timeout_callback, NULL);
+    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_RX_CB_ID, uart_recv_heartbeat_cmd_callback,  NULL);
+    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_PNT_RX_CB_ID, uart_recv_time_sync_cmd_callback, NULL);
+    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_SET_RX_CB_ID, uart_recv_set_cmd_callback, NULL);
+    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_GET_RX_CB_ID, uart_recv_get_cmd_callback, NULL);
+    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_REBOOT_RX_CB_ID, uart_recv_reboot_cmd_callback, NULL);
+    // ret |= uart_protocol_tx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_TX_CB_ID, uart_send_heartbeat_cmd_callback, NULL);
     if (ret != 0)
     {
-        LOG_E("dose_uart_init err: %d\r\n", ret);
-        return -1;
+        LOG_E("uart_protocol_rx_RegisterCallback err: %d\r\n", ret);
+        osThreadExit();
+    }
+
+    ret = device_dose_uart_open();
+    if (ret != 0)
+    {
+        LOG_E("device dos uart open err: %d\r\n", ret);
+        osThreadExit();
     }
 
     for (;;)
     {
-        ret = device_dose_uart_data_read(&recv_buf, osWaitForever);
+        ret = device_dose_uart_data_recv_with_block(buf, sizeof(buf), osWaitForever);
         if (ret != 0)
         {
-            LOG_E("device_dose_uart_data_read err: %d\r\n", ret);
+            LOG_E("device dose uart data recv with block err: %d\r\n", ret);
             continue;
         }
+    }
 
-        ret = dose_uart_cmd_process(&recv_buf);
-        if (ret!= 0)
+    return 0;
+}
+
+static int8_t link_status_entry(void *argument)
+{
+    int8_t ret = 0;
+    int32_t event_flags = 0;
+
+    for (;;)
+    {
+        event_flags = osEventFlagsWait(uart_rx_event_id, UART_RX_HEARTBEAT_TIMEOUT_EVENT | UART_RX_HEARTBEAT_CMD_EVENT | UART_RX_REBOOT_CMD_EVENT, osFlagsWaitAny, osWaitForever);
+        if (event_flags > 0)
         {
-            LOG_E("dose_uart_cmd_process err: %d\r\n", ret);
+            if (event_flags & UART_RX_HEARTBEAT_TIMEOUT_EVENT)
+            {
+
+            }
+            else if (event_flags & UART_RX_HEARTBEAT_CMD_EVENT)
+            {
+   
+            }
+            else if (event_flags & UART_RX_REBOOT_CMD_EVENT)
+            {
+                HAL_NVIC_SystemReset();
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int8_t dose_uart_send_entry(void *argument)
+{
+    int8_t ret = 0;
+    uint8_t buf[DOSE_UART_FRAME_SIZE_MAX] = {0};
+    struct uart_data obj = {0};
+
+    for (;;)
+    {
+        osMessageQueueGet(dose_uart_send_queue, buf, NULL, osWaitForever);
+
+        obj.id = 0;
+        obj.cmd = 0;
+        obj.len = (buf[2] | buf[3] << 8) + 4;
+        obj.data = buf;
+
+#if 1
+        LOG_I("send id: %d, cmd: %d, len: %d\r\n", obj.id, obj.cmd, obj.len);
+        for (uint8_t i = 0; i < obj.len; i++)
+        {
+            LOG_I("%02x ", obj.data[i]);
+        }
+        LOG_I("\r\n");
+#endif
+
+        ret = device_dose_uart_data_write(&obj, 100);
+        if (ret != 0)
+        {
+            LOG_E("device dose uart data write err: %d\r\n", ret);
         }
     }
 
@@ -1011,37 +1105,47 @@ static int8_t dose_uart_recv_entry(void *argument)
 
 static int8_t dose_uart_thread_init(void)
 {
-    osThreadAttr_t thread_recv_attr = {
+    uart_rx_event_id = osEventFlagsNew(NULL);
+    if (uart_rx_event_id == NULL)
+    {
+        LOG_E("osEventFlagsNew err\r\n");
+        return -1;
+    }
+
+    osThreadAttr_t attr = {
     .name = "dose_uart_recv_thread",
     .stack_size = 1024 * 4,
     .priority = osPriorityAboveNormal,
     };
 
-    osThreadId_t thread_id = osThreadNew(dose_uart_recv_entry, NULL, &thread_recv_attr);
+    osThreadId_t thread_id = osThreadNew(dose_uart_recv_entry, NULL, &attr);
     if (thread_id == NULL)
     {
         LOG_E("thread dose uart create failed\r\n");
-        return -1;
-    }
-
-    dose_uart_send_queue = osMessageQueueNew(5, sizeof(struct dose_uart), NULL);
-    if (dose_uart_send_queue == NULL)
-    {
-        LOG_E("message queue create failed\r\n");
         return -2;
     }
 
-    osThreadAttr_t thread_send_attr = {
-    .name = "dose_uart_send_thread",
-    .stack_size = 1024 * 4,
-    .priority = osPriorityAboveNormal,
-    };
-
-    thread_id = osThreadNew(dose_uart_send_entry, NULL, &thread_send_attr);
+    attr.name = "link_status_thread";
+    thread_id = osThreadNew(link_status_entry, NULL, &attr);
     if (thread_id == NULL)
     {
-        LOG_E("thread dose uart create failed\r\n");
+        LOG_E("thread link status create failed\r\n");
         return -3;
+    }
+
+    dose_uart_send_queue = osMessageQueueNew(5, DOSE_UART_FRAME_SIZE_MAX, NULL);
+    if (dose_uart_send_queue == NULL)
+    {
+        LOG_E("queue dose uart send create failed\r\n");
+        return -4;
+    }
+
+    attr.name = "dose_uart_send_thread";
+    thread_id = osThreadNew(dose_uart_send_entry, NULL, &attr);
+    if (thread_id == NULL)
+    {
+        LOG_E("thread dose uart send create failed\r\n");
+        return -5;
     }
 
     osMutexAttr_t mutex_attributes = {
@@ -1052,7 +1156,7 @@ static int8_t dose_uart_thread_init(void)
     if (control_data_get()->mutex == NULL)
     {
         LOG_E("mutex create failed\r\n");
-        return -4;
+        return -6;
     }
 
     return 0;
@@ -1060,7 +1164,7 @@ static int8_t dose_uart_thread_init(void)
 INIT_APP_EXPORT(dose_uart_thread_init);
 
 
-#ifdef dose_uart_TEST
+#ifndef DOSE_UART_TEST
 #include "shell.h"
 
 static int8_t dose_uart_cmd_send(uint8_t argc, char **argv)
@@ -1072,10 +1176,10 @@ static int8_t dose_uart_cmd_send(uint8_t argc, char **argv)
     cmd.id.bits.cmd_id = DOSE_UART_ID;
     cmd.id.bits.cmd_ack = 1;
     cmd.type = 0x40;
-    cmd.len = 10;
+    *cmd.len = 10;
     cmd.data = data;
 
-    for (uint8_t i = 0; i < cmd.len; i++)
+    for (uint8_t i = 0; i < *cmd.len; i++)
     {
         cmd.data[i] = i;
     }

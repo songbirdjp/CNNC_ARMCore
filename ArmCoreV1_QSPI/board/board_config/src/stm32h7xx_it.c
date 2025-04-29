@@ -336,16 +336,16 @@ void EXTI9_5_IRQHandler(void)
 /**
   * @brief This function handles USART1 global interrupt.
   */
-// void USART1_IRQHandler(void)
-// {
-//   /* USER CODE BEGIN USART1_IRQn 0 */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
 
-//   /* USER CODE END USART1_IRQn 0 */
-//   HAL_UART_IRQHandler(&huart1);
-//   /* USER CODE BEGIN USART1_IRQn 1 */
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
 
-//   /* USER CODE END USART1_IRQn 1 */
-// }
+  /* USER CODE END USART1_IRQn 1 */
+}
 
 /**
   * @brief This function handles DMA1 stream7 global interrupt.
@@ -378,16 +378,16 @@ void TIM5_IRQHandler(void)
 /**
   * @brief This function handles UART5 global interrupt.
   */
-// void UART5_IRQHandler(void)
-// {
-//   /* USER CODE BEGIN UART5_IRQn 0 */
+void UART5_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART5_IRQn 0 */
 
-//   /* USER CODE END UART5_IRQn 0 */
-//   HAL_UART_IRQHandler(&huart5);
-//   /* USER CODE BEGIN UART5_IRQn 1 */
+  /* USER CODE END UART5_IRQn 0 */
+  HAL_UART_IRQHandler(&huart5);
+  /* USER CODE BEGIN UART5_IRQn 1 */
 
-//   /* USER CODE END UART5_IRQn 1 */
-// }
+  /* USER CODE END UART5_IRQn 1 */
+}
 
 /**
   * @brief This function handles TIM6 global interrupt, DAC1_CH1 and DAC1_CH2 underrun error interrupts.

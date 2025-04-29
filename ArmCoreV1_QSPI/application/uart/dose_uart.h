@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 #define DOSE_UART_ID    0
+#define DOSE_UART_FRAME_SIZE_MAX    128
 
 struct dose_object
 {
@@ -23,7 +24,7 @@ struct dose_object
     }id;    /* device rs422 id */
 
     uint8_t type;   /* cmd type */
-    uint16_t len;   /* data length */
+    uint16_t *len;   /* data length */
     uint8_t *data;  /* data pointer */
 };
 

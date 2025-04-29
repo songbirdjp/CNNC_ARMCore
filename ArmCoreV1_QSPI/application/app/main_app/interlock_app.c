@@ -208,9 +208,15 @@ static int8_t interlock_status_update(void)
     return 0;
 }
 
-static int8_t timer_callback(void *argument)
+static int8_t interlock_detect_entry(void *argument)
 {
-    return interlock_status_update();
+    for (;;)
+    {
+        interlock_status_update();
+        osDelay(100);
+    }
+
+    return 0;
 }
 
 static int8_t interlock_app_init(void)
@@ -226,18 +232,16 @@ static int8_t interlock_app_init(void)
         return -1;
     }
 
-    osTimerId_t timer_id = osTimerNew(timer_callback, osTimerPeriodic, NULL, NULL);
-    if (timer_id == NULL)
+    osThreadAttr_t thread_attr = {
+        .name = "interlock_detect_thread",
+        .stack_size = 1024 * 4,
+        .priority = osPriorityNormal,
+    };
+    osThreadId_t thread_id = osThreadNew(interlock_detect_entry, NULL, &thread_attr);
+    if (thread_id == NULL)
     {
-        LOG_E("timer create failed\r\n");
+        LOG_E("thread create failed\r\n");
         return -2;
-    }
-
-    osStatus_t stat = osTimerStart(timer_id, 100);  /* start timer with 100ms interval */
-    if (stat != osOK)
-    {
-        LOG_E("timer start err: %d\r\n", stat);
-        return -3;
     }
 
     return 0;
