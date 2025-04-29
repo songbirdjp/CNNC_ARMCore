@@ -67,6 +67,16 @@ static int32_t uart_send_func(uint8_t *data, uint16_t data_len, uint32_t timeout
     {
         return -1;
     }
+
+#if 0
+    LOG_I("send: ");
+    for (int i = 0; i < data_len; i++)
+    {
+        LOG_I("%02x ", data[i]);
+    }
+    LOG_I("\r\n");
+#endif
+
     return 0;
 }
 static int32_t uart_recv_func(uint8_t *data, uint16_t data_len, uint32_t timeout, void *arg)
@@ -363,7 +373,7 @@ int32_t uart_protocol_recv(uart_protocol_t *const self,
         ret = uart_protocol_send(self, (uint8_t *)&send_data, send_data.length + sizeof(uart_protocol_payload_t) - UART_PROTOCOL_DATA_MAX_LENGTH, 100);
         if (ret < 0)
         {
-            return -11;
+            return -9;
         }
     }
     break;
@@ -403,12 +413,24 @@ int32_t uart_protocol_recv(uart_protocol_t *const self,
         }
         break;
     case 0x85: /*数据set应答*/
+        if (self->uart_protocol_rx_callback[UART_PROTOCOL_SET_RX_CB_ID].pCallback != NULL)
+        {
+            ret = self->uart_protocol_rx_callback[UART_PROTOCOL_SET_RX_CB_ID].pCallback(self,
+                                                                                        payload->id_ack >> 1,
+                                                                                        payload->data,
+                                                                                        &payload->length,
+                                                                                        self->uart_protocol_rx_callback[UART_PROTOCOL_SET_RX_CB_ID].arg);
+            if (ret != 0)
+            {
+                return -13;
+            }
+        }
         break;
     case 0x86: /*数据get应答*/
         osStatus = osMessageQueuePut(self->get_rx_response_queue, payload->data + 1, 0, 100);
         if (osStatus != osOK)
         {
-            return -13;
+            return -14;
         }
         break;
     case 0xeb: /* 复位帧 */
@@ -421,12 +443,12 @@ int32_t uart_protocol_recv(uart_protocol_t *const self,
                                                                                            self->uart_protocol_rx_callback[UART_PROTOCOL_REBOOT_RX_CB_ID].arg);
             if (ret != 0)
             {
-                return -14;
+                return -15;
             }
         }
         break;
     default:
-        ret = -15;
+        ret = -16;
         LOG_E("invalid frame type: %d\r\n", payload->type);
         break;
     }
@@ -511,6 +533,7 @@ int32_t uart_protocol_config_get(uart_protocol_t *const self,
                                  uint32_t *len,
                                  uint32_t timeout)
 {
+    return 0;
 }
 int32_t uart_protocol_set(uart_protocol_t *const self,
                           uint32_t ID,

@@ -346,6 +346,16 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
 	*data_len = recv_len - FRAME_EXTRA_LEN;
     memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
 
+#if 0
+#include "ulog.h"
+    LOG_I("recv: ");
+    for (int i = 0; i < recv_len; i++)
+    {
+        LOG_I("%02X ", self->rx_buffer[i]);
+    }
+    LOG_I("\r\n");
+#endif
+
     if (self->rx_buffer[FRAME_DATA_OFFSET + 4] & 0x80) // receive a response frame
     {
         if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)

@@ -107,6 +107,8 @@ extern "C"
         device_err_t (*read)(uart_dev_t *const self, void *const buffer, uint32_t size, uint32_t timeout);
         device_err_t (*write)(uart_dev_t *const self, void const *const buffer, uint32_t size, uint32_t timeout);
         device_err_t (*ioctl)(uart_dev_t *const self, uint8_t cmd, void *const arg);
+        device_err_t (*write_before)(uart_dev_t *const self);
+        device_err_t (*write_complete)(uart_dev_t *const self);
     } device_uart_ops_t;
     int32_t device_uart_register(uart_dev_t *const self,
                                  const char *name,

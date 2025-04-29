@@ -932,7 +932,7 @@ static int8_t dose_uart_cmd_process(struct dose_object *obj)
         return -1;
     }
 
-#if 1
+#if 0
     LOG_I("recv len: %d\r\n", *obj->len);
     for (uint8_t i = 0; i < *obj->len; i++)
     {
