@@ -145,7 +145,7 @@ static int8_t eps_link_menu_init(void)
     cmd.len = offset;
     cmd.data = data;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -167,7 +167,7 @@ static int8_t eps_link_menu_value_read(void)
     cmd.len = 4;
     cmd.data = data;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -180,7 +180,7 @@ static int8_t eps_link_menu_value_read(void)
     cmd.len = 4;
     cmd.data = data;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -191,7 +191,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0x00;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -202,7 +202,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0x01;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -213,7 +213,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0x02;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -224,7 +224,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0x03;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -235,7 +235,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xC8;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -246,7 +246,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xC9;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -257,7 +257,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xCA;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -268,7 +268,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xCF;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -279,7 +279,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xD0;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -290,7 +290,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xCB;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -301,7 +301,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xCC;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -312,7 +312,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xCD;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -323,7 +323,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xCE;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -334,7 +334,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x00;
     data[1] = 0xD5;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -345,7 +345,7 @@ static int8_t eps_link_menu_value_read(void)
     data[0] = 0x01;
     data[1] = 0x4B;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -368,7 +368,7 @@ static int8_t eps_init(void)
     cmd.len = 4;
     cmd.data = data;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -381,7 +381,7 @@ static int8_t eps_init(void)
     data[2] = 0x00;
     data[3] = 0x01;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -394,7 +394,7 @@ static int8_t eps_init(void)
     data[2] = 0x00;
     data[3] = 0x01;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -407,7 +407,7 @@ static int8_t eps_init(void)
     data[2] = 0x00;
     data[3] = 0x01;
 
-    ret = uart_modbus_cmd_write(BGM_UART_EPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -429,14 +429,14 @@ static int8_t eps_functions_init(void)
 {
     int8_t ret = 0;
 
-    ret = uart_cmd_parse_callback_register(BGM_UART_EPS, eps_cmd_parse);
+    ret = uart_cmd_parse_callback_register(BGM_UART_EPS_VPS, eps_cmd_parse);
     if (ret != 0)
     {
         LOG_E("eps cmd parse callback register err: %d\r\n", ret);
         return -1;
     }
 
-    ret = uart_init_callback_register(BGM_UART_EPS, eps_init);
+    ret = uart_init_callback_register(BGM_UART_EPS_VPS, eps_init);
     if (ret != 0)
     {
         LOG_E("eps init callback register err: %d\r\n", ret);

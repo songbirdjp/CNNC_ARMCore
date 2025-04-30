@@ -4,7 +4,7 @@
 #include "ulog.h"
 #include "init_call.h"
 
-#define DEVICE_ADDRESS_VPS  0x01
+#define DEVICE_ADDRESS_VPS  0x02
 
 static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
 {
@@ -95,7 +95,7 @@ static int8_t vps_link_menu_init(void)
     data[2] = 0x00;
     data[3] = 0x01;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -163,7 +163,7 @@ static int8_t vps_link_menu_init(void)
     cmd.len = offset;
     cmd.data = data;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -179,7 +179,7 @@ static int8_t vps_link_menu_init(void)
     data[2] = 0x00;
     data[3] = 0x00;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -201,7 +201,7 @@ static int8_t vps_link_menu_value_read(void)
     cmd.len = 4;
     cmd.data = data;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -215,7 +215,7 @@ static int8_t vps_link_menu_value_read(void)
    cmd.len = 4;
    cmd.data = data;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -226,7 +226,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x00;
    data[1] = 0x64;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -237,7 +237,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x00;
    data[1] = 0x68;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -248,7 +248,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x00;
    data[1] = 0x65;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -259,7 +259,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x00;
    data[1] = 0x66;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -270,7 +270,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x00;
    data[1] = 0x67;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -281,7 +281,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0x90;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -292,7 +292,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0x91;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -303,7 +303,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0x93;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -314,7 +314,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0x94;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -325,7 +325,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0x95;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -336,7 +336,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0x96;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -347,7 +347,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0x97;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -358,7 +358,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0x98;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -369,7 +369,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0xA9;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -380,7 +380,7 @@ static int8_t vps_link_menu_value_read(void)
    data[0] = 0x01;
    data[1] = 0xAB;
 
-   ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
    if (ret != 0)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -404,7 +404,7 @@ static int8_t vps_init(void)
     cmd.len = 4;
     cmd.data = data;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -420,7 +420,7 @@ static int8_t vps_init(void)
     data[2] = 0x00;
     data[3] = 0x01;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -433,7 +433,7 @@ static int8_t vps_init(void)
     data[2] = 0x00;
     data[3] = 0x01;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -446,7 +446,7 @@ static int8_t vps_init(void)
     // data[2] = 0x0F;
     // data[3] = 0xA0;
 
-    // ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    // ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     // if (ret != 0)
     // {
     //     LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -459,7 +459,7 @@ static int8_t vps_init(void)
     data[2] = 0x00;
     data[3] = 0x01;
 
-    ret = uart_modbus_cmd_write(BGM_UART_VPS, &cmd);
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
     if (ret != 0)
     {
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
@@ -481,14 +481,14 @@ static int8_t vps_functions_init(void)
 {
     int8_t ret = 0;
 
-    ret = uart_cmd_parse_callback_register(BGM_UART_VPS, vps_cmd_parse);
+    ret = uart_cmd_parse_callback_register(BGM_UART_EPS_VPS + 1, vps_cmd_parse);
     if (ret != 0)
     {
         LOG_E("vps cmd parse callback register err: %d\r\n", ret);
         return -1;
     }
 
-    ret = uart_init_callback_register(BGM_UART_VPS, vps_init);
+    ret = uart_init_callback_register(BGM_UART_EPS_VPS + 1, vps_init);
     if (ret != 0)
     {
         LOG_E("vps init callback register err: %d\r\n", ret);

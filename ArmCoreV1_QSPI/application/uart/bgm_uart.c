@@ -30,11 +30,11 @@ uint16_t modbus_crc16_cal(const uint8_t *data, uint16_t length)
     return (crc >> 8 | crc << 8);
 }
 
-static int8_t (*uart_cmd_parse[BGM_UART_MAX])(enum uart_id id, struct cmd_object *cmd) = {NULL};
+static int8_t (*uart_cmd_parse[BGM_UART_MAX + UART_DEV_MAX])(enum uart_id id, struct cmd_object *cmd) = {NULL};
 
 int8_t uart_cmd_parse_callback_register(enum uart_id id, int8_t (*callback)(enum uart_id id, struct cmd_object *cmd))
 {
-    if (id >= BGM_UART_MAX)
+    if (id >= BGM_UART_MAX + UART_DEV_MAX)
     {
         LOG_E("invalid uart id: %d\r\n", id);
         return -1;
@@ -54,16 +54,32 @@ static int8_t uart_cmd_parse_func(enum uart_id id, struct cmd_object *cmd)
 
     if (uart_cmd_parse[id] != NULL)
     {
+        if (id == BGM_UART_EPS_VPS)
+        {
+            switch (cmd->id.byte)
+            {
+            case 0x01:  /* eps */
+                return uart_cmd_parse[id](id, cmd);
+                break;
+            case 0x02:  /* vps */
+                return uart_cmd_parse[id + 1](id, cmd);
+                break;
+            default:
+                LOG_E("invalid modbus addr: %d\r\n", cmd->id.byte);
+                return -2;
+                break;
+            }
+        }
         return uart_cmd_parse[id](id, cmd);
     }
 
     return 0;
 }
 
-static int8_t (*uart_init_callback[BGM_UART_MAX])(void) = {NULL};
+static int8_t (*uart_init_callback[BGM_UART_MAX + UART_DEV_MAX])(void) = {NULL};
 int8_t uart_init_callback_register(enum uart_id id, int8_t (*callback)(void))
 {
-    if (id >= BGM_UART_MAX)
+    if (id >= BGM_UART_MAX + UART_DEV_MAX)
     {
         LOG_E("invalid uart id: %d\r\n", id);
         return -1;
@@ -83,6 +99,10 @@ static int8_t uart_init_func(enum uart_id id)
 
     if (uart_init_callback[id] != NULL)
     {
+        if (id == BGM_UART_EPS_VPS)
+        {
+            uart_init_callback[id + 1]();
+        }
         return uart_init_callback[id]();
     }
 
@@ -114,17 +134,27 @@ static int8_t uart_cmd_process(enum uart_id id, struct cmd_object *obj)
 
     struct cmd_object cmd = {0};
 
-    if (id < UART_PROTOCOL_NUM)
+    switch (id)
     {
+    case BGM_UART_AFC:
+    case BGM_UART_DOSE1:
+    case BGM_UART_DOSE2:
         cmd.id.byte = obj->data[1];
         cmd.type = obj->data[2];
         cmd.len = (uint16_t *)&obj->data[3];
         cmd.data = obj->data + 5;
-    }
-    else if (id >= UART_PROTOCOL_NUM && id < BGM_UART_MAX)
-    {
+        break;
+    case BGM_UART_RTM:
+        memcpy(&cmd, obj, sizeof(struct cmd_object));
+        break;
+    case BGM_UART_EPS_VPS:
         *obj->len -= 2;
         memcpy(&cmd, obj, sizeof(struct cmd_object));
+        break;
+    default:
+        LOG_E("invalid uart id: %d\r\n", id);
+        return -3;
+        break;
     }
 
     return uart_cmd_parse_func(id, &cmd);
@@ -168,6 +198,10 @@ static enum uart_id uart_protocol_id_get(struct uart_protocol *const self)
     else if (strcmp(name, UART_DEV_NAME_USART2) == 0)
     {
         return BGM_UART_DOSE2;
+    }
+    else if (strcmp(name, UART_DEV_NAME_UART4) == 0)
+    {
+        return BGM_UART_RTM;
     }
 
     return BGM_UART_MAX;
@@ -386,25 +420,34 @@ static int8_t uart_send_entry(void *argument)
          * 3. 针对modbus连接，需要将所发送数据打包到data字段中
          */
 
-        if (id < UART_PROTOCOL_NUM)
+        switch (id)
         {
+        case BGM_UART_AFC:
+        case BGM_UART_DOSE1:
+        case BGM_UART_DOSE2:
             obj.id = 0;
             obj.cmd = 0;
             obj.len = (buf[2] | buf[3] << 8) + 4;
             obj.data = buf;
-        }
-        else if (id >= UART_PROTOCOL_NUM && id < BGM_UART_MAX)
-        {
+            break;
+        case BGM_UART_RTM:
+            obj.id = *(uint32_t *)&buf[4];
+            obj.cmd = buf[8];
+            obj.len = (buf[2] | buf[3] << 8) - 5;
+            obj.data = &buf[9];
+            break;
+        case BGM_UART_EPS_VPS:
             obj.id = 0;
             obj.cmd = 0;
             obj.len = buf[2] | buf[3] << 8;
             memcpy(&buf[2], &buf[4], obj.len);
             obj.len += 2;
             obj.data = buf;
-        }
-        else
-        {
-            /* TODO: rtm连接 */
+            break;
+        default:
+            LOG_E("invalid uart id: %d\r\n", id);
+            continue;
+            break;
         }
 
 #if 0
@@ -429,7 +472,7 @@ static int8_t uart_send_entry(void *argument)
 
 static int8_t uart_thread_init(void)
 {
-    static enum uart_id uart_id[BGM_UART_MAX] = {BGM_UART_AFC, BGM_UART_DOSE1, BGM_UART_DOSE2, BGM_UART_EPS, BGM_UART_VPS};
+    static enum uart_id uart_id[BGM_UART_MAX] = {BGM_UART_AFC, BGM_UART_DOSE1, BGM_UART_DOSE2, BGM_UART_RTM, BGM_UART_EPS_VPS};
 
     osThreadId_t thread_id = NULL;
     osThreadAttr_t attr = {
@@ -467,7 +510,14 @@ static int8_t uart_thread_init(void)
             return -2;
         }
 
-        uart_send_queue[i] = osMessageQueueNew(5, UART_FRAME_SIZE_MAX, NULL);
+        if (i < UART_PROTOCOL_NUM)
+        {
+            uart_send_queue[i] = osMessageQueueNew(5, UART_FRAME_SIZE_MAX, NULL);
+        }
+        else
+        {
+            uart_send_queue[i] = osMessageQueueNew(16, UART_FRAME_SIZE_MAX, NULL);
+        }
         if (uart_send_queue[i] == NULL)
         {
             LOG_E("queue uart send create failed\r\n");

@@ -92,8 +92,6 @@ void Error_Handler(void);
 #define TrigFB_GPIO_Port GPIOB
 #define ModSumDetect_Pin GPIO_PIN_11
 #define ModSumDetect_GPIO_Port GPIOD
-#define UART3_DE_Pin GPIO_PIN_12
-#define UART3_DE_GPIO_Port GPIOD
 #define IOEIntB_Pin GPIO_PIN_6
 #define IOEIntB_GPIO_Port GPIOG
 #define IOEIntB_EXTI_IRQn EXTI9_5_IRQn
@@ -106,8 +104,6 @@ void Error_Handler(void);
 #define PulseInhibitDetect_Pin GPIO_PIN_9
 #define PulseInhibitDetect_GPIO_Port GPIOC
 #define PulseInhibitDetect_EXTI_IRQn EXTI9_5_IRQn
-#define UART4_DE_Pin GPIO_PIN_15
-#define UART4_DE_GPIO_Port GPIOA
 #define W5500_RSTn_Pin GPIO_PIN_3
 #define W5500_RSTn_GPIO_Port GPIOD
 #define W5500_INTn_Pin GPIO_PIN_4

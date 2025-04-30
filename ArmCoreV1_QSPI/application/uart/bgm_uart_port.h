@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#define UART_PROTOCOL_NUM      3
+#define UART_PROTOCOL_NUM      UART_PROTOCOL_MAX
 #define UART_FRAME_SIZE_MAX    128
 
 enum uart_protocol_id
@@ -15,13 +15,13 @@ enum uart_protocol_id
     UART_PROTOCOL_AFC = 0,
     UART_PROTOCOL_DOSE1,
     UART_PROTOCOL_DOSE2,
+    UART_PROTOCOL_RTM,
     UART_PROTOCOL_MAX,
 };
 enum uart_dev_id
 {
-    UART_DEV_EPS = 0,
-    UART_DEV_VPS,
-    UART_DEV_MAX,
+    UART_DEV_EPS_VPS = 0,
+    UART_DEV_MAX,   /* indicates the number of uart devices in one bus */
 };
 
 enum uart_id
@@ -29,8 +29,8 @@ enum uart_id
     BGM_UART_AFC = 0,
     BGM_UART_DOSE1,
     BGM_UART_DOSE2,
-    BGM_UART_EPS,
-    BGM_UART_VPS,
+    BGM_UART_RTM,
+    BGM_UART_EPS_VPS,
     BGM_UART_MAX
 };
 

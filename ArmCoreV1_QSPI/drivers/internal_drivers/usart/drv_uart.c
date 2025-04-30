@@ -336,11 +336,11 @@ static int8_t drv_uart_write_before(uart_dev_t *const self)
     }
     else if (uart->huart == &huart3)
     {
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+        /* do nothing */
     }
     else if (uart->huart == &huart4)
     {
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
+        /* do nothing */
     }
     else if (uart->huart == &huart5)
     {
@@ -376,11 +376,11 @@ static int8_t drv_uart_write_complete(uart_dev_t *const self)
     }
     else if (uart->huart == &huart3)
     {
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+        /* do nothing */
     }
     else if (uart->huart == &huart4)
     {
-        HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
+        /* do nothing */
     }
     else if (uart->huart == &huart5)
     {
@@ -437,7 +437,7 @@ static int32_t drv_uart4_init(void)
     return drv_uart_register(uart_drv_get(&huart4),
                                     &huart4,
                                     UART_DEV_NAME_UART4,
-                                    UART_TYPE_HALF_DUPLEX_MASTER);
+                                    UART_TYPE_FULL_DUPLEX);
 }
 INIT_DEVICE_EXPORT(drv_uart4_init);
 

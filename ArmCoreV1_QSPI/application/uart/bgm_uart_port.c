@@ -7,8 +7,8 @@
  * AFC: UART7
  * DOSE1: UART5
  * DOSE2: UART2
- * EPS: UART3
- * VPS: UART4
+ * EPS/VPS: UART3
+ * RTM: UART4
  */
 
 static uart_protocol_t uart_protocal[UART_PROTOCOL_MAX] = {0};
@@ -38,6 +38,11 @@ static int8_t bgm_uart_protocol_init(void)
                              10000,
                              10000);
 
+    ret |= uart_protocol_init(uart_protocal_get(UART_PROTOCOL_RTM),
+                             UART_DEV_NAME_UART4,
+                             1000,
+                             10000,
+                             10000);
     if (ret != 0)
     {
         LOG_E("uart_protocol_init error: %d\r\n", ret);
@@ -56,14 +61,14 @@ static int8_t bgm_uart_dev_init(void)
 {
     int8_t ret = 0;
 
-    uart_dev[UART_DEV_EPS] = device_uart_find(UART_DEV_NAME_USART3);
-    if (uart_dev[UART_DEV_EPS] == NULL)
+    uart_dev[UART_DEV_EPS_VPS] = device_uart_find(UART_DEV_NAME_USART3);
+    if (uart_dev[UART_DEV_EPS_VPS] == NULL)
     {
         LOG_E("device_uart_find err: %s\r\n", UART_DEV_NAME_USART3);
         return -1;
     }
 
-    ret = dev_uart_init(uart_dev[UART_DEV_EPS],
+    ret = dev_uart_init(uart_dev[UART_DEV_EPS_VPS],
                         DEV_UART_IOCTL_USE_DMA,
                         5,
                         UART_FRAME_SIZE_MAX);
@@ -71,23 +76,6 @@ static int8_t bgm_uart_dev_init(void)
     {
         LOG_E("dev_uart_init err: %d\r\n", ret);
         return -2;
-    }
-
-    uart_dev[UART_DEV_VPS] = device_uart_find(UART_DEV_NAME_UART4);
-    if (uart_dev[UART_DEV_VPS] == NULL)
-    {
-        LOG_E("device_uart_find err: %s\r\n", UART_DEV_NAME_UART4);
-        return -3;
-    }
-
-    ret = dev_uart_init(uart_dev[UART_DEV_VPS],
-                        DEV_UART_IOCTL_USE_DMA,
-                        5,
-                        UART_FRAME_SIZE_MAX);
-    if (ret != 0)
-    {
-        LOG_E("dev_uart_init err: %d\r\n", ret);
-        return -4;
     }
 
     return ret;

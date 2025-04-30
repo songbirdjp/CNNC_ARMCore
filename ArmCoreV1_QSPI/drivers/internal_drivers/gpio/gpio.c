@@ -61,16 +61,13 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin|ModTriggerInhibitCtrl_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, UART3_DE_Pin|WATCHDOG2_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, EPSEnable_Pin|WATCHDOG1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(UART4_DE_GPIO_Port, UART4_DE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(W5500_RSTn_GPIO_Port, W5500_RSTn_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(W5500_RSTn_GPIO_Port, W5500_RSTn_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(WATCHDOG2_GPIO_Port, WATCHDOG2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, W5500_CSn_Pin|FM25V02_CSn_Pin, GPIO_PIN_SET);
@@ -133,13 +130,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(ModSumDetect_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : UART3_DE_Pin W5500_RSTn_Pin WATCHDOG2_Pin */
-  GPIO_InitStruct.Pin = UART3_DE_Pin|W5500_RSTn_Pin|WATCHDOG2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
   /*Configure GPIO pin : IOEIntB_Pin */
   GPIO_InitStruct.Pin = IOEIntB_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -159,12 +149,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(PulseInhibitDetect_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : UART4_DE_Pin */
-  GPIO_InitStruct.Pin = UART4_DE_Pin;
+  /*Configure GPIO pins : W5500_RSTn_Pin WATCHDOG2_Pin */
+  GPIO_InitStruct.Pin = W5500_RSTn_Pin|WATCHDOG2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(UART4_DE_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pin : W5500_INTn_Pin */
   GPIO_InitStruct.Pin = W5500_INTn_Pin;
