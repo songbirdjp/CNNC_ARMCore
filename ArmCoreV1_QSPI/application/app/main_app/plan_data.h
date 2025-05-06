@@ -22,6 +22,9 @@ struct radiation_point_data
 
 struct beam_data
 {
+    uint8_t beam_type;
+    uint8_t radiation_type;
+    uint8_t deliver_type;
     float dose_meter;   /* beam dose cumulative */
     float dose_rate;    /* beam dose rate */
 
@@ -33,10 +36,31 @@ struct beam_data
     osMutexId_t mutex;
 };
 
+enum beam_type
+{
+    BEAM_TYPE_NONE = 0,
+    BEAM_TYPE_KV,
+    BEAM_TYPE_MV
+};
+
+enum deliver_type
+{
+    DELIVER_TYPE_NONE = 0,
+    DELIVER_TYPE_VMAT,
+    DELIVER_TYPE_SWIMRT,
+    DELIVER_TYPE_SSIMRT,
+    DELIVER_TYPE_CRT,
+    DELIVER_TYPE_HiMAT,
+    DELIVER_TYPE_SURVIEW,
+    DELIVER_TYPE_CT
+};
 
 enum beam_data_state
 {
-    BEAM_DOSE_METER = 0,
+    BEAM_TYPE = 0,
+    BEAM_RADIATION_TYPE,
+    BEAM_DELIVER_TYPE,
+    BEAM_DOSE_METER,
     BEAM_DOSE_RATE,
     BEAM_TOTAL_CP,
     BEAM_TOTAL_RI,

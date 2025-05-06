@@ -245,6 +245,23 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             // LOG_I("ri_data[%d]: dose: %d, dose_rate: %d, dose_expect_time: %d ms\r\n", 
             //             cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4], cmd->data[7] << 8 | cmd->data[6], cmd->data[9] << 8 | cmd->data[8]);
             break;
+        case 0x06:
+            ret = beam_data_value_set(0, BEAM_TYPE, 0, cmd->data[2]);
+            if (ret != 0)
+            {
+                LOG_E("beam data type set err: %d\r\n", ret);
+            }
+            ret = beam_data_value_set(0, BEAM_RADIATION_TYPE, 0, cmd->data[3]);
+            if (ret != 0)
+            {
+                LOG_E("beam data radiation type set err: %d\r\n", ret);
+            }
+            ret = beam_data_value_set(0, BEAM_DELIVER_TYPE, 0, cmd->data[4]);
+            if (ret != 0)
+            {
+                LOG_E("beam data deliver type set err: %d\r\n", ret);
+            }
+            break;
         default:
             ret = -1;
             break;

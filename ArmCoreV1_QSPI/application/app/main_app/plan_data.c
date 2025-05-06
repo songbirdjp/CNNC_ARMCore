@@ -29,6 +29,15 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
 
     switch (state) 
     {
+    case BEAM_TYPE:
+        value = beam_data->beam_type;
+        break;
+    case BEAM_RADIATION_TYPE:
+        value = beam_data->radiation_type;
+        break;
+    case BEAM_DELIVER_TYPE:
+        value = beam_data->deliver_type;
+        break;
     case BEAM_DOSE_METER:
         value = beam_data->dose_meter;
         break;
@@ -121,6 +130,15 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
 
     switch (state)
     {
+    case BEAM_TYPE:
+        beam_data->beam_type = value;
+        break;
+    case BEAM_RADIATION_TYPE:
+        beam_data->radiation_type = value;
+        break;
+    case BEAM_DELIVER_TYPE:
+        beam_data->deliver_type = value;
+        break;
     case BEAM_DOSE_METER:
         beam_data->dose_meter = value;
         break;
