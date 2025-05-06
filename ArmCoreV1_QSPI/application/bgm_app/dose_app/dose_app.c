@@ -926,7 +926,15 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
             ret = dose_cmd_write(id, 0x02, buf, offset);
             offset = 2;
         }
-        /* 6. beam lock and validate */
+        /* 6. beam info */
+        offset = 0;
+        buf[offset++] = 0x42;
+        buf[offset++] = 0x06;
+        buf[offset++] = beam_info->info->beamType;
+        buf[offset++] = 0;
+        buf[offset++] = beam_info->info->deliveryType;
+        ret = dose_cmd_write(id, 0x02, buf, offset);
+        /* 7. beam lock and validate */
         offset = 0;
         buf[offset++] = 0x43;
         buf[offset++] = 0x00;

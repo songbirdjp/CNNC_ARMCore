@@ -13,21 +13,21 @@ extern "C" {
 #define CP_IN_PACK 32
 
 typedef enum{
-    MV_MODE,
-    KV_SURVIEW_MODE,
-    KV_SPIRAL_MODE
+    BEAM_TYPE_NONE = 0,
+    BEAM_TYPE_KV,
+    BEAM_TYPE_MV
 }BEAM_TYPE;
 
 typedef enum{
-    No_Defined,
-    VMAT,
-    SWIMRT,
-    SSIMRT,
-    CRT,
-    HiMAT,
-    SURVIEW,
-    CT
-}DELIVERY_TYPE;
+    DELIVER_TYPE_NONE = 0,
+    DELIVER_TYPE_VMAT,
+    DELIVER_TYPE_SWIMRT,
+    DELIVER_TYPE_SSIMRT,
+    DELIVER_TYPE_CRT,
+    DELIVER_TYPE_HiMAT,
+    DELIVER_TYPE_SURVIEW,
+    DELIVER_TYPE_CT
+}DELIVER_TYPE;
 
 typedef struct {
     uint16_t frmTag;
