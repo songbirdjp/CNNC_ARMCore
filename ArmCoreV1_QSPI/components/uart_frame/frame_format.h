@@ -81,6 +81,7 @@ extern "C"
         uint32_t timeout_ms;
         osTimerId_t osTimerId;
         osSemaphoreId_t osSemaphoreId;
+        uint8_t semaphore_lock;
 
         osMutexId_t tx_mutex;
         uint8_t *tx_buffer;

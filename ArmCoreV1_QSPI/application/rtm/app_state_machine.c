@@ -101,7 +101,6 @@ static void rtm_state_machine_power_saver(stateTable_t *self, Event_t const *e)
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
 
-
     rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
     rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
     rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
@@ -172,23 +171,64 @@ static void rtm_state_machine_ready(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_READY);
+    uint8_t ready_flag = 0;
+    if ((rtm_event->dido_structure->tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
+        (rtm_event->dido_structure->tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1))
+    {
+        // todo: 填写故障联锁标志
+        ready_flag++;
+    }
+    if (rtm_event->dido_structure->tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn == 0)
+    {
+        // todo: 填写高压故障标志
+        ready_flag++;
+    }
+    if (ready_flag != 0)
+    {
+        rtm_event->super.sig = SYSTEM_STATE_MV_INTERRUPT;
+        TRAN(state, STATE_MACHINE_INTERRUPT);
+        stateTable_dispatch(self, (Event_t *)rtm_event);
+    }
+    else
+    {
+        TRAN(signal, e->sig);
+        TRAN(state, STATE_MACHINE_READY);
+    }
 }
 static void rtm_state_machine_work(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_WORK);
+    uint8_t ready_flag = 0;
+    if ((rtm_event->dido_structure->tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
+        (rtm_event->dido_structure->tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1))
+    {
+        // todo: 填写故障联锁标志
+        ready_flag++;
+    }
+    if (rtm_event->dido_structure->tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn == 0)
+    {
+        // todo: 填写高压故障标志
+        ready_flag++;
+    }
+    if (ready_flag != 0)
+    {
+        rtm_event->super.sig = SYSTEM_STATE_MV_INTERRUPT;
+        TRAN(state, STATE_MACHINE_INTERRUPT);
+        stateTable_dispatch(self, (Event_t *)rtm_event);
+    }
+    else
+    {
+        rtm_event->dido_structure->tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 1;
+        TRAN(signal, e->sig);
+        TRAN(state, STATE_MACHINE_WORK);
+    }
 }
 static void rtm_state_machine_complete(stateTable_t *self, Event_t const *e)
 {
     rtm_event_t *rtm_event = (rtm_event_t *)e;
 
+    rtm_event->dido_structure->tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 0;
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_COMPLETE);
 }
@@ -196,26 +236,43 @@ static void rtm_state_machine_interrupt(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
+    uint8_t ready_flag = 0;
+
+    rtm_event->dido_structure->tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
 
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_INTERRUPT);
 
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
-
-    if( e->sig == SYSTEM_STATE_MV_READY)
+    if (e->sig == SYSTEM_STATE_MV_READY)
     {
-        //TODO:无故障，自发跳转到STATE_MACHINE_INTERRUPT状态，需要处理
-        rtm_event->super.sig = SYSTEM_STATE_MV_READY;
-        TRAN(state, STATE_MACHINE_READY);
-        stateTable_dispatch(self, (Event_t *)rtm_event);
+        // TODO:无故障，自发跳转到STATE_MACHINE_INTERRUPT状态，需要处理
+        if ((rtm_event->dido_structure->tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
+            (rtm_event->dido_structure->tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1))
+        {
+            // todo: 填写故障联锁标志
+            ready_flag++;
+        }
+        if (rtm_event->dido_structure->tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn == 0)
+        {
+            // todo: 填写高压故障标志
+            ready_flag++;
+        }
+        if (ready_flag == 0)
+        {
+            rtm_event->super.sig = SYSTEM_STATE_MV_READY;
+            TRAN(state, STATE_MACHINE_READY);
+            stateTable_dispatch(self, (Event_t *)rtm_event);
+        }
     }
 }
 static void rtm_state_machine_terminate(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-    
+    rtm_event->dido_structure->tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 0;
+
     rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
     rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
     rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
@@ -243,7 +300,7 @@ static void rtm_state_machine_kv_prepare(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-    
+
     rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
     rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
     rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 1;
@@ -257,39 +314,122 @@ static void rtm_state_machine_surview_ready(stateTable_t *self, Event_t const *e
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_SURVIEW_READY);
+    uint8_t ready_flag = 0;
+    if ((rtm_event->dido_structure->tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
+        (rtm_event->dido_structure->tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1))
+    {
+        // todo: 填写故障联锁标志
+        ready_flag++;
+    }
+    if (rtm_event->dido_structure->tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn == 0)
+    {
+        // todo: 填写高压故障标志
+        ready_flag++;
+    }
+    if (ready_flag != 0)
+    {
+        rtm_event->super.sig = SYSTEM_STATE_MV_TERMINATE;
+        TRAN(state, STATE_MACHINE_TERMINATE);
+        stateTable_dispatch(self, (Event_t *)rtm_event);
+    }
+    else
+    {
+        TRAN(signal, e->sig);
+        TRAN(state, STATE_MACHINE_SURVIEW_READY);
+    }
 }
 static void rtm_state_machine_surview_work(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_SURVIEW_WORK);
+
+    uint8_t ready_flag = 0;
+    if ((rtm_event->dido_structure->tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
+        (rtm_event->dido_structure->tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1))
+    {
+        // todo: 填写故障联锁标志
+        ready_flag++;
+    }
+    if (rtm_event->dido_structure->tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn == 0)
+    {
+        // todo: 填写高压故障标志
+        ready_flag++;
+    }
+    if (ready_flag != 0)
+    {
+        rtm_event->super.sig = SYSTEM_STATE_MV_TERMINATE;
+        TRAN(state, STATE_MACHINE_TERMINATE);
+        stateTable_dispatch(self, (Event_t *)rtm_event);
+    }
+    else
+    {
+        rtm_event->dido_structure->tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 1;
+        TRAN(signal, e->sig);
+        TRAN(state, STATE_MACHINE_SURVIEW_WORK);
+    }
 }
 static void rtm_state_machine_ct_ready(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_CT_READY);
+    uint8_t ready_flag = 0;
+    if ((rtm_event->dido_structure->tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
+        (rtm_event->dido_structure->tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1))
+    {
+        // todo: 填写故障联锁标志
+        ready_flag++;
+    }
+    if (rtm_event->dido_structure->tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn == 0)
+    {
+        // todo: 填写高压故障标志
+        ready_flag++;
+    }
+    if (ready_flag != 0)
+    {
+        rtm_event->super.sig = SYSTEM_STATE_MV_TERMINATE;
+        TRAN(state, STATE_MACHINE_TERMINATE);
+        stateTable_dispatch(self, (Event_t *)rtm_event);
+    }
+    else
+    {
+        TRAN(signal, e->sig);
+        TRAN(state, STATE_MACHINE_CT_READY);
+    }
 }
 static void rtm_state_machine_ct_work(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_CT_WORK);
+    uint8_t ready_flag = 0;
+    if ((rtm_event->dido_structure->tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
+        (rtm_event->dido_structure->tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1))
+    {
+        // todo: 填写故障联锁标志
+        ready_flag++;
+    }
+    if (rtm_event->dido_structure->tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn == 0)
+    {
+        // todo: 填写高压故障标志
+        ready_flag++;
+    }
+    if (ready_flag != 0)
+    {
+        rtm_event->super.sig = SYSTEM_STATE_MV_TERMINATE;
+        TRAN(state, STATE_MACHINE_TERMINATE);
+        stateTable_dispatch(self, (Event_t *)rtm_event);
+    }
+    else
+    {
+        rtm_event->dido_structure->tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 1;
+        TRAN(signal, e->sig);
+        TRAN(state, STATE_MACHINE_CT_WORK);
+    }
 }
 static void rtm_state_machine_kv_complete(stateTable_t *self, Event_t const *e)
 {
     int32_t retval = 0;
     rtm_event_t *rtm_event = (rtm_event_t *)e;
+    rtm_event->dido_structure->tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 0;
     TRAN(signal, e->sig);
     TRAN(state, STATE_MACHINE_KV_COMPLETE);
 }
