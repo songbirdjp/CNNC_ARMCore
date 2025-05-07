@@ -4,6 +4,7 @@
 #include "init_call.h"
 #include "fsm_app.h"
 #include "ulog.h"
+#include "gpio_port.h"
 
 struct interlock_status
 {
@@ -148,14 +149,20 @@ static int8_t interlock_status_update(void)
     if (ret > 0)
     {
         stat->value.bits.board_power_fault = (ret & ~(1 << 1)) ? 1 : 0;
-        // stat->value.bits.hv_limit = (ret & (1 << 1)) ? 1 : 0;
+        stat->value.bits.hv_limit = (ret & (1 << 1)) ? 1 : 0;
+    }
+    else if (ret == 0)
+    {
+        stat->value.bits.board_power_fault = 0;
+        stat->value.bits.hv_limit = 0;
     }
 
     /* 2. check communication status */
     // stat->value.bits.comm_timeout = 0;
 
     /* 3. check wdt status */
-    // stat->value.bits.wdt_fault = 0;
+    stat->value.bits.wdt_fault = gpio_common_get()->read("GPIOD_5") == GPIO_PIN_SET ? 0 : 1;
+    gpio_common_get()->write("GPIOE_5", stat->value.bits.wdt_fault);
 
     /* 4. check adcs7476 status */
     ret = adcs7476_object_data_limit_fault_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);

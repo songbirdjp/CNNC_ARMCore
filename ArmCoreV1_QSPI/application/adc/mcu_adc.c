@@ -22,6 +22,7 @@ int8_t board_power_limit_fault_get(void)
     ret = adc_sample_data_amend(result, ADC_CHANNEL_NUM_MAX);
     if (ret != 0)
     {
+        LOG_E("adc sample data amend err: %d\r\n", ret);
         return ret;
     }
 

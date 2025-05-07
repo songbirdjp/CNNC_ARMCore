@@ -49,8 +49,8 @@ int8_t radiation_index_update_callback(int8_t (*cb)(void))
     return 0;
 }
 
-osMessageQueueId_t dose_uart_send_queue = NULL;
-static int8_t dose_uart_cmd_write(struct dose_object *cmd)
+static osMessageQueueId_t dose_uart_send_queue = NULL;
+int8_t dose_uart_cmd_write(struct dose_object *cmd)
 {
     uint8_t buf[DOSE_UART_FRAME_SIZE_MAX] = {0};
 

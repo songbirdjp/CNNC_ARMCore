@@ -129,7 +129,7 @@ struct control_para
 
 int8_t radiation_index_update_callback(int8_t (*cb)(void));
 int8_t control_data_pointer_get(void **ptr);
-
+int8_t dose_uart_cmd_write(struct dose_object *cmd);
 
 #ifdef __cplusplus
 }
