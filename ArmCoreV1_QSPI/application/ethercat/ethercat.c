@@ -192,6 +192,8 @@ static int8_t ethercat_timestamp_sync(void)
 static void Ethercatfunc(void *argument)
 {
   /* USER CODE BEGIN Ethercatfunc */
+    osDelay(50);
+
     ethercat_slave_init();
 
     ethercat_slave_stack_init();
@@ -213,18 +215,16 @@ static void ethercat_slave_entry(void *argument)
 {
   /* USER CODE BEGIN ethercat_slave_entry */
   /* Infinite loop */
-  int32_t ret = 0;
-  osDelay(100); /* wait ethercat init complete */
-
-  for(;;)
-  {
-    ret = ethercat_slave_wait_event();
-    if (ret < 0)
+    int32_t ret = 0;
+    osDelay(100); /* wait ethercat init complete */
+    for(;;)
     {
-        printf("ethercat wait err:%d\r\n", ret);
+        ret = ethercat_slave_wait_event();
+        if (ret < 0)
+        {
+            printf("ethercat wait err:%d\r\n", ret);
+        }
     }
-    // osDelay(100);
-  }
   /* USER CODE END ethercat_slave_entry */
 }
 
@@ -253,7 +253,7 @@ static int8_t ethercat_thread_init(void)
     if (lan9252_irq_threadHandle == NULL)
     {
         printf("thread lan9252 irq create failed\r\n");
-        return -1;
+        return -2;
     }
 
     return 0;
