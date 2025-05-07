@@ -280,8 +280,9 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
                     goto error;
                 }
             }
-
-            status = osSemaphoreAcquire(self->osSemaphoreId, timeout);  /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
+            self->semaphore_lock++;
+            status = osSemaphoreAcquire(self->osSemaphoreId, timeout); /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
+            self->semaphore_lock--;
             if (status != osOK)
             {
                 self->send_count++;
@@ -342,19 +343,22 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
             return -4;
         }
     }
-	*data_len = recv_len - FRAME_EXTRA_LEN;
+    *data_len = recv_len - FRAME_EXTRA_LEN;
     memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
 
     if (self->rx_buffer[FRAME_DATA_OFFSET + 4] & 0x80) // receive a response frame
     {
-        if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)
+        if (self->semaphore_lock)
         {
-            return -5;
-        }
-        status = osSemaphoreRelease(self->osSemaphoreId);
-        if (status != osOK)
-        {
-            return -6;
+            if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)
+            {
+                return -5;
+            }
+            status = osSemaphoreRelease(self->osSemaphoreId);
+            if (status != osOK)
+            {
+                return -6;
+            }
         }
     }
     else

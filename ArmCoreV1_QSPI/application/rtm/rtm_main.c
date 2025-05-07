@@ -63,6 +63,7 @@ static void app_rtm_fault_detect_entry(void *argument)
     }
 }
 osThreadId_t app_rtm_main_threadId;
+#define RTM_MAIN_THREAD_CYCLE_MS (1)
 static void app_rtm_main_thread(void *argument)
 {
     app_rtm_main_t *self = (app_rtm_main_t *)argument;
@@ -71,6 +72,12 @@ static void app_rtm_main_thread(void *argument)
     rtm_status_t rtm_status = {0};
     rtm_status_t rtm_status_old = {0};
     dido_structure_t dido_structure = {0};
+
+    uint32_t current_time = 0;
+    uint32_t last_time = 0;
+    current_time = osKernelGetTickCount();
+    last_time = current_time;
+
     rtm_event_t rtm_event = {
         .dido_structure = &dido_structure,
         .super.sig = SYSTEM_STATE_SYSTEM_ON};
@@ -125,9 +132,17 @@ static void app_rtm_main_thread(void *argument)
         {
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, 0x01, 0x1E, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
             memcpy(&rtm_status_old, &rtm_status, sizeof(rtm_status_t));
+            last_time = osKernelGetTickCount();
+        }
+        // 周期上报状态
+        current_time = osKernelGetTickCount();
+        if (current_time - last_time > 1000)
+        {
+            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, 0x01, 0x1E, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
+            last_time = current_time;
         }
 
-        osDelay(1);
+        osDelay(RTM_MAIN_THREAD_CYCLE_MS);
     }
 exit:
     osThreadExit();
@@ -159,88 +174,177 @@ void app_rtm_event_output_set(void)
 {
     osEventFlagsSet(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT);
 }
+
+enum
+{
+    OUTPUT_DATA_BEAM_ID = 0,
+    OUTPUT_DATA_RADIATION_INDEX,
+    OUTPUT_DATA_ICM_REQUIRE_STATE,
+    OUTPUT_DATA_BGM_REQUIRE_STATE,
+    OUTPUT_DATA_QAM_REQUIRE_STATE,
+    OUTPUT_DATA_RTM_OFF_REQUIRE_STATE,
+    OUTPUT_DATA_GMM_REQUIRE_STATE,
+    OUTPUT_DATA_PSM_REQUIRE_STATE,
+    OUTPUT_DATA_FKP_LED_BLINK,
+    OUTPUT_DATA_CPG_LED_BLINK,
+};
+
 static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7010 *data)
 {
     static TOBJ7010 output_data = {0};
+    static uint8_t flag = OUTPUT_DATA_BEAM_ID;
     uint16_t len = 0;
+    uint32_t current_time = 0;
+    static uint32_t last_time = 0;
+
     if (self->module_queue == NULL || data == NULL)
     {
         return;
     }
+
+    current_time = osKernelGetTickCount();
     if (memcmp(&output_data, data, sizeof(TOBJ7010)) == 0)
     {
-        return;
+        if(current_time - last_time < 200)
+        {
+            return;
+        }
+        last_time = current_time;
+        switch (flag)
+        {
+        case OUTPUT_DATA_BEAM_ID:
+            flag = OUTPUT_DATA_ICM_REQUIRE_STATE;
+            len = (uint8_t *)&output_data.OutU8_reserved1 - (uint8_t *)&output_data.OutU8_beam_id;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x0, &data->OutU8_beam_id, len);
+            // rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x0, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x0, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x0, &data->OutU8_beam_id, len);
+            break;
+        case OUTPUT_DATA_ICM_REQUIRE_STATE:
+            flag = OUTPUT_DATA_BGM_REQUIRE_STATE;
+            len = (uint8_t *)&output_data.OutU8_bgm_require_state - (uint8_t *)&output_data.OutU8_icm_require_state;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x4, 0x12, &data->OutU8_icm_require_state, len);
+            break;
+        case OUTPUT_DATA_BGM_REQUIRE_STATE:
+            flag = OUTPUT_DATA_QAM_REQUIRE_STATE;
+            len = (uint8_t *)&output_data.OutU8_qam_require_state - (uint8_t *)&output_data.OutU8_bgm_require_state;
+            // rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x8, 0x13, &data->OutU8_bgm_require_state, len);
+            break;
+        case OUTPUT_DATA_QAM_REQUIRE_STATE:
+            flag = OUTPUT_DATA_RTM_OFF_REQUIRE_STATE;
+            len = (uint8_t *)&output_data.OutU8_bsm_require_state - (uint8_t *)&output_data.OutU8_qam_require_state;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x10, 0x14, &data->OutU8_qam_require_state, len);
+            break;
+        case OUTPUT_DATA_RTM_OFF_REQUIRE_STATE:
+            flag = OUTPUT_DATA_GMM_REQUIRE_STATE;
+            len = (uint8_t *)&output_data.OutU8_gmm_require_state - (uint8_t *)&output_data.OutU8_rtm_off_require_state;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x40, 0x16, &data->OutU8_rtm_off_require_state, len);
+            break;
+        case OUTPUT_DATA_GMM_REQUIRE_STATE:
+            flag = OUTPUT_DATA_PSM_REQUIRE_STATE;
+            len = (uint8_t *)&output_data.OutU8_psm_require_state - (uint8_t *)&output_data.OutU8_gmm_require_state;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x80, 0x19, &data->OutU8_gmm_require_state, len);
+            break;
+        case OUTPUT_DATA_PSM_REQUIRE_STATE:
+            flag = OUTPUT_DATA_FKP_LED_BLINK;
+            len = (uint8_t *)&output_data.OutU8_fkp_led_blink - (uint8_t *)&output_data.OutU8_psm_require_state;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x1A, &data->OutU8_psm_require_state, len);
+            break;
+        case OUTPUT_DATA_FKP_LED_BLINK:
+            flag = OUTPUT_DATA_CPG_LED_BLINK;
+            len = (uint8_t *)&output_data.OutU8_cpg_led_blink - (uint8_t *)&output_data.OutU8_fkp_led_blink;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x17, &data->OutU8_fkp_led_blink, len);
+            break;
+        case OUTPUT_DATA_CPG_LED_BLINK:
+            flag = OUTPUT_DATA_BEAM_ID;
+            len = sizeof(output_data.OutU8_cpg_led_blink);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x400, 0x18, &data->OutU8_cpg_led_blink, len);
+            break;
+        default:
+            break;
+        }
     }
-
-    len = (uint8_t *)&output_data.OutU8_rtm_on_require_state - (uint8_t *)&output_data.OutU8_beam_id;
-    if (memcmp(&output_data.OutU8_beam_id, &data->OutU8_beam_id, len) != 0)
+    else
     {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x0, &data->OutU8_beam_id, len);
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x0, &data->OutU8_beam_id, len);
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x0, &data->OutU8_beam_id, len);
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x0, &data->OutU8_beam_id, len);
-    }
+        len = (uint8_t *)&output_data.OutU8_reserved1 - (uint8_t *)&output_data.OutU8_beam_id;
+        if (memcmp(&output_data.OutU8_beam_id, &data->OutU8_beam_id, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x0, &data->OutU8_beam_id, len);
+            // rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x0, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x0, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x0, &data->OutU8_beam_id, len);
+        }
 
-    len = (uint8_t *)&output_data.OutU8_icm_require_state - (uint8_t *)&output_data.OutU8_rtm_on_require_state;
-    if (memcmp(&output_data.OutU8_rtm_on_require_state, &data->OutU8_rtm_on_require_state, len) != 0)
-    {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], 0x2, 0x1F, &data->OutU8_rtm_on_require_state, len);
-    }
+        len = (uint8_t *)&output_data.OutU8_rtm_on_require_state - (uint8_t *)&output_data.OutU16_radiation_index;
+        if (memcmp(&output_data.OutU16_radiation_index, &data->OutU16_radiation_index, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x1, &data->OutU16_radiation_index, len);
+            // rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x1, &data->OutU16_radiation_index, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x1, &data->OutU16_radiation_index, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x1, &data->OutU16_radiation_index, len);
+        }
 
-    len = (uint8_t *)&output_data.OutU8_bgm_require_state - (uint8_t *)&output_data.OutU8_icm_require_state;
-    if (memcmp(&output_data.OutU8_icm_require_state, &data->OutU8_icm_require_state, len) != 0)
-    {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x4, 0x12, &data->OutU8_icm_require_state, len);
-    }
+        len = (uint8_t *)&output_data.OutU8_icm_require_state - (uint8_t *)&output_data.OutU8_rtm_on_require_state;
+        if (memcmp(&output_data.OutU8_rtm_on_require_state, &data->OutU8_rtm_on_require_state, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], 0x2, 0x1F, &data->OutU8_rtm_on_require_state, len);
+        }
 
-    len = (uint8_t *)&output_data.OutU8_qam_require_state - (uint8_t *)&output_data.OutU8_bgm_require_state;
-    if (memcmp(&output_data.OutU8_bgm_require_state, &data->OutU8_bgm_require_state, len) != 0)
-    {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x8, 0x13, &data->OutU8_bgm_require_state, len);
-    }
+        len = (uint8_t *)&output_data.OutU8_bgm_require_state - (uint8_t *)&output_data.OutU8_icm_require_state;
+        if (memcmp(&output_data.OutU8_icm_require_state, &data->OutU8_icm_require_state, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x4, 0x12, &data->OutU8_icm_require_state, len);
+        }
 
-    len = (uint8_t *)&output_data.OutU8_bsm_require_state - (uint8_t *)&output_data.OutU8_qam_require_state;
-    if (memcmp(&output_data.OutU8_qam_require_state, &data->OutU8_qam_require_state, len) != 0)
-    {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x10, 0x14, &data->OutU8_qam_require_state, len);
-    }
+        len = (uint8_t *)&output_data.OutU8_qam_require_state - (uint8_t *)&output_data.OutU8_bgm_require_state;
+        if (memcmp(&output_data.OutU8_bgm_require_state, &data->OutU8_bgm_require_state, len) != 0)
+        {
+            // rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x8, 0x13, &data->OutU8_bgm_require_state, len);
+        }
 
-    len = (uint8_t *)&output_data.OutU8_gmm_require_state - (uint8_t *)&output_data.OutU8_rtm_off_require_state;
-    if (memcmp(&output_data.OutU8_rtm_off_require_state, &data->OutU8_rtm_off_require_state, len) != 0)
-    {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x40, 0x16, &data->OutU8_rtm_off_require_state, len);
-    }
+        len = (uint8_t *)&output_data.OutU8_bsm_require_state - (uint8_t *)&output_data.OutU8_qam_require_state;
+        if (memcmp(&output_data.OutU8_qam_require_state, &data->OutU8_qam_require_state, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x10, 0x14, &data->OutU8_qam_require_state, len);
+        }
 
-    len = (uint8_t *)&output_data.OutU8_psm_require_state - (uint8_t *)&output_data.OutU8_gmm_require_state;
-    if (memcmp(&output_data.OutU8_gmm_require_state, &data->OutU8_gmm_require_state, len) != 0)
-    {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x80, 0x19, &data->OutU8_gmm_require_state, len);
-    }
+        len = (uint8_t *)&output_data.OutU8_gmm_require_state - (uint8_t *)&output_data.OutU8_rtm_off_require_state;
+        if (memcmp(&output_data.OutU8_rtm_off_require_state, &data->OutU8_rtm_off_require_state, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x40, 0x16, &data->OutU8_rtm_off_require_state, len);
+        }
 
-    len = (uint8_t *)&output_data.OutU8_fkp_led_blink - (uint8_t *)&output_data.OutU8_psm_require_state;
-    if (memcmp(&output_data.OutU8_psm_require_state, &data->OutU8_psm_require_state, len) != 0)
-    {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x1A, &data->OutU8_psm_require_state, len);
-        // uint8_t buf_temp[13 *4] = {0};
-        // for(uint8_t i = 0; i < 13; i++)
-        // {
-        //     buf_temp[i*4] = i;
-        // }
-        // rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x22, buf_temp, 13*4);
-    }
+        len = (uint8_t *)&output_data.OutU8_psm_require_state - (uint8_t *)&output_data.OutU8_gmm_require_state;
+        if (memcmp(&output_data.OutU8_gmm_require_state, &data->OutU8_gmm_require_state, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x80, 0x19, &data->OutU8_gmm_require_state, len);
+        }
 
-    len = (uint8_t *)&output_data.OutU8_cpg_led_blink - (uint8_t *)&output_data.OutU8_fkp_led_blink;
-    if (memcmp(&output_data.OutU8_fkp_led_blink, &data->OutU8_fkp_led_blink, len) != 0)
-    {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x17, &data->OutU8_fkp_led_blink, len);
-    }
+        len = (uint8_t *)&output_data.OutU8_fkp_led_blink - (uint8_t *)&output_data.OutU8_psm_require_state;
+        if (memcmp(&output_data.OutU8_psm_require_state, &data->OutU8_psm_require_state, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x1A, &data->OutU8_psm_require_state, len);
+            // uint8_t buf_temp[13 *4] = {0};
+            // for(uint8_t i = 0; i < 13; i++)
+            // {
+            //     buf_temp[i*4] = i;
+            // }
+            // rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x22, buf_temp, 13*4);
+        }
 
-    len = sizeof(output_data.OutU8_cpg_led_blink);
-    if (memcmp(&output_data.OutU8_cpg_led_blink, &data->OutU8_cpg_led_blink, len) != 0)
-    {
-        rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x400, 0x18, &data->OutU8_cpg_led_blink, len);
+        len = (uint8_t *)&output_data.OutU8_cpg_led_blink - (uint8_t *)&output_data.OutU8_fkp_led_blink;
+        if (memcmp(&output_data.OutU8_fkp_led_blink, &data->OutU8_fkp_led_blink, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x17, &data->OutU8_fkp_led_blink, len);
+        }
+
+        len = sizeof(output_data.OutU8_cpg_led_blink);
+        if (memcmp(&output_data.OutU8_cpg_led_blink, &data->OutU8_cpg_led_blink, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x400, 0x18, &data->OutU8_cpg_led_blink, len);
+        }
+        memcpy(&output_data, data, sizeof(TOBJ7010));
     }
-    memcpy(&output_data, data, sizeof(TOBJ7010));
 }
 
 static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ6000 *data, queue_frame_t *queue_frame)
@@ -262,8 +366,11 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
     // TODO:做长度判断
     switch (cmd)
     {
-    case 0x00:
-        memcpy(&input_data->InU8_beam_id, queue_frame->payload.data + 1, len);
+    // case 0x00:
+    //     memcpy(&input_data->InU8_beam_id, queue_frame->payload.data + 1, len);
+    //     break;
+    case 0x01:
+        memcpy(&input_data->InU16_radiation_index, queue_frame->payload.data + 1, len);
         break;
     case 0x1E:
         memcpy(&input_data->InU8_rtm_on_arm_fsm_state_current, queue_frame->payload.data + 1, len);
@@ -389,7 +496,7 @@ static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                 status = osMessageQueuePut(self->queue_group[i], &queue_frame, 0, 0);
                 if (status != osOK)
                 {
-                    LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
+                    // LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
                 }
             }
         }
@@ -406,7 +513,7 @@ static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                     status = osMessageQueuePut(self->queue_group[i], &queue_frame, 0, 0);
                     if (status != osOK)
                     {
-                        LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
+                        // LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
                     }
                 }
             }
@@ -511,7 +618,7 @@ int app_rtm_data_handle_create(void)
     self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_name = "RTM_ON_PLC";
     self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].module_name = "RTM_ON_ARM";
     self->rtm_module_info[RTM_MODULE_ICM].module_name = "ICM";
-    self->rtm_module_info[RTM_MODULE_BGM].module_name = "BGM";
+    // self->rtm_module_info[RTM_MODULE_BGM].module_name = "BGM";
     self->rtm_module_info[RTM_MODULE_QAM].module_name = "QAM";
     // self->rtm_module_info[RTM_MODULE_BSM].module_name = "BSM";
     self->rtm_module_info[RTM_MODULE_RTM_OFF].module_name = "RTM_OFF";
@@ -519,7 +626,7 @@ int app_rtm_data_handle_create(void)
     self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].ID = 0x01;
     self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].ID = 0x02;
     self->rtm_module_info[RTM_MODULE_ICM].ID = 0x04;
-    self->rtm_module_info[RTM_MODULE_BGM].ID = 0x08;
+    // self->rtm_module_info[RTM_MODULE_BGM].ID = 0x08;
     self->rtm_module_info[RTM_MODULE_QAM].ID = 0x10;
     // self->rtm_module_info[RTM_MODULE_BSM].ID = 0x20;
     self->rtm_module_info[RTM_MODULE_RTM_OFF].ID = 0x40 | 0x80 | 0x100 | 0x200 | 0x400;
@@ -531,13 +638,13 @@ int app_rtm_data_handle_create(void)
         }
     }
 
-    self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_priority = osPriorityRealtime;
-    self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].module_priority = osPriorityHigh;
+    self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_priority = osPriorityAboveNormal;
+    self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].module_priority = osPriorityAboveNormal;
     self->rtm_module_info[RTM_MODULE_ICM].module_priority = osPriorityNormal;
-    self->rtm_module_info[RTM_MODULE_BGM].module_priority = osPriorityNormal;
+    // self->rtm_module_info[RTM_MODULE_BGM].module_priority = osPriorityNormal;
     self->rtm_module_info[RTM_MODULE_QAM].module_priority = osPriorityNormal;
     // self->rtm_module_info[RTM_MODULE_BSM].module_priority = osPriorityNormal;
-    self->rtm_module_info[RTM_MODULE_RTM_OFF].module_priority = osPriorityRealtime;
+    self->rtm_module_info[RTM_MODULE_RTM_OFF].module_priority = osPriorityAboveNormal;
 
     // 远程模块信息赋值
     self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].heartbeat_info_rx.board_id = 0;
@@ -549,9 +656,9 @@ int app_rtm_data_handle_create(void)
     self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx.board_id = 0;
     self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx.HardwareVersion = 0;
     self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx.FirmWareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.board_id = 0;
-    self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.HardwareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.FirmWareVersion = 0;
+    // self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.board_id = 0;
+    // self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.HardwareVersion = 0;
+    // self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.FirmWareVersion = 0;
     self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx.board_id = 0;
     self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx.HardwareVersion = 0;
     self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx.FirmWareVersion = 0;
@@ -596,15 +703,15 @@ int app_rtm_data_handle_create(void)
     {
         return -2;
     }
-    ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_BGM].uart_protocol,
-                             UART_DEV_NAME_USART3,
-                             1000,
-                             10000,
-                             10000);
-    if (ret != 0)
-    {
-        return -3;
-    }
+    // ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_BGM].uart_protocol,
+    //                          UART_DEV_NAME_USART3,
+    //                          1000,
+    //                          10000,
+    //                          10000);
+    // if (ret != 0)
+    // {
+    //     return -3;
+    // }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_QAM].uart_protocol,
                              UART_DEV_NAME_UART4,
                              1000,
@@ -689,22 +796,22 @@ int app_rtm_data_handle_create(void)
     {
         return -11;
     }
-    thread_attributes.name = "app_bgm_rx_thread";
-    thread_attributes.stack_size = 1024 * 4;
-    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_BGM].module_priority;
-    threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_BGM]), &thread_attributes);
-    if (threadHandle == NULL)
-    {
-        return -12;
-    }
-    thread_attributes.name = "app_bgm_tx_thread";
-    thread_attributes.stack_size = 1024 * 4;
-    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_BGM].module_priority;
-    threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_BGM]), &thread_attributes);
-    if (threadHandle == NULL)
-    {
-        return -13;
-    }
+    // thread_attributes.name = "app_bgm_rx_thread";
+    // thread_attributes.stack_size = 1024 * 4;
+    // thread_attributes.priority = self->rtm_module_info[RTM_MODULE_BGM].module_priority;
+    // threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_BGM]), &thread_attributes);
+    // if (threadHandle == NULL)
+    // {
+    //     return -12;
+    // }
+    // thread_attributes.name = "app_bgm_tx_thread";
+    // thread_attributes.stack_size = 1024 * 4;
+    // thread_attributes.priority = self->rtm_module_info[RTM_MODULE_BGM].module_priority;
+    // threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_BGM]), &thread_attributes);
+    // if (threadHandle == NULL)
+    // {
+    //     return -13;
+    // }
     thread_attributes.name = "app_qam_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
     thread_attributes.priority = self->rtm_module_info[RTM_MODULE_QAM].module_priority;

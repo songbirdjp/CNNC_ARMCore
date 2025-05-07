@@ -233,13 +233,13 @@ int8_t ethercat_thread_init(void)
     osThreadAttr_t EthercatSlave_attributes = {
     .name = "EthercatSlave",
     .stack_size = 1024 * 4,
-    .priority = (osPriority_t) osPriorityNormal,
+    .priority = (osPriority_t) osPriorityHigh,
     };
 
     osThreadAttr_t lan9252_irq_thread_attributes = {
     .name = "lan9252_irq_thread",
     .stack_size = 512 * 4,
-    .priority = (osPriority_t) osPriorityHigh,
+    .priority = (osPriority_t) osPriorityRealtime,
     };
 
     osThreadId_t EthercatSlaveHandle = osThreadNew(Ethercatfunc, NULL, &EthercatSlave_attributes);
