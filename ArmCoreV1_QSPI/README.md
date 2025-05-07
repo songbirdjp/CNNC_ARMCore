@@ -57,6 +57,9 @@ ArmCoreV1_QSPI
 │  │  │  └─ io_port.h
 │  │  ├─ plan_data.c
 │  │  ├─ plan_data.h
+│  │  ├─ rtm_app
+│  │  │  ├─ rtm_app.c
+│  │  │  └─ rtm_app.h
 │  │  ├─ vps_app
 │  │  │  ├─ vps_app.c
 │  │  │  └─ vps_app.h
@@ -96,8 +99,8 @@ ArmCoreV1_QSPI
 │  └─ uart
 │     ├─ bgm_uart.c
 │     ├─ bgm_uart.h
-│     ├─ bgm_uart_port.c
-│     └─ bgm_uart_port.h
+│     ├─ uart_port.c
+│     └─ uart_port.h
 ├─ ARM_core.pdf
 ├─ board
 │  ├─ board_config

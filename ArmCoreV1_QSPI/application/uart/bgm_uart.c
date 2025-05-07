@@ -199,7 +199,7 @@ static enum uart_id uart_protocol_id_get(struct uart_protocol *const self)
     {
         return BGM_UART_DOSE2;
     }
-    else if (strcmp(name, UART_DEV_NAME_UART4) == 0)
+    else if (strcmp(name, UART_DEV_NAME_USART3) == 0)
     {
         return BGM_UART_RTM;
     }
@@ -270,6 +270,10 @@ static int8_t uart_recv_entry(void *argument)
             LOG_E("[%d]: uart_protocol_rx_RegisterCallback err: %d\r\n", id, ret);
             osThreadExit();
         }
+    }
+    else if (id == BGM_UART_EPS_VPS)
+    {
+        osDelay(3000);
     }
 
     ret = uart_open(id);
@@ -358,7 +362,7 @@ int8_t uart_cmd_write(enum uart_id id, struct cmd_object *cmd)
     buf[3] = *cmd->len >> 8;
     memcpy(&buf[4], cmd->data, *cmd->len);
 
-    osStatus_t stat = osMessageQueuePut(uart_send_queue[id], buf, 0, 0);
+    osStatus_t stat = osMessageQueuePut(uart_send_queue[id], buf, 0, 100);
     if (stat != osOK)
     {
         LOG_E("[%d]: uart send queue put err: %d\r\n", id, stat);
@@ -464,6 +468,11 @@ static int8_t uart_send_entry(void *argument)
         if (ret != 0)
         {
             LOG_E("[%d]: uart data write err: %d\r\n", id, ret);
+        }
+
+        if (id >= UART_PROTOCOL_NUM && id < BGM_UART_MAX)   /* modbus连接 */
+        {
+            osDelay(50);
         }
     }
 

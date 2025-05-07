@@ -263,6 +263,10 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         /* 6. set dose board to dummy */
         ret |= dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
         ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
+        /* 7. update beam deliver type */
+        osMutexAcquire(obj->mutex, osWaitForever);
+        /* TODO */
+        osMutexRelease(obj->mutex);
         break;
     case BGM_STATE_PREPARE:
         LOG_I("---remote set to prepare---\r\n");

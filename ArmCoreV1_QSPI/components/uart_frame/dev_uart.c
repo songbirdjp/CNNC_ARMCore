@@ -202,7 +202,7 @@ device_err_t dev_uart_init(uart_dev_t *dev, uint16_t oflags, uint32_t queueSpace
     }
     dev->rx_buf_len = queueMsgSize;
 
-    dev->rx_buf_tmp = (uint8_t *)pvPortMalloc(sizeof(uart_frame_t));
+    dev->rx_buf_tmp = (uint8_t *)pvPortMalloc(queueMsgSize);
     if (dev->rx_buf_tmp == NULL)
     {
         return DEV_ENOMEM;

@@ -192,6 +192,8 @@ static int8_t ethercat_timestamp_sync(void)
 static void Ethercatfunc(void *argument)
 {
   /* USER CODE BEGIN Ethercatfunc */
+    osDelay(50);
+
     ethercat_slave_init();
 
     ethercat_slave_stack_init();

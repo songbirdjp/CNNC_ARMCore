@@ -56,7 +56,7 @@ static int8_t rtm_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     int8_t ret = 0;
     uint32_t remote_id = cmd->id.byte;
 
-#if 1
+#if 0
     LOG_I("recv %d data: ", remote_id);
     for (uint16_t i = 0; i < *cmd->len; i++)
     {
@@ -64,6 +64,11 @@ static int8_t rtm_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     }
     LOG_I("\r\n");
 #endif
+
+    if (*cmd->len == 0) /* cmd feedback */
+    {
+        return 0;
+    }
 
     if (remote_id != 0x00 && (remote_id & RS422_BUS_MODULE_ID_BGM) != RS422_BUS_MODULE_ID_BGM)
     {
@@ -136,7 +141,7 @@ static int8_t rtm_app_test(uint8_t argc, char *argv[])
     {
         .id = RS422_BUS_MODULE_ID_LOCAL | RS422_BUS_MODULE_ID_RTM_ON_PLC,
         .cmd = UART_DATA_CMD_SEND_FSM_STATE,
-        .len = 10,
+        .len = 24,
     };
 
     for (uint16_t i = 0; i < msg.len; i++)

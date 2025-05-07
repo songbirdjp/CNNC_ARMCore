@@ -427,7 +427,7 @@ static int32_t drv_uart3_init(void)
     return drv_uart_register(uart_drv_get(&huart3),
                                     &huart3,
                                     UART_DEV_NAME_USART3,
-                                    UART_TYPE_HALF_DUPLEX_MASTER);
+                                    UART_TYPE_FULL_DUPLEX);
 }
 INIT_DEVICE_EXPORT(drv_uart3_init);
 
@@ -437,7 +437,7 @@ static int32_t drv_uart4_init(void)
     return drv_uart_register(uart_drv_get(&huart4),
                                     &huart4,
                                     UART_DEV_NAME_UART4,
-                                    UART_TYPE_FULL_DUPLEX);
+                                    UART_TYPE_HALF_DUPLEX_MASTER);
 }
 INIT_DEVICE_EXPORT(drv_uart4_init);
 

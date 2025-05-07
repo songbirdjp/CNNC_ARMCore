@@ -1,7 +1,7 @@
 #ifndef __BGM_UART_H__
 #define __BGM_UART_H__
 
-#include "bgm_uart_port.h"
+#include "uart_port.h"
 
 #ifdef __cplusplus
 extern "C" {

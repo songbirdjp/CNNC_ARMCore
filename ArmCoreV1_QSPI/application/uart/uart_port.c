@@ -1,4 +1,4 @@
-#include "bgm_uart_port.h"
+#include "uart_port.h"
 #include "dev_uart.h"
 #include "init_call.h"
 #include "ulog.h"
@@ -7,8 +7,8 @@
  * AFC: UART7
  * DOSE1: UART5
  * DOSE2: UART2
- * EPS/VPS: UART3
- * RTM: UART4
+ * RTM: UART3
+ * EPS/VPS: UART4
  */
 
 static uart_protocol_t uart_protocal[UART_PROTOCOL_MAX] = {0};
@@ -39,7 +39,7 @@ static int8_t bgm_uart_protocol_init(void)
                              10000);
 
     ret |= uart_protocol_init(uart_protocal_get(UART_PROTOCOL_RTM),
-                             UART_DEV_NAME_UART4,
+                             UART_DEV_NAME_USART3,
                              1000,
                              10000,
                              10000);
@@ -61,10 +61,10 @@ static int8_t bgm_uart_dev_init(void)
 {
     int8_t ret = 0;
 
-    uart_dev[UART_DEV_EPS_VPS] = device_uart_find(UART_DEV_NAME_USART3);
+    uart_dev[UART_DEV_EPS_VPS] = device_uart_find(UART_DEV_NAME_UART4);
     if (uart_dev[UART_DEV_EPS_VPS] == NULL)
     {
-        LOG_E("device_uart_find err: %s\r\n", UART_DEV_NAME_USART3);
+        LOG_E("device_uart_find err: %s\r\n", UART_DEV_NAME_UART4);
         return -1;
     }
 
