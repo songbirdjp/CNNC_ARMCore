@@ -30,8 +30,8 @@ struct beam_data
 
     uint16_t total_cp;  /* control point total num */
     uint16_t total_ri;  /* radiation point total num */
-    struct radiation_point_data radiation_data[RADIATION_POINT_MAX];
-    uint16_t cp_ri_map[CP_RI_MAP_MAX];  /* control point to radiation point map */
+    struct radiation_point_data radiation_data[RADIATION_POINT_MAX + 1];
+    uint16_t cp_ri_map[CP_RI_MAP_MAX + 1];  /* control point to radiation point map */
 
     osMutexId_t mutex;
 };

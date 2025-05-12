@@ -108,7 +108,7 @@ struct interlock_para
 
 struct radiation_point_para
 {
-    uint8_t cp;                         /* radiation index at CP */
+    uint16_t cp;                        /* radiation index at CP */
     uint16_t index;                     /* current radiation index */
     uint16_t index_max_in_cp;           /* max radiation index at current CP */
     uint32_t dose_rate_interpolated;    /* dose rate interpolated at current radiation index */
@@ -127,9 +127,10 @@ struct control_para
     osMutexId_t mutex;
 };
 
-int8_t radiation_index_update_callback(int8_t (*cb)(void));
+int8_t radiation_index_update_callback(int8_t (*cb)(uint32_t time_excess_ms));
 int8_t control_data_pointer_get(void **ptr);
 int8_t dose_uart_cmd_write(struct dose_object *cmd);
+int8_t radiation_status_get(uint8_t *buf, uint16_t *len);
 
 #ifdef __cplusplus
 }

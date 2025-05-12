@@ -80,7 +80,7 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
             LOG_E("invalid ri_idx: %d\n", ri_idx);
             break;
         }
-        for (uint8_t i = 1; i <= beam_data->total_cp; i++)
+        for (uint16_t i = 1; i <= beam_data->total_cp; i++)
         {
             if (ri_idx <= beam_data->cp_ri_map[i] && ri_idx > beam_data->cp_ri_map[i-1])
             {
@@ -95,7 +95,7 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
             LOG_E("invalid ri_idx: %d\n", ri_idx);
             break;
         }
-        for (uint8_t i = 1; i <= beam_data->total_cp; i++)
+        for (uint16_t i = 1; i <= beam_data->total_cp; i++)
         {
             if (ri_idx <= beam_data->cp_ri_map[i] && ri_idx > beam_data->cp_ri_map[i-1])
             {
