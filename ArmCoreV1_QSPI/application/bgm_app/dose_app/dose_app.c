@@ -4,6 +4,7 @@
 #include "init_call.h"
 #include "ulog.h"
 #include "plan_data.h"
+#include "rtm_app.h"
 
 struct board_status
 {
@@ -128,13 +129,13 @@ struct realtime_data
         }bits;
     }state;
 
-    uint8_t control_point;
+    uint16_t control_point;
     uint16_t radiation_index;
     float dose_cumulated;   /* unit: MU */
     float dose_rate;        /* unit: MU/min */
     uint8_t prf_current;
     uint8_t one_pulse_valid_flag;
-    uint16_t one_pulse_dose;
+    uint32_t one_pulse_dose;
 };
 
 struct dose_info_t
@@ -566,23 +567,23 @@ static int8_t dose_realtime_frame_parse(enum uart_id id, struct cmd_object *cmd)
 #if 0
         LOG_I("[%d]: dose state: %#.2x\r\n", id, cmd->data[1]);
         LOG_I("[%d]: dose interlock: %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
-        LOG_I("[%d]: dose current cp: %d\r\n", id, cmd->data[4]);
-        LOG_I("[%d]: dose current radiation index: %d\r\n", id, cmd->data[6] << 8 | cmd->data[5]);
-        LOG_I("[%d]: dose current cumulative: %d (0.1MU)\r\n", id, cmd->data[8] << 8 | cmd->data[7]);
-        LOG_I("[%d]: dose current prf: %d\r\n", id, cmd->data[9]);
-        LOG_I("[%d]: dose abnormal pulse count: %d\r\n", id, cmd->data[11] << 8 | cmd->data[10]);
-        LOG_I("[%d]: dose one pulse valid flag: %d\r\n", id, cmd->data[12]);
-        LOG_I("[%d]: dose one pulse code: %d\r\n", id, cmd->data[14] << 8 | cmd->data[13]);
+        LOG_I("[%d]: dose current cp: %d\r\n", id, cmd->data[5] << 8 | cmd->data[4]);
+        LOG_I("[%d]: dose current radiation index: %d\r\n", id, cmd->data[7] << 8 | cmd->data[6]);
+        LOG_I("[%d]: dose current cumulative: %f (MU)\r\n", id, *(float *)&cmd->data[8]);
+        LOG_I("[%d]: dose current prf: %d\r\n", id, cmd->data[12]);
+        LOG_I("[%d]: dose abnormal pulse count: %d\r\n", id, cmd->data[14] << 8 | cmd->data[13]);
+        LOG_I("[%d]: dose one pulse valid flag: %d\r\n", id, cmd->data[15]);
+        LOG_I("[%d]: dose one pulse code: %d\r\n", id, *(uint32_t *)&cmd->data[16]);
 #endif
         obj->realtime.state.byte = cmd->data[1];
         obj->status.interlock.bytes = cmd->data[3] << 8 | cmd->data[2];
-        obj->realtime.control_point = cmd->data[4];
-        obj->realtime.radiation_index = cmd->data[6] << 8 | cmd->data[5];
-        obj->realtime.dose_cumulated = (float)(cmd->data[8] << 8 | cmd->data[7]) / 10.0f;
-        obj->realtime.prf_current = cmd->data[9];
-        obj->interlock.one_pulse.count_abnormal= cmd->data[11] << 8 | cmd->data[10];
-        obj->realtime.one_pulse_valid_flag = cmd->data[12];
-        obj->realtime.one_pulse_dose = cmd->data[14] << 8 | cmd->data[13];
+        obj->realtime.control_point = cmd->data[5] << 8 | cmd->data[4];
+        obj->realtime.radiation_index = cmd->data[7] << 8 | cmd->data[6];
+        obj->realtime.dose_cumulated = *(float *)&cmd->data[8];
+        obj->realtime.prf_current = cmd->data[12];
+        obj->interlock.one_pulse.count_abnormal= cmd->data[14] << 8 | cmd->data[13];
+        obj->realtime.one_pulse_valid_flag = cmd->data[15];
+        obj->realtime.one_pulse_dose = *(uint32_t *)&cmd->data[16];
         break;
     default:
         LOG_E("[%d]: invalid realtime cmd type: %x\r\n", id, cmd->data[0]);
@@ -591,6 +592,78 @@ static int8_t dose_realtime_frame_parse(enum uart_id id, struct cmd_object *cmd)
     }
 
     osMutexRelease(obj->mutex);
+
+    return ret;
+}
+
+enum real_time_data_type
+{
+    REAL_TIME_DATA_TYPE_RADIATION = 0,
+    REAL_TIME_DATA_TYPE_RI,
+    REAL_TIME_DATA_TYPE_QAM,
+};
+static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
+{
+    int8_t ret = 0;
+
+    switch (cmd->data[0])
+    {
+    case 0x01:
+        switch (cmd->data[1])
+        {
+        case REAL_TIME_DATA_TYPE_RADIATION:
+            {
+                struct dose_info_t *obj = dose_info_object_get(id);
+
+                osMutexAcquire(obj->mutex, osWaitForever);
+                obj->realtime.state.byte = cmd->data[3];
+                obj->status.interlock.bytes = cmd->data[5] << 8 | cmd->data[4];
+                obj->realtime.control_point = cmd->data[7] << 8 | cmd->data[6];
+                obj->realtime.radiation_index = cmd->data[9] << 8 | cmd->data[8];
+                obj->realtime.dose_cumulated = *(float *)&cmd->data[10];
+                obj->realtime.prf_current = cmd->data[14];
+                obj->interlock.one_pulse.count_abnormal= cmd->data[16] << 8 | cmd->data[15];
+                obj->realtime.one_pulse_valid_flag = cmd->data[17];
+                obj->realtime.one_pulse_dose = *(uint32_t *)&cmd->data[18];
+                osMutexRelease(obj->mutex);
+            }
+            break;
+        case REAL_TIME_DATA_TYPE_RI:
+            {
+                struct dose_info_t *obj = dose_info_object_get(id);
+                osMutexAcquire(obj->mutex, osWaitForever);
+                obj->realtime.radiation_index = cmd->data[3] << 8 | cmd->data[2];
+                osMutexRelease(obj->mutex);
+
+                ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_BROADCAST, UART_CMD_SEND_RADIATION_INDEX, &cmd->data[2], *cmd->len - 2);
+                if (ret != 0)
+                {
+                    LOG_E("cmd to rtm upload err: %d\r\n", ret);
+                }
+            }
+            break;
+        case REAL_TIME_DATA_TYPE_QAM:
+            /* 1. to fkp */
+            ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, &cmd->data[2], 8);
+            /* 2. to rtm */
+            ret |= cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM, UART_DATA_CMD_SEND_QAM, &cmd->data[2], *cmd->len - 2);
+            if (ret != 0)
+            {
+                LOG_E("cmd to rtm upload err: %d\r\n", ret);
+            }
+            break;
+        default:
+            LOG_E("invalid realtime data sub cmd: %x\r\n", cmd->data[1]);
+            ret = -1;
+            break;
+        }
+        break;
+
+    default:
+        LOG_E("invalid realtime data cmd: %x\r\n", cmd->data[0]);
+        ret = -2;
+        break;
+    }
 
     return ret;
 }
@@ -615,11 +688,19 @@ static int8_t dose_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     /* 2. parse cmd type */
     switch (cmd->type)
     {
+    case 0x04:  /* realtime data upload by dose */
+        ret = dose_realtime_data_parse(id, cmd);
+        if (ret != 0)
+        {
+            LOG_E("[%d]: dose_realtime_data_parse err: %d\r\n", id, ret);
+            return -2;
+        }
+        break;
     case 0x81:  /* handshake frame */
         ret = dose_handshake_frame_parse(id, cmd);
         if (ret != 0)
         {
-            LOG_E("[%d]: bgm_uart_handshake_parse err: %d\r\n", id, ret);
+            LOG_E("[%d]: dose_handshake_frame_parse err: %d\r\n", id, ret);
             return -2;
         }
         break;
@@ -635,7 +716,7 @@ static int8_t dose_cmd_parse(enum uart_id id, struct cmd_object *cmd)
         ret = dose_realtime_frame_parse(id, cmd);
         if (ret != 0)
         {
-            LOG_E("[%d]: bgm_uart_realtime_parse err: %d\r\n", id, ret);
+            LOG_E("[%d]: dose_realtime_frame_parse err: %d\r\n", id, ret);
             return -2;
         }
         break;
@@ -739,10 +820,13 @@ float dose_data_info_get(enum uart_id id, enum dose_info_index index, void *data
         value = obj->treatment.pulse_mode;
         break;
     case DOSE_INFO_RADIATION_GET:
-        value = obj->realtime.one_pulse_dose | obj->realtime.one_pulse_valid_flag << 16;
+        value = obj->realtime.one_pulse_dose | obj->realtime.one_pulse_valid_flag << 24;
         break;
     case DOSE_INFO_INTERLOCK_GET:
         value = obj->status.interlock.bytes;
+        break;
+    case DOSE_INFO_RADIATION_INDEX_GET:
+        value = obj->realtime.radiation_index;
         break;
     default:
         LOG_E("[%d]: invalid dose info index: %d\r\n", id, index);

@@ -144,6 +144,28 @@ int8_t dose_beam_cumulated_clear(enum uart_id id)
     return ret;
 }
 
+int8_t beam_deliver_type_get(uint16_t beam_id, uint8_t *deliver_type)
+{
+    int8_t ret = 0;
+    struct one_beam_order beam_obj = {0};
+
+    ret = getPlanBeamData(beam_id, &beam_obj);
+    if (ret != 0)
+    {
+        LOG_E("get beam data err: %d\r\n", ret);
+        return -1;
+    }
+
+    *deliver_type = beam_obj.info->deliveryType;
+
+    return 0;
+}
+
+uint16_t dose_radiation_index_get(enum uart_id id)
+{
+    return dose_data_info_get(id, DOSE_INFO_RADIATION_INDEX_GET, NULL);
+}
+
 int8_t dose_beam_parameter_set(enum uart_id id, uint16_t beam_id)
 {
     int8_t ret = 0;
@@ -275,7 +297,7 @@ MSH_CMD_EXPORT_ALIAS(dose_cmd_test, dose_cmd_test, test dose cmd);
 
 
 /* 2. bgm with afc board communication interface */
-void BGM_SendCmd(enum uart_id uartID, UARTCmdType_t cmdType, uint8_t *cmdData, uint8_t len)
+void BGM_SendCmd(enum uart_id uartID, uint8_t cmdType, uint8_t *cmdData, uint8_t len)
 {
     struct cmd_object BGMCmdToSend;
     BGMCmdToSend.id.bits.cmd_id = 0;
@@ -285,306 +307,3 @@ void BGM_SendCmd(enum uart_id uartID, UARTCmdType_t cmdType, uint8_t *cmdData, u
     BGMCmdToSend.data = cmdData;
     uart_cmd_write(uartID,&BGMCmdToSend);
 }
-
-#if 0
-void AFC_GetADCValueByFrame(void)
-{
-    uint8_t _afcCmd[2] = {0x60,0x05};
-    BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,2); 
-}
-
-extern BGMStateMachine_t ARMcurrentState;
-extern BGMStateMachine_t PLCcurrentState;
-
-void Shell_ModifyARMFSM(int8_t argc, uint8_t **argv)
-{
-    uint8_t temp;
-    temp = (uint8_t)strtol((char *)argv[1], NULL, 16); 
-    ARMcurrentState = temp;
-}
-MSH_CMD_EXPORT_ALIAS(Shell_ModifyARMFSM,MAFSM,"Modify All FSM");
-
-void Shell_CheckALLFSM(void)
-{
-    uint8_t cmdToCheck[2] = {0xc0,0x01};
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, cmdToCheck,2); 
-    //PLCcurrentState
-    LOG_E("PLCcurrentState = %d\r\n",PLCcurrentState);
-    LOG_E("ARM currentState = %d\r\n",ARMcurrentState);
-}
-MSH_CMD_EXPORT_ALIAS(Shell_CheckALLFSM,ReadAllFSM,"Read All FSM");
-int BGM2AFC_Handshake(void)
-{
-    struct cmd_object BGM2AFCHandshake;
-    BGM2AFCHandshake.id.byte = 0x80;
-    BGM2AFCHandshake.type = UARTCmdType_HandshakeDown;
-    BGM2AFCHandshake.len = sizeof(BGM_ARM_IO_Version);
-    BGM2AFCHandshake.data = BGM_ARM_IO_Version;
-    LOG_I("BGM2AFC_Handshake\r\n");
-    return uart_cmd_write(BGM_UART_AFC,&BGM2AFCHandshake);
-}
-MSH_CMD_EXPORT_ALIAS(BGM2AFC_Handshake,B2AHS,"Dose Board Handshake Set");
-
-void Shell_BGM2Dose_Handshake(int8_t argc, uint8_t **argv)
-{
-    printf("BGM to AFC Command set with %d arguments:\n", argc);
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    enum uart_id uartID;
-     if(strcmp((char *)argv[1], "01") == 0)
-    {
-        uartID = BGM_UART_DOSE1;
-    }
-    else if (strcmp((char *)argv[1], "02") == 0)
-    {
-        uartID = BGM_UART_DOSE2;
-    }
-    dose_handshake(uartID); 
-}
-MSH_CMD_EXPORT_ALIAS(Shell_BGM2Dose_Handshake,B2DHS,"Dose Board Handshake Set");
-
-void BGMShell_BGM2AFTCmd(int8_t argc, uint8_t **argv)
-{
-    printf("BGM to AFC Command set with %d arguments:\n", argc);
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    if (argc >= 2)  
-    {
-        uint8_t dataLen = argc - 1; 
-        if (dataLen > 16)
-         {
-            printf("Data length exceeds 16 bytes, which is the maximum allowed.\n");
-            return;
-        }
-        uint8_t AFCCmdData[16] = {0};  
-        for (int i = 0; i < dataLen; i++) 
-        {
-            AFCCmdData[i] = (uint8_t)strtol((char *)argv[i + 1], NULL, 16); 
-            //AFCCmdData[i] = (uint8_t)atoi((char *)argv[i + 1]);
-        }
-        BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown, AFCCmdData,argc - 1); 
-    }
-    else
-    {
-        printf("Insufficient arguments.\n");
-    }
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_BGM2AFTCmd,AFTCMD,"AFTCMD Set");
-
-void BGMShell_BGMtoDose1Cmd(int8_t argc, uint8_t **argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    if (argc >= 2)  
-    {
-        uint8_t dataLen = argc - 1; 
-        if (dataLen > 16)
-         {
-            printf("Data length exceeds 16 bytes, which is the maximum allowed.\n");
-            return;
-        }
-        uint8_t Dose1CmdData[16] = {0};  
-        for (int i = 0; i < dataLen; i++) 
-        {
-            Dose1CmdData[i] = (uint8_t)strtol((char *)argv[i + 1], NULL, 16); 
-        }
-        BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown, Dose1CmdData,argc - 1); 
-    }
-    else
-    {
-        printf("Insufficient arguments.\n");
-    }
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_BGMtoDose1Cmd,DOSE1CMD,"Dose 1 CMD Set");
-
-void BGMShell_BGMtoDose2Cmd(int8_t argc, uint8_t **argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    if (argc >= 2)  
-    {
-        uint8_t dataLen = argc - 1; 
-        if (dataLen > 16)
-         {
-            printf("Data length exceeds 16 bytes, which is the maximum allowed.\n");
-            return;
-        }
-        uint8_t Dose2CmdData[16] = {0};  
-        for (int i = 0; i < dataLen; i++) 
-        {
-            Dose2CmdData[i] = (uint8_t)strtol((char *)argv[i + 1], NULL, 16); 
-        }
-        BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown, Dose2CmdData,argc - 1 ); 
-    }
-    else
-    {
-        printf("Insufficient arguments.\n");
-    }
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_BGMtoDose2Cmd,DOSE2CMD,"DOSE 2 CMD Set");
-
-void BGMShell_CtrlDoseBoardFSM(int8_t argc, uint8_t **argv)
-{
-        for (int i = 0; i < argc; i++)
-        {
-            LOG_I("arg[%d]: %s\n", i, argv[i]);
-        } 
-        uint8_t shellDoseFSM = 0;
-        shellDoseFSM = (uint8_t)strtol((char *)argv[1], NULL, 16); 
-        LOG_I("shellDoseFSM = %d\r\n",shellDoseFSM);
-        dose_fsm_state_set((DoseFsmState_t) shellDoseFSM);
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_CtrlDoseBoardFSM,DOSE1FSM,"CtrlDoseBoard1 FSM");
-
-void BGM_SetDoseBoardPRF(enum uart_id uartID,uint8_t prfVal)
-{
-    uint8_t prfCmd[3] = {0x41,0x01,0x00};
-    prfCmd[2] = prfVal;
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,prfCmd,3); 
-    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,prfCmd,3); 
-}
-
-void BGMShell_SetDoseBoardPRF(int8_t argc, uint8_t **argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    enum uart_id id;
-    uint8_t shellDosePRF = 0;
-    id = (enum uart_id)strtol((char *)argv[1], NULL, 16);
-    shellDosePRF = (uint8_t)strtol((char *)argv[2], NULL, 16); 
-    BGM_SetDoseBoardPRF(id,shellDosePRF);
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseBoardPRF,DOSEPRF,"Set DoseBoard PRF");
-
-void BGM_SetDoseMode(enum uart_id uartID,uint8_t doseMode)//BGM_SetDoseBoardDose
-{
-    uint8_t doseCmd[3] = {0x40,0x00,0x000};
-    doseCmd[2] = doseMode;
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,doseCmd,3); 
-    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,doseCmd,3); 
-}
-void BGMShell_SetDoseMode(int8_t argc, uint8_t **argv)
-{
-    enum uart_id id;
-    uint16_t shellPara = 0;
-    id = (enum uart_id)strtol((char *)argv[1], NULL, 16);
-    shellPara =(uint8_t)strtol((char *)argv[2], NULL, 16);
-    BGM_SetDoseMode(id,shellPara);
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseMode,DOSEModeSet,"DOSE Mode Set dummy or Normal");
-
-void BGM_SetDoseBoardDose(enum uart_id uartID,uint16_t doseVal)
-{
-    uint8_t doseCmd[4] = {0x42,0x01,0x00,0x00};
-    doseCmd[2] = doseVal;
-    doseCmd[3] = doseVal >> 8;
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,doseCmd,4); 
-    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,doseCmd,4); 
-}
-
-void BGMShell_SetDoseBoardDose(int8_t argc, uint8_t **argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    enum uart_id id;
-    uint16_t shellSetDose = 0;
-    id = (enum uart_id)strtol((char *)argv[1], NULL, 16);
-    shellSetDose =((uint8_t)strtol((char *)argv[2], NULL, 16))|(((uint8_t)strtol((char *)argv[3], NULL, 16)) << 8 ); 
-    BGM_SetDoseBoardDose(id,shellSetDose);
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseBoardDose,DOSEdoseset,"Set DoseBoard aim dose");
-
-void BGMShell_LockDoseCaliPara(int8_t argc, uint8_t **argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    enum uart_id id;
-    uint16_t shellLockPara = 0;
-    id = (enum uart_id)strtol((char *)argv[1], NULL, 16);
-    shellLockPara =(uint8_t)strtol((char *)argv[2], NULL, 16);
-    BGM_LockDoseCaliPara(id,shellLockPara);
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_LockDoseCaliPara,DOSELockPara,"Set DOSELockPara");
-
-void BGMShell_LockBeamData(int8_t argc, uint8_t **argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    enum uart_id id;
-    uint16_t shellLockPara = 0;
-    id = (enum uart_id)strtol((char *)argv[1], NULL, 16);
-    shellLockPara =(uint8_t)strtol((char *)argv[2], NULL, 16);
-    BGM_LockBeamData(id,shellLockPara);
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_LockBeamData,DOSELockBeamData,"Set LockBeamData");
-
-void BGM_SetDoseBoardKadc(enum uart_id uartID,uint32_t kadcVal)
-{
-    uint8_t KadcCmd[5] = {0x02,0x00,0x00,0x00,0x00};
-    KadcCmd[2] = kadcVal;
-    KadcCmd[3] = kadcVal >> 8;
-    KadcCmd[4] = kadcVal >> 16;
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,KadcCmd,5);  
-     BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,KadcCmd,5); 
-}
-
-void BGMShell_SetDoseBoardKadc(int8_t argc, uint8_t **argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    enum uart_id id;
-    uint8_t shelltemp[3] = {0};
-    uint32_t shellDosekadc = 0;
-    id = (enum uart_id)strtol((char *)argv[1], NULL, 16);
-    shelltemp[0] =  (uint8_t)strtol((char *)argv[2], NULL, 16); 
-    shelltemp[1] =  (uint8_t)strtol((char *)argv[3], NULL, 16);
-    shelltemp[2] =  (uint8_t)strtol((char *)argv[4], NULL, 16);
-    shellDosekadc = ((shelltemp[2] << 16)|(shelltemp[1] << 8)|(shelltemp[0]));
-    BGM_SetDoseBoardKadc(id,shellDosekadc);
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseBoardKadc,DOSEkadc,"Set DoseBoard kadc");
-
-void BGM_SetDoseBoardDAC(enum uart_id uartID,uint32_t dacVal)
-{
-    uint8_t dacCmd[4] = {0x03,0x00,0x00,0x00};
-    dacCmd[2] = dacVal;
-    dacCmd[3] = dacVal >> 8;
-    BGM_SendCmd(BGM_UART_DOSE1,UARTCmdType_CommandDown,dacCmd,4);  
-    BGM_SendCmd(BGM_UART_DOSE2,UARTCmdType_CommandDown,dacCmd,4);  
-}
-
-void BGMShell_SetDoseBoardDAC(int8_t argc, uint8_t **argv)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg[%d]: %s\n", i, argv[i]);
-    } 
-    enum uart_id id;
-    uint8_t shelltemp[3] = {0};
-    uint32_t shellDosedac = 0;
-    id = (enum uart_id)strtol((char *)argv[1], NULL, 16);
-    shelltemp[0] =  (uint8_t)strtol((char *)argv[2], NULL, 16); 
-    shelltemp[1] =  (uint8_t)strtol((char *)argv[3], NULL, 16);
-    shellDosedac = ((shelltemp[1] << 8)|(shelltemp[0]));
-    BGM_SetDoseBoardDAC(id,shellDosedac);
-}
-MSH_CMD_EXPORT_ALIAS(BGMShell_SetDoseBoardDAC,DOSEdac,"Set DoseBoard dac");
-#endif

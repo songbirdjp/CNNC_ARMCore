@@ -143,6 +143,13 @@ static int8_t uart_cmd_process(enum uart_id id, struct cmd_object *obj)
         cmd.type = obj->data[2];
         cmd.len = (uint16_t *)&obj->data[3];
         cmd.data = obj->data + 5;
+
+        if (cmd.id.bits.cmd_ack != 0)   /* need ack */
+        {
+            obj->data[1] &= ~(1 << 7);
+            obj->data[2] |= 0x80;
+            *obj->len = *cmd.len + 5;
+        }
         break;
     case BGM_UART_RTM:
         memcpy(&cmd, obj, sizeof(struct cmd_object));

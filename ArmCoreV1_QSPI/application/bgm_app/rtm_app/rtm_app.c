@@ -130,32 +130,42 @@ static int8_t rtm_functions_init(void)
 INIT_ENV_EXPORT(rtm_functions_init);
 
 
+int8_t cmd_to_rtm_upload(uint32_t id, enum uart_subcmd_type type, uint8_t *buf, uint16_t len)
+{
+    int8_t ret = 0;
+
+    struct uart_cmd_set_get msg = 
+    {
+        .id = RS422_BUS_MODULE_ID_LOCAL | id,
+        .cmd = type,
+        .len = len,
+    };
+
+    memcpy(msg.buf, buf, len);
+
+    ret = rtm_cmd_write(&msg);
+    if (ret != 0)
+    {
+        LOG_E("uart send msg err: %d\r\n", ret);
+    }
+
+    return ret;
+}
+
 
 #ifndef RTM_APP_TEST
 #include "shell.h"
 static int8_t rtm_app_test(uint8_t argc, char *argv[])
 {
     int8_t ret = 0;
+    uint8_t buf[30] = {0};
 
-    struct uart_cmd_set_get msg = 
+    for (uint16_t i = 0; i < 24; i++)
     {
-        .id = RS422_BUS_MODULE_ID_LOCAL | RS422_BUS_MODULE_ID_RTM_ON_PLC,
-        .cmd = UART_DATA_CMD_SEND_FSM_STATE,
-        .len = 24,
-    };
-
-    for (uint16_t i = 0; i < msg.len; i++)
-    {
-        msg.buf[i] = i;
+        buf[i] = i;
     }
 
-    ret = rtm_cmd_write(&msg);
-    if (ret != 0)
-    {
-        LOG_E("uart send msg err: %d\r\n", ret);
-    }    
-
-    return 0;
+    return cmd_to_rtm_upload(RS422_BUS_MODULE_ID_RTM_ON_PLC, UART_DATA_CMD_SEND_FSM_STATE, buf, 24);
 }
 MSH_CMD_EXPORT_ALIAS(rtm_app_test, rtm_app_test, rtm app test);
 #endif

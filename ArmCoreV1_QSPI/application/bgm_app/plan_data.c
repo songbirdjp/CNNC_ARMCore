@@ -303,14 +303,14 @@ int8_t getPlanBeamData(uint16_t beamIndex, struct one_beam_order *beam_info)
     uint16_t localBeamIndex = 0;
     uint8_t skipBeamCnt = 0;
 
-    if(beamIndex < 0){
-        printf("Error: Invalid beam index %d\r\n",beamIndex);
-        return -1;
-    }
-
     while(1)
     {
         localBeamIndex = (pBeamData[1] << 8) + pBeamData[0];
+        if (localBeamIndex >= MAX_BEAM_NUM)
+        {
+            printf("invalid beam index: %d\r\n", localBeamIndex);
+            return -1;
+        }
         // printf("find %d:beam id %d\r\n",skipBeamCnt, localBeamIndex);
         if(localBeamIndex != beamIndex){
             pBeamData += nrtBeamData.oneBeamSize[localBeamIndex];

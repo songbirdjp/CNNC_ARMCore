@@ -34,6 +34,7 @@ struct bgm_data_info
     enum bgm_fsm_state fsm_state_request_already;
     uint16_t beam_id;
     uint16_t radiation_index;
+    uint8_t deliver_type;
     uint8_t dose_mode;
     uint8_t pulse_mode;
     uint8_t cali_mode;

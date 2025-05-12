@@ -1,6 +1,7 @@
 #ifndef __RTM_APP_H__
 #define __RTM_APP_H__
 
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,8 @@ enum uart_subcmd_type
     UART_DATA_CMD_RECV_FSM_STATE = 0x13,
     UART_DATA_CMD_RECV_GMM = 0x82,
 };
+
+int8_t cmd_to_rtm_upload(uint32_t id, enum uart_subcmd_type type, uint8_t *buf, uint16_t len);
 
 
 #ifdef __cplusplus

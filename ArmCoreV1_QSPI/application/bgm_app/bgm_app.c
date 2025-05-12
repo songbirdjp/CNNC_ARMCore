@@ -264,8 +264,10 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         ret |= dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
         ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
         /* 7. update beam deliver type */
+        uint8_t deliver_type = 0;
+        ret |= beam_deliver_type_get(info.beam_id, &deliver_type);
         osMutexAcquire(obj->mutex, osWaitForever);
-        /* TODO */
+        obj->deliver_type = deliver_type;
         osMutexRelease(obj->mutex);
         break;
     case BGM_STATE_PREPARE:
