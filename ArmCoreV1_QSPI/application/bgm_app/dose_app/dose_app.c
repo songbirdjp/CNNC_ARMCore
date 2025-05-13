@@ -973,6 +973,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x42;
         buf[offset++] = 0x02;
         buf[offset++] = beam_info->info->CPQuantityInBeam;          /* cp num */
+        buf[offset++] = beam_info->info->CPQuantityInBeam >> 8;
         buf[offset++] = beam_info->info->RIQuantityInBeam;          /* ri num low */
         buf[offset++] = beam_info->info->RIQuantityInBeam >> 8;     /* ri num high */
         ret = dose_cmd_write(id, 0x02, buf, offset);
@@ -984,6 +985,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         for (uint8_t i = 0; i < beam_info->info->CPQuantityInBeam; i++)    /* cp num */
         {
             buf[offset++] = i + 1;   /* cp index */
+            buf[offset++] = (i + 1) >> 8;
             buf[offset++] = beam_info->cp_ri_map[i];        /* ri value low */
             buf[offset++] = beam_info->cp_ri_map[i] >> 8;   /* ri value high */
             ret = dose_cmd_write(id, 0x02, buf, offset);
