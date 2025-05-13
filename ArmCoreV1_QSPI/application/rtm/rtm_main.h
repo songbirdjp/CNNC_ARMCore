@@ -53,12 +53,23 @@ typedef struct rtm_module_info
     osMessageQueueId_t queue_group[RTM_MODULE_MAX];
 } rtm_module_info_t;
 
-typedef struct app_fault_table
+typedef struct app_not_ready_event_table
 {
     uint32_t emergency_stop : 1; // emergency stop, 0: normal, 1: emergency stop
     uint32_t door_open : 1; // door open, 0: door open, 1: door close
     uint32_t reserved : 30;
 } app_not_ready_event_table_t;
+
+typedef struct app_serious_interlock_table
+{
+    uint32_t emergency_stop : 1; 
+    uint32_t door_open : 1;
+    uint32_t HvEN : 1;
+    uint32_t KVTreatmentEn : 1;
+    uint32_t MVTreatmentEn : 1;
+    uint32_t MoveEN : 1;
+    uint32_t reserved : 26;
+} app_serious_interlock_table_t;
 
 typedef struct app_rtm_main
 {
@@ -67,13 +78,14 @@ typedef struct app_rtm_main
     app_not_ready_event_table_t not_ready_event;
     uint32_t warning_interlock;
     uint32_t minor_interlock;
-    uint32_t serious_interlock;
+    app_serious_interlock_table_t serious_interlock;
 
     uint32_t interlock_override;
     uint32_t unready_override;
     uint16_t led_belt;
 
-    rtm_state_machine_t state_machine;
+    // rtm_state_machine_t state_machine;
+    rtm_StateMachine_t state_machine;
 
     rtm_module_info_t rtm_module_info[RTM_MODULE_MAX];
 
@@ -82,12 +94,13 @@ typedef struct app_rtm_main
     uart_dev_t *uart_fkp;
 } app_rtm_main_t;
 
-typedef struct rtm_event
-{
-    Event_t super;
-    dido_structure_t *dido_structure;
-} rtm_event_t;
-
+// typedef struct rtm_event
+// {
+//     Event_t super;
+//     app_rtm_main_t *app_rtm;
+//     uint32_t last_time;
+//     uint8_t target_state; //延时完成后应该切换到的状态
+// } rtm_event_t;
 #ifdef __cplusplus
 }
 #endif

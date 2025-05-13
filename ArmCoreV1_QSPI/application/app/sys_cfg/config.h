@@ -2,6 +2,6 @@
 #define __CONFIG_H__
 
 #define GIT_BRANCH  "rtm_off_arm_io_develop_new"
-#define GIT_HASH    "10a6890f1cf736bb475adf1b78a5c18eb375cf6b"
+#define GIT_HASH    "c2a174a75ec6d3e18bb281ca3a1442208af26bbb"
 
 #endif

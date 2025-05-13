@@ -340,7 +340,7 @@ static void app_di_poll_entry(void *argument)
         .driver_tca9535_reg = DRIVER_TCA9535_REG_INPUT_PORT_0,
         .dataLen = 2};
     pin_msg_t pin_msg = PIN_STATE_NONE;
-    osDelay(100);//规避内部I2C解锁延时切换打断ethercat初始化过程，造成safe op
+
     int32_t retVal = di_device_init(self);
     if (retVal != 0)
     {
@@ -484,7 +484,7 @@ static void app_do_entry(void *argument)
         .dataLen = 1};
     pin_msg_t gpio_msg = PIN_STATE_NONE;
     uint32_t ret = 0;
-    osDelay(100);//规避内部I2C解锁延时切换打断ethercat初始化过程，造成safe op
+
     int32_t retVal = do_device_init(self);
     if (retVal != 0)
     {
@@ -751,7 +751,16 @@ void app_di_get(app_dido_t *self, dido_structure_t *dido_value)
 void app_do_set(app_dido_t *self, dido_structure_t *dido_value)
 {
     osMutexAcquire(self->mutex, osWaitForever);
-    memcpy((uint8_t *)(&self->dido_structure_temp) + DO_DATA_OFFSET_START, (uint8_t *)dido_value + DO_DATA_OFFSET_START, DO_DATA_OFFSET_END - DO_DATA_OFFSET_START);
+    if (memcmp((uint8_t *)(&self->dido_structure_temp) + DO_DATA_OFFSET_START, (uint8_t *)dido_value + DO_DATA_OFFSET_START, DO_DATA_OFFSET_END - DO_DATA_OFFSET_START) != 0)
+    {
+        memcpy((uint8_t *)(&self->dido_structure_temp) + DO_DATA_OFFSET_START, (uint8_t *)dido_value + DO_DATA_OFFSET_START, DO_DATA_OFFSET_END - DO_DATA_OFFSET_START);
+        osThreadFlagsSet(self->do_thread_id, APP_RTM_THREAD_FLAG_DO_UPDATE);
+    }
     osMutexRelease(self->mutex);
-    osThreadFlagsSet(self->do_thread_id, APP_RTM_THREAD_FLAG_DO_UPDATE);
+}
+void app_do_get(app_dido_t *self, dido_structure_t *dido_value)
+{
+    osMutexAcquire(self->mutex, osWaitForever);
+    memcpy((uint8_t *)dido_value + DO_DATA_OFFSET_START, (uint8_t *)(&self->dido_structure_temp) + DO_DATA_OFFSET_START, DO_DATA_OFFSET_END - DO_DATA_OFFSET_START);
+    osMutexRelease(self->mutex);
 }

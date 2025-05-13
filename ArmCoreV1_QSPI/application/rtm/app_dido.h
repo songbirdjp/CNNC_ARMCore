@@ -219,6 +219,7 @@ extern "C"
     int32_t app_dido_create(app_dido_t *self);
     void app_di_get(app_dido_t *self, dido_structure_t *dido_value);
     void app_do_set(app_dido_t *self, dido_structure_t *dido_value);
+    void app_do_get(app_dido_t *self, dido_structure_t *dido_value);
 #ifdef __cplusplus
 }
 #endif

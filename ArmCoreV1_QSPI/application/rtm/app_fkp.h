@@ -33,16 +33,24 @@ extern "C"
     typedef struct fkp_send_structure
     {
         uint16_t OffGantryUnitInfo;
+
         uint8_t BoardID;
         uint8_t HardwareVersion;
+        uint8_t SystemCurrentState;
         uint32_t FirmWareVersion;
 
-        uint8_t SystemCurrentState;
-        uint32_t TotalDose;
-        uint32_t DeliveredDose;
+        float TotalDose;
+        float DeliveredDose;
         uint8_t FkpLedBlink;
         uint8_t Vibration;
-        uint8_t Reserve[8];
+        uint8_t beep;
+        uint8_t power_off;
+        uint16_t year;
+        uint8_t month;
+        uint8_t day;
+        uint8_t hour;
+        uint8_t minute;
+        uint8_t fractions;
     } __attribute__((aligned(1), packed)) fkp_send_structure_t;
 
     typedef struct fkp_recv_structure
