@@ -118,6 +118,7 @@ enum radiation_data_state
     DOSE_RADIATION_IDX_CURRENT,
     DOSE_CONTROL_POINT_CURRENT,
     DOSE_CONTROL_POINT_PREV_RADIATION_IDX,
+    DOSE_CONTROL_POINT_UPDATE,
     DOSE_PREV_RADIATION_IDX,
     DOSE_RADIATION_IDX,
     DOSE_RATE_RADIATION_IDX,
@@ -175,22 +176,9 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_CONTROL_POINT_PREV_RADIATION_IDX:
-        {
-            osMutexAcquire(obj->control_data->mutex, osWaitForever);
-            uint16_t idx = obj->control_data->radiation.index - 1;
-            osMutexRelease(obj->control_data->mutex);
-
-            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
-            for (uint16_t i = 1; i <= obj->beam_data->total_cp; i++)
-            {
-                if (idx <= obj->beam_data->cp_ri_map[i] && idx > obj->beam_data->cp_ri_map[i-1])
-                {
-                    value = i;
-                    break;
-                }
-            }
-            osMutexRelease(obj->beam_data->mutex);            
-        }
+        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        value = obj->control_data->radiation.cp_prev;
+        osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_PREV_RADIATION_IDX:
         {
@@ -334,6 +322,26 @@ static int8_t radiation_data_value_set(enum radiation_data_state state, uint64_t
         osMutexAcquire(obj->control_data->mutex, osWaitForever);
         obj->control_data->radiation.index = value;
         osMutexRelease(obj->control_data->mutex);
+        break;
+    case DOSE_CONTROL_POINT_CURRENT:
+        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        obj->control_data->radiation.cp = value;
+        osMutexRelease(obj->control_data->mutex);
+        break;
+    case DOSE_CONTROL_POINT_PREV_RADIATION_IDX:
+        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        obj->control_data->radiation.cp_prev = value;
+        osMutexRelease(obj->control_data->mutex);
+        break;
+    case DOSE_CONTROL_POINT_UPDATE:
+        {
+            osMutexAcquire(obj->control_data->mutex, osWaitForever);
+            uint16_t idx = obj->control_data->radiation.index;
+            obj->control_data->radiation.cp_prev = obj->control_data->radiation.cp;
+            obj->control_data->radiation.cp = beam_data_value_get(0, BEAM_RI_IN_CP, idx);
+            obj->control_data->radiation.index_max_in_cp = beam_data_value_get(0, BEAM_RI_IN_CP_MAX, idx);
+            osMutexRelease(obj->control_data->mutex);
+        }
         break;
     case DOSE_INTERPOLATED_RADIATION_IDX:
         osMutexAcquire(obj->control_data->mutex, osWaitForever);
@@ -1353,6 +1361,8 @@ static int8_t control_point_limit_check(void)
     uint16_t cp_cur = radiation_data_value_get(DOSE_CONTROL_POINT_CURRENT);
     uint16_t cp_prev = radiation_data_value_get(DOSE_CONTROL_POINT_PREV_RADIATION_IDX);
 
+    // LOG_I("cp_cur: %d, cp_prev: %d\r\n", cp_cur, cp_prev);
+
     if (cp_prev + 1 == cp_cur)
     {
         uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
@@ -1474,8 +1484,14 @@ static int8_t dose_radiation_index_update(uint32_t time_excess_ms)
 
     if (deliver_type == DELIVER_TYPE_SWIMRT || deliver_type == DELIVER_TYPE_SSIMRT || deliver_type == DELIVER_TYPE_CRT)
     {
-        /* 1. update radiation index and upload to arm io */
+        /* 1. update radiation index、control point and upload to arm io */
         ret = radiation_data_value_set(DOSE_RADIATION_IDX_CURRENT, radiation_data_value_get(DOSE_RADIATION_IDX_CURRENT) + 1);
+        if (ret != 0)
+        {
+            LOG_E("radiation data value set err: %d\r\n", ret);
+            return ret;
+        }
+        ret = radiation_data_value_set(DOSE_CONTROL_POINT_UPDATE, 0);
         if (ret != 0)
         {
             LOG_E("radiation data value set err: %d\r\n", ret);
@@ -1755,6 +1771,18 @@ static int8_t detect_whether_one_pulse_repeat(void)
             return ret;
         }
         ret = radiation_data_value_set(DOSE_RADIATION_IDX_CURRENT, 0);
+        if (ret != 0)
+        {
+            LOG_E("radiation data value set err: %d\r\n", ret);
+            return ret;
+        }
+        ret = radiation_data_value_set(DOSE_CONTROL_POINT_CURRENT, 0);
+        if (ret != 0)
+        {
+            LOG_E("radiation data value set err: %d\r\n", ret);
+            return ret;
+        }
+        ret = radiation_data_value_set(DOSE_CONTROL_POINT_PREV_RADIATION_IDX, 0);
         if (ret != 0)
         {
             LOG_E("radiation data value set err: %d\r\n", ret);
@@ -2273,6 +2301,15 @@ static int8_t dose_interpolation_init_test(uint8_t argc, char **argv)
         LOG_E("beam data total ri set err: %d\r\n", ret);
     }
 
+    for (uint8_t i = 0; i < TOTAL_CP; i++)
+    {
+        ret = beam_data_value_set(0, BEAM_CP_RI_MAP, i, 2 * i + 1);
+        if (ret != 0)
+        {
+            LOG_E("beam data cp ri map set err: %d\r\n", ret);
+        }
+    }
+
     for (uint8_t i = 0; i < TOTAL_RI; i++)
     {
         ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, i, i + 1);
@@ -2309,6 +2346,11 @@ static int8_t dose_interpolation_data_get(uint8_t argc, char **argv)
     LOG_I("beam total cp: %d\r\n", (uint16_t)beam_data_value_get(0, BEAM_TOTAL_CP, 0));
     LOG_I("beam total ri: %d\r\n", (uint16_t)beam_data_value_get(0, BEAM_TOTAL_RI, 0));
 
+    for (uint8_t i = 0; i < beam_data_value_get(0, BEAM_TOTAL_CP, 0); i++)
+    {
+        LOG_I("beam cp[%d]: %d\r\n", i, (uint16_t)beam_data_value_get(0, BEAM_CP_RI_MAP, i));
+    }
+
     for (uint8_t i = 0; i < beam_data_value_get(0, BEAM_TOTAL_RI, 0); i++)
     {
         LOG_I("beam ri[%d] dose rate: %f\r\n", i, beam_data_value_get(0, BEAM_RI_DOSE_RATE, i));
@@ -2329,6 +2371,7 @@ static int8_t dose_interpolation_radiation_index_set(uint8_t argc, char **argv)
 
     osMutexAcquire(obj->control_data->mutex, osWaitForever);
     obj->control_data->radiation.index = index;
+    obj->control_data->radiation.cp_prev = obj->control_data->radiation.cp;
     obj->control_data->radiation.cp = beam_data_value_get(0, BEAM_RI_IN_CP, obj->control_data->radiation.index);
     obj->control_data->radiation.index_max_in_cp = beam_data_value_get(0, BEAM_RI_IN_CP_MAX, obj->control_data->radiation.index);
     osMutexRelease(obj->control_data->mutex);

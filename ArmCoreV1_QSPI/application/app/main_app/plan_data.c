@@ -104,6 +104,14 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
             }
         }
         break;
+    case BEAM_CP_RI_MAP:
+        if (ri_idx > beam_data->total_cp)
+        {
+            LOG_E("invalid cp_idx: %d\n", ri_idx);
+            break;
+        }
+        value = beam_data->cp_ri_map[ri_idx];
+        break;
     default:
         LOG_E("invalid state: %d\n", state);
         break;

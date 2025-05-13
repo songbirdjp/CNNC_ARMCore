@@ -203,12 +203,12 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             }
             break;
         case 0x02:
-            ret = beam_data_value_set(0, BEAM_TOTAL_CP, 0, cmd->data[2]);
+            ret = beam_data_value_set(0, BEAM_TOTAL_CP, 0, cmd->data[3] << 8 | cmd->data[2]);
             if (ret != 0)
             {
                 LOG_E("beam data total cp set err: %d\r\n", ret);
             }
-            ret |= beam_data_value_set(0, BEAM_TOTAL_RI, 0, cmd->data[4] << 8 | cmd->data[3]);
+            ret |= beam_data_value_set(0, BEAM_TOTAL_RI, 0, cmd->data[5] << 8 | cmd->data[4]);
             if (ret != 0)
             {
                 LOG_E("beam data total ri set err: %d\r\n", ret);
@@ -219,7 +219,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
         case 0x03:
             break;
         case 0x04:
-            ret = beam_data_value_set(0, BEAM_CP_RI_MAP, cmd->data[2], cmd->data[4] << 8 | cmd->data[3]);
+            ret = beam_data_value_set(0, BEAM_CP_RI_MAP, cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4]);
             if (ret != 0)
             {
                 LOG_E("beam data cp ri map set err: %d\r\n", ret);
@@ -834,6 +834,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
 
             osMutexAcquire(obj->mutex, osWaitForever);
             obj->radiation.index = cmd->data[2] << 8 | cmd->data[1];
+            obj->radiation.cp_prev = obj->radiation.cp;
             obj->radiation.cp = beam_data_value_get(0, BEAM_RI_IN_CP, obj->radiation.index);
             obj->radiation.index_max_in_cp = beam_data_value_get(0, BEAM_RI_IN_CP_MAX, obj->radiation.index);
             osMutexRelease(obj->mutex);

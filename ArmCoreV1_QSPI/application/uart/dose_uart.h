@@ -108,6 +108,7 @@ struct interlock_para
 
 struct radiation_point_para
 {
+    uint16_t cp_prev;                   /* previous CP */
     uint16_t cp;                        /* radiation index at CP */
     uint16_t index;                     /* current radiation index */
     uint16_t index_max_in_cp;           /* max radiation index at current CP */
