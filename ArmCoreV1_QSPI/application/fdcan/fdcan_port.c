@@ -9,31 +9,31 @@ static struct device_fdcan *device_fdcan1_get(void)
 }
 
 /**
-  * @brief This function handles FDCAN1 interrupt 0.
-  */
+ * @brief This function handles FDCAN1 interrupt 0.
+ */
 void FDCAN1_IT0_IRQHandler(void)
 {
-  /* USER CODE BEGIN FDCAN1_IT0_IRQn 0 */
+    /* USER CODE BEGIN FDCAN1_IT0_IRQn 0 */
 
-  /* USER CODE END FDCAN1_IT0_IRQn 0 */
-  HAL_FDCAN_IRQHandler((FDCAN_HandleTypeDef *)device_fdcan1_get());
-  /* USER CODE BEGIN FDCAN1_IT0_IRQn 1 */
+    /* USER CODE END FDCAN1_IT0_IRQn 0 */
+    HAL_FDCAN_IRQHandler((FDCAN_HandleTypeDef *)device_fdcan1_get());
+    /* USER CODE BEGIN FDCAN1_IT0_IRQn 1 */
 
-  /* USER CODE END FDCAN1_IT0_IRQn 1 */
+    /* USER CODE END FDCAN1_IT0_IRQn 1 */
 }
 
 /**
-  * @brief This function handles FDCAN1 interrupt 1.
-  */
+ * @brief This function handles FDCAN1 interrupt 1.
+ */
 void FDCAN1_IT1_IRQHandler(void)
 {
-  /* USER CODE BEGIN FDCAN1_IT1_IRQn 0 */
+    /* USER CODE BEGIN FDCAN1_IT1_IRQn 0 */
 
-  /* USER CODE END FDCAN1_IT1_IRQn 0 */
-  HAL_FDCAN_IRQHandler((FDCAN_HandleTypeDef *)device_fdcan1_get());
-  /* USER CODE BEGIN FDCAN1_IT1_IRQn 1 */
+    /* USER CODE END FDCAN1_IT1_IRQn 0 */
+    HAL_FDCAN_IRQHandler((FDCAN_HandleTypeDef *)device_fdcan1_get());
+    /* USER CODE BEGIN FDCAN1_IT1_IRQn 1 */
 
-  /* USER CODE END FDCAN1_IT1_IRQn 1 */
+    /* USER CODE END FDCAN1_IT1_IRQn 1 */
 }
 
 static int8_t fdcan_dlc_to_index(uint8_t len)
@@ -94,8 +94,7 @@ static int8_t device_fdcan_init(struct device_fdcan *fdcan, uint8_t *device_name
         .global_filter.NonMatchingStd = FDCAN_REJECT,
         .global_filter.NonMatchingExt = FDCAN_REJECT,
         .global_filter.RejectRemoteStd = FDCAN_REJECT_REMOTE,
-        .global_filter.RejectRemoteExt = FDCAN_REJECT_REMOTE
-    };
+        .global_filter.RejectRemoteExt = FDCAN_REJECT_REMOTE};
     ret = fdcan->ioctl(fdcan, FDCAN_CMD_SET_RX_GLOBAL_FILTER, (void *)&filter);
     if (ret != 0)
     {
@@ -129,7 +128,7 @@ static int8_t device_fdcan_init(struct device_fdcan *fdcan, uint8_t *device_name
     {
         uint32_t irq_idx;
         uint32_t line;
-    }line_info = {0, FDCAN_INTERRUPT_LINE0};
+    } line_info = {0, FDCAN_INTERRUPT_LINE0};
 
     ret = fdcan->ioctl(fdcan, FDCAN_CMD_SET_IRQ_LINE, (void *)&line_info);
     if (ret != 0)
@@ -144,7 +143,7 @@ static int8_t device_fdcan_init(struct device_fdcan *fdcan, uint8_t *device_name
         uint32_t en;
         uint32_t irq_idx;
         uint32_t tx_buf_idx
-    }irq_info = {.en = 1, .irq_idx = 0, .tx_buf_idx = 0};
+    } irq_info = {.en = 1, .irq_idx = 0, .tx_buf_idx = 0};
 
     irq_info.irq_idx = FDCAN_IT_RX_FIFO0_MESSAGE_LOST | FDCAN_IT_RX_FIFO0_FULL | FDCAN_IT_RX_FIFO0_NEW_MESSAGE | \
                    FDCAN_IT_RX_FIFO1_MESSAGE_LOST | FDCAN_IT_RX_FIFO1_FULL | FDCAN_IT_RX_FIFO1_NEW_MESSAGE | \
@@ -159,6 +158,7 @@ static int8_t device_fdcan_init(struct device_fdcan *fdcan, uint8_t *device_name
         return ret;
     }
 
+    fdcan1_enable_switch(1);
     /* 6. open device */
     ret = fdcan->open(fdcan);
     if (ret != 0)
@@ -222,7 +222,7 @@ int8_t fdcan1_data_read(struct fdcan_rx_msg *msg, uint32_t timeout)
 
     return device_fdcan1_get()->read(device_fdcan1_get(), msg, timeout);
 }
-
+#define FDCAN1_TEST
 #ifdef FDCAN1_TEST
 #include "shell.h"
 
@@ -233,7 +233,6 @@ static int8_t fdcan1_test(int argc, char *argv[])
         printf("usage: <cmd><run times>\r\n");
         return -1;
     }
-
 
     uint8_t tx_buf[64] = {0};
     struct fdcan_rx_msg msg = {0};
@@ -255,59 +254,58 @@ static int8_t fdcan1_test(int argc, char *argv[])
             return ret;
         }
 
-        ret = fdcan1_data_read(&msg, osWaitForever);
-        if (ret != 0)
-        {
-            printf("fdcan1_data_read err: %d\r\n", ret);
-            return ret;
-        }
+        // ret = fdcan1_data_read(&msg, osWaitForever);
+        // if (ret != 0)
+        // {
+        //     printf("fdcan1_data_read err: %d\r\n", ret);
+        //     return ret;
+        // }
 
-        if (memcmp(tx_buf, msg.buf, sizeof(tx_buf)))
-        {
-            printf("rx_buf: ");
-            for (uint8_t i = 0; i < sizeof(msg.buf); i++)
-            {
-                printf("%02x ", msg.buf[i]);
-            }
-            printf("\r\n");
-        }
+        // if (memcmp(tx_buf, msg.buf, sizeof(tx_buf)))
+        // {
+        //     printf("rx_buf: ");
+        //     for (uint8_t i = 0; i < sizeof(msg.buf); i++)
+        //     {
+        //         printf("%02x ", msg.buf[i]);
+        //     }
+        //     printf("\r\n");
+        // }
 
-        printf("count: %u\r\n", cnt);
+        // printf("count: %u\r\n", cnt);
     }
 
-    FDCAN_ErrorCountersTypeDef err_cnt = {0};
-    ret = device_fdcan1_get()->ioctl(device_fdcan1_get(), FDCAN_CMD_GET_ERR_CNT, (void *)&err_cnt);
-    if (ret != 0)
-    {
-        printf("device %s get err cnt err: %d\r\n", DEVICE_NAME_FDCAN1, ret);
-        return ret;
-    }
+    // FDCAN_ErrorCountersTypeDef err_cnt = {0};
+    // ret = device_fdcan1_get()->ioctl(device_fdcan1_get(), FDCAN_CMD_GET_ERR_CNT, (void *)&err_cnt);
+    // if (ret != 0)
+    // {
+    //     printf("device %s get err cnt err: %d\r\n", DEVICE_NAME_FDCAN1, ret);
+    //     return ret;
+    // }
 
-    FDCAN_ProtocolStatusTypeDef status = {0};
-    ret = device_fdcan1_get()->ioctl(device_fdcan1_get(), FDCAN_CMD_GET_PROTO_STAT, (void *)&status);
-    if (ret != 0)
-    {
-        printf("device %s get proto status err: %d\r\n", DEVICE_NAME_FDCAN1, ret);
-        return ret;
-    }
+    // FDCAN_ProtocolStatusTypeDef status = {0};
+    // ret = device_fdcan1_get()->ioctl(device_fdcan1_get(), FDCAN_CMD_GET_PROTO_STAT, (void *)&status);
+    // if (ret != 0)
+    // {
+    //     printf("device %s get proto status err: %d\r\n", DEVICE_NAME_FDCAN1, ret);
+    //     return ret;
+    // }
 
-    printf("TxErrorCnt: %u\r\n", err_cnt.TxErrorCnt);
-    printf("RxErrorCnt: %u\r\n", err_cnt.RxErrorCnt);
-    printf("RxErrorPassive: %u\r\n", err_cnt.RxErrorPassive);
-    printf("ErrorLogging: %u\r\n", err_cnt.ErrorLogging);
+    // printf("TxErrorCnt: %u\r\n", err_cnt.TxErrorCnt);
+    // printf("RxErrorCnt: %u\r\n", err_cnt.RxErrorCnt);
+    // printf("RxErrorPassive: %u\r\n", err_cnt.RxErrorPassive);
+    // printf("ErrorLogging: %u\r\n", err_cnt.ErrorLogging);
 
-    printf("Activity: %u\r\n", status.Activity);
-    printf("BusOff: %u\r\n", status.BusOff);
-    printf("DataLastErrorCode: %u\r\n", status.DataLastErrorCode);
-    printf("ErrorPassive: %u\r\n", status.ErrorPassive);
-    printf("LastErrorCode: %u\r\n", status.LastErrorCode);
-    printf("ProtocolException: %u\r\n", status.ProtocolException);
-    printf("RxBRSflag: %u\r\n", status.RxBRSflag);
-    printf("RxESIflag: %u\r\n", status.RxESIflag);
-    printf("RxFDFflag: %u\r\n", status.RxFDFflag);
-    printf("TDCvalue: %u\r\n", status.TDCvalue);
-    printf("Warning: %u\r\n", status.Warning);
-
+    // printf("Activity: %u\r\n", status.Activity);
+    // printf("BusOff: %u\r\n", status.BusOff);
+    // printf("DataLastErrorCode: %u\r\n", status.DataLastErrorCode);
+    // printf("ErrorPassive: %u\r\n", status.ErrorPassive);
+    // printf("LastErrorCode: %u\r\n", status.LastErrorCode);
+    // printf("ProtocolException: %u\r\n", status.ProtocolException);
+    // printf("RxBRSflag: %u\r\n", status.RxBRSflag);
+    // printf("RxESIflag: %u\r\n", status.RxESIflag);
+    // printf("RxFDFflag: %u\r\n", status.RxFDFflag);
+    // printf("TDCvalue: %u\r\n", status.TDCvalue);
+    // printf("Warning: %u\r\n", status.Warning);
 
     return 0;
 }
