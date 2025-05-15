@@ -29,7 +29,7 @@ extern "C"
         RTM_MODULE_RTM_ON_PLC = 0,
         RTM_MODULE_RTM_ON_ARM,
         RTM_MODULE_ICM,
-        // RTM_MODULE_BGM,
+        RTM_MODULE_BGM,
         RTM_MODULE_QAM,
         // RTM_MODULE_BSM,
 
