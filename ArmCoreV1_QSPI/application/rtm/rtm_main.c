@@ -16,6 +16,8 @@
 #include "lan9252_app.h"
 #include "init_call.h"
 #include "app_fkp.h"
+#include "fdcan_port.h"
+#include "app_cpg.h"
 #include "hw_crc.h"
 typedef struct
 {
@@ -644,7 +646,6 @@ static void app_fkp_tx_thread(void *argument)
         crc = hardware_crc_calculate(CRC32, (uint8_t *)&send_data + 2, tx_len - 6);
         crc ^= 0xFFFFFFFF;
         send_data.crc = crc;
-        
 
         if (memcmp(&send_data, &send_data_bak, sizeof(send_data)) != 0)
         {
@@ -654,6 +655,113 @@ static void app_fkp_tx_thread(void *argument)
             // {
             //     continue;
             // }
+        }
+    }
+exit:
+    osThreadExit();
+}
+static void app_cpg_rx_thread(void *argument)
+{
+    app_rtm_main_t *self = (app_rtm_main_t *)argument;
+    uint16_t rx_len = sizeof(cpg_recv_structure_t);
+    int8_t ret = 0;
+    struct fdcan_rx_msg msg = {0};
+    uint32_t CpgButton = 0;
+    uint32_t CpgButton_bak = 0;
+    uint32_t CpgButton_1 = 0;
+    uint32_t CpgButton_2 = 0;
+    for (;;)
+    {
+        ret = fdcan1_data_read(&msg, 0xFFFFFFFF);
+        if (ret != 0)
+        {
+            LOG_E("fdcan1_data_read error, ret = %d\r\n", ret);
+            continue;
+        }
+        if ((msg.header.Identifier != 0x01) && (msg.header.Identifier != 0x02))
+        {
+            continue;
+        }
+        if (msg.header.Identifier == 0x01)
+        {
+            CpgButton_1 = (*(cpg_recv_structure_t *)&msg.buf).CpgButton;
+        }
+        else if (msg.header.Identifier == 0x02)
+        {
+            CpgButton_2 = (*(cpg_recv_structure_t *)&msg.buf).CpgButton;
+        }
+        CpgButton = CpgButton_1 | CpgButton_2;
+
+        if (CpgButton != CpgButton_bak)
+        {
+            CpgButton_bak = CpgButton;
+            ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_RTM_OFF_PLC],
+                                          0x80 | 0x100 | 0x01,
+                                          0xA1,
+                                          &CpgButton,
+                                          sizeof(CpgButton));
+            if (ret != 0)
+            {
+                LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
+            }
+            ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_RTM_ON],
+                                          0x80 | 0x100 | 0x01,
+                                          0xA1,
+                                          &CpgButton,
+                                          sizeof(CpgButton));
+            if (ret != 0)
+            {
+                LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
+            }
+            // ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_PSM],
+            //                               0x80 | 0x100 | 0x01,
+            //                               0xA1,
+            //                               &CpgButton,
+            //                               sizeof(CpgButton));
+            // if (ret != 0)
+            // {
+            //     LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
+            // }
+        }
+    }
+exit:
+    osThreadExit();
+}
+static void app_cpg_tx_thread(void *argument)
+{
+    app_rtm_main_t *self = (app_rtm_main_t *)argument;
+    queue_frame_t queue_frame;
+    osStatus_t status = osOK;
+    int8_t ret = 0;
+    uint16_t tx_len = sizeof(cpg_send_structure_t);
+    cpg_send_structure_t send_data = {0}, send_data_bak = {0};
+    for (;;)
+    {
+        status = osMessageQueueGet(self->rtm_module_info[RTM_MODULE_CPG].module_queue, &queue_frame, NULL, 0xFFFFFFFF);
+        if (status != osOK)
+        {
+            LOG_E("%s queue get error, status = %d\r\n", self->rtm_module_info[RTM_MODULE_CPG].module_name, status);
+            continue;
+        }
+
+        if (queue_frame.payload.type == 0x05 && queue_frame.payload.data[0] == 0x18)
+        {
+            memcpy(&(send_data.CpgLedBlink), queue_frame.payload.data + 1, 1);
+        }
+        if (memcmp(&send_data, &send_data_bak, sizeof(send_data)) != 0)
+        {
+            memcpy(&send_data_bak, &send_data, sizeof(send_data));
+
+            ret =  fdcan1_data_write(0x01, (uint8_t *)&send_data, sizeof(send_data));
+            if (ret != 0)
+            {
+                LOG_E("fdcan1_data_write error,id = 0x01, ret = %d\r\n", ret);
+            }
+            ret =  fdcan1_data_write(0x02, (uint8_t *)&send_data, sizeof(send_data));
+            if (ret != 0)
+            {
+                LOG_E("fdcan1_data_write error,id = 0x02, ret = %d\r\n", ret);
+            }
         }
     }
 exit:
@@ -676,7 +784,7 @@ int app_rtm_data_handle_create(void)
     // self->rtm_module_info[RTM_MODULE_GMM].module_name = "GMM";
     // self->rtm_module_info[RTM_MODULE_PSM].module_name = "PSM";
     self->rtm_module_info[RTM_MODULE_FKP].module_name = "FKP";
-    // self->rtm_module_info[RTM_MODULE_CPG].module_name = "CPG";
+    self->rtm_module_info[RTM_MODULE_CPG].module_name = "CPG";
     self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].module_name = "RTM_OFF_ARM";
     self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].module_name = "RTM_OFF_PLC";
 
@@ -684,7 +792,7 @@ int app_rtm_data_handle_create(void)
     // self->rtm_module_info[RTM_MODULE_GMM].ID = 0x80;
     // self->rtm_module_info[RTM_MODULE_PSM].ID = 0x100;
     self->rtm_module_info[RTM_MODULE_FKP].ID = 0x200;
-    // self->rtm_module_info[RTM_MODULE_CPG].ID = 0x400;
+    self->rtm_module_info[RTM_MODULE_CPG].ID = 0x400;
     self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].ID = 0x40;
     self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].ID = 0x80 | 0x100;
     for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
@@ -699,7 +807,7 @@ int app_rtm_data_handle_create(void)
     // self->rtm_module_info[RTM_MODULE_GMM].module_priority = osPriorityNormal;
     // self->rtm_module_info[RTM_MODULE_PSM].module_priority = osPriorityNormal;
     self->rtm_module_info[RTM_MODULE_FKP].module_priority = osPriorityNormal;
-    // self->rtm_module_info[RTM_MODULE_CPG].module_priority = osPriorityNormal;
+    self->rtm_module_info[RTM_MODULE_CPG].module_priority = osPriorityNormal;
     self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].module_priority = osPriorityAboveNormal;
     self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].module_priority = osPriorityAboveNormal;
 
@@ -716,9 +824,9 @@ int app_rtm_data_handle_create(void)
     self->rtm_module_info[RTM_MODULE_FKP].heartbeat_info_rx.board_id = 0;
     self->rtm_module_info[RTM_MODULE_FKP].heartbeat_info_rx.HardwareVersion = 0;
     self->rtm_module_info[RTM_MODULE_FKP].heartbeat_info_rx.FirmWareVersion = 0;
-    // self->rtm_module_info[RTM_MODULE_CPG].heartbeat_info_rx.board_id = 0;
-    // self->rtm_module_info[RTM_MODULE_CPG].heartbeat_info_rx.HardwareVersion = 0;
-    // self->rtm_module_info[RTM_MODULE_CPG].heartbeat_info_rx.FirmWareVersion = 0;
+    self->rtm_module_info[RTM_MODULE_CPG].heartbeat_info_rx.board_id = 0;
+    self->rtm_module_info[RTM_MODULE_CPG].heartbeat_info_rx.HardwareVersion = 0;
+    self->rtm_module_info[RTM_MODULE_CPG].heartbeat_info_rx.FirmWareVersion = 0;
     self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].heartbeat_info_rx.board_id = 0;
     self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].heartbeat_info_rx.HardwareVersion = 0;
     self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].heartbeat_info_rx.FirmWareVersion = 0;
@@ -779,24 +887,13 @@ int app_rtm_data_handle_create(void)
     {
         return -5;
     }
-    // ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_FKP].uart_protocol,
-    //                          UART_DEV_NAME_UART4,
-    //                          1000,
-    //                          10000,
-    //                          10000);
-    // if (ret != 0)
-    // {
-    //     return -4;
-    // }
-    // ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_CPG].uart_protocol,
-    //                          UART_DEV_NAME_USART3,
-    //                          1000,
-    //                          10000,
-    //                          10000);
-    // if (ret != 0)
-    // {
-    //     return -5;
-    // }
+
+    ret = fdcan1_init();
+    if (ret != 0)
+    {
+        return -6;
+    }
+
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_RTM_ON].uart_protocol,
                              UART_DEV_NAME_UART5,
                              1000,
@@ -805,7 +902,7 @@ int app_rtm_data_handle_create(void)
     if (ret != 0)
     {
         printf("uart_protocol_init error, ret = %d", ret);
-        return -6;
+        return -7;
     }
     for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
     {
@@ -815,7 +912,7 @@ int app_rtm_data_handle_create(void)
         self->rtm_module_info[i].module_queue = osMessageQueueNew(5, sizeof(queue_frame_t), NULL);
         if (self->rtm_module_info[i].module_queue == NULL)
         {
-            return -7;
+            return -8;
         }
         for (uint8_t j = 0; j < RTM_MODULE_MAX; j++)
         {
@@ -829,7 +926,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_ethercat_rx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -8;
+        return -9;
     }
     thread_attributes.name = "app_ethercat_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -837,7 +934,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_ethercat_tx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -9;
+        return -10;
     }
     thread_attributes.name = "app_rtm_main_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -845,7 +942,7 @@ int app_rtm_data_handle_create(void)
     app_rtm_main_threadId = osThreadNew(app_rtm_main_thread, self, &thread_attributes);
     if (app_rtm_main_threadId == NULL)
     {
-        return -8;
+        return -11;
     }
     // thread_attributes.name = "app_gmm_rx_thread";
     // thread_attributes.stack_size = 1024 * 4;
@@ -853,7 +950,7 @@ int app_rtm_data_handle_create(void)
     // threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_GMM]), &thread_attributes);
     // if (threadHandle == NULL)
     // {
-    //     return -10;
+    //     return -12;
     // }
     // thread_attributes.name = "app_gmm_tx_thread";
     // thread_attributes.stack_size = 1024 * 4;
@@ -861,7 +958,7 @@ int app_rtm_data_handle_create(void)
     // threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_GMM]), &thread_attributes);
     // if (threadHandle == NULL)
     // {
-    //     return -11;
+    //     return -13;
     // }
     // thread_attributes.name = "app_psm_rx_thread";
     // thread_attributes.stack_size = 1024 * 4;
@@ -869,7 +966,7 @@ int app_rtm_data_handle_create(void)
     // threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_PSM]), &thread_attributes);
     // if (threadHandle == NULL)
     // {
-    //     return -12;
+    //     return -14;
     // }
     // thread_attributes.name = "app_psm_tx_thread";
     // thread_attributes.stack_size = 1024 * 4;
@@ -877,7 +974,7 @@ int app_rtm_data_handle_create(void)
     // threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_PSM]), &thread_attributes);
     // if (threadHandle == NULL)
     // {
-    //     return -13;
+    //     return -15;
     // }
     thread_attributes.name = "app_fkp_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -885,7 +982,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_fkp_rx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -14;
+        return -16;
     }
     thread_attributes.name = "app_fkp_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -893,31 +990,31 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_fkp_tx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -15;
+        return -17;
     }
-    // thread_attributes.name = "app_cpg_rx_thread";
-    // thread_attributes.stack_size = 1024 * 4;
-    // thread_attributes.priority = self->rtm_module_info[RTM_MODULE_CPG].module_priority;
-    // threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_CPG]), &thread_attributes);
-    // if (threadHandle == NULL)
-    // {
-    //     return -16;
-    // }
-    // thread_attributes.name = "app_cpg_tx_thread";
-    // thread_attributes.stack_size = 1024 * 4;
-    // thread_attributes.priority = self->rtm_module_info[RTM_MODULE_CPG].module_priority;
-    // threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_CPG]), &thread_attributes);
-    // if (threadHandle == NULL)
-    // {
-    //     return -17;
-    // }
+    thread_attributes.name = "app_cpg_rx_thread";
+    thread_attributes.stack_size = 1024 * 4;
+    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_CPG].module_priority;
+    threadHandle = osThreadNew(app_cpg_rx_thread, self, &thread_attributes);
+    if (threadHandle == NULL)
+    {
+        return -18;
+    }
+    thread_attributes.name = "app_cpg_tx_thread";
+    thread_attributes.stack_size = 1024 * 4;
+    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_CPG].module_priority;
+    threadHandle = osThreadNew(app_cpg_tx_thread, self, &thread_attributes);
+    if (threadHandle == NULL)
+    {
+        return -19;
+    }
     thread_attributes.name = "app_rtm_on_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
     thread_attributes.priority = self->rtm_module_info[RTM_MODULE_RTM_ON].module_priority;
     threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_ON]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -18;
+        return -20;
     }
     thread_attributes.name = "app_rtm_on_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -925,7 +1022,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_ON]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -19;
+        return -21;
     }
     return 0;
 }

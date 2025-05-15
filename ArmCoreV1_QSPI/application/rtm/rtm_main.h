@@ -30,7 +30,7 @@ typedef enum
     // RTM_MODULE_GMM,
     // RTM_MODULE_PSM,
     RTM_MODULE_FKP,
-    // RTM_MODULE_CPG,
+    RTM_MODULE_CPG,
     RTM_MODULE_RTM_OFF_ARM,
     RTM_MODULE_RTM_OFF_PLC,
 
@@ -94,13 +94,6 @@ typedef struct app_rtm_main
     uart_dev_t *uart_fkp;
 } app_rtm_main_t;
 
-// typedef struct rtm_event
-// {
-//     Event_t super;
-//     app_rtm_main_t *app_rtm;
-//     uint32_t last_time;
-//     uint8_t target_state; //延时完成后应该切换到的状态
-// } rtm_event_t;
 #ifdef __cplusplus
 }
 #endif

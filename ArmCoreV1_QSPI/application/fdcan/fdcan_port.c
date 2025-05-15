@@ -170,11 +170,11 @@ static int8_t device_fdcan_init(struct device_fdcan *fdcan, uint8_t *device_name
     return 0;
 }
 
-static int8_t fdcan1_init(void)
+int8_t fdcan1_init(void)
 {
     return device_fdcan_init(device_fdcan1_get(), DEVICE_NAME_FDCAN1);
 }
-INIT_APP_EXPORT(fdcan1_init);
+// INIT_APP_EXPORT(fdcan1_init);
 
 int8_t fdcan1_enable_switch(uint32_t enable)
 {
@@ -222,7 +222,7 @@ int8_t fdcan1_data_read(struct fdcan_rx_msg *msg, uint32_t timeout)
 
     return device_fdcan1_get()->read(device_fdcan1_get(), msg, timeout);
 }
-#define FDCAN1_TEST
+// #define FDCAN1_TEST
 #ifdef FDCAN1_TEST
 #include "shell.h"
 
@@ -254,58 +254,58 @@ static int8_t fdcan1_test(int argc, char *argv[])
             return ret;
         }
 
-        // ret = fdcan1_data_read(&msg, osWaitForever);
-        // if (ret != 0)
-        // {
-        //     printf("fdcan1_data_read err: %d\r\n", ret);
-        //     return ret;
-        // }
+        ret = fdcan1_data_read(&msg, osWaitForever);
+        if (ret != 0)
+        {
+            printf("fdcan1_data_read err: %d\r\n", ret);
+            return ret;
+        }
 
-        // if (memcmp(tx_buf, msg.buf, sizeof(tx_buf)))
-        // {
-        //     printf("rx_buf: ");
-        //     for (uint8_t i = 0; i < sizeof(msg.buf); i++)
-        //     {
-        //         printf("%02x ", msg.buf[i]);
-        //     }
-        //     printf("\r\n");
-        // }
+        if (memcmp(tx_buf, msg.buf, sizeof(tx_buf)))
+        {
+            printf("rx_buf: ");
+            for (uint8_t i = 0; i < sizeof(msg.buf); i++)
+            {
+                printf("%02x ", msg.buf[i]);
+            }
+            printf("\r\n");
+        }
 
-        // printf("count: %u\r\n", cnt);
+        printf("count: %u\r\n", cnt);
     }
 
-    // FDCAN_ErrorCountersTypeDef err_cnt = {0};
-    // ret = device_fdcan1_get()->ioctl(device_fdcan1_get(), FDCAN_CMD_GET_ERR_CNT, (void *)&err_cnt);
-    // if (ret != 0)
-    // {
-    //     printf("device %s get err cnt err: %d\r\n", DEVICE_NAME_FDCAN1, ret);
-    //     return ret;
-    // }
+    FDCAN_ErrorCountersTypeDef err_cnt = {0};
+    ret = device_fdcan1_get()->ioctl(device_fdcan1_get(), FDCAN_CMD_GET_ERR_CNT, (void *)&err_cnt);
+    if (ret != 0)
+    {
+        printf("device %s get err cnt err: %d\r\n", DEVICE_NAME_FDCAN1, ret);
+        return ret;
+    }
 
-    // FDCAN_ProtocolStatusTypeDef status = {0};
-    // ret = device_fdcan1_get()->ioctl(device_fdcan1_get(), FDCAN_CMD_GET_PROTO_STAT, (void *)&status);
-    // if (ret != 0)
-    // {
-    //     printf("device %s get proto status err: %d\r\n", DEVICE_NAME_FDCAN1, ret);
-    //     return ret;
-    // }
+    FDCAN_ProtocolStatusTypeDef status = {0};
+    ret = device_fdcan1_get()->ioctl(device_fdcan1_get(), FDCAN_CMD_GET_PROTO_STAT, (void *)&status);
+    if (ret != 0)
+    {
+        printf("device %s get proto status err: %d\r\n", DEVICE_NAME_FDCAN1, ret);
+        return ret;
+    }
 
-    // printf("TxErrorCnt: %u\r\n", err_cnt.TxErrorCnt);
-    // printf("RxErrorCnt: %u\r\n", err_cnt.RxErrorCnt);
-    // printf("RxErrorPassive: %u\r\n", err_cnt.RxErrorPassive);
-    // printf("ErrorLogging: %u\r\n", err_cnt.ErrorLogging);
+    printf("TxErrorCnt: %u\r\n", err_cnt.TxErrorCnt);
+    printf("RxErrorCnt: %u\r\n", err_cnt.RxErrorCnt);
+    printf("RxErrorPassive: %u\r\n", err_cnt.RxErrorPassive);
+    printf("ErrorLogging: %u\r\n", err_cnt.ErrorLogging);
 
-    // printf("Activity: %u\r\n", status.Activity);
-    // printf("BusOff: %u\r\n", status.BusOff);
-    // printf("DataLastErrorCode: %u\r\n", status.DataLastErrorCode);
-    // printf("ErrorPassive: %u\r\n", status.ErrorPassive);
-    // printf("LastErrorCode: %u\r\n", status.LastErrorCode);
-    // printf("ProtocolException: %u\r\n", status.ProtocolException);
-    // printf("RxBRSflag: %u\r\n", status.RxBRSflag);
-    // printf("RxESIflag: %u\r\n", status.RxESIflag);
-    // printf("RxFDFflag: %u\r\n", status.RxFDFflag);
-    // printf("TDCvalue: %u\r\n", status.TDCvalue);
-    // printf("Warning: %u\r\n", status.Warning);
+    printf("Activity: %u\r\n", status.Activity);
+    printf("BusOff: %u\r\n", status.BusOff);
+    printf("DataLastErrorCode: %u\r\n", status.DataLastErrorCode);
+    printf("ErrorPassive: %u\r\n", status.ErrorPassive);
+    printf("LastErrorCode: %u\r\n", status.LastErrorCode);
+    printf("ProtocolException: %u\r\n", status.ProtocolException);
+    printf("RxBRSflag: %u\r\n", status.RxBRSflag);
+    printf("RxESIflag: %u\r\n", status.RxESIflag);
+    printf("RxFDFflag: %u\r\n", status.RxFDFflag);
+    printf("TDCvalue: %u\r\n", status.TDCvalue);
+    printf("Warning: %u\r\n", status.Warning);
 
     return 0;
 }
