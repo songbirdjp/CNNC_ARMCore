@@ -282,6 +282,12 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
                 }
             }
 
+            status = osSemaphoreAcquire(self->osSemaphoreId, 0);
+            if (status == osOK)
+            {
+                printf("recv semaphore is valid when send request frame\r\n");
+            }
+
             status = osSemaphoreAcquire(self->osSemaphoreId, timeout);  /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
             if (status != osOK)
             {

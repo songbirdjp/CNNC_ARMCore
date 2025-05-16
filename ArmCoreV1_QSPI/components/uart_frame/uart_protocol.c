@@ -121,7 +121,7 @@ int32_t uart_protocol_init(uart_protocol_t *const self,
     {
         return -3;
     }
-    err = dev_uart_init(self->uart_dev, DEV_UART_IOCTL_USE_DMA, 5, UART_PROTOCOL_FRAME_QUEUE_SIZE);
+    err = dev_uart_init(self->uart_dev, DEV_UART_IOCTL_USE_DMA, 16, UART_PROTOCOL_FRAME_QUEUE_SIZE);
     if (err != DEV_EOK)
     {
         return -4;

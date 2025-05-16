@@ -173,6 +173,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
         {
         case 0x00:
             obj->treatment.pulse_mode = (cmd->data[2] == 0) ? 0 : 1;
+            LOG_I("set pulse mode: %d\r\n", cmd->data[2]);
             break;
         case 0x01:
             LOG_I("dose uart prf set: %d\r\n", cmd->data[2]);
@@ -213,8 +214,8 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             {
                 LOG_E("beam data total ri set err: %d\r\n", ret);
             }
-            LOG_I("dose beam total cp set: %d\r\n", cmd->data[2]);
-            LOG_I("dose beam total ri set: %d\r\n", cmd->data[4] << 8 | cmd->data[3]);
+            LOG_I("dose beam total cp set: %d\r\n", cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("dose beam total ri set: %d\r\n", cmd->data[5] << 8 | cmd->data[4]);
             break;
         case 0x03:
             break;
@@ -224,7 +225,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             {
                 LOG_E("beam data cp ri map set err: %d\r\n", ret);
             }
-            // LOG_I("ri_value[%d]: %d\r\n", cmd->data[2], cmd->data[4] << 8 | cmd->data[3]);
+            // LOG_I("cp_ri_map[%d]: %d\r\n", cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4]);
             break;
         case 0x05:
             ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, cmd->data[3] << 8 | cmd->data[2], (cmd->data[5] << 8 | cmd->data[4]) / 10.0);
@@ -251,16 +252,19 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             {
                 LOG_E("beam data type set err: %d\r\n", ret);
             }
+            LOG_I("beam type: %d\r\n", cmd->data[2]);
             ret = beam_data_value_set(0, BEAM_RADIATION_TYPE, 0, cmd->data[3]);
             if (ret != 0)
             {
                 LOG_E("beam data radiation type set err: %d\r\n", ret);
             }
+            LOG_I("beam radiation type: %d\r\n", cmd->data[3]);
             ret = beam_data_value_set(0, BEAM_DELIVER_TYPE, 0, cmd->data[4]);
             if (ret != 0)
             {
                 LOG_E("beam data deliver type set err: %d\r\n", ret);
             }
+            LOG_I("beam deliver type: %d\r\n", cmd->data[4]);
             break;
         default:
             ret = -1;
@@ -464,7 +468,6 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
             {
                 ret = -1;
             }
-            obj->treatment.dose_mode = 0;
             if (obj->treatment.dose_mode != 0)
             {
                 ret = -1;
@@ -477,7 +480,10 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
         }
         break;
     case FSM_STATE_PRELIMINARY_BEGIN:
-        ret = -1;
+        if (new_state != FSM_STATE_TERMINATE)
+        {
+            ret = -1;
+        }
         break;
     case FSM_STATE_PRELIMINARY:
         if (new_state != FSM_STATE_PREPARE && new_state != FSM_STATE_TERMINATE)
@@ -500,7 +506,6 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
                 LOG_I("lock: %d, %d\r\n", obj->calibration.status.bits.lock, obj->treatment.status.bits.lock);
                 ret = -1;
             }
-            obj->treatment.dose_mode = 1;
             if (obj->treatment.dose_mode != 1)
             {
                 LOG_I("dose mode: %d\r\n", obj->treatment.dose_mode);
@@ -785,8 +790,8 @@ int8_t radiation_status_get(uint8_t *buf, uint16_t *len)
     memcpy(&buf[3], &data->radiation.cp, sizeof(uint16_t));   /* cp */
     memcpy(&buf[5], &data->radiation.index, sizeof(uint16_t));    /* radiation index */
     double dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
-    dose_cumulated = dose_cumulated * 10.0f / control_data_get()->calibration.adc_factor[0];
-    memcpy(&buf[7], (float *)&dose_cumulated, sizeof(float));   /* dose cumulated */
+    float dose = (float)(dose_cumulated / control_data_get()->calibration.adc_factor[0]);
+    memcpy(&buf[7], (float *)&dose, sizeof(float));   /* dose cumulated */
     buf[11] = data->treatment.prf_hz; /* PRF */
     memcpy(&buf[12], &data->interlock.one_pulse.count_abnormal, sizeof(uint16_t));    /* pulse abnormal */
     uint8_t one_pulse_valid = dose_value_status_get(ONE_PULSE_COMPLETE);
@@ -1161,7 +1166,7 @@ static int8_t dose_uart_thread_init(void)
         return -3;
     }
 
-    dose_uart_send_queue = osMessageQueueNew(5, DOSE_UART_FRAME_SIZE_MAX, NULL);
+    dose_uart_send_queue = osMessageQueueNew(16, DOSE_UART_FRAME_SIZE_MAX, NULL);
     if (dose_uart_send_queue == NULL)
     {
         LOG_E("queue dose uart send create failed\r\n");
