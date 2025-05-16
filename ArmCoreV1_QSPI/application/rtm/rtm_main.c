@@ -141,6 +141,15 @@ static void app_rtm_main_thread(void *argument)
                     self->unready_override = *(uint32_t *)&(queue_frame.payload.data[7]);
                     self->led_belt = *(uint16_t *)&(queue_frame.payload.data[11]);
                 }
+                else if (queue_frame.payload.data[0] == 0x02)
+                {
+                    // 清除故障
+                    if (queue_frame.payload.data[1] & 0x01)
+                    {
+                        rtm_event.sig = ERROR_SIG;
+                        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                    }
+                }
             }
             else if (queue_frame.payload.type == 0x06) /*GET帧*/
             {
@@ -325,6 +334,9 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
     case 0x01:
         memcpy(&input_data->InU16_radiation_index, queue_frame->payload.data + 1, len);
         break;
+    case 0x02:
+        memcpy(&input_data->InU8_fault_clear, queue_frame->payload.data + 1, len);
+        break;
     case 0x19:
         memcpy(&input_data->InU8_gmm_require_state, queue_frame->payload.data + 1, len);
         break;
@@ -353,14 +365,29 @@ static void app_ethercat_rx_thread(void *argument)
     uint32_t ret = 0;
     rtm_module_info_t *self = (rtm_module_info_t *)argument;
     TOBJ7010 output_data = {0};
+    uint8_t ethercat_Link_state = 0;
+    uint32_t current_time = 0;
+    uint32_t last_time = 0;
+    current_time = osKernelGetTickCount();
+    last_time = current_time;
     for (;;)
     {
-        ret = osEventFlagsWait(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT, osFlagsWaitAny, osWaitForever);
+        ret = osEventFlagsWait(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT, osFlagsWaitAny, 500);
         if (ret & APP_RTM_EVENT_FLAG_OUTPUT)
         {
             ethercat_recv_data_get((uint16_t *)&output_data, sizeof(TOBJ7010));
+
+            if (ethercat_Link_state != output_data.OutU8_ethercat_Link_state)
+            {
+                ethercat_Link_state = output_data.OutU8_ethercat_Link_state;
+                last_time = current_time;
+            }
             // TODO: 处理输出数据
             ethercat_output_data_distribute(self, &output_data);
+        }
+        if (current_time - last_time > 1000)
+        {
+            LOG_I("%s unlink\r\n", self->module_name);
         }
     }
 exit:
@@ -376,14 +403,13 @@ static void app_ethercat_tx_thread(void *argument)
     TOBJ6000 input_data = {0};
     for (;;)
     {
-        status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 0xFFFFFFFF);
-        if (status != osOK)
+        status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 500);
+        if (status == osOK)
         {
-            LOG_E("%s queue get error, status = %d\r\n", self->module_name, status);
-            continue;
+            ethercat_input_data_distribute(self, &input_data, &queue_frame);
+            ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
         }
-        ethercat_input_data_distribute(self, &input_data, &queue_frame);
-        ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
+        input_data.InU8_ethercat_Link_state = !input_data.InU8_ethercat_Link_state;
     }
 exit:
     osThreadExit();
@@ -630,7 +656,7 @@ static void app_fkp_tx_thread(void *argument)
 
         if (queue_frame.payload.type == 0x05 && queue_frame.payload.data[0] == 0x17)
         {
-            memcpy(&(send_data.fkp_send_structure.FkpLedBlink), queue_frame.payload.data + 1, 1);
+            memcpy(&(send_data.fkp_send_structure.FkpLedBlink), queue_frame.payload.data + 1, 2);
         }
         // send_data.fkp_send_structure.DeliveredDose = 1.1;
         // send_data.fkp_send_structure.TotalDose = 1.5;
@@ -746,18 +772,18 @@ static void app_cpg_tx_thread(void *argument)
 
         if (queue_frame.payload.type == 0x05 && queue_frame.payload.data[0] == 0x18)
         {
-            memcpy(&(send_data.CpgLedBlink), queue_frame.payload.data + 1, 1);
+            memcpy(&(send_data.CpgLedBlink), queue_frame.payload.data + 1, 2);
         }
         if (memcmp(&send_data, &send_data_bak, sizeof(send_data)) != 0)
         {
             memcpy(&send_data_bak, &send_data, sizeof(send_data));
 
-            ret =  fdcan1_data_write(0x01, (uint8_t *)&send_data, sizeof(send_data));
+            ret = fdcan1_data_write(0x01, (uint8_t *)&send_data, sizeof(send_data));
             if (ret != 0)
             {
                 LOG_E("fdcan1_data_write error,id = 0x01, ret = %d\r\n", ret);
             }
-            ret =  fdcan1_data_write(0x02, (uint8_t *)&send_data, sizeof(send_data));
+            ret = fdcan1_data_write(0x02, (uint8_t *)&send_data, sizeof(send_data));
             if (ret != 0)
             {
                 LOG_E("fdcan1_data_write error,id = 0x02, ret = %d\r\n", ret);

@@ -129,6 +129,7 @@ static int32_t fault_check(app_rtm_main_t *self, uint8_t state)
     {
         if ((state == STATE_MACHINE_READY) ||
             (state == STATE_MACHINE_WORK) ||
+            (state == STATE_MACHINE_INTERRUPT) ||
             (state == STATE_MACHINE_SURVIEW_READY) ||
             (state == STATE_MACHINE_SURVIEW_WORK) ||
             (state == STATE_MACHINE_CT_READY) ||
@@ -159,6 +160,77 @@ static int32_t fault_check(app_rtm_main_t *self, uint8_t state)
     }
     return retval;
 }
+static int32_t fault_clear(app_rtm_main_t *self, uint8_t state)
+{
+    int32_t retval = 0;
+    dido_structure_t dido_structure = {0};
+    app_do_get(&(self->app_dido), &dido_structure);
+    app_di_get(&(self->app_dido), &dido_structure);
+
+    if ((0 == dido_structure.tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_EMERGENCY4) ||
+        (0 == dido_structure.tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_EMERGENCY2) ||
+        (0 == dido_structure.tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_EMERGENCY3) ||
+        (0 == dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_CITB_EMERGENCY1) ||
+        (0 == dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_CITB_EMERGENCY5))
+    {
+        self->serious_interlock.emergency_stop = 1;
+    }
+    else
+    {
+        self->serious_interlock.emergency_stop = 0;
+    }
+    if (((dido_structure.tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
+         (dido_structure.tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1)))
+    {
+        if ((state == STATE_MACHINE_READY) ||
+            (state == STATE_MACHINE_WORK) ||
+            (state == STATE_MACHINE_INTERRUPT) ||
+            (state == STATE_MACHINE_SURVIEW_READY) ||
+            (state == STATE_MACHINE_SURVIEW_WORK) ||
+            (state == STATE_MACHINE_CT_READY) ||
+            (state == STATE_MACHINE_CT_WORK))
+        {
+            self->serious_interlock.door_open = 1;
+        }
+        else
+        {
+            self->serious_interlock.door_open = 0;
+        }
+    }
+    // HvEn check
+    if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn ^ dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn)
+    {
+        self->serious_interlock.HvEN = 1;
+    }
+    else
+    {
+        self->serious_interlock.HvEN = 0;
+    }
+    // kv_treatment_en check
+    if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn ^ dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_KV_TreatmentEN)
+    {
+        self->serious_interlock.KVTreatmentEn = 1;
+    }
+    else
+    {
+        self->serious_interlock.KVTreatmentEn = 0;
+    }
+    // mv_treatment_en check
+    if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn ^ dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_MV_TreatmentEN)
+    {
+        self->serious_interlock.MVTreatmentEn = 1;
+    }
+    else
+    {
+        self->serious_interlock.MVTreatmentEn = 0;
+    }
+    *(uint32_t *)&(self->serious_interlock) &= ~(self->interlock_override);
+    if (*((uint32_t *)&self->serious_interlock) != 0)
+    {
+        retval = -1;
+    }
+    return retval;
+}
 static State_t system_initialization(void *self, Event_t const *const e)
 {
     State_t status;
@@ -172,7 +244,7 @@ static State_t system_initialization(void *self, Event_t const *const e)
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_initialization exit\r\n");
+        // LOG_I("system_initialization exit\r\n");
         status = HANDLED();
         break;
     }
@@ -180,7 +252,7 @@ static State_t system_initialization(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = INITIALIZATION_SIG;
         status = TRAN(&module_init);
-        //LOG_I("system_initialization enter\r\n");
+        // LOG_I("system_initialization enter\r\n");
         break;
     }
     }
@@ -208,14 +280,14 @@ static State_t module_init(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_init enter\r\n");
+        // LOG_I("module_init enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
         time = 0;
-        //LOG_I("module_init exit\r\n");
+        // LOG_I("module_init exit\r\n");
         status = HANDLED();
         break;
     }
@@ -251,14 +323,14 @@ static State_t system_systemOn(void *self, Event_t const *const e)
     {
     case ENTER_SIG:
     {
-        //LOG_I("system_systemOn enter\r\n");
+        // LOG_I("system_systemOn enter\r\n");
         rtm_sm->current_state = SYSTEM_ON_SIG;
         status = TRAN(&module_idle);
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_systemOn exit\r\n");
+        // LOG_I("system_systemOn exit\r\n");
         status = HANDLED();
         break;
     }
@@ -290,7 +362,7 @@ static State_t module_idle(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_idle enter\r\n");
+        // LOG_I("module_idle enter\r\n");
         status = HANDLED();
         break;
     }
@@ -298,7 +370,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     {
         time = 0;
         fault_flag = 0;
-        //LOG_I("module_idle exit\r\n");
+        // LOG_I("module_idle exit\r\n");
         status = HANDLED();
         break;
     }
@@ -370,13 +442,13 @@ static State_t system_shutdown(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = SHUTDOWN_SIG;
         status = TRAN(&module_shutdown);
-        //LOG_I("system_shutdown enter\r\n");
+        // LOG_I("system_shutdown enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
         status = HANDLED();
-        //LOG_I("system_shutdown exit\r\n");
+        // LOG_I("system_shutdown exit\r\n");
         break;
     }
     default:
@@ -404,13 +476,13 @@ static State_t module_shutdown(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_shutdown enter\r\n");
+        // LOG_I("module_shutdown enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_shutdown exit\r\n");
+        // LOG_I("module_shutdown exit\r\n");
         status = HANDLED();
         break;
     }
@@ -432,12 +504,12 @@ static State_t system_powerSaver(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = POWER_SAVER_SIG;
         status = TRAN(&module_powerSaver);
-        //LOG_I("system_powerSaver enter\r\n");
+        // LOG_I("system_powerSaver enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_powerSaver exit\r\n");
+        // LOG_I("system_powerSaver exit\r\n");
         status = HANDLED();
         break;
     }
@@ -466,13 +538,13 @@ static State_t module_powerSaver(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_powerSaver enter\r\n");
+        // LOG_I("module_powerSaver enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_powerSaver exit\r\n");
+        // LOG_I("module_powerSaver exit\r\n");
         status = HANDLED();
         break;
     }
@@ -504,12 +576,12 @@ static State_t system_mv_preliminary(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = MV_PREPARE_SIG;
         status = TRAN(&module_mv_preliminary);
-        //LOG_I("system_mv_preliminary enter\r\n");
+        // LOG_I("system_mv_preliminary enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_mv_preliminary exit\r\n");
+        // LOG_I("system_mv_preliminary exit\r\n");
         status = HANDLED();
         break;
     }
@@ -541,13 +613,13 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_mv_preliminary enter\r\n");
+        // LOG_I("module_mv_preliminary enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_mv_preliminary exit\r\n");
+        // LOG_I("module_mv_preliminary exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -597,12 +669,12 @@ static State_t system_mv_prepare(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = MV_PREPARE_SIG;
         status = TRAN(&module_mv_prepare);
-        //LOG_I("system_mv_prepare enter\r\n");
+        // LOG_I("system_mv_prepare enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_mv_prepare exit\r\n");
+        // LOG_I("system_mv_prepare exit\r\n");
         status = HANDLED();
         break;
     }
@@ -630,17 +702,17 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_mv_prepare enter\r\n");
+        // LOG_I("module_mv_prepare enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_mv_prepare exit\r\n");
+        // LOG_I("module_mv_prepare exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -694,12 +766,12 @@ static State_t system_mv_ready(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = MV_READY_SIG;
         status = TRAN(&module_mv_ready);
-        //LOG_I("system_mv_ready enter\r\n");
+        // LOG_I("system_mv_ready enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_mv_ready exit\r\n");
+        // LOG_I("system_mv_ready exit\r\n");
         status = HANDLED();
         break;
     }
@@ -723,13 +795,13 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
     {
     case ENTER_SIG:
     {
-        //LOG_I("module_mv_ready enter\r\n");
+        // LOG_I("module_mv_ready enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_mv_ready exit\r\n");
+        // LOG_I("module_mv_ready exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -795,12 +867,12 @@ static State_t system_mv_radiation(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = MV_RADIATION_SIG;
         status = TRAN(&module_mv_work);
-        //LOG_I("system_mv_work enter\r\n");
+        // LOG_I("system_mv_work enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_mv_work exit\r\n");
+        // LOG_I("system_mv_work exit\r\n");
         status = HANDLED();
         break;
     }
@@ -828,13 +900,13 @@ static State_t module_mv_work(void *self, Event_t const *const e)
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_mv_work enter\r\n");
+        // LOG_I("module_mv_work enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_mv_work exit\r\n");
+        // LOG_I("module_mv_work exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -900,12 +972,12 @@ static State_t system_mv_complete(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = MV_COMPLETE_SIG;
         status = TRAN(&module_mv_complete);
-        //LOG_I("system_mv_complete enter\r\n");
+        // LOG_I("system_mv_complete enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_mv_complete exit\r\n");
+        // LOG_I("system_mv_complete exit\r\n");
         status = HANDLED();
         break;
     }
@@ -933,13 +1005,13 @@ static State_t module_mv_complete(void *self, Event_t const *const e)
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_mv_complete enter\r\n");
+        // LOG_I("module_mv_complete enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_mv_complete exit\r\n");
+        // LOG_I("module_mv_complete exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -986,12 +1058,12 @@ static State_t system_mv_interrupt(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = MV_INTERRUPT_SIG;
         status = TRAN(&module_mv_interrupt);
-        //LOG_I("system_mv_interrupt enter\r\n");
+        // LOG_I("system_mv_interrupt enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_mv_interrupt exit\r\n");
+        // LOG_I("system_mv_interrupt exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1012,23 +1084,31 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
     static uint32_t time = 0;
     static uint8_t fault_flag = 0;
     static int32_t error = 0;
+    static uint8_t fault_clear_flag = 0;
     switch (e->sig)
     {
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 0;
+
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_mv_interrupt enter\r\n");
+        // LOG_I("module_mv_interrupt enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_mv_interrupt exit\r\n");
+        // LOG_I("module_mv_interrupt exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
+        fault_clear_flag = 0;
         status = HANDLED();
         break;
     }
@@ -1052,13 +1132,34 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         time++;
-        error = fault_check(rtm, STATE_MACHINE_INTERRUPT);
+        if (fault_clear_flag == 0)
+        {
+            error = fault_check(rtm, STATE_MACHINE_INTERRUPT);
+        }
+        else
+        {
+            error = fault_clear(rtm, STATE_MACHINE_INTERRUPT);
+        }
         if (time >= RTM_ERROR_WAIT_TIME)
         {
+            fault_clear_flag = 0;
             time = 0;
             fault_flag = 1;
         }
-        // TODO:高级故障跳terminate
+
+        status = HANDLED();
+        break;
+    }
+    case ERROR_SIG:
+    {
+        fault_clear_flag = 1;
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
+        app_do_set(&(rtm->app_dido), &dido_structure);
         status = HANDLED();
         break;
     }
@@ -1080,12 +1181,12 @@ static State_t system_mv_terminate(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = MV_TERMINATE_SIG;
         status = TRAN(&module_mv_terminate);
-        //LOG_I("system_mv_terminate enter\r\n");
+        // LOG_I("system_mv_terminate enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_mv_terminate exit\r\n");
+        // LOG_I("system_mv_terminate exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1119,13 +1220,13 @@ static State_t module_mv_terminate(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_mv_terminate enter\r\n");
+        // LOG_I("module_mv_terminate enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_mv_terminate exit\r\n");
+        // LOG_I("module_mv_terminate exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -1171,12 +1272,12 @@ static State_t system_kv_terminate(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = SYSTEM_ON_SIG;
         status = TRAN(&module_kv_terminate);
-        //LOG_I("system_kv_terminate enter\r\n");
+        // LOG_I("system_kv_terminate enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_kv_terminate exit\r\n");
+        // LOG_I("system_kv_terminate exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1210,13 +1311,13 @@ static State_t module_kv_terminate(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_kv_terminate enter\r\n");
+        // LOG_I("module_kv_terminate enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_kv_terminate exit\r\n");
+        // LOG_I("module_kv_terminate exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -1257,12 +1358,12 @@ static State_t system_kv_preliminary(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = KV_PRELIMINARY_SIG;
         status = TRAN(&module_kv_preliminary);
-        //LOG_I("system_kv_preliminary enter\r\n");
+        // LOG_I("system_kv_preliminary enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_kv_preliminary exit\r\n");
+        // LOG_I("system_kv_preliminary exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1294,13 +1395,13 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_kv_preliminary enter\r\n");
+        // LOG_I("module_kv_preliminary enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_kv_preliminary exit\r\n");
+        // LOG_I("module_kv_preliminary exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -1350,12 +1451,12 @@ static State_t system_kv_prepare(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = KV_PREPARE_SIG;
         status = TRAN(&module_kv_prepare);
-        //LOG_I("system_kv_prepare enter\r\n");
+        // LOG_I("system_kv_prepare enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_kv_prepare exit\r\n");
+        // LOG_I("system_kv_prepare exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1384,16 +1485,16 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_kv_prepare enter\r\n");
+        // LOG_I("module_kv_prepare enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_kv_prepare exit\r\n");
+        // LOG_I("module_kv_prepare exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -1459,12 +1560,12 @@ static State_t system_surview_ready(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = SURVIEW_READY_SIG;
         status = TRAN(&module_surview_ready);
-        //LOG_I("system_surview_ready enter\r\n");
+        // LOG_I("system_surview_ready enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_surview_ready exit\r\n");
+        // LOG_I("system_surview_ready exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1488,13 +1589,13 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
     {
     case ENTER_SIG:
     {
-        //LOG_I("module_surview_ready enter\r\n");
+        // LOG_I("module_surview_ready enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_surview_ready exit\r\n");
+        // LOG_I("module_surview_ready exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -1555,12 +1656,12 @@ static State_t system_surview_radiation(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = SURVIEW_RADIATION_SIG;
         status = TRAN(&module_surview_work);
-        //LOG_I("system_surview_radiation enter\r\n");
+        // LOG_I("system_surview_radiation enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_surview_radiation exit\r\n");
+        // LOG_I("system_surview_radiation exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1588,13 +1689,13 @@ static State_t module_surview_work(void *self, Event_t const *const e)
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_surview_work enter\r\n");
+        // LOG_I("module_surview_work enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_surview_work exit\r\n");
+        // LOG_I("module_surview_work exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -1655,12 +1756,12 @@ static State_t system_ct_ready(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = CT_READY_SIG;
         status = TRAN(&module_ct_ready);
-        //LOG_I("system_ct_ready enter\r\n");
+        // LOG_I("system_ct_ready enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_ct_ready exit\r\n");
+        // LOG_I("system_ct_ready exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1684,13 +1785,13 @@ static State_t module_ct_ready(void *self, Event_t const *const e)
     {
     case ENTER_SIG:
     {
-        //LOG_I("module_ct_ready enter\r\n");
+        // LOG_I("module_ct_ready enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_ct_ready exit\r\n");
+        // LOG_I("module_ct_ready exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -1751,12 +1852,12 @@ static State_t system_ct_radiation(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = CT_RADIATION_SIG;
         status = TRAN(&module_ct_work);
-        //LOG_I("system_ct_radiation enter\r\n");
+        // LOG_I("system_ct_radiation enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_ct_radiation exit\r\n");
+        // LOG_I("system_ct_radiation exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1784,13 +1885,13 @@ static State_t module_ct_work(void *self, Event_t const *const e)
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_ct_work enter\r\n");
+        // LOG_I("module_ct_work enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_ct_work exit\r\n");
+        // LOG_I("module_ct_work exit\r\n");
         time = 0;
         fault_flag = 0;
         error = 0;
@@ -1851,12 +1952,12 @@ static State_t system_kv_complete(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = KV_COMPLETE_SIG;
         status = TRAN(&module_kv_complete);
-        //LOG_I("system_kv_complete enter\r\n");
+        // LOG_I("system_kv_complete enter\r\n");
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("system_kv_complete exit\r\n");
+        // LOG_I("system_kv_complete exit\r\n");
         status = HANDLED();
         break;
     }
@@ -1884,13 +1985,13 @@ static State_t module_kv_complete(void *self, Event_t const *const e)
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        //LOG_I("module_kv_complete enter\r\n");
+        // LOG_I("module_kv_complete enter\r\n");
         status = HANDLED();
         break;
     }
     case EXIT_SIG:
     {
-        //LOG_I("module_kv_complete exit\r\n");
+        // LOG_I("module_kv_complete exit\r\n");
         time = 0;
         fault_flag = 0;
         status = HANDLED();
