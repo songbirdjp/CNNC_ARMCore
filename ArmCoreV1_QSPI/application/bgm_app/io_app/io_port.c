@@ -306,6 +306,7 @@ static int8_t ioe_config(void)
 }
 static int8_t ioe_read(struct extend_status *stat)
 {
+    static uint16_t interrupt_flag_prev = 0;
     HAL_StatusTypeDef status = HAL_OK;
     uint8_t cmd_buf[8] = {0}, recv_buf[8] = {0};
 
@@ -323,8 +324,9 @@ static int8_t ioe_read(struct extend_status *stat)
     uint16_t interrupt_capture = recv_buf[4] | recv_buf[5] << 8;
 
     /* here maintain the interrupt flag and capture value which latest changed */
-    if (interrupt_flag != 0)
+    if (interrupt_flag_prev != interrupt_flag)
     {
+        interrupt_flag_prev = interrupt_flag;
         stat->interrupt_flag = interrupt_flag;
         stat->interrupt_capture = interrupt_capture;
     }
@@ -535,44 +537,57 @@ struct interlocks interlock_status_get(void)
 
 #ifndef INTERLOCK_TEST
 #include "shell.h"
-static int8_t interlock_status_test(uint8_t argc, char *argv[])
+static int8_t interlock_status_output(uint8_t argc, char *argv[])
 {
     struct interlocks interlock = interlock_status_get();
 
     LOG_I("//////////////////////BGM Interlocks Status//////////////////////// \r\n");
-    LOG_I("interrupt_flag          =   %#.4x\r\n", interlock.extend_status.interrupt_flag);
-    LOG_I("interrupt_capture       =   %#.4x\r\n", interlock.extend_status.interrupt_capture);
-    LOG_I("current                 =   %#.4x\r\n", interlock.extend_status.current.bytes);
-    LOG_I("CoolingLv1Detect        =   %d\r\n", interlock.extend_status.current.bits.CoolingLv1Detect);
-    LOG_I("CoolingLv2Detect        =   %d\r\n", interlock.extend_status.current.bits.CoolingLv2Detect);
-    LOG_I("WaterSW1Detect          =   %d\r\n", interlock.extend_status.current.bits.WaterSW1Detect);
-    LOG_I("WaterSW2Detect          =   %d\r\n", interlock.extend_status.current.bits.WaterSW2Detect);
-    LOG_I("WaterSW3Detect          =   %d\r\n", interlock.extend_status.current.bits.WaterSW3Detect);
-    LOG_I("WaterSW4Detect          =   %d\r\n", interlock.extend_status.current.bits.WaterSW4Detect);
-    LOG_I("WaterSW5Detect          =   %d\r\n", interlock.extend_status.current.bits.WaterSW5Detect);
-    LOG_I("SF6HighDetect           =   %d\r\n", interlock.extend_status.current.bits.SF6HighDetect);
-    LOG_I("SF6LowDetect            =   %d\r\n", interlock.extend_status.current.bits.SF6LowDetect);
-    LOG_I("EPSStateOPDetect        =   %d\r\n", interlock.extend_status.current.bits.EPSStateOPDetect);
-    LOG_I("nEPSStateFaultDetect    =   %d\r\n", interlock.extend_status.current.bits.nEPSStateFaultDetect);
-    LOG_I("VPSStateFaultDetect     =   %d\r\n", interlock.extend_status.current.bits.VPSStateFaultDetect);
-    LOG_I("VPSStateOPDetect        =   %d\r\n", interlock.extend_status.current.bits.VPSStateOPDetect);
-    LOG_I("GatingDetect            =   %d\r\n", interlock.extend_status.current.bits.GatingDetect);
-    LOG_I("HVConFBDetect           =   %d\r\n", interlock.extend_status.current.bits.HVConFBDetect);
-    LOG_I("MVTreatmentENDetect     =   %d\r\n", interlock.extend_status.current.bits.MVTreatmentENDetect);
-    LOG_I("Dose1Detect             =   %d\r\n", interlock.detect_status.bits.Dose1Detect);
-    LOG_I("Dose2Detect             =   %d\r\n", interlock.detect_status.bits.Dose2Detect);
-    LOG_I("EmergencyDetect         =   %d\r\n", interlock.detect_status.bits.EmergencyDetect);
-    LOG_I("HvEnDetect              =   %d\r\n", interlock.detect_status.bits.HvEnDetect);
-    LOG_I("LvOKDetect              =   %d\r\n", interlock.detect_status.bits.LvOKDetect);
-    LOG_I("ModTrigFB               =   %d\r\n", interlock.detect_status.bits.ModTrigFB);
-    LOG_I("ModArcDetect            =   %d\r\n", interlock.detect_status.bits.ModArcDetect);
-    LOG_I("ModHvONDetect           =   %d\r\n", interlock.detect_status.bits.ModHvOnDetect);
-    LOG_I("ModSumDetect            =   %d\r\n", interlock.detect_status.bits.ModSumDetect);
-    LOG_I("ModTrigONDetect         =   %d\r\n", interlock.detect_status.bits.ModTrigOnDetect);
-    LOG_I("PulseInhibitDetect      =   %d\r\n", interlock.detect_status.bits.PulseInhibitDetect);
-    LOG_I("///////////////////////////////////////////////////////////////////// \r\n");
+    LOG_I("interrupt_flag           = %#.4x\r\n", interlock.extend_status.interrupt_flag);
+    LOG_I("interrupt_capture        = %#.4x (normal is 0xFFFF)\r\n", interlock.extend_status.interrupt_capture);
+    LOG_I("current                  = %#.4x\r\n", interlock.extend_status.current.bytes);
+    LOG_I("------------------------------ status ----------------------------------\r\n");
+    LOG_I("lv interlock:            = %d\r\n", interlock.detect_status.bits.LvOKDetect);
+    LOG_I("hv interlock:            = %d\r\n", interlock.detect_status.bits.HvEnDetect);
+    LOG_I("mod trigger:             = %d\r\n", interlock.detect_status.bits.ModTrigFB);
+    LOG_I("------------------------------ lv interlock ----------------------------------\r\n");
+    LOG_I("VPSStateOPDetect         = %d\r\n", interlock.extend_status.current.bits.VPSStateOPDetect);
+    LOG_I("VPSStateFaultDetect      = %d\r\n", interlock.extend_status.current.bits.VPSStateFaultDetect);
+    LOG_I("RTC_WD_OK                = null\r\n");
+    LOG_I("LvInterlockEn            = %d\r\n", gpio_common_get()->read("GPIOE_4"));
+    LOG_I("EPSStateOPDetect         = %d\r\n", interlock.extend_status.current.bits.EPSStateOPDetect);
+    LOG_I("nEPSStateFaultDetect     = %d\r\n", interlock.extend_status.current.bits.nEPSStateFaultDetect);
+    LOG_I("WaterSW1Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW1Detect);
+    LOG_I("WaterSW2Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW2Detect);
+    LOG_I("WaterSW3Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW3Detect);
+    LOG_I("WaterSW4Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW4Detect);
+    LOG_I("WaterSW5Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW5Detect);
+    LOG_I("EPSEnable3V3             = %d\r\n", gpio_common_get()->read("GPIOG_7"));
+    LOG_I("CoolingLv1Detect         = %d\r\n", interlock.extend_status.current.bits.CoolingLv1Detect);
+    LOG_I("------------------------------ hv interlock ----------------------------------\r\n");
+    LOG_I("LvOKDetect               = %d\r\n", interlock.detect_status.bits.LvOKDetect);
+    LOG_I("CoolingLv2Detect         = %d\r\n", interlock.extend_status.current.bits.CoolingLv2Detect);
+    LOG_I("Dose2Detect              = %d\r\n", interlock.detect_status.bits.Dose2Detect);
+    LOG_I("HvInterlockEN            = %d\r\n", gpio_common_get()->read("GPIOE_5"));
+    LOG_I("------------------------------ mod trigger -----------------------------------\r\n");
+    LOG_I("SF6HighDetect            = %d\r\n", interlock.extend_status.current.bits.SF6HighDetect);
+    LOG_I("SF6LowDetect             = %d\r\n", interlock.extend_status.current.bits.SF6LowDetect);
+    LOG_I("MVTreatmentENDetect      = %d\r\n", interlock.extend_status.current.bits.MVTreatmentENDetect);
+    LOG_I("HVEnDetect               = %d\r\n", interlock.detect_status.bits.HvEnDetect);
+    LOG_I("Dose1Detect              = %d\r\n", interlock.detect_status.bits.Dose1Detect);
+    LOG_I("ModPRFEn                 = %d\r\n", gpio_common_get()->read("GPIOE_2"));
+    LOG_I("GatingDetect             = %d\r\n", interlock.extend_status.current.bits.GatingDetect);
+    LOG_I("ModTriggerInhibitCtrl3V3 = %d\r\n", gpio_common_get()->read("GPIOC_6"));
+    LOG_I("------------------------------ other status ----------------------------------\r\n");
+    LOG_I("VPSEnable3V3             = %d\r\n", gpio_common_get()->read("GPIOE_6"));
+    LOG_I("HVConFBDetect            = %d\r\n", interlock.extend_status.current.bits.HVConFBDetect);
+    LOG_I("ModHvONDetect            = %d\r\n", interlock.detect_status.bits.ModHvOnDetect);
+    LOG_I("ModTrigONDetect          = %d\r\n", interlock.detect_status.bits.ModTrigOnDetect);
+    LOG_I("ModSumDetect             = %d\r\n", interlock.detect_status.bits.ModSumDetect);
+    LOG_I("PulseInhibitDetect       = %d\r\n", interlock.detect_status.bits.PulseInhibitDetect);
+    LOG_I("EmergencyDetect          = %d\r\n", interlock.detect_status.bits.EmergencyDetect);
+    LOG_I("ModArcDetect             = %d\r\n", interlock.detect_status.bits.ModArcDetect);
 
     return 0;
 }
-MSH_CMD_EXPORT_ALIAS(interlock_status_test, interlock_status_test, test interlock status);
+MSH_CMD_EXPORT_ALIAS(interlock_status_output, interlock_status_output, output interlock status);
 #endif

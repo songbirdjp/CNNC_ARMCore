@@ -98,6 +98,16 @@ static void frame_format_timer_callback(void *arg)
     {
         return;
     }
+
+#if 1
+    printf("send repeat count: %d\r\n", self->tx_retry_count);
+    for (uint8_t i = 0; i < self->tx_retry_data_len; i++)
+    {
+        printf("%.2x ", self->tx_buffer[i]);
+    }
+    printf("\r\n");
+#endif
+
 }
 
 int32_t frame_format_init(frame_format_t *self,
@@ -282,6 +292,12 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
                 }
             }
 
+            status = osSemaphoreAcquire(self->osSemaphoreId, 0);
+            if (status == osOK)
+            {
+                printf("recv semaphore is valid when send request frame\r\n");
+            }
+
             status = osSemaphoreAcquire(self->osSemaphoreId, timeout);  /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
             if (status != osOK)
             {
@@ -360,6 +376,7 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
     {
         if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)
         {
+            printf("recv response count error: %d  %d\r\n", self->recv_response_count, ((uart_frame_t *)self->rx_buffer)->count);
             return -5;
         }
         status = osSemaphoreRelease(self->osSemaphoreId);

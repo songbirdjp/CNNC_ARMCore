@@ -61,14 +61,6 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
 
     osMutexAcquire(obj->mutex, osWaitForever);
 
-    if (last_radiation_index != recv->OutU16_RadiationIndex && obj->fsm_state == BGM_STATE_WORK)
-    {
-        last_radiation_index = recv->OutU16_RadiationIndex;
-
-        ret = dose_radiation_index_set(BGM_UART_DOSE1, last_radiation_index, 0);
-        ret |= dose_radiation_index_set(BGM_UART_DOSE2, last_radiation_index, 0);
-    }
-
     if (bgm_fsm_state_ctrl == 0)
     {
         obj->fsm_state_request = recv->OutU8_RequireState;
@@ -93,15 +85,21 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
         case DELIVER_TYPE_HiMAT:
         case DELIVER_TYPE_SURVIEW:
         case DELIVER_TYPE_CT:
+        case DELIVER_TYPE_SSIMRT:
             obj->radiation_index = recv->OutU16_RadiationIndex;
+            if (last_radiation_index != recv->OutU16_RadiationIndex)
+            {
+                last_radiation_index = recv->OutU16_RadiationIndex;
+
+                ret = dose_radiation_index_set(BGM_UART_DOSE1, last_radiation_index, 0);
+                ret |= dose_radiation_index_set(BGM_UART_DOSE2, last_radiation_index, 0);
+            }
             break;
         case DELIVER_TYPE_SWIMRT:
-        case DELIVER_TYPE_SSIMRT:
         case DELIVER_TYPE_CRT:
             /* radiation index is updated by dose board */
             obj->radiation_index = dose_radiation_index_get(BGM_UART_DOSE1);
             break;
-
         default:
             LOG_E("invalid deliver type: %d\r\n", obj->deliver_type);
             break;

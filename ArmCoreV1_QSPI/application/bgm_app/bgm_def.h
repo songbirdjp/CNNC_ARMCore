@@ -22,6 +22,7 @@ int8_t dose_state_polling(enum uart_id id);
 int8_t dose_beam_cumulated_clear(enum uart_id id);
 int8_t beam_deliver_type_get(uint16_t beam_id, uint8_t *deliver_type);
 uint16_t dose_radiation_index_get(enum uart_id id);
+int8_t dose_beam_info_set(enum uart_id id, uint8_t *data);
 int8_t dose_beam_parameter_set(enum uart_id id, uint16_t beam_id);
 int8_t dose_radiation_data_get(enum uart_id id);
 int8_t dose_radiation_index_set(enum uart_id id, uint16_t index, uint8_t emergency);

@@ -208,7 +208,7 @@ static int8_t dose_calibration_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            cmd->data[2] == 0 ? LOG_I("[%d]: dose calibration data lock opened\r\n", id) : LOG_I("[%d]: dose calibration data lock closed\r\n", id);
+            // cmd->data[2] == 0 ? LOG_I("[%d]: dose calibration data lock opened\r\n", id) : LOG_I("[%d]: dose calibration data lock closed\r\n", id);
             obj->calibration.status.bits.lock = cmd->data[2];
             break;
         case 0x01:
@@ -292,12 +292,13 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
             obj->treatment.ri_src = cmd->data[2];
             break;
         case 0x01:
-            LOG_I("[%d]: dose meter set %d ok\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
+            LOG_I("[%d]: dose meter set %f ok\r\n", id, (float)(cmd->data[3] << 8 | cmd->data[2]) / 10.0f);
             break;
         case 0x02:
         case 0x03:
         case 0x04:
         case 0x05:
+        case 0x06:
             break;
         default:
             ret = -1;
@@ -308,7 +309,7 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            cmd->data[2] == 0 ? LOG_I("[%d]: beam data lock opened\r\n", id) : LOG_I("[%d]: beam data lock closed\r\n", id);
+            // cmd->data[2] == 0 ? LOG_I("[%d]: beam data lock opened\r\n", id) : LOG_I("[%d]: beam data lock closed\r\n", id);
             obj->treatment.status.bits.lock = cmd->data[2];
             break;
         case 0x01:
@@ -584,6 +585,7 @@ static int8_t dose_realtime_frame_parse(enum uart_id id, struct cmd_object *cmd)
         obj->interlock.one_pulse.count_abnormal= cmd->data[14] << 8 | cmd->data[13];
         obj->realtime.one_pulse_valid_flag = cmd->data[15];
         obj->realtime.one_pulse_dose = *(uint32_t *)&cmd->data[16];
+        // LOG_I("[%d]: recv dose realtime frame: %f\r\n", id, obj->realtime.dose_cumulated);
         break;
     default:
         LOG_E("[%d]: invalid realtime cmd type: %x\r\n", id, cmd->data[0]);
@@ -626,6 +628,8 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                 obj->realtime.one_pulse_valid_flag = cmd->data[17];
                 obj->realtime.one_pulse_dose = *(uint32_t *)&cmd->data[18];
                 osMutexRelease(obj->mutex);
+
+                // LOG_I("[%d] recv dose realtime data: %f\r\n", id, obj->realtime.dose_cumulated);
             }
             break;
         case REAL_TIME_DATA_TYPE_RI:
@@ -634,6 +638,8 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                 osMutexAcquire(obj->mutex, osWaitForever);
                 obj->realtime.radiation_index = cmd->data[3] << 8 | cmd->data[2];
                 osMutexRelease(obj->mutex);
+
+                LOG_I("[%d] recv dose radiation index: %d\r\n", id, obj->realtime.radiation_index);
 
                 ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_BROADCAST, UART_CMD_SEND_RADIATION_INDEX, &cmd->data[2], *cmd->len - 2);
                 if (ret != 0)
@@ -950,6 +956,16 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x01;
         ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
+    case DOSE_INFO_BEAM_TYPE_SET:
+    {
+        buf[offset++] = 0x42;
+        buf[offset++] = 0x06;
+        buf[offset++] = BEAM_TYPE_MV;
+        buf[offset++] = 0;
+        buf[offset++] = *(uint8_t *)data;
+        ret = dose_cmd_write(id, 0x02, buf, offset);
+        break;
+    }
     case DOSE_INFO_BEAM_SET:
     {
         struct one_beam_order *beam_info = (struct one_beam_order *)data;
@@ -967,7 +983,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = beam_meter;
         buf[offset++] = beam_meter >> 8;
         ret = dose_cmd_write(id, 0x02, buf, offset);
-        LOG_I("[%d]: beam meter set: %d\r\n", id, beam_meter);
+        LOG_I("[%d]: beam meter set: %f\r\n", id, beam_info->info->beamMeterSet);
         /* 3. beam cp & ri num */
         offset = 0;
         buf[offset++] = 0x42;

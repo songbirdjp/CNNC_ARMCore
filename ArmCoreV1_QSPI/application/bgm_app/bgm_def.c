@@ -166,6 +166,11 @@ uint16_t dose_radiation_index_get(enum uart_id id)
     return dose_data_info_get(id, DOSE_INFO_RADIATION_INDEX_GET, NULL);
 }
 
+int8_t dose_beam_info_set(enum uart_id id, uint8_t *data)
+{
+    return dose_data_info_set(id, DOSE_INFO_BEAM_TYPE_SET, data, 0);
+}
+
 int8_t dose_beam_parameter_set(enum uart_id id, uint16_t beam_id)
 {
     int8_t ret = 0;
@@ -299,11 +304,12 @@ MSH_CMD_EXPORT_ALIAS(dose_cmd_test, dose_cmd_test, test dose cmd);
 /* 2. bgm with afc board communication interface */
 void BGM_SendCmd(enum uart_id uartID, uint8_t cmdType, uint8_t *cmdData, uint8_t len)
 {
+    uint16_t length = len;
     struct cmd_object BGMCmdToSend;
     BGMCmdToSend.id.bits.cmd_id = 0;
     BGMCmdToSend.id.bits.cmd_ack = 1;
     BGMCmdToSend.type = cmdType;
-    BGMCmdToSend.len = &len;
+    BGMCmdToSend.len = &length;
     BGMCmdToSend.data = cmdData;
     uart_cmd_write(uartID,&BGMCmdToSend);
 }

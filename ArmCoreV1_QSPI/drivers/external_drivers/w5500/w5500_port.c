@@ -1,6 +1,7 @@
 #include "drv_spi.h"
 #include <stdbool.h>
 #include "socket.h"
+#include "ulog.h"
 
 static DEVICE_SPI device_w5500 = {0};
 
@@ -69,7 +70,7 @@ static uint8_t w5500_phy_link_status_get(void)
 
     if (ctlwizchip(CW_GET_PHYLINK, (void *)&tmp) == -1)
     {
-        printf("get phylink err\n");
+        LOG_E("get phylink err\n");
         return -1;
     }
 
@@ -95,14 +96,14 @@ static int8_t w5500_chip_init(wiz_NetInfo *net_info)
     reg_wizchip_cs_cbfunc(w5500_select, w5500_deselect);
     reg_wizchip_spiburst_cbfunc(w5500_read_dma, w5500_write_dma);
 
-    printf("getVERSIONR:%d\r\n", getVERSIONR());
+    LOG_I("getVERSIONR:%d\r\n", getVERSIONR());
 
     /* 3. set tx and rx buffer size */
     uint8_t memsize[2][8] = {{2, 2, 2, 2, 2, 2, 2, 2},
                              {2, 2, 2, 2, 2, 2, 2, 2}};
     if (ctlwizchip(CW_INIT_WIZCHIP, (void *) memsize) == -1)
     {
-        printf("w5500 chip init err\r\n");
+        LOG_E("w5500 chip init err\r\n");
         return -2;
     }
 
@@ -114,8 +115,8 @@ static int8_t w5500_chip_init(wiz_NetInfo *net_info)
     ctlwizchip(CW_GET_ID, (void *)tmpstr);
     ctlnetwork(CN_GET_NETINFO, (void *)&tempINFO);
 
-    printf("chip id:%s\r\n", tmpstr);
-    printf("local ip:%d.%d.%d.%d\r\n", tempINFO.ip[0], tempINFO.ip[1], tempINFO.ip[2], tempINFO.ip[3]);
+    LOG_I("chip id:%s\r\n", tmpstr);
+    LOG_I("local ip:%d.%d.%d.%d\r\n", tempINFO.ip[0], tempINFO.ip[1], tempINFO.ip[2], tempINFO.ip[3]);
 
     return 0;
 }
@@ -156,16 +157,16 @@ static void W5500_interrupt_init(uint8_t max_interrupt)
 
 static void W5500_interrupt_status_print(uint8_t sn)
 {
-    printf("getIMR:%x\r\n", getIMR());
-    printf("getSIMR:%x\r\n", getSIMR());
-    printf("getSn_IMR:%x\r\n", getSn_IMR(sn));   
-    printf("getIR:%x\r\n", getIR());
-    printf("getSIR:%x\r\n", getSIR());
-    printf("getSn_IR:%x\r\n", getSn_IR(sn));
+    LOG_I("getIMR:%x\r\n", getIMR());
+    LOG_I("getSIMR:%x\r\n", getSIMR());
+    LOG_I("getSn_IMR:%x\r\n", getSn_IMR(sn));   
+    LOG_I("getIR:%x\r\n", getIR());
+    LOG_I("getSIR:%x\r\n", getSIR());
+    LOG_I("getSn_IR:%x\r\n", getSn_IR(sn));
     
     // if (HAL_GPIO_ReadPin(W5500_INTn_GPIO_Port, W5500_INTn_Pin) == GPIO_PIN_RESET)
     // {
-    //     printf("---W5500 INTn pin reset---\r\n");
+    //     LOG_I("---W5500 INTn pin reset---\r\n");
     // }
 }
 #include "tcp_tasks.h"
@@ -179,7 +180,7 @@ static int32_t w5500_irq_process(void)
    
     if (ctlwizchip(CW_GET_INTERRUPT, &interrupt_type) != 0)
     {
-        printf("W5500 get interrupt err\r\n");
+        LOG_E("W5500 get interrupt err\r\n");
     }
 
     reg_ir = interrupt_type & 0xFF;
@@ -187,7 +188,7 @@ static int32_t w5500_irq_process(void)
 
     if (reg_ir)
     {
-        printf("IR interrupt:%x\r\n", reg_ir);
+        LOG_I("IR interrupt:%x\r\n", reg_ir);
         setIR(reg_ir);
         while(getIR() & reg_ir);
     }
@@ -205,11 +206,11 @@ static int32_t w5500_irq_process(void)
 
     if (reg_sn_ir) // 清除中断标志位
     {
-        // printf("reg_sn_ir:%x\r\n", reg_sn_ir);
-        (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: connect to peer succeed\r\n", sn) : NULL;
-        (reg_sn_ir & Sn_IR_DISCON) ? printf("socket %d: disconnect to peer\r\n", sn) : NULL;
-        // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp recv interrupt\r\n") : NULL;
-        (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("socket %d: tcp timeout interrupt\r\n", sn) : NULL;
+        // LOG_I("reg_sn_ir:%x\r\n", reg_sn_ir);
+        (reg_sn_ir & Sn_IR_CON) ? LOG_I("socket %d: connect to peer succeed\r\n", sn) : NULL;
+        (reg_sn_ir & Sn_IR_DISCON) ? LOG_I("socket %d: disconnect to peer\r\n", sn) : NULL;
+        // (reg_sn_ir & Sn_IR_RECV) ? LOG_I("tcp recv interrupt\r\n") : NULL;
+        (reg_sn_ir & Sn_IR_TIMEOUT) ? LOG_I("socket %d: tcp timeout interrupt\r\n", sn) : NULL;
         // (reg_sn_ir & Sn_IR_SENDOK) ? socket_sending_status_set(socket_sending_status_get() & (~(1<<sn))) : NULL;
 
         if (reg_sn_ir & Sn_IR_SENDOK)
@@ -230,14 +231,14 @@ static int32_t w5500_irq_process(void)
                 setSn_IR(sn, reg_sn_ir);
             }
         }
-        (clr_cnt != 0) ? printf("clr_cnt: %u\r\n", clr_cnt) : NULL;
+        (clr_cnt != 0) ? LOG_I("clr_cnt: %u\r\n", clr_cnt) : NULL;
         
     }
 
     DEVICE_SPI *dev = device_w5500_get();
     int32_t recv_len = 0;
 
-    // printf("sn:%d\r\n", sn);
+    // LOG_I("sn:%d\r\n", sn);
 
     switch (getSn_SR(sn))                  /*获取socket的状态*/
     {
@@ -254,7 +255,7 @@ static int32_t w5500_irq_process(void)
                 recv_ret = recv(sn, dev->rx_buf, recv_len);     /*接收来自对端的数据*/
                 if (recv_ret <= SOCK_BUSY)
                 {
-                    printf("tcp receive err:%d\r\n", recv_ret);
+                    LOG_E("tcp receive err:%d\r\n", recv_ret);
                     return recv_ret;
                 }
                // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* NOTE: must according to static TCP_DATA_t */
@@ -265,7 +266,7 @@ static int32_t w5500_irq_process(void)
                 recv_ret = osMessageQueuePut(dev->rx_queue, &rxBufTmp, 0, 100);
                 if (recv_ret != osOK)
                 {
-                    printf("w5500 queue put err:%d\r\n", recv_ret);
+                    LOG_E("w5500 queue put err:%d\r\n", recv_ret);
                     return recv_ret;
                 }
                 
@@ -294,37 +295,37 @@ static int32_t w5500_irq_process(void)
 static DEVICE_SPI_OPT device_w5500_opt = {0};
 static int8_t w5500_opt_before_write(DEVICE_SPI *spi)
 {
-    // printf("before write\r\n");
+    // LOG_I("before write\r\n");
 
     return 0;
 }
 static int8_t w5500_opt_after_write(DEVICE_SPI *spi)
 {
-    // printf("after write\r\n");
+    // LOG_I("after write\r\n");
 
     return 0;
 }
 static int8_t w5500_opt_complete_write(DEVICE_SPI *spi)
 {
-    // printf("complete write\r\n");
+    // LOG_I("complete write\r\n");
 
     return 0;
 }
 static int8_t w5500_opt_before_read(DEVICE_SPI *spi)
 {
-    // printf("before read\r\n");
+    // LOG_I("before read\r\n");
 
     return 0;
 }
 static int8_t w5500_opt_after_read(DEVICE_SPI *spi)
 {
-    // printf("after read\r\n");
+    // LOG_I("after read\r\n");
 
     return 0;
 }
 static int8_t w5500_opt_complete_read(DEVICE_SPI *spi)
 {
-    // printf("complete read\r\n");
+    // LOG_I("complete read\r\n");
 
     return 0;
 }
@@ -350,7 +351,7 @@ static int8_t device_w5500_irq_init(DEVICE_SPI *spi, uint8_t *node_name)
     IRQ_INFO_NODE *node = (IRQ_INFO_NODE *)pvPortMalloc(sizeof(IRQ_INFO_NODE));
     if (node == NULL)
     {
-        printf("device irq node %s malloc err\r\n", node_name);
+        LOG_E("device irq node %s malloc err\r\n", node_name);
         return -1;
     }
     
@@ -370,7 +371,7 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
 {
     if (net_info == NULL)
     {
-        printf("ptr is null\r\n");
+        LOG_E("ptr is null\r\n");
         return -1;
     }
 
@@ -379,7 +380,7 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
     ret = spi_init(&device_w5500, device_name, SPI_MASTER);
     if (ret != 0)
     {
-        printf("device %s init err:%d\r\n", device_name, ret);
+        LOG_E("device %s init err:%d\r\n", device_name, ret);
         return ret;
     }
 
@@ -395,7 +396,7 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
     ret = device_w5500_get()->open(device_w5500_get());
     if (ret != 0)
     {
-        printf("device %s open err:%d\r\n", device_name, ret);
+        LOG_E("device %s open err:%d\r\n", device_name, ret);
         return ret;
     }
 
@@ -454,7 +455,7 @@ int8_t device_w5500_link_state_recover(uint8_t sn)
     if (sock_open_status == true)
     {
         close(sn);
-        printf("close socket:%d\r\n", sn);
+        LOG_I("close socket:%d\r\n", sn);
     }
 
     return 0;

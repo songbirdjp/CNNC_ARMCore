@@ -10,14 +10,14 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
 {
     if (cmd == NULL)
     {
-        LOG_E("[%d] cmd is NULL\r\n", id);
+        LOG_E("[%d][eps] cmd is NULL\r\n", id);
         return -1;
     }
 
     /* 1. check cmd id */
     if (cmd->id.byte != DEVICE_ADDRESS_EPS)
     {
-        LOG_E("[%d] invalid cmd id: %d\r\n", id, cmd->id.byte);
+        LOG_E("[%d][eps] invalid cmd id: %d\r\n", id, cmd->id.byte);
         return -2;
     }
 
@@ -31,7 +31,7 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     uint16_t crc_cal = modbus_crc16_cal(buf, *cmd->len);
     if (crc_cal != crc)
     {
-        LOG_E("[%d] crc err: %x, %x \r\n", id, crc_cal, crc);
+        LOG_E("[%d][eps] crc err: %x, %x \r\n", id, crc_cal, crc);
         return -3;
     }
 
@@ -43,7 +43,7 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
          * 3：寄存器数量超限
          * 4：内部处理出错
          */
-        LOG_E("[%d] cmd frame err: %d\r\n", id, cmd->data[0]);
+        LOG_E("[%d][eps] cmd frame err: %d\r\n", id, cmd->data[0]);
         return -4;
     }
 
@@ -52,25 +52,25 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     case READ_HOLDING_REGISTERS:
         for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
         {
-            LOG_I("[%d] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("[%d][eps] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
         }
         LOG_I("\r\n");
         break;
     case READ_INPUT_REGISTERS:
         for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
         {
-            LOG_I("[%d] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("[%d][eps] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
         }
         LOG_I("\r\n");
         break;
     case WRITE_SINGLE_REGISTER:
-        LOG_I("[%d] reg addr: %#.4x, value: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("[%d][eps] reg addr: %#.4x, value: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
         break;
     case WRITE_MULTIPLE_REGISTERS:
-        LOG_I("[%d] reg addr: %#.4x, len: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("[%d][eps] reg addr: %#.4x, len: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
         break;
     default:
-        LOG_E("[%d] invalid cmd type: %d\r\n", id, cmd->type);
+        LOG_E("[%d][eps] invalid cmd type: %d\r\n", id, cmd->type);
         return -5;
         break;
     }
@@ -265,7 +265,7 @@ static int8_t eps_link_menu_value_read(void)
     }
 
     /* 8. read fault code H */
-    data[0] = 0x00;
+    data[0] = 0x00; /* TODO: 合并为2个, 连续地址可以合并 */
     data[1] = 0xCF;
 
     ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);

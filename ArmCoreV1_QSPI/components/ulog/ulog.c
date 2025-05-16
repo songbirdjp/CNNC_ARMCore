@@ -359,7 +359,7 @@ static int8_t ulog_thread_init(void)
         return -1;
     }
 
-    ulog_output_queueHandle = osMessageQueueNew (32, sizeof(struct msg_info), NULL);
+    ulog_output_queueHandle = osMessageQueueNew (64, sizeof(struct msg_info), NULL);
     if (ulog_output_queueHandle == NULL)
     {
         printf("queue ulog output create failed\r\n");
