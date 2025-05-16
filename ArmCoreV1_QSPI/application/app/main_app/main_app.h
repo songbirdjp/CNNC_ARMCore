@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#define BANKA
+//#define BANKA
 //#define TEST
 #ifdef BANKA
 #define BANK_NO 1 //A=1 B=2
@@ -27,7 +27,25 @@ struct ethercat_data_send    /* slave -> master */
 };
 
 #define IS_TCP_SERVER
-enum serverFsmStates {FSM_NOSTATE,FSM_INIT,FSM_IDLE,FSM_PREPARE,FSM_READY,FSM_SERVO,FSM_MANUAL,FSM_FAULT,FSM_SHUTDOWN};
+enum serverFsmStates {
+    FSM_NOSTATE,
+    FSM_INIT,
+    FSM_IDLE,
+    FSM_PRELIMINARY,
+    FSM_PREPARE,
+    FSM_READY,
+    FSM_SERVO,
+    GAP1,
+    GAP2,
+    GAP3,
+    FSM_PARK,
+    FSM_MANUAL,
+    FSM_COMPLETE,
+    FSM_SHUTDOWN,
+    FSM_POWERSAVE,
+    FSM_TERMINATE,
+    FSM_INTERRUPT
+};
 #ifdef __cplusplus
 }
 #endif

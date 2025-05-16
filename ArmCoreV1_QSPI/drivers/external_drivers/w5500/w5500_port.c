@@ -97,7 +97,7 @@ static int8_t w5500_chip_init(wiz_NetInfo *net_info)
 
     /* 3. set tx and rx buffer size */
     uint8_t memsize[2][8] = {{2, 2, 2, 2, 2, 2, 2, 2},
-                             {4, 2, 2, 2, 2, 2, 2, 0}};
+                             {4, 4, 2, 2, 2, 2, 0, 0}};
     if (ctlwizchip(CW_INIT_WIZCHIP, (void *)memsize) == -1)
     {
         printf("w5500 chip init err\r\n");

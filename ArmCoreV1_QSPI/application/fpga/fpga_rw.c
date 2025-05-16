@@ -4,38 +4,46 @@
 #include "init_call.h"
 #include "spi.h"
 
-bool DMATransmitting = 0;
-SEND_CONTROL sndCtrl;
+//SEND_CONTROL sndCtrl;
+static uint8_t totalCmdNum;
 
-SEND_PARAM sendCmd[TOTAL_FPGA_CMD_NUM] = {
-        CMD_BANK_SET, 1,1,//0
-        CMD_TAR_MOD,1,1,//1
-        CMD_PWM_MOD,1,0,//2
-        CMD_PACK_MOD,2,0,//3
-        CMD_SINGLE_BANK,1,0,//4
-        CMD_CHECK_PASS,1,0,//5
-        CMD_CTRL_VALID,11,0,//0x11
-        CMD_SCREEN_2ND,11,0,//0x12
-        CMD_POS_MNI,18,1,//0x14
-        CMD_POS_ADJ,166,0,//0x15
-        CMD_OOT_TH,4,0,//0x16
-        CMD_WAIT_POS,2,1,//0x18
-        CMD_REF_OFFSET,166,1,//0x19
-        CMD_SEEK_STEP,2,0,//0x1a
-        CMD_PID_LEAF,12,1,//0x20
-        CMD_PID_BOX,6,0,//0x21
-        CMD_PWM_LIMIT,4,0,//0x22
-        CMD_2ND_K,164,1,//0x24
-        CMD_2ND_B,164,1,//0x25
-        CMD_2ND_TH,2,1,//0x26
-        CMD_ADC_MNI,4,1,//0x27
-        CMD_DEBUG_ENB,11,0,//0x30
-        CMD_DEBUG_REF,11,0,//0x31
-        CMD_DEBUG_PWM,2,0,//0x32
-        CMD_TAR_SET,174,1,//0x40
-        CMD_STA_REQ,10,0//0x50
+SEND_PARAM sendCmd[] = {
+        CMD_BANK_SET, 1,//0
+        CMD_TAR_MOD,1,//1
+        CMD_PWM_MOD,1,//2
+        CMD_SINGLE_BANK,1,//4
+        CMD_CHECK_PASS,1,//5
+        CMD_CTRL_VALID,12,//0x11
+        CMD_SCREEN_2ND,12,//0x12
+        CMD_INPLACE_STOP,12,//0x13
+        CMD_POS_MNI,14,//0x14
+        CMD_POS_ADJ,166,//0x15
+        CMD_OOT_TH,4,//0x16
+        CMD_WAIT_POS,4,//0x18
+        CMD_REF_OFFSET,166,//0x19
+        CMD_SEEK_STEP,2,//0x1a
+        CMD_VEL_SET,12,//0x1b
+        CMD_HOME_VEL_SET,4,//0x1c
+        CMD_PARK_POS,4,//0x1d
+        CMD_PID_LEAF,12,//0x20
+        CMD_PID_BOX,6,//0x21
+        CMD_PWM_LIMIT,4,//0x22
+        CMD_2ND_K,164,//0x24
+        CMD_2ND_B,164,//0x25
+        CMD_2ND_TH,2,//0x26
+        CMD_ADC_MNI,4,//0x27
+        CMD_2ND_OFFSET,1,//0x28
+        CMD_DEBUG_ENB,11,//0x30
+        CMD_DEBUG_REF,11,//0x31
+        CMD_DEBUG_PWM,2,//0x32
+        CMD_TAR_SET,174,//0x40
+        CMD_SPD_ANA,4,//0x41
+        CMD_MOV_TIM,2,
+        CMD_JAW_POS,4,//0x48
+        CMD_STA_REQ,1,//0x50
+        CMD_CFG_DONE,1//0x60
 };
-
+#if 0
 void makeSingleSendAry(uint8_t index, uint8_t * pData, uint8_t size, bool isFirstSegment, bool isCmd)
 {
     if(size < 1)    return;
@@ -97,7 +105,7 @@ void makeSingleSendAry(uint8_t index, uint8_t * pData, uint8_t size, bool isFirs
        // else memset(sndCtrl.cmdSendBuf,0,sndCtrl.singleSize[index]);
     }
 }
-#if 0
+
 void makeParamSendAry(uint8_t * pData)
 {
     sndCtrl.pCrt = sndCtrl.paramSendBuf;
@@ -242,6 +250,7 @@ static int8_t send_to_fpga_init(void)
     }
 
     device_send_to_fpga_open();
+    totalCmdNum = sizeof(sendCmd)/sizeof(SEND_PARAM);
 
     return 0;
 }
@@ -336,17 +345,30 @@ osStatus_t recv_from_fpga_data_get(uint8_t *buf)
     return osMessageQueueGet(recv_from_fpga_queueHandle, buf, 0, 0);
 }
 
-void make_cmd_to_fpga(uint8_t index, uint8_t *pData, uint8_t size)
+void make_cmd_to_fpga(uint8_t cmd, uint8_t *pData)
 {
     osStatus_t stat;
     struct send_to_fpga_msg send_buf = {0};
+    uint8_t index = 0xff, size;
+    uint8_t singleSize;
+
+    for(uint8_t i = 0; i < totalCmdNum; i++)
+    {
+        if(cmd == sendCmd[i].cmd){
+            index = i; 
+            break;
+        }  
+    }
+    if(index == 0xff)   return;
+    size = sendCmd[index].TxLen;
+    singleSize = size + 6;//head + checksum = 6
 
     send_buf.len = 5;
     send_buf.buf[0] = TX_SYNC_BYTE_H;
     send_buf.buf[1] = TX_SYNC_BYTE_L;
     send_buf.buf[2] = 0;
-    send_buf.buf[3] = sendCmd[index].TxLen;
-    send_buf.buf[4] = sendCmd[index].cmd;
+    send_buf.buf[3] = size;
+    send_buf.buf[4] = cmd;
 
     for(uint8_t i = 0; i < size; i+=2)
     {
@@ -370,11 +392,10 @@ void make_cmd_to_fpga(uint8_t index, uint8_t *pData, uint8_t size)
 
     for (uint8_t i = 2; i < send_buf.len; i++)
     {
-         send_buf.buf[sndCtrl.singleSize[index] - 1] += send_buf.buf[i];
+         send_buf.buf[singleSize - 1] += send_buf.buf[i];
     }
 
-    send_buf.len = sndCtrl.singleSize[index];
-
+    send_buf.len = singleSize;
     stat = osMessageQueuePut(send_to_fpga_queueHandle, &send_buf, 0, 1000);
     if (stat != osOK)
     {
@@ -384,24 +405,38 @@ void make_cmd_to_fpga(uint8_t index, uint8_t *pData, uint8_t size)
 
 void make_para_for_fpga(uint8_t *pData)
 {
-    make_cmd_to_fpga(0, &pData[6], sendCmd[0].TxLen);//0
-    make_cmd_to_fpga(1, &pData[58], sendCmd[1].TxLen);//1
-    make_cmd_to_fpga(8, &pData[34], sendCmd[8].TxLen);//0x14
-    make_cmd_to_fpga(11, &pData[54], sendCmd[11].TxLen);//0x18
+    uint8_t buf[166] = {0},i;
+    uint8_t configureDone = 0;
 
+    make_cmd_to_fpga(CMD_BANK_SET, &pData[6]);//0
+    make_cmd_to_fpga(CMD_TAR_MOD, &pData[80]);//1
+    make_cmd_to_fpga(CMD_CTRL_VALID, &pData[660]);//0x11
+   // for(i = 0; i < 12; i++) printf("%x ",pData[660+i]);
+  //  printf("\r\n");
+    make_cmd_to_fpga(CMD_SCREEN_2ND, &pData[672]);//0x12
+  //  for(i = 0; i < 12; i++) printf("%x ",pData[672+i]);
+   // printf("\r\n");
+    make_cmd_to_fpga(CMD_INPLACE_STOP, &pData[684]);//0x13
+  //  for(i = 0; i < 12; i++) printf("%x ",pData[684+i]);
+   // printf("\r\n");
+    make_cmd_to_fpga(CMD_POS_MNI, &pData[40]);//0x14
+    make_cmd_to_fpga(CMD_WAIT_POS, &pData[56]);//0x18
+    memcpy(buf, &pData[496], 164);
+    memcpy(&buf[164], &pData[54], 2);
+    make_cmd_to_fpga(CMD_REF_OFFSET, buf);//0x19
+    make_cmd_to_fpga(CMD_VEL_SET, &pData[60]);//0x1b
+    make_cmd_to_fpga(CMD_HOME_VEL_SET, &pData[72]);//0x1c
+    make_cmd_to_fpga(CMD_PARK_POS, &pData[76]);//0x1d
 
-    // make_cmd_to_fpga(12, &pData[418], 164,1);//0x19
-    // make_cmd_to_fpga(12, &pData[52], 2,0);//0x19
-
-    memcpy(&pData[440 + 164], &pData[52], 2);
-    make_cmd_to_fpga(12, &pData[440], 166);//0x19
-
-    make_cmd_to_fpga(14, &pData[8], sendCmd[14].TxLen);//0x20
-    make_cmd_to_fpga(17, &pData[112],sendCmd[17].TxLen);//0x24
-    make_cmd_to_fpga(18, &pData[276], sendCmd[18].TxLen);//0x25
-    make_cmd_to_fpga(19, &pData[30], sendCmd[19].TxLen);//0x26
-    make_cmd_to_fpga(20, &pData[60], sendCmd[20].TxLen);//0x27
-
+    make_cmd_to_fpga(CMD_PID_LEAF, &pData[8]);//0x20
+    make_cmd_to_fpga(CMD_PID_BOX, &pData[20]);//0x21
+    make_cmd_to_fpga(CMD_2ND_K, &pData[166]);//0x24
+    make_cmd_to_fpga(CMD_2ND_B, &pData[330]);//0x25
+    make_cmd_to_fpga(CMD_2ND_TH, &pData[36]);//0x26
+    make_cmd_to_fpga(CMD_ADC_MNI, &pData[82]);//0x27
+    make_cmd_to_fpga(CMD_2ND_OFFSET, &pData[494]);//0x28
+    make_cmd_to_fpga(CMD_CFG_DONE, &configureDone);//0x60
+#if 0
     uint16_t initPos[87];
     for(uint8_t i = 0; i < 82; i++)
     {
@@ -412,13 +447,8 @@ void make_para_for_fpga(uint8_t *pData)
     initPos[83] = initPos[85] = 35100;
     initPos[84] = initPos[86] = 5687;
 
-    // make_cmd_to_fpga(24, (uint8_t*)initPos, 164,1);//0x40
-    // make_cmd_to_fpga(24, &pData[56], 2,0);//0x40
-
-    // initPos[0] = initPos[2] = 35100;
-    // initPos[1] = initPos[3] = 5687;
-
-    make_cmd_to_fpga(24, (uint8_t*)initPos, 174);//0x40
+    make_cmd_to_fpga(24, (uint8_t*)initPos);//0x40
+#endif
 }
 
 int8_t recv_from_fpga_callback_register(int8_t (*cb)(void *arg))

@@ -10,7 +10,7 @@
 
 #define	 CRC_TABLE_SIZE		256
 
-#define RT_DOWNLOAD_PAYLOAD_LEN  174 //plan data from plc
+#define RT_DOWNLOAD_PAYLOAD_LEN  184 //plan data from plc
 #define RT_SAVE_PAYLOAD_LEN  (RT_DOWNLOAD_PAYLOAD_LEN+2)    //+ RI
 #define RT_SDRAM_PAYLOAD_LEN  (RT_SAVE_PAYLOAD_LEN+4)       //+ 2 leaf pos, because get 80 leafs pos from PLC, but fpga need 82 leafs pos
 
@@ -28,7 +28,7 @@ static FRAME_HEAD frameHead;
 static FRAME_END frameEnd;
 
 static APP_DATA_SEND activeSendData[] = {
-    {"tcpFeedback", 0, TCP_SEND_PERIOD, WDT_BINDATA, ALL_CLIENTS, NULL, NULL},
+    {"tcpFeedback", 0, TCP_SEND_PERIOD, WDT_BINDATA, CONTROLLER, NULL, NULL},
 };
 
 bool InitCrc32Table(void)
@@ -106,7 +106,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 
         if(frameHead.packIndexInOneBeam == 1)   lastPackIndex = 0;
         payloadLength = u8LenTotal - 20;
-        if (frameHead.frmLength != payloadLength)
+        if(frameHead.frmLength != payloadLength)
         {
             secondPosFeedback.errorCode = 0xf1;
             printf("recv error #1: tcp buf len = %d frame len =%d!!! \r\n", u8LenTotal, frameHead.frmLength);
@@ -165,7 +165,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 
                // printf("%d ", info->gDATABUF[12+i]);
             }
-         //   for(i = 12; i < frameHead.frmLength; i++)  printf("0x%x ", info->gDATABUF[i]);
+          //  for(i = 12; i < frameHead.frmLength; i++)  printf("%x ", data[i]);
             crcCal = 0xffffffff;
             crcCal = Crc32Buffer(crcCal, &data[12], saveLength);//ok
            // crcCal = hardware_crc_calculate(CRC32, &data[12], saveLength);
@@ -214,14 +214,14 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 
             //record each beam info
             // 1 beam in SDRAM: totalRI + BeamIndex + (RI1 + RI2 + ...+RI(totalRI)), sizeof(RI) = RT_PAYLOAD_LEN
-            rtBeamData.totalBeam = (data[15] << 8) + data[14];//current beam index
-            rtBeamData.totalRIInBeam[rtBeamData.totalBeam] = (data[13] << 8) + data[12];
-            rtBeamData.oneBeamSize[rtBeamData.totalBeam] =
+            rtBeamData.beamIndex = (data[15] << 8) + data[14];//current beam index
+            rtBeamData.totalRIInBeam[rtBeamData.beamIndex] = (data[13] << 8) + data[12];
+            rtBeamData.oneBeamSize[rtBeamData.beamIndex] =
                     4 + RT_SDRAM_PAYLOAD_LEN
-                    * rtBeamData.totalRIInBeam[rtBeamData.totalBeam];
-            if (rtBeamData.totalBeam >= MAX_BEAM_NUM) printf("Warn: beam > 30, will not be sent to FPGA!\r\n");
+                    * rtBeamData.totalRIInBeam[rtBeamData.beamIndex];
+            if (++rtBeamData.totalBeam >= MAX_BEAM_NUM) printf("Warn: beam > 30, will not be sent to FPGA!\r\n");
             printf("Beam %d transfer finish, size is %d, crc is %u\r\n",
-                   rtBeamData.totalBeam, rtBeamData.oneBeamSize[rtBeamData.totalBeam], crcInData);
+                   rtBeamData.beamIndex, rtBeamData.oneBeamSize[rtBeamData.beamIndex], crcInData);
 #if 0
             pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
             pBeamData = pSDRAM + 6;
@@ -266,15 +266,15 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             printf("recv error #4: crc error: %u %u!!! \r\n", crcInData, crcCal);
             return -1;
         }
-
         printf("crc:%u\r\n", crcInData);
+        secondPosFeedback.errorCode = 0xF0; //ok
 #ifndef TEST
         make_para_for_fpga(data);
         plcSetJawParam(data);
 #endif
     }
     else{
-        printf("error data pack!\r\n");
+        printf("error data pack:no valid tag!\r\n");
     }    
 
     memset(&info, 0, sizeof(info));
@@ -287,7 +287,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType JawPos)
 {
     __IO uint8_t *pBeamData;
-    uint8_t send_buf[174] = {0};
+    uint8_t send_buf[184] = {0};
   //  memset(&JawPos, 0 , sizeof(struct JawFlagType));
 
     pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
@@ -295,20 +295,36 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
 
    // rtBeamData.totalBeam = 2;
   //  rtBeamData.totalRIInBeam[1] = 0x704;
-    if((beamIndex <= 0) || (beamIndex > rtBeamData.totalBeam) || (RIIndex <= 0) || (RIIndex > rtBeamData.totalRIInBeam[beamIndex]))
+    if((beamIndex <= 0) || (RIIndex <= 0) || (RIIndex > rtBeamData.totalRIInBeam[beamIndex]))
     {
         printf("Error: Invalid beam/RI index %d,%d,%d,%d\r\n",
                rtBeamData.totalBeam,rtBeamData.totalRIInBeam[beamIndex],beamIndex,RIIndex);
         return;
     }
    // printf("BEAM%d.RI%d\r\n", beamIndex, RIIndex);
-
+#if 0
     for(uint8_t i = 1; i < beamIndex; i++)
     {
       //  if(rtBeamData.oneBeamSize[i] == 0)  return; //beamIndex >= 2
         pBeamData += rtBeamData.oneBeamSize[i];
       //  printf("beam %u size %u\r\n", i, rtBeamData.oneBeamSize[i]);
     }   //skip front beams
+#endif
+    uint16_t localBeamIndex;
+    uint8_t skipBeamCnt = 0;
+    while(1)
+    {
+        localBeamIndex = (pBeamData[3] << 8) + pBeamData[2];
+        if(localBeamIndex != beamIndex)
+        {
+            pBeamData += rtBeamData.oneBeamSize[localBeamIndex];
+            if(++skipBeamCnt >=  rtBeamData.totalBeam){
+                printf("Can't find beam%d\r\n", beamIndex);
+                return;
+            }
+        } 
+        else    break;
+    }	  
   //  printf("%d %d %d %d %d %d\r\n", *pBeamData,*(pBeamData+1),*(pBeamData+2),*(pBeamData+3),*(pBeamData+4),*(pBeamData+5));
     pBeamData += 4; //skip current beam head (total RI + beam index)
 
@@ -347,8 +363,14 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
    // for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  printf("%x ",sndCtrl.cmdSendBuf[i]);
    // printf("\r\n");
 
-    memmove(&send_buf[166], pBeamData, 8);
-    make_cmd_to_fpga(24, send_buf, 174);
+    memmove(&send_buf[166], pBeamData, 18);
+    make_cmd_to_fpga(CMD_TAR_SET, send_buf);
+    make_cmd_to_fpga(CMD_SPD_ANA, &send_buf[174]);
+    make_cmd_to_fpga(CMD_MOV_TIM, &send_buf[182]);
+   // printf("beamid %d ri %d:",beamIndex,RIIndex);
+   // printf("Jaw x %d y %d\r\n",pos[X],pos[Y]);
+   // for(uint8_t j = 0; j < 184; j++)    printf("%x ",send_buf[j]);
+   // printf("\r\n");
 #endif
 }
 
@@ -357,6 +379,7 @@ void nrtRecvDataProcess(APP_DATA_RECV* info)
     nrtRecvParamAndPlan(info);
     updateNRTFeedback();
     ws_send(info->sn,  feedback, feedback16Len*2, true, false, WDT_BINDATA);
+	secondPosFeedback.errorCode = 0;								
 }
 
 void setTCPSendControlSignal(uint8_t itemIndex, int32_t setVal)
@@ -367,18 +390,18 @@ void setTCPSendControlSignal(uint8_t itemIndex, int32_t setVal)
 void clearPlan(void)
 {
     uint8_t *pBeamData;
+	uint32_t sdTotalSize = 0;
   
     printf("Clear plan!\r\n");
     pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     pBeamData = pSDRAM;
-    for(uint8_t i = 1; i <= rtBeamData.totalBeam; i++){
-        memset(pBeamData, 0, rtBeamData.oneBeamSize[i]);
-        pBeamData += rtBeamData.oneBeamSize[i];
-    }
+    for(uint8_t i = 0; i < MAX_BEAM_NUM; i++)   sdTotalSize += rtBeamData.oneBeamSize[i];
+    memset(pBeamData, 0, sdTotalSize);
 
-    rtBeamData.totalBeam = 0;
-    memset(rtBeamData.totalRIInBeam, 0, MAX_BEAM_NUM);
-    memset(rtBeamData.oneBeamSize, 0, MAX_BEAM_NUM);
+    rtBeamData.totalBeam = 0;															
+    rtBeamData.beamIndex = 0;
+    memset(rtBeamData.totalRIInBeam, 0, sizeof(rtBeamData.totalRIInBeam));
+    memset(rtBeamData.oneBeamSize, 0, sizeof(rtBeamData.oneBeamSize));
 }
 
 void planDataInit(void)
@@ -391,15 +414,17 @@ void planDataInit(void)
     feedback = (uint16_t*)pvPortMalloc(feedback16Len*2);
     if(feedback != NULL)   memset(feedback, 0, feedback16Len*2);
     else    printf("%s file malloc err(line:%d)\r\n", __FILE__, __LINE__);  
-
+#if 0
     for(uint8_t i = 0; i < TOTAL_FPGA_CMD_NUM; i++)
     {
         sndCtrl.singleSize[i] = sendCmd[i].TxLen+6;
         if(sendCmd[i].useAsParam)  sndCtrl.totalSize += sndCtrl.singleSize[i];//calculate parameter buf size
     }
- 
+ #endif
     interlockFeedback.versionARM = 2;
     secondPosFeedback.bankNo = BANK_NO;
+	 memset(rtBeamData.totalRIInBeam, 0, sizeof(rtBeamData.totalRIInBeam));
+    memset(rtBeamData.oneBeamSize, 0, sizeof(rtBeamData.oneBeamSize));																	  
 
     osMutexAttr_t tcp_send_mutex_attributes = {
     .name = "tcp_send_mutex",

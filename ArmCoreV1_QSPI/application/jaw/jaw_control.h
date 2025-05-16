@@ -13,9 +13,13 @@ typedef enum {
     INIT_MOVE_BACKWARD,
     INIT_END,
     IDLE,
+    PARK_START,
+    PARK_END,
     PREPARE_START,
     PREPARE_END,
     SERVO,
+    POWER_SAVE,
+    SHUTDOWN,
     LIMSWITCH_FALLING,
     LIMSWITCH_RISING,
     UART_DEBUG,
@@ -71,6 +75,11 @@ typedef struct
 {
     uint16_t jawMinADSetting;
     uint16_t jawMaxADSetting;
+    uint16_t jawMaxVelocity;
+    uint16_t jawTimeConst;
+    uint16_t jawAcceleration;
+    uint16_t jawHomeVelocity;
+    uint16_t jawParkPos;
     uint16_t jaw2ndEncCalibrationPK;
     uint16_t jaw2ndEncCalibrationPB;
     uint16_t jawDualChTolerance;

@@ -4,113 +4,133 @@
 #include "jaw_control.h"
 #include "planData.h"
 
-#define CARRIER_SECOND_FEEDBACK_CH   4
-#define YJAW_SECOND_FEEDBACK_CH   5
-#define XJAW_SECOND_FEEDBACK_CH   6
-#define HEALTHY_DIFF_RATIO   0.05
-#define MAX_ADC_VALUE   4096 //12 bits ADC
+static const uint8_t powerErrorBit[POWER_CHANNEL_NUM] = {0x8, 0x10, 0x1, 0x2, 0x4};
 
-bool powerManage(uint8_t ch)
+bool powerManage(uint8_t ch, uint16_t value)
 {
     //Vref = 5V
+    static uint8_t powerErrorCnt[POWER_CHANNEL_NUM] = {0};
     double theoryVoltage;
     double actualDiffRatio, Diff;
+    uint8_t index;
+   
+    switch(ch)
+    {
+        case 0:
+        case 2:
+        case 3:
+            index = ch;
+            theoryVoltage = 3.75;
+            break;
+        case 1:
+            index = ch;
+            theoryVoltage = 4.0;
+        break;
+        case 7:
+            index = 4;
+            theoryVoltage = 3.75;
+            break;
+        default:
+            printf("Invalid power channel\r\n");
+            return 0;
+    }
 
-    double sampleVoltage = (double)ADCgetValue(&hspi4, ch)/4096*5.0;
-    if(ch == 1) theoryVoltage = 4.0;
-    else    theoryVoltage = 3.75;
-
+    double sampleVoltage = (double)value/4096*5.0;
     Diff = theoryVoltage - sampleVoltage;
     actualDiffRatio = fabs(Diff)/theoryVoltage;
-    if(actualDiffRatio > HEALTHY_DIFF_RATIO){
-      //  printf("channel %d power is too %s %fV\r\n", ch, Diff<1e-6?"high":"low", sampleVoltage);
+    if(actualDiffRatio > HEALTHY_DIFF_RATIO)
+    {
+       // printf("channel %d power is too %s %fV\r\n", ch, Diff<1e-6?"high":"low", sampleVoltage);
+        if(++powerErrorCnt[index] >= 3){//always error in 30s
+            interlockFeedback.powerInterlock |= powerErrorBit[index];
+            powerErrorCnt[index] = 0;
+        }   
         return 0;
     }
+    else    powerErrorCnt[index] = 0;
+
+   // printf("adc:%d %d\r\n", ch, value);
     return 1;
 }
 
-uint16_t getSecondFeedBack(uint8_t ch) //ch should be 4,5,6
+void calculateDualChannelDiff(uint8_t ch, uint16_t value)
 {
-    if((ch < 4 ) || (ch > 6)){
-        printf("Invalid second feedback channel\r\n");
-        return 0;
-    }
-
-    return ADCgetValue(&hspi4, ch);
-}
-
-void calculateDualChannelDiff(uint8_t ch)
-{
-    uint16_t adcResult;
-    uint16_t convertEnc;
-
-    adcResult = getSecondFeedBack(ch);
+  //  uint16_t convertEnc;
 
     switch(ch)
     {
+        case CARRIER_SECOND_FEEDBACK_CH: 
+            secondPosFeedback.carrierSecondPos = value;   
+            break;
         case YJAW_SECOND_FEEDBACK_CH:
-            if(adcResult > jawParameterByAxes[Y].jawMaxADSetting)   interlockFeedback.jawInterlock[Y] |= 0x100;
-            if(adcResult > MAX_ADC_VALUE)   interlockFeedback.jawInterlock[Y] |= 0x20;
-            convertEnc = jawParameterByAxes[Y].jaw2ndEncCalibrationPK*adcResult
-                            +jawParameterByAxes[Y].jaw2ndEncCalibrationPB;
-            
-            if(abs(convertEnc - rtFeedback.jawRTPos[Y]) > jawParameterByAxes[Y].jawDualChTolerance){
-            //    printf("Y Jaw Encoder untrue\r\n");
-                interlockFeedback.jawInterlock[Y] |= 0x40;
-            }
-            secondPosFeedback.jawSecondPos[Y] = adcResult;
+            secondPosFeedback.jawSecondPos[Y] = value;
             break;
-        case XJAW_SECOND_FEEDBACK_CH:
-            if(adcResult > jawParameterByAxes[X].jawMaxADSetting)   interlockFeedback.jawInterlock[X] |= 0x100;
-            if(adcResult > MAX_ADC_VALUE)   interlockFeedback.jawInterlock[X] |= 0x20;
-            convertEnc = jawParameterByAxes[X].jaw2ndEncCalibrationPK*adcResult
-                         +jawParameterByAxes[X].jaw2ndEncCalibrationPB;
-            if(abs(convertEnc - rtFeedback.jawRTPos[X]) > jawParameterByAxes[X].jawDualChTolerance){
-             //   printf("X Jaw Encoder untrue\r\n");
-                interlockFeedback.jawInterlock[X] |= 0x40;
-            }
-            secondPosFeedback.jawSecondPos[X] = adcResult;
+        case XJAW_SECOND_FEEDBACK_CH:   
+            secondPosFeedback.jawSecondPos[X] = value;   
             break;
-        default:    break;
+        default:    
+            printf("Invalid second feedback channel\r\n");  
+            return;
     }
+#if 0
+    if(value > jawParameterByAxes[axes].jawMaxADSetting)   interlockFeedback.jawInterlock[axes] |= 0x100;
+    if(value > MAX_ADC_VALUE)   interlockFeedback.jawInterlock[axes] |= 0x20;
+    convertEnc = jawParameterByAxes[axes].jaw2ndEncCalibrationPK*value
+        +jawParameterByAxes[axes].jaw2ndEncCalibrationPB;
+            
+    if(abs(convertEnc - rtFeedback.jawRTPos[axes]) > jawParameterByAxes[axes].jawDualChTolerance){
+        //    printf("Y Jaw Encoder untrue\r\n");
+        interlockFeedback.jawInterlock[axes] |= 0x40;
+    }
+#endif
 }
 
 void ADCProcessTask(void *argument)
 {
      uint8_t ch456 = CARRIER_SECOND_FEEDBACK_CH;
-     uint32_t loopCnt;
+     uint32_t loopCnt = 0;
+     uint8_t wch = 0, rch = ADC_CHANNEL_NUM;
+     uint16_t adc = 0;
 
     AD7927_Init(&hspi4);
+    osDelay(1000);
   /* Infinite loop */
+
   for(;;)
   {
-      switch(loopCnt++ % 5000){//read power channels, each channel sample period = 5s
-          case 1:
-              if(!powerManage(0))   interlockFeedback.powerInterlock |= 0x8;//bit 3
-              osDelay(1);
-              break;
-          case 2:
-              if(!powerManage(1))   interlockFeedback.powerInterlock |= 0x10;//bit 4
-              osDelay(1);
-              break;
-          case 3:
-              if(!powerManage(2))   interlockFeedback.powerInterlock |= 0x1;//bit 0
-              osDelay(1);
-              break;
-          case 4:
-              if(!powerManage(3))   interlockFeedback.powerInterlock |= 0x2;//bit 1
-              osDelay(1);
-              break;
-          case 5:
-              if(!powerManage(7))   interlockFeedback.powerInterlock |= 0x4;//bit 2
-              osDelay(1);
-              break;
-          default:  break;
-      }
-      calculateDualChannelDiff(ch456);
-      if(++ch456 > XJAW_SECOND_FEEDBACK_CH) ch456 = CARRIER_SECOND_FEEDBACK_CH;
-
-      osDelay(2);
+    switch(loopCnt++ % 5000){//read power value every 10s
+        case 0: wch = 0;    break;
+        case 1: wch = 1;    break;
+        case 2: wch = 2;    break;
+        case 3: wch = 3;    break;
+        case 4: wch = 7;    break;
+        default:    wch = ch456;
+            if(++ch456 > XJAW_SECOND_FEEDBACK_CH) ch456 = CARRIER_SECOND_FEEDBACK_CH; 
+            break;
+    }
+    adc = ADCgetValue(&hspi4, wch);
+    
+    switch(rch)
+    {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 7:
+            powerManage(rch, adc);
+            break;
+        case 4:
+        case 5:
+        case 6:
+           // if(rch == 5)    printf("4:%d\r\n",adc);
+            calculateDualChannelDiff(rch, adc);
+            break;
+        default: break;
+    }
+ //   printf("%d %d\r\n",wch,rch);
+    rch = wch;
+   
+    osDelay(2);
   }
 }
 

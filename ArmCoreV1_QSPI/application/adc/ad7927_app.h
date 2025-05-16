@@ -8,8 +8,8 @@ extern "C" {
 #endif
 
 #define MAX_ADC_VALUE   4096 //12 bits ADC
-#define ADC_WORK_LENGTH   125 //unit£ºmm
-#define ADC_RESOLUTION   ADC_WORK_LENGTH/MAX_ADC_VALUE //unit£ºmm
+#define ADC_WORK_LENGTH   125 //unitï¼šmm
+#define ADC_RESOLUTION   ADC_WORK_LENGTH/MAX_ADC_VALUE //unitï¼šmm
 
 #ifdef __cplusplus
 }

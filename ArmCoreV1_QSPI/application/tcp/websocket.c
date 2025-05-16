@@ -373,7 +373,7 @@ int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* retType, u
             if (retPkgType == WDT_PING)
             {
                 //自动 ping-pong
-                ws_send(s, NULL, 0, true, false, WDT_PONG);
+              //  ws_send(s, NULL, 0, true, false, WDT_PONG);
                 // WS_INFO("ws_recv: WDT_PING\r\n");
                 retFinal = 0;
             }
@@ -678,7 +678,17 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
                 client[s].socketNum = -1;
 				client[s].loopCnt = 0;	
                 if(client[s].clientType == SERVICE) serviceNumber--;
-                break;		 
+                break;	
+            case WDT_PING:	
+                uint16_t payloadLen = len - retHeadLen;
+                uint8_t *pdata = NULL;
+                 printf("recv ping and reply pong %d\r\n",payloadLen);
+                //  for(i=0; i< payloadLen; i++)
+                //     printf("%x ",data[i]);
+                // printf("\r\n");
+                if(payloadLen > 0)  pdata = data;
+                ws_send(s, pdata, payloadLen, true, false, WDT_PONG);
+                break;	 
             case WDT_TXTDATA:
                // printf("recv data: %s\r\n",data);s
             case WDT_BINDATA:

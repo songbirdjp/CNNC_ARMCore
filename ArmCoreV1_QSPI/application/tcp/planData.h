@@ -44,21 +44,23 @@ typedef struct {
     uint16_t faultInfo1;
     uint16_t faultInfo2;
     uint16_t rtPosUpload[RT_FPGA_UPLOAD_POS_LEN/2];
+    uint16_t MlcCurFsm;
     uint16_t jawRTPos[2];
     uint16_t jawInfo[2];
+    uint16_t jawTowardPos[2];
 }REALTIME_FEEDBACK;
 
 typedef struct {
     uint16_t versionARM;
-    uint16_t versionFPGA;
+    uint32_t versionFPGA;
     uint16_t leafNcarInterlock[83];
     uint16_t jawInterlock[2];
     uint16_t powerInterlock;
     uint16_t fanInterlock;
-    uint16_t boardLoss;
+   // uint16_t boardLoss;
     uint16_t armStatus;
     uint16_t FPGAStatus;
-}INTERLOCK_FEEDBACK;
+}__attribute__((aligned(1), packed))INTERLOCK_FEEDBACK;
 
 typedef struct {
     uint16_t bankNo;
@@ -67,7 +69,7 @@ typedef struct {
     uint16_t leafSecondPos[82];
     uint16_t carrierSecondPos;   // total RI in one beam, < 2048
     uint16_t jawSecondPos[2];
-}SECOND_POS_FEEDBACK;
+}__attribute__((aligned(1), packed))SECOND_POS_FEEDBACK;
 
 extern BEAM_DATA rtBeamData;
 extern REALTIME_FEEDBACK rtFeedback;

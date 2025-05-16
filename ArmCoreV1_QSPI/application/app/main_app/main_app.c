@@ -722,37 +722,57 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
         operateSendMutex(1, 0, osWaitForever);// 1:Acquire 0:Release
         if (recvBuf[4] == PACKF0_CMD) 
         {
-          //  printf("F0\r\n");
-            for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
-            {   //RT 0 - 165 ：82 leaf and carrier pos
-                rtFeedback.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
-            }
+           // printf("F0\r\n");
+            // for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
+            // {   //RT 0 - 165 ：82 leaf and carrier pos
+            //     rtFeedback.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
+            // }
+            memcpy(rtFeedback.rtPosUpload, &recvBuf[FPGA_RT_UPLOAD_START], 166);
+          //  printf("car %d\r\n",rtFeedback.rtPosUpload[82]);
             rtFeedback.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
             rtFeedback.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
-
-            for (i = 0; i < 164; i += 2) 
-            {  //NRT 0 - 163 ：82 leaf second pos
-                secondPosFeedback.leafSecondPos[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];                            
-            }
-            interlockFeedback.boardLoss = (recvBuf[FPGA_NRT_UPLOAD_START + 166] & 0xc0) >> 6;//NRT 166 bit6-7
-            interlockFeedback.FPGAStatus = (recvBuf[FPGA_NRT_UPLOAD_START + 166] << 8) + recvBuf[FPGA_NRT_UPLOAD_START + 167]; //NRT 166-167
-                    
+            rtFeedback.MlcCurFsm = recvBuf[FPGA_RT_UPLOAD_START+168];//RT 168
+           // printf("sta: %d %d %d %d\r\n", recvBuf[FPGA_RT_UPLOAD_START+166],recvBuf[FPGA_RT_UPLOAD_START+167], recvBuf[FPGA_RT_UPLOAD_START+168],recvBuf[FPGA_RT_UPLOAD_START+169]);
+          //  rtFeedback.jawTowardPos[X] = (recvBuf[170 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 171];//RT 170 - 171
+         //   rtFeedback.jawTowardPos[Y] = (recvBuf[172 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 173];//RT 172 - 173
+            memcpy(&rtFeedback.jawTowardPos[X], &recvBuf[FPGA_RT_UPLOAD_START+170], 4);
+           // printf("toward %d %d\r\n",rtFeedback.jawTowardPos[X],rtFeedback.jawTowardPos[Y]);
+          //  printf("sta 0x%x 0x%x 0x%x\r\n",rtFeedback.faultInfo1,rtFeedback.faultInfo2,rtFeedback.MlcCurFsm);
+            // for (i = 0; i < 164; i += 2) 
+            // {  //NRT 0 - 163 ：82 leaf second pos
+            //     secondPosFeedback.leafSecondPos[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];                            
+            // }
+            memcpy(secondPosFeedback.leafSecondPos, &recvBuf[FPGA_NRT_UPLOAD_START], 164);
+          //  printf("sec %d\r\n",secondPosFeedback.leafSecondPos[80]); 
+           // interlockFeedback.boardLoss = recvBuf[FPGA_NRT_UPLOAD_START + 168];//NRT 166 bit6-7
+          //  interlockFeedback.FPGAStatus = (recvBuf[FPGA_NRT_UPLOAD_START + 166] << 8) + recvBuf[FPGA_NRT_UPLOAD_START + 167]; //NRT 166-167 
+            memcpy(&interlockFeedback.FPGAStatus, &recvBuf[FPGA_NRT_UPLOAD_START + 166], 2);  
+          //  printf("FPGAStatus %x\r\n",interlockFeedback.FPGAStatus);      
         }
         else if (recvBuf[4] == PACKF1_CMD) 
         {
-          //  printf("F1\r\n");
-            for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
-            {   //RT 0 - 165 ：82 leaf and carrier pos
-                rtFeedback.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
-            }
+         //   printf("F1\r\n");
+            // for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
+            // {   //RT 0 - 165 ：82 leaf and carrier pos
+            //     rtFeedback.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
+            // }
+            memcpy(rtFeedback.rtPosUpload, &recvBuf[FPGA_RT_UPLOAD_START], 166);
             rtFeedback.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
             rtFeedback.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
-
-            for (i = 0; i < (NRT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
-            {//NRT 0 - 165 ：82 leaf and carrier interlock
-               interlockFeedback.leafNcarInterlock[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];
-            }
-            interlockFeedback.versionFPGA = (recvBuf[FPGA_NRT_UPLOAD_START + 166] << 8) + recvBuf[FPGA_NRT_UPLOAD_START + 167];//NRT 166-167           
+            rtFeedback.MlcCurFsm = recvBuf[FPGA_RT_UPLOAD_START+168];//RT 168
+           // rtFeedback.jawTowardPos[X] = (recvBuf[170 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 171];//RT 170 - 171
+          //  rtFeedback.jawTowardPos[Y] = (recvBuf[172 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 173];//RT 172 - 173
+            memcpy(&rtFeedback.jawTowardPos[X], &recvBuf[FPGA_RT_UPLOAD_START+170], 4);
+           // printf("jaw %d %d\r\n", rtFeedback.jawTowardPos[X],rtFeedback.jawTowardPos[Y]);
+            // for (i = 0; i < 166; i += 2) 
+            // {//NRT 0 - 165 ：82 leaf and carrier interlock
+            //    interlockFeedback.leafNcarInterlock[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];
+            // }
+            memcpy(interlockFeedback.leafNcarInterlock, &recvBuf[FPGA_NRT_UPLOAD_START], 166);
+            memcpy(&interlockFeedback.versionFPGA, &recvBuf[FPGA_NRT_UPLOAD_START + 166], 4);
+          //  interlockFeedback.versionFPGA = 
+              //  (recvBuf[FPGA_NRT_UPLOAD_START + 166]<<24)+(recvBuf[FPGA_NRT_UPLOAD_START + 167]<<16)+(recvBuf[FPGA_NRT_UPLOAD_START + 168]<<8)+recvBuf[FPGA_NRT_UPLOAD_START + 169];
+           // printf("ver %x\r\n",interlockFeedback.versionFPGA);       
         }
         operateSendMutex(0, 0, 0);
         #endif
@@ -784,22 +804,24 @@ static int8_t realtime_ethercat_data_process(void)
   //  memcpy(&send->InfoIn[0], &recv->InfoOut[0], sizeof(UINT16) * 8);         //rt upload， echo
     memcpy(send, recv, sizeof(UINT16) * 8);
 #else
-    send->InU16_CrtFsmState = rtFeedback.faultInfo1&0x000f;
+    send->InU16_CrtFsmState = rtFeedback.MlcCurFsm;
     memcpy(&send->InU16_BeamIndexFB, &recv->OutU16_BeamIndex, sizeof(uint16_t) * 7);         //rt upload， echo
 #endif
     send->InU16_PlanCmdFB = recv->OutU16_PlanCmd;
-    send->InU16_FaultInfo1 = rtFeedback.faultInfo1&0x00f0;
-    if(interlockFeedback.boardLoss&0x0007)  send->InU16_FaultInfo1 |= 0x0002;
+    send->InU16_FaultInfo1 = rtFeedback.faultInfo1;
+   // printf("%x\r\n", rtFeedback.faultInfo1);
+  //  if(interlockFeedback.boardLoss&0x0007)  send->InU16_FaultInfo1 |= 0x0002;
     if(tcp_link_status_get() == false) 
     {
         send->InU16_FaultInfo1 |= 0x0001;
     //   //  printf("tcp feedback\r\n");
     }
-   send->InU16_FaultInfo2 = rtFeedback.faultInfo2&0x00ff;
+    send->InU16_FaultInfo2 = rtFeedback.faultInfo2&0x00ff;
 
     memcpy(send->InAU16_LeafCrtPos, rtFeedback.rtPosUpload, sizeof(uint16_t) * (8 * 10 + 3));
     send->InAU16_JawCrtPos[X] = rtFeedback.jawRTPos[X];
     send->InAU16_JawCrtPos[Y] = rtFeedback.jawRTPos[Y];
+   // printf("self %d %d\r\n",rtFeedback.jawRTPos[X],rtFeedback.jawRTPos[Y]);
     send->InU16_JawInfo = (rtFeedback.jawInfo[Y] << 4) + rtFeedback.jawInfo[X];
 
     rtBeamData.fsmState = recv->OutU16_FsmStateSetting;   //save rt cmd
@@ -810,7 +832,7 @@ static int8_t realtime_ethercat_data_process(void)
     if(oldState != rtBeamData.fsmState){
         printf("fsm state: %d -> %d\r\n",oldState,rtBeamData.fsmState);
         uint8_t newState = rtBeamData.fsmState;
-        make_cmd_to_fpga(25, &newState, 1);
+        make_cmd_to_fpga(CMD_STA_REQ, &newState);
         oldState = rtBeamData.fsmState;
 
         uint16_t state[2];

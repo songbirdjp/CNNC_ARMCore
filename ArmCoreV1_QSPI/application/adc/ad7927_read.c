@@ -1,6 +1,6 @@
 #include "ad7927_read.h"
 
-uint16_t spiSixteenBits =(
+static uint16_t spiSixteenBits =(
         (AD7927_CFGREG_11 << (15 - BUFFER))|
         (AD7927_CFGREG_10 << (14 - BUFFER))|
         (AD7927_CFGREG_9 << (13 - BUFFER))|
@@ -32,26 +32,17 @@ HAL_StatusTypeDef AD7927_Init(SPI_HandleTypeDef *hspi)
 
 uint16_t ADCgetValue(SPI_HandleTypeDef* hspi, uint8_t channel)
 {
-    uint8_t TXData[2] = {0};
-    uint8_t RXData[2] = {0};
     uint16_t adcResult = 0;
     HAL_StatusTypeDef _spiADCStatus;
 
-    spiSixteenBits &= 0xE3FF;//clear all channel bits， bit12 - 10
-    spiSixteenBits |= (channel << 10);//set channel
-    TXData[0] = spiSixteenBits >> 8;
-    TXData[1] = spiSixteenBits ;
+   spiSixteenBits &= 0xE3FF;//clear all channel bits， bit12 - 10
+   spiSixteenBits |= (channel << 10);//set channel
+ 
 
-    _spiADCStatus = HAL_SPI_Transmit(hspi, TXData, 2, 1000);//send config
-    _spiADCStatus = HAL_SPI_Receive(hspi, RXData, 2, 1000);//receive data
-  //  printf("_spiADCStatus = %d\r\n",_spiADCStatus);
+    _spiADCStatus = HAL_SPI_TransmitReceive(hspi,&spiSixteenBits,&adcResult,1, 1000);
+    if(_spiADCStatus > 0)  printf("spi4 recv status = %d\r\n",_spiADCStatus);
 
-//    printf("RXData[0] = 0x%x\r\n",RXData[0]);
-//    printf("RXData[1] = 0x%x\r\n",RXData[1]);
-//    printf("TXData[0] = 0x%x\r\n",TXData[0]);
-//    printf("TXData[1] = 0x%x\r\n",TXData[1]);
-
-    adcResult = ((uint16_t)RXData[0] << 8 | RXData[1]) & 0x0FFF;
-  //  printf("adcResult = %d\r\n",adcResult);
+    adcResult &= 0x0FFF;
+   // printf("adcResult = ch%d %d\r\n",channel, adcResult);
     return adcResult;
 }
