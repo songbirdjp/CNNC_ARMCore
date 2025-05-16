@@ -2,7 +2,7 @@
 #include "string.h"
 #include "stdio.h"
 #include "usart.h"
-
+#include "ulog.h"
 #define UART_SEND_SUCCEED_EVENT     (1<<0)
 
 static void ErrorCallback(UART_HandleTypeDef *huart)
@@ -19,10 +19,16 @@ static void RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
 
     *(uint16_t *)&uart->rx_buf[uart->rx_buf_len] = size;  /* rx_buf last but two byte indicate valid data length, because uart use dma idle mode */
 
+    // LOG_I("111uart rx %s, len: %d\r\n", uart->name, size);
+    // for (int i = 0; i < size; i++) {
+    //     LOG_I("%02x ", uart->rx_buf[i]);
+    // }
+    // LOG_I("\r\n");
+
     ret = osMessageQueuePut(uart->rx_queue, uart->rx_buf, 0, 0);
     if (ret != osOK)
     {
-        printf("%s queue put err:%d\r\n", uart->name, ret);
+        LOG_I("%s queue put err:%d\r\n", uart->name, ret);
     }
 
     __disable_irq();

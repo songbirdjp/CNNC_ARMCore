@@ -28,13 +28,26 @@
 #define FRAME_HEADER_OFFSET     0
 #define FRAME_HEADER_LEN        2
 
-#define FRAME_COUNT_OFFSET      (FRAME_HEADER_OFFSET + FRAME_HEADER_LEN)
+#define FRAME_COUNT_OFFSET      (FRAME_HEADER_OFFSET + FRAME_HEADER_LEN)//2
 #define FRAME_COUNT_LEN         2
 
-#define FRAME_DATA_LEN_OFFSET   (FRAME_COUNT_OFFSET + FRAME_COUNT_LEN)
-#define FRAME_DATA_LEN          2
 
-#define FRAME_DATA_OFFSET       (FRAME_DATA_LEN_OFFSET + FRAME_DATA_LEN)
+#define FRAME_PAYLOAD_LEN_OFFSET   (FRAME_COUNT_OFFSET + FRAME_COUNT_LEN)//4
+#define FRAME_PAYLOAD_LEN_LEN         2
+
+#define FRAME_ID_ACK_OFFSET (FRAME_PAYLOAD_LEN_OFFSET + FRAME_PAYLOAD_LEN_LEN)//6
+#define FRAME_ID_ACK_LEN 4
+
+#define FRAME_TYPE_OFFSET (FRAME_ID_ACK_OFFSET + FRAME_ID_ACK_LEN)//10
+#define FRAME_TYPE_LEN 1
+
+#define FRAME_DATA_LEN_OFFSET (FRAME_TYPE_OFFSET + FRAME_TYPE_LEN)//11
+#define FRAME_DATA_LEN_LEN 2
+
+// #define FRAME_ZERO_OFFSET (FRAME_DATA_LEN_OFFSET + FRAME_DATA_LEN_LEN)//13
+// #define FRAME_ZERO_LEN 1
+
+#define FRAME_DATA_OFFSET   (FRAME_DATA_LEN_OFFSET + FRAME_DATA_LEN_LEN)//13
 
 #define FRAME_CRC_LEN           4
 #define FRAME_EXTRA_LEN         (FRAME_DATA_OFFSET + FRAME_CRC_LEN)
@@ -98,7 +111,7 @@ int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t
         ret = -4;
     }
 
-    uint32_t crc_cal = hardware_crc_calculate(&buf[FRAME_COUNT_OFFSET], len + FRAME_COUNT_LEN + FRAME_DATA_LEN) ^ 0xFFFFFFFF;
+    uint32_t crc_cal = hardware_crc_calculate(&buf[FRAME_COUNT_OFFSET], len + FRAME_COUNT_LEN + FRAME_PAYLOAD_LEN_LEN + 7 ) ^ 0xFFFFFFFF;
     uint32_t crc_recv = buf[len + FRAME_DATA_OFFSET] | buf[len + FRAME_DATA_OFFSET + 1] << 8 | buf[len + FRAME_DATA_OFFSET + 2] << 16 | buf[len + FRAME_DATA_OFFSET + 3] << 24;
     if (crc_cal != crc_recv)
     {
@@ -149,6 +162,8 @@ int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t
 
 int8_t frame_format_pack_and_send(struct frame_statistics *stats, uint8_t *buf, uint16_t len, int8_t (*cb)(uint8_t *buf, uint16_t size, uint32_t timeout), uint32_t timeout)
 {
+    //cjh tag
+
     if (buf == NULL || len == 0)
     {
         LOG_E("args error\r\n");
@@ -158,22 +173,34 @@ int8_t frame_format_pack_and_send(struct frame_statistics *stats, uint8_t *buf, 
     int8_t ret = 0;
 
     uint8_t buf_send[128] = {0};
+  
 
+   // header: 55 aa   count:02 00   payload len:0e 00   7bytes:01 00 00 00 05(85) 07 00   data :00 80 02 02 00 40 03 12 84 03 fa 
     /* 1. fill header */
-    buf_send[FRAME_HEADER_OFFSET] = 0x55;
-    buf_send[FRAME_HEADER_OFFSET + 1] = 0xAA;
+    buf_send[FRAME_HEADER_OFFSET] = 0x55; //0//55
+    buf_send[FRAME_HEADER_OFFSET + 1] = 0xAA;//1//aa
 
     /* 2. fill count */
     uint16_t *cnt = frame_stats_send_cnt_get(stats);
-    buf_send[FRAME_COUNT_OFFSET] = *cnt & 0xFF;
-    buf_send[FRAME_COUNT_OFFSET + 1] = (*cnt >> 8) & 0xFF;
+    buf_send[FRAME_COUNT_OFFSET] = *cnt & 0xFF; //2//02
+    buf_send[FRAME_COUNT_OFFSET + 1] = (*cnt >> 8) & 0xFF; //3//00  
 
-    /* 3. fill data len */
-    buf_send[FRAME_DATA_LEN_OFFSET] = len & 0xFF;
-    buf_send[FRAME_DATA_LEN_OFFSET + 1] = (len >> 8) & 0xFF;
+    /* 3. fill payload len */
+    buf_send[FRAME_PAYLOAD_LEN_OFFSET] = (len+7) & 0xFF;//4//0e
+    buf_send[FRAME_PAYLOAD_LEN_OFFSET + 1] = ((len+7) >> 8) & 0xFF;//5//00
 
-    /* 4. fill data */
-    memcpy(&buf_send[FRAME_DATA_OFFSET], buf, len);
+    buf_send[FRAME_ID_ACK_OFFSET] = 0x01& 0xFF; //6//01
+    buf_send[FRAME_ID_ACK_OFFSET + 1] = 0x00& 0xFF; //7//00
+    buf_send[FRAME_ID_ACK_OFFSET + 2] = 0x00& 0xFF; //8//00
+    buf_send[FRAME_ID_ACK_OFFSET + 3] = 0x00& 0xFF; //9//05
+
+    buf_send[FRAME_TYPE_OFFSET] = 0x85& 0xFF; //10//85
+
+    buf_send[FRAME_DATA_LEN_OFFSET] = len& 0xFF; //11//01
+    buf_send[FRAME_DATA_LEN_OFFSET + 1] = (len >> 8) & 0xFF; //12//00
+
+    /* 4. fill payload */
+    memcpy(&buf_send[FRAME_DATA_OFFSET], buf, len);//13
 
     /* 5. fill crc32 */
     HAL_StatusTypeDef stat = hardware_crc_config(CRC32);
@@ -183,7 +210,7 @@ int8_t frame_format_pack_and_send(struct frame_statistics *stats, uint8_t *buf, 
         return -2;
     }
 
-    uint32_t crc_cal = hardware_crc_calculate(&buf_send[FRAME_COUNT_OFFSET], len + FRAME_COUNT_LEN + FRAME_DATA_LEN) ^ 0xFFFFFFFF;
+    uint32_t crc_cal = hardware_crc_calculate(&buf_send[FRAME_COUNT_OFFSET], len + FRAME_COUNT_LEN + FRAME_PAYLOAD_LEN_LEN + 7) ^ 0xFFFFFFFF;
     buf_send[len + FRAME_DATA_OFFSET] = crc_cal & 0xFF;
     buf_send[len + FRAME_DATA_OFFSET + 1] = (crc_cal >> 8) & 0xFF;
     buf_send[len + FRAME_DATA_OFFSET + 2] = (crc_cal >> 16) & 0xFF;

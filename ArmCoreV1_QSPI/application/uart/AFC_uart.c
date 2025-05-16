@@ -363,14 +363,16 @@ static int8_t AFC_cmd_parse(struct AFC_object *cmd)
         return -1;
     }
     /* 1. check cmd id */
+    
     if (cmd->id.bits.cmd_id != AFC_UART_ID)
     {
         return 0;
     }
 
     int8_t ret = 0;
-
+   
     /* 2. parse cmd type */
+    //LOG_I("AFC_cmd_parse  cmd->type: %02x\r\n", cmd->type);
     switch (cmd->type)
     {
     case 0x01:  /* handshake frame */
@@ -383,6 +385,7 @@ static int8_t AFC_cmd_parse(struct AFC_object *cmd)
         break;
     case 0x02:  /* command frame */
         ret = AFC_command_frame_parse(cmd);
+        LOG_I("AFC_command_frame_parse ret: %d\r\n", ret);
         if (ret != 0)
         {
             LOG_E("AFC_command_frame_parse err: %d\r\n", ret);
@@ -408,7 +411,7 @@ static int8_t AFC_cmd_parse(struct AFC_object *cmd)
         cmd->id.bits.cmd_ack = 0;
 
         cmd->type |= 0x80;
-        
+        //LOG_I("414AFC_cmd_parse  cmd->type: %02x\r\n", cmd->type);
         ret = AFC_uart_cmd_write(cmd);
         if (ret != 0)
         {
@@ -430,13 +433,13 @@ static int8_t AFC_uart_send_entry(void *argument)
     {
         osMessageQueueGet(AFC_uart_send_queue, &send_buf, NULL, osWaitForever);
 
-#if 0
-        printf("send_buf len: %d\r\n", send_buf.len);
+#if 1
+        LOG_I("TEST afc send_buf len: %d\r\n", send_buf.len);
         for (uint8_t i = 0; i < send_buf.len; i++)
         {
-            printf("%02x ", send_buf.buf[i]);
+            LOG_I("%02x ", send_buf.buf[i]);
         }
-        printf("\r\n");
+        LOG_I("\r\n");
 #endif
 
         ret = device_AFC_uart_data_write(&send_buf, send_buf.len, 1000);
@@ -457,7 +460,7 @@ static int8_t AFC_uart_cmd_process(struct AFC_uart *buf)
     }
 
 #if 0
-    LOG_I("recv_buf len: %d\r\n", buf->len);
+    LOG_I("test len: %d\r\n", buf->len);
     for (uint8_t i = 0; i < buf->len; i++)
     {
         LOG_I("%02x ", buf->buf[i]);
@@ -466,8 +469,23 @@ static int8_t AFC_uart_cmd_process(struct AFC_uart *buf)
 #endif
 
     struct AFC_object cmd = {0};
-    memcpy(&cmd, buf->buf, sizeof(struct AFC_object));
-    cmd.data = &buf->buf[sizeof(struct AFC_object) - sizeof(uint8_t *)];
+    memcpy(&cmd, buf->buf + 14, sizeof(struct AFC_object));
+    cmd.data = &buf->buf[sizeof(struct AFC_object) - sizeof(uint8_t *) + 14];
+
+
+    // LOG_I("cmd.id.byte: %02x\r\n", cmd.id.byte);
+    // LOG_I("cmd.id.bits.cmd_id: %02x\r\n", cmd.id.bits.cmd_id);
+    // LOG_I("cmd.id.bits.cmd_ack: %02x\r\n", cmd.id.bits.cmd_ack);
+    // LOG_I("cmd.type: %02x\r\n", cmd.type);
+    // LOG_I("cmd.len: %d\r\n", cmd.len);
+    // LOG_I("cmd.data: ");
+
+    // for (uint16_t i = 0; i <  cmd.len; i++)
+    // {
+    //     LOG_I("%02x ", cmd.data[i]);
+    // }
+    // LOG_I("\r\n");
+
     return AFC_cmd_parse(&cmd);
 }
 
