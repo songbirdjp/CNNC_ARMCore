@@ -6,6 +6,12 @@
 
 #define DEVICE_ADDRESS_VPS  0x02
 
+static struct vps_status vps_status_obj = {0};
+static struct vps_status *vps_status_get(void)
+{
+    return &vps_status_obj;
+}
+
 static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
 {
     if (cmd == NULL)
@@ -25,7 +31,8 @@ static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     uint8_t buf[128] = {0};
     buf[0] = cmd->id.byte;
     buf[1] = cmd->type;
-    memcpy(&buf[2], cmd->data, *cmd->len);
+    enum vps_read_write_id cmd_id = cmd->data[0] | cmd->data[1] << 8;
+    memcpy(&buf[2], &cmd->data[2], *cmd->len);
 
     uint16_t crc = buf[*cmd->len] << 8 | buf[*cmd->len + 1];
     uint16_t crc_cal = modbus_crc16_cal(buf, *cmd->len);
@@ -35,7 +42,7 @@ static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
         return -3;
     }
 
-    if (cmd->type & 0x80)
+    if (buf[1] & 0x80)
     {
         /* 
          * 1：功能不支持
@@ -43,34 +50,75 @@ static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
          * 3：寄存器数量超限
          * 4：内部处理出错
          */
-        LOG_E("[%d][vps] cmd frame err: %d\r\n", id, cmd->data[0]);
+        LOG_E("[%d][vps] cmd frame err: %d\r\n", id, buf[1]);
         return -4;
     }
 
-    switch (cmd->type)
+    struct vps_status *obj = vps_status_get();
+
+    switch (buf[1])
     {
     case READ_HOLDING_REGISTERS:
-        for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
+        LOG_I("[%d][vps] ", id);
+        for (uint8_t i = 0; i < buf[2] / 2; i++)
         {
-            LOG_I("[%d][vps] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("%.4x ", buf[3 + i * 2] << 8 | buf[4 + i * 2]);
         }
         LOG_I("\r\n");
+        switch (cmd_id)
+        {
+        case VPS_SOFTWARE_VERSION:
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->software_version = buf[3] << 8 | buf[4];
+            osMutexRelease(obj->mutex);
+            break;
+        case VPS_RUN_STATUS:
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->run_status = buf[3] << 8 | buf[4];
+            obj->voltage_output = buf[5] << 8 | buf[6];
+            obj->current_output = (float)(buf[7] << 8 | buf[8]) / 1000.0f + (float)(buf[9] << 8 | buf[10]) / 1000000.0f;
+            obj->power_voltage = (float)(buf[11] << 8 | buf[12]) / 100.0f;
+            obj->button_lock = buf[19] << 8 | buf[20];
+            osMutexRelease(obj->mutex);
+            break;
+        case VPS_FAULT_STOP:
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->fault_stop = buf[3] << 8 | buf[4];
+            obj->fault_cur = buf[7] << 8 | buf[8];
+            obj->fault_code = buf[9] << 24 | buf[10] << 16 | buf[11] << 8 | buf[12];
+            obj->fault_record[0] = buf[13] << 8 | buf[14];
+            obj->fault_record[1] = buf[15] << 8 | buf[16];
+            obj->fault_record[2] = buf[17] << 8 | buf[18];
+            obj->fault_record[3] = buf[19] << 8 | buf[20];
+            osMutexRelease(obj->mutex);
+            break;
+        case VPS_FIRE_COUNT:
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->fire_count = buf[3] << 8 | buf[4];
+            obj->fire_count_uplimit = buf[5] << 8 | buf[6];
+            obj->fire_stop_time = buf[7] << 8 | buf[8];
+            osMutexRelease(obj->mutex);
+            break;
+        default:
+            break;
+        }
         break;
     case READ_INPUT_REGISTERS:
-        for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
+        LOG_I("[%d][vps] ", id);
+        for (uint8_t i = 0; i < buf[2] / 2; i++)
         {
-            LOG_I("[%d][vps] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("%.4x ", buf[3 + i * 2] << 8 | buf[4 + i * 2]);
         }
         LOG_I("\r\n");
         break;
     case WRITE_SINGLE_REGISTER:
-        LOG_I("[%d][vps] reg addr: %#.4x, value: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("[%d][vps] reg addr: %#.4x, value: %#.4x\r\n", id, buf[2] << 8 | buf[3], buf[4] << 8 | buf[5]);
         break;
     case WRITE_MULTIPLE_REGISTERS:
-        LOG_I("[%d][vps] reg addr: %#.4x, len: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("[%d][vps] reg addr: %#.4x, len: %#.4x\r\n", id, buf[2] << 8 | buf[3], buf[4] << 8 | buf[5]);
         break;
     default:
-        LOG_E("[%d][vps] invalid cmd type: %d\r\n", id, cmd->type);
+        LOG_E("[%d][vps] invalid cmd type: %d\r\n", id, buf[1]);
         return -5;
         break;
     }
@@ -208,7 +256,7 @@ static int8_t vps_link_menu_value_read(void)
         return -1;
     }
 #else
-
+#if 0
    /* 1. read software version */
    cmd.addr = DEVICE_ADDRESS_VPS;
    cmd.type = READ_HOLDING_REGISTERS;
@@ -365,7 +413,7 @@ static int8_t vps_link_menu_value_read(void)
        return -14;
    }
 
-   /* 15. read fire times */
+   /* 15. read fire count */
    data[0] = 0x01;
    data[1] = 0xA9;
 
@@ -385,6 +433,62 @@ static int8_t vps_link_menu_value_read(void)
    {
        LOG_E("uart modbus cmd write err: %d\r\n", ret);
        return -16;
+   }
+#endif
+   /* 1. read software version */
+   cmd.addr = DEVICE_ADDRESS_VPS;
+   cmd.type = READ_HOLDING_REGISTERS;
+   cmd.cmd_id = VPS_SOFTWARE_VERSION;
+   cmd.len = 4;
+   cmd.data = data;
+
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+   if (ret != 0)
+   {
+       LOG_E("uart modbus cmd write err: %d\r\n", ret);
+       return -1;
+   }
+
+   /* 2. read run status */
+   cmd.cmd_id = VPS_RUN_STATUS;
+   data[0] = 0x00;
+   data[1] = 0x64;
+   data[2] = 0x00;
+   data[3] = 0x09;
+
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+   if (ret != 0)
+   {
+       LOG_E("uart modbus cmd write err: %d\r\n", ret);
+       return -2;
+   }
+
+   /* 3. read halt status */
+   cmd.cmd_id = VPS_FAULT_STOP;
+   data[0] = 0x01;
+   data[1] = 0x90;
+   data[2] = 0x00;
+   data[3] = 0x09;
+
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+   if (ret != 0)
+   {
+       LOG_E("uart modbus cmd write err: %d\r\n", ret);
+       return -3;
+   }
+
+   /* 4. read fire count */
+   cmd.cmd_id = VPS_FIRE_COUNT;
+   data[0] = 0x01;
+   data[1] = 0xA9;
+   data[2] = 0x00;
+   data[3] = 0x03;
+
+   ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+   if (ret != 0)
+   {
+       LOG_E("uart modbus cmd write err: %d\r\n", ret);
+       return -4;
    }
 
 #endif
@@ -504,25 +608,68 @@ INIT_ENV_EXPORT(vps_functions_init);
 static int8_t vps_read_test(uint8_t argc, char **argv)
 {
     int8_t ret = 0;
+    struct modbus_cmd_object cmd = {0};
+    uint8_t buf[16] = {0};
 
+    uint16_t reg_addr = atoi(argv[1]);
+    uint16_t len = atoi(argv[2]);
+    buf[0] = reg_addr >> 8;
+    buf[1] = reg_addr;
+    buf[2] = len >> 8;
+    buf[3] = len;
+
+    cmd.addr = DEVICE_ADDRESS_VPS;
+    cmd.type = READ_HOLDING_REGISTERS;
+    cmd.len = 4;
+    cmd.data = buf;
+
+    return uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+}
+MSH_CMD_EXPORT_ALIAS(vps_read_test, vps_read_test, read vps value);
+static int8_t vps_write_test(uint8_t argc, char **argv)
+{
+    int8_t ret = 0;
+    struct modbus_cmd_object cmd = {0};
+    uint8_t buf[16] = {0};
+
+    uint16_t reg_addr = atoi(argv[1]);
+    uint16_t data = atoi(argv[2]);
+    buf[0] = reg_addr >> 8;
+    buf[1] = reg_addr;
+    buf[2] = data >> 8;
+    buf[3] = data;
+
+    cmd.addr = DEVICE_ADDRESS_VPS;
+    cmd.type = WRITE_SINGLE_REGISTER;
+    cmd.len = 4;
+    cmd.data = buf;
+
+    return uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+}
+MSH_CMD_EXPORT_ALIAS(vps_write_test, vps_write_test, write vps value);
+
+static int8_t vps_cmd_test(uint8_t argc, char **argv)
+{
+    int8_t ret = 0;
+    struct modbus_cmd_object cmd = {0};
+    uint8_t buf[16] = {0};
 
     switch (atoi(argv[1]))
     {
     case 0:
-        ret = vps_link_menu_value_read();
-        if (ret != 0)
-        {
-            LOG_E("vps link menu value read err: %d\r\n", ret);
-        }
+        ret = vps_read_test(argc - 1, argv + 1);
         break;
     case 1:
-        vps_link_menu_init();
+        ret = vps_write_test(argc - 1, argv + 1);
+        break;
+    case 2:
+        ret = vps_link_menu_value_read();
         break;
     default:
         break;
     }
 
-    return 0;
+    return ret;
 }
-MSH_CMD_EXPORT_ALIAS(vps_read_test, vps_read_test, read vps value);
+MSH_CMD_EXPORT_ALIAS(vps_cmd_test, vps_cmd_test, vps cmd test);
 #endif

@@ -42,8 +42,9 @@ enum modbus_cmd
 
 struct modbus_cmd_object
 {
-    uint8_t addr;
-    uint8_t type;
+    uint8_t addr;   /* slave address */
+    enum modbus_cmd type;
+    uint16_t cmd_id;    /* cmd id for local recored */
     uint16_t len;
     uint8_t *data;
 };

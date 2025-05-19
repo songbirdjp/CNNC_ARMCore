@@ -2,6 +2,6 @@
 #define __CONFIG_H__
 
 #define GIT_BRANCH  "bgm_arm_io_develop"
-#define GIT_HASH    "5822d3006202aa1ebd3c3127655320ec3f23dbae"
+#define GIT_HASH    "c1c28fa34bd9625efacefa4a05b2fffc9cbe6d12"
 
 #endif

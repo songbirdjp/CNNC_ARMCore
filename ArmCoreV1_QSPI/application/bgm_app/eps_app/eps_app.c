@@ -6,6 +6,12 @@
 
 #define DEVICE_ADDRESS_EPS  0x01
 
+static struct eps_status eps_status_obj = {0};
+static struct eps_status *eps_status_get(void)
+{
+    return &eps_status_obj;
+}
+
 static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
 {
     if (cmd == NULL)
@@ -25,7 +31,8 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     uint8_t buf[128] = {0};
     buf[0] = cmd->id.byte;
     buf[1] = cmd->type;
-    memcpy(&buf[2], cmd->data, *cmd->len);
+    enum eps_read_write_id cmd_id = cmd->data[0] | cmd->data[1] << 8;
+    memcpy(&buf[2], &cmd->data[2], *cmd->len);
 
     uint16_t crc = buf[*cmd->len] << 8 | buf[*cmd->len + 1];
     uint16_t crc_cal = modbus_crc16_cal(buf, *cmd->len);
@@ -35,7 +42,7 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
         return -3;
     }
 
-    if (cmd->type & 0x80)
+    if (buf[1] & 0x80)
     {
         /* 
          * 1：功能不支持
@@ -43,34 +50,79 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
          * 3：寄存器数量超限
          * 4：内部处理出错
          */
-        LOG_E("[%d][eps] cmd frame err: %d\r\n", id, cmd->data[0]);
+        LOG_E("[%d][eps] cmd frame err: %d\r\n", id, buf[1]);
         return -4;
     }
 
-    switch (cmd->type)
+    struct eps_status *obj = eps_status_get();
+
+    switch (buf[1])
     {
     case READ_HOLDING_REGISTERS:
-        for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
+        LOG_I("[%d][eps] ", id);
+        for (uint8_t i = 0; i < buf[2] / 2; i++)
         {
-            LOG_I("[%d][eps] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("%.4x ", buf[3 + i * 2] << 8 | buf[4 + i * 2]);
         }
         LOG_I("\r\n");
+
+        switch (cmd_id)
+        {
+        case EPS_SOFTWARE_VERSION:
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->software_version = buf[3] << 8 | buf[4];
+            osMutexRelease(obj->mutex);
+            break;
+        case EPS_RUN_STATUS:
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->run_status = buf[3] << 8 | buf[4];
+            obj->voltage_output = (float)(buf[5] << 8 | buf[6]) / 100.0f;
+            obj->current_output = (float)(buf[7] << 8 | buf[8]) / 100.0f;
+            obj->power_output = (float)(buf[9] << 8 | buf[10]) / 100.0f;
+            osMutexRelease(obj->mutex);
+            break;
+        case EPS_FAULT_STOP:
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->fault_stop = buf[3] << 8 | buf[4];
+            obj->fault_cur = buf[7] << 8 | buf[8];
+            obj->fault_record[0] = buf[9] << 8 | buf[10];
+            obj->fault_record[1] = buf[11] << 8 | buf[12];
+            obj->fault_record[2] = buf[13] << 8 | buf[14];
+            obj->fault_record[3] = buf[15] << 8 | buf[16];
+            obj->fault_code = buf[17] << 24 | buf[18] << 16 | buf[19] << 8 | buf[20];
+            osMutexRelease(obj->mutex);
+            break;
+        case EPS_FAN_FAULT_ENABLE:
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->fan_fault_enable = buf[3] << 8 | buf[4];
+            osMutexRelease(obj->mutex);
+            break;
+        case EPS_COMMUNICATION_STORAGE:
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->storage = buf[3] << 8 | buf[4];
+            osMutexRelease(obj->mutex);
+            break;
+        default:
+            LOG_E("[%d][eps] invalid cmd id: %d\r\n", id, cmd_id);
+            break;
+        }
         break;
     case READ_INPUT_REGISTERS:
-        for (uint8_t i = 0; i < cmd->data[0] / 2; i++)
+        LOG_I("[%d][eps] ", id);
+        for (uint8_t i = 0; i < buf[2] / 2; i++)
         {
-            LOG_I("[%d][eps] %.4x ", id, cmd->data[1 + i * 2] << 8 | cmd->data[2 + i * 2]);
+            LOG_I("%.4x ", buf[3 + i * 2] << 8 | buf[4 + i * 2]);
         }
         LOG_I("\r\n");
         break;
     case WRITE_SINGLE_REGISTER:
-        LOG_I("[%d][eps] reg addr: %#.4x, value: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("[%d][eps] reg addr: %#.4x, value: %#.4x\r\n", id, buf[2] << 8 | buf[3], buf[4] << 8 | buf[5]);
         break;
     case WRITE_MULTIPLE_REGISTERS:
-        LOG_I("[%d][eps] reg addr: %#.4x, len: %#.4x\r\n", id, cmd->data[0] << 8 | cmd->data[1], cmd->data[2] << 8 | cmd->data[3]);
+        LOG_I("[%d][eps] reg addr: %#.4x, len: %#.4x\r\n", id, buf[2] << 8 | buf[3], buf[4] << 8 | buf[5]);
         break;
     default:
-        LOG_E("[%d][eps] invalid cmd type: %d\r\n", id, cmd->type);
+        LOG_E("[%d][eps] invalid cmd type: %d\r\n", id, buf[1]);
         return -5;
         break;
     }
@@ -174,6 +226,7 @@ static int8_t eps_link_menu_value_read(void)
         return -1;
     }
 #else
+#if 0
     /* 0. read software version */
     cmd.addr = DEVICE_ADDRESS_EPS;
     cmd.type = READ_HOLDING_REGISTERS;
@@ -351,7 +404,76 @@ static int8_t eps_link_menu_value_read(void)
         LOG_E("uart modbus cmd write err: %d\r\n", ret);
         return -16;
     }
-    
+#endif
+    /* 1. read software version */
+    cmd.addr = DEVICE_ADDRESS_EPS;
+    cmd.type = READ_HOLDING_REGISTERS;
+    cmd.cmd_id = EPS_SOFTWARE_VERSION;
+    cmd.len = 4;
+    cmd.data = data;
+
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+    if (ret != 0)
+    {
+        LOG_E("uart modbus cmd write err: %d\r\n", ret);
+        return -1;
+    }
+
+    /* 2. read run status */
+    cmd.cmd_id = EPS_RUN_STATUS;
+    data[0] = 0x00;
+    data[1] = 0x00;
+    data[2] = 0x00;
+    data[3] = 0x04;
+
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+    if (ret != 0)
+    {
+        LOG_E("uart modbus cmd write err: %d\r\n", ret);
+        return -2;
+    }
+
+    /* 3. read fault stop */
+    cmd.cmd_id = EPS_FAULT_STOP;
+    data[0] = 0x00;
+    data[1] = 0xC8;
+    data[2] = 0x00;
+    data[3] = 0x09;
+
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+    if (ret != 0)
+    {
+        LOG_E("uart modbus cmd write err: %d\r\n", ret);
+        return -3;
+    }
+
+    /* 4. read fan fault stop enable */
+    cmd.cmd_id = EPS_FAN_FAULT_ENABLE;
+    data[0] = 0x00;
+    data[1] = 0xD5;
+    data[2] = 0x00;
+    data[3] = 0x01;
+
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+    if (ret != 0)
+    {
+        LOG_E("uart modbus cmd write err: %d\r\n", ret);
+        return -4;
+    }
+
+    /* 5. read communication storage */
+    cmd.cmd_id = EPS_COMMUNICATION_STORAGE;
+    data[0] = 0x01;
+    data[1] = 0x4B;
+    data[2] = 0x00;
+    data[3] = 0x01;
+
+    ret = uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+    if (ret != 0)
+    {
+        LOG_E("uart modbus cmd write err: %d\r\n", ret);
+        return -5;
+    }
 #endif
     return 0;
 }
@@ -365,6 +487,7 @@ static int8_t eps_init(void)
     /* 0. read software version */
     cmd.addr = DEVICE_ADDRESS_EPS;
     cmd.type = READ_HOLDING_REGISTERS;
+    cmd.cmd_id = EPS_SOFTWARE_VERSION;
     cmd.len = 4;
     cmd.data = data;
 
@@ -376,6 +499,7 @@ static int8_t eps_init(void)
     }
 
     /* 1. read 001: status */
+    cmd.cmd_id = EPS_RUN_STATUS;
     data[0] = 0x00;
     data[1] = 0x00;
     data[2] = 0x00;
@@ -389,6 +513,7 @@ static int8_t eps_init(void)
     }
 
     /* 2. read 002: voltage */
+    cmd.cmd_id = EPS_VOLTAGE_OUTPUT;
     data[0] = 0x00;
     data[1] = 0x01;
     data[2] = 0x00;
@@ -402,6 +527,7 @@ static int8_t eps_init(void)
     }
 
     /* 3. read 003: current */
+    cmd.cmd_id = EPS_CURRENT_OUTPUT;
     data[0] = 0x00;
     data[1] = 0x02;
     data[2] = 0x00;
@@ -449,18 +575,71 @@ INIT_ENV_EXPORT(eps_functions_init);
 
 #ifndef EPS_TEST
 #include "shell.h"
-static int8_t eps_read_test(void)
+static int8_t eps_read_test(uint8_t argc, char **argv)
 {
     int8_t ret = 0;
+    struct modbus_cmd_object cmd = {0};
+    uint8_t buf[16] = {0};
 
-    ret = eps_link_menu_value_read();
-    if (ret != 0)
-    {
-        LOG_E("eps link menu value read err: %d\r\n", ret);
-        return -1;
-    }
+    uint16_t reg_addr = atoi(argv[1]);
+    uint16_t len = atoi(argv[2]);
+    buf[0] = reg_addr >> 8;
+    buf[1] = reg_addr;
+    buf[2] = len >> 8;
+    buf[3] = len;
 
-    return 0;
+    cmd.addr = DEVICE_ADDRESS_EPS;
+    cmd.type = READ_HOLDING_REGISTERS;
+    cmd.len = 4;
+    cmd.data = buf;
+
+    return uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
 }
 MSH_CMD_EXPORT_ALIAS(eps_read_test, eps_read_test, read eps value);
+static int8_t eps_write_test(uint8_t argc, char **argv)
+{
+    int8_t ret = 0;
+    struct modbus_cmd_object cmd = {0};
+    uint8_t buf[16] = {0};
+
+    uint16_t reg_addr = atoi(argv[1]);
+    uint16_t data = atoi(argv[2]);
+    buf[0] = reg_addr >> 8;
+    buf[1] = reg_addr;
+    buf[2] = data >> 8;
+    buf[3] = data;
+
+    cmd.addr = DEVICE_ADDRESS_EPS;
+    cmd.type = WRITE_SINGLE_REGISTER;
+    cmd.len = 4;
+    cmd.data = buf;
+
+    return uart_modbus_cmd_write(BGM_UART_EPS_VPS, &cmd);
+}
+MSH_CMD_EXPORT_ALIAS(eps_write_test, eps_write_test, write eps value);
+
+static int8_t eps_cmd_test(uint8_t argc, char **argv)
+{
+    int8_t ret = 0;
+    struct modbus_cmd_object cmd = {0};
+    uint8_t buf[16] = {0};
+
+    switch (atoi(argv[1]))
+    {
+    case 0:
+        ret = eps_read_test(argc - 1, argv + 1);
+        break;
+    case 1:
+        ret = eps_write_test(argc - 1, argv + 1);
+        break;
+    case 2:
+        ret = eps_link_menu_value_read();
+        break;
+    default:
+        break;
+    }
+
+    return ret;
+}
+MSH_CMD_EXPORT_ALIAS(eps_cmd_test, eps_cmd_test, eps cmd test);
 #endif
