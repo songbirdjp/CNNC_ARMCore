@@ -1,381 +1,1985 @@
 /**
- * @file rtm_on_main.c
+ * @file app_state_machine.c
  * @author SI (siyunlong@cnncpm.com)
  * @brief
  * @version 0.1
- * @date 2024-08-23
+ * @date 2025-05-07
  *
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2025
  *
  */
 #include "app_state_machine.h"
 #include "ulog.h"
 #include "rtm_main.h"
 
-#define TRAN(x, target_state) (((stateTable_t *)self)->x = (uint8_t)(target_state))
+#define RTM_ERROR_WAIT_TIME (25)
 
-device_err_t stateTable_ctor(stateTable_t *self,
-                             Tran const *table,
-                             uint8_t n_states,
-                             uint8_t n_signals,
-                             Tran initial)
+static int32_t stateMachine_ctor(StateMachine_t *self,
+                                 StateHandler_t initial)
 {
-    if (self == NULL || table == NULL || n_states == 0 || n_signals == 0 || initial == NULL)
+    if (self == NULL || initial == NULL)
     {
-        return DEV_EINVAL;
+        return -1;
     }
-    self->state_table = table;
-    self->n_states = n_states;
-    self->n_signals = n_signals;
-    self->state = 0;
-    self->signal = 0;
-    self->initial = initial;
-    return DEV_EOK;
+    memset(self, 0, sizeof(StateMachine_t));
+    self->StateHandler = initial;
+    return 0;
 }
-device_err_t stateTable_init(stateTable_t *self, Event_t const *e)
+static int32_t stateMachine_init(StateMachine_t *self, Event_t const *e)
 {
     if (self == NULL)
     {
-        return DEV_EINVAL;
+        return -1;
     }
-    self->state = 0;
-    self->signal = 0;
-    self->initial(self, e);
-    return DEV_EOK;
+    self->StateHandler(self, e);
+    return 0;
 }
-device_err_t stateTable_dispatch(stateTable_t *self, Event_t const *e)
+static int32_t stateMachine_dispatch(StateMachine_t *self, Event_t const *e)
 {
-    Tran func;
     if (self == NULL || e == NULL)
     {
-        return DEV_EINVAL;
+        return -1;
     }
-    if (e->sig >= self->n_signals)
+    if (e->sig >= MAX_SIG)
     {
-        return DEV_EINVAL;
+        return -2;
     }
-
-    func = self->state_table[self->state * self->n_signals + e->sig];
-
-    if (func == NULL)
+    if (self->StateHandler == NULL)
     {
-        return DEV_EINVAL;
+        return -3;
     }
-    func(self, e);
+    StateHandler_t handler = self->StateHandler;
+    Event_t event = {0};
+    State_t status = handler(self, e);
 
-    return DEV_EOK;
+    while (status == RET_TRAN)
+    {
+        event.sig = EXIT_SIG;
+        handler(self, &event);
+
+        handler = self->StateHandler;
+
+        event.sig = ENTER_SIG;
+        status = self->StateHandler(self, &event);
+    }
+    return status;
 }
-uint8_t stateTable_get_state(stateTable_t *self)
+
+/*************************************state machine start**********************/
+
+static State_t system_initialization(void *self, Event_t const *const e);
+static State_t system_systemOn(void *self, Event_t const *const e);
+static State_t system_shutdown(void *self, Event_t const *const e);
+static State_t system_powerSaver(void *self, Event_t const *const e);
+static State_t system_mv_preliminary(void *self, Event_t const *const e);
+static State_t system_mv_prepare(void *self, Event_t const *const e);
+static State_t system_mv_ready(void *self, Event_t const *const e);
+static State_t system_mv_radiation(void *self, Event_t const *const e);
+static State_t system_mv_complete(void *self, Event_t const *const e);
+static State_t system_mv_interrupt(void *self, Event_t const *const e);
+static State_t system_mv_terminate(void *self, Event_t const *const e);
+
+static State_t system_kv_preliminary(void *self, Event_t const *const e);
+static State_t system_kv_prepare(void *self, Event_t const *const e);
+static State_t system_surview_ready(void *self, Event_t const *const e);
+static State_t system_surview_radiation(void *self, Event_t const *const e);
+static State_t system_ct_ready(void *self, Event_t const *const e);
+static State_t system_ct_radiation(void *self, Event_t const *const e);
+static State_t system_kv_complete(void *self, Event_t const *const e);
+static State_t system_kv_terminate(void *self, Event_t const *const e);
+
+static State_t module_init(void *self, Event_t const *const e);
+static State_t module_idle(void *self, Event_t const *const e);
+static State_t module_shutdown(void *self, Event_t const *const e);
+static State_t module_powerSaver(void *self, Event_t const *const e);
+static State_t module_mv_preliminary(void *self, Event_t const *const e);
+static State_t module_mv_prepare(void *self, Event_t const *const e);
+static State_t module_mv_ready(void *self, Event_t const *const e);
+static State_t module_mv_work(void *self, Event_t const *const e);
+static State_t module_mv_complete(void *self, Event_t const *const e);
+static State_t module_mv_interrupt(void *self, Event_t const *const e);
+static State_t module_mv_terminate(void *self, Event_t const *const e);
+static State_t module_kv_preliminary(void *self, Event_t const *const e);
+static State_t module_kv_prepare(void *self, Event_t const *const e);
+static State_t module_surview_ready(void *self, Event_t const *const e);
+static State_t module_surview_work(void *self, Event_t const *const e);
+static State_t module_ct_ready(void *self, Event_t const *const e);
+static State_t module_ct_work(void *self, Event_t const *const e);
+static State_t module_kv_complete(void *self, Event_t const *const e);
+static State_t module_kv_terminate(void *self, Event_t const *const e);
+
+static int32_t fault_check(app_rtm_main_t *self, uint8_t state)
+{
+    int32_t retval = 0;
+    dido_structure_t dido_structure = {0};
+    app_do_get(&(self->app_dido), &dido_structure);
+    app_di_get(&(self->app_dido), &dido_structure);
+
+    // HvEn check
+    if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_HVEN)
+    {
+        if (state == STATE_MACHINE_INIT ||
+            state == STATE_MACHINE_INIT ||
+            state == STATE_MACHINE_IDLE ||
+            state == STATE_MACHINE_TERMINATE)
+        {
+            self->serious_interlock.HvEN = 1;
+        }
+    }
+    else
+    {
+        if (state != STATE_MACHINE_INIT &&
+            state != STATE_MACHINE_INIT &&
+            state != STATE_MACHINE_IDLE &&
+            state != STATE_MACHINE_TERMINATE)
+        {
+            self->serious_interlock.HvEN = 1;
+        }
+    }
+    // kv_treatment_en check
+    if (dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_KV_TreatmentEN)
+    {
+        self->serious_interlock.KVTreatmentEn = 1;
+    }
+    // mv_treatment_en check
+    if (dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_MV_TreatmentEN)
+    {
+        self->serious_interlock.MVTreatmentEn = 1;
+    }
+    *(uint32_t *)&(self->serious_interlock) &= ~(self->interlock_override);
+    if (*((uint32_t *)&self->serious_interlock) != 0)
+    {
+        retval = -1;
+    }
+    return retval;
+}
+static int32_t fault_clear(app_rtm_main_t *self, uint8_t state)
+{
+    int32_t retval = 0;
+    dido_structure_t dido_structure = {0};
+    app_do_get(&(self->app_dido), &dido_structure);
+    app_di_get(&(self->app_dido), &dido_structure);
+
+    // HvEn check
+    if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_HVEN)
+    {
+        if (state == STATE_MACHINE_INIT ||
+            state == STATE_MACHINE_INIT ||
+            state == STATE_MACHINE_IDLE ||
+            state == STATE_MACHINE_TERMINATE)
+        {
+            self->serious_interlock.HvEN = 1;
+        }
+        else
+        {
+            self->serious_interlock.HvEN = 0;
+        }
+    }
+    else
+    {
+        if (state != STATE_MACHINE_INIT &&
+            state != STATE_MACHINE_INIT &&
+            state != STATE_MACHINE_IDLE &&
+            state != STATE_MACHINE_TERMINATE)
+        {
+            self->serious_interlock.HvEN = 1;
+        }
+        else
+        {
+            self->serious_interlock.HvEN = 0;
+        }
+    }
+    // kv_treatment_en check
+    if (dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_KV_TreatmentEN)
+    {
+        self->serious_interlock.KVTreatmentEn = 1;
+    }
+    else
+    {
+        self->serious_interlock.KVTreatmentEn = 0;
+    }
+    // mv_treatment_en check
+    if (dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_MV_TreatmentEN)
+    {
+        self->serious_interlock.MVTreatmentEn = 1;
+    }
+    else
+    {
+        self->serious_interlock.MVTreatmentEn = 0;
+    }
+    *(uint32_t *)&(self->serious_interlock) &= ~(self->interlock_override);
+    if (*((uint32_t *)&self->serious_interlock) != 0)
+    {
+        retval = -1;
+    }
+    return retval;
+}
+static State_t system_initialization(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_initialization exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        rtm_sm->current_state = INITIALIZATION_SIG;
+        status = TRAN(&module_init);
+        // LOG_I("system_initialization enter\r\n");
+        break;
+    }
+    }
+    return status;
+}
+
+static State_t module_init(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    static uint32_t time = 0;
+
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_init enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        time = 0;
+        // LOG_I("module_init exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        fault_check(rtm, STATE_MACHINE_INIT);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            status = TRAN(&system_systemOn);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+
+static State_t system_systemOn(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("system_systemOn enter\r\n");
+        rtm_sm->current_state = SYSTEM_ON_SIG;
+        status = TRAN(&module_idle);
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_systemOn exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_idle(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_idle enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        time = 0;
+        fault_flag = 0;
+        // LOG_I("module_idle exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    case INITIALIZATION_SIG:
+    {
+        HAL_NVIC_SystemReset(); // reset system
+        break;
+    }
+    case SHUTDOWN_SIG:
+    {
+        status = TRAN(&system_shutdown);
+        break;
+    }
+    case POWER_SAVER_SIG:
+    {
+        status = TRAN(&system_powerSaver);
+        break;
+    }
+    case MV_PREPARE_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_mv_preliminary);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case KV_PRELIMINARY_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_kv_preliminary);
+        }
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_IDLE);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_shutdown(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = SHUTDOWN_SIG;
+        status = TRAN(&module_shutdown);
+        // LOG_I("system_shutdown enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        status = HANDLED();
+        // LOG_I("system_shutdown exit\r\n");
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_shutdown(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_shutdown enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_shutdown exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_powerSaver(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = POWER_SAVER_SIG;
+        status = TRAN(&module_powerSaver);
+        // LOG_I("system_powerSaver enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_powerSaver exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_powerSaver(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_powerSaver enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_powerSaver exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    case SHUTDOWN_SIG:
+    {
+        status = TRAN(&system_shutdown);
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_systemOn);
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_mv_preliminary(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = MV_PREPARE_SIG;
+        status = TRAN(&module_mv_preliminary);
+        // LOG_I("system_mv_preliminary enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_mv_preliminary exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_mv_preliminary(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_mv_preliminary enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_mv_preliminary exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_kv_terminate); // TODO change to system_terminate
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_PRELIMINARY);
+        if (error == 0)
+        {
+            status = TRAN(&system_mv_prepare);
+        }
+        else if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+            status = HANDLED();
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_mv_prepare(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = MV_PREPARE_SIG;
+        status = TRAN(&module_mv_prepare);
+        // LOG_I("system_mv_prepare enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_mv_prepare exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_mv_prepare(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_mv_prepare enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_mv_prepare exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_kv_terminate); // TODO change to system_terminate
+        break;
+    }
+    case MV_READY_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_mv_ready);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_PREPARE);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+        }
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_mv_ready(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = MV_READY_SIG;
+        status = TRAN(&module_mv_ready);
+        // LOG_I("system_mv_ready enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_mv_ready exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_mv_ready(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("module_mv_ready enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_mv_ready exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case MV_RADIATION_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_mv_radiation);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case MV_INTERRUPT_SIG:
+    {
+        status = TRAN(&system_mv_interrupt);
+        break;
+    }
+    case MV_TERMINATE_SIG:
+    {
+        status = TRAN(&system_mv_terminate);
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_READY);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+            if (error != 0)
+            {
+                status = TRAN(&system_mv_interrupt);
+            }
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_mv_radiation(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = MV_RADIATION_SIG;
+        status = TRAN(&module_mv_work);
+        // LOG_I("system_mv_work enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_mv_work exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_mv_work(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("module_mv_work enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_mv_work exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case MV_COMPLETE_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_mv_complete);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case MV_INTERRUPT_SIG:
+    {
+        status = TRAN(&system_mv_interrupt);
+        break;
+    }
+    case MV_TERMINATE_SIG:
+    {
+        status = TRAN(&system_mv_terminate);
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_WORK);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+            if (error != 0)
+            {
+                status = TRAN(&system_mv_interrupt);
+            }
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_mv_complete(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = MV_COMPLETE_SIG;
+        status = TRAN(&module_mv_complete);
+        // LOG_I("system_mv_complete enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_mv_complete exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_mv_complete(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("module_mv_complete enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_mv_complete exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_systemOn);
+        break;
+    }
+    case MV_PREPARE_SIG:
+    {
+        status = TRAN(&system_mv_prepare);
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_COMPLETE);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+        }
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_mv_interrupt(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = MV_INTERRUPT_SIG;
+        status = TRAN(&module_mv_interrupt);
+        // LOG_I("system_mv_interrupt enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_mv_interrupt exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_mv_interrupt(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    static uint8_t fault_clear_flag = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_mv_interrupt enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_mv_interrupt exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        fault_clear_flag = 0;
+        status = HANDLED();
+        break;
+    }
+    case MV_READY_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_mv_ready);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case MV_TERMINATE_SIG:
+    {
+        status = TRAN(&system_mv_terminate);
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        if (fault_clear_flag == 0)
+        {
+            error = fault_check(rtm, STATE_MACHINE_INTERRUPT);
+        }
+        else
+        {
+            error = fault_clear(rtm, STATE_MACHINE_INTERRUPT);
+        }
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            fault_clear_flag = 0;
+            time = 0;
+            fault_flag = 1;
+        }
+
+        status = HANDLED();
+        break;
+    }
+    case ERROR_SIG:
+    {
+        fault_clear_flag = 1;
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_mv_terminate(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = MV_TERMINATE_SIG;
+        status = TRAN(&module_mv_terminate);
+        // LOG_I("system_mv_terminate enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_mv_terminate exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_mv_terminate(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_mv_terminate enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_mv_terminate exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_systemOn);
+        // TODO:高级故障清除
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_TERMINATE);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_kv_terminate(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = SYSTEM_ON_SIG;
+        status = TRAN(&module_kv_terminate);
+        // LOG_I("system_kv_terminate enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_kv_terminate exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_kv_terminate(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_kv_terminate enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_kv_terminate exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_TERMINATE);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+            status = TRAN(&system_systemOn);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_kv_preliminary(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = KV_PRELIMINARY_SIG;
+        status = TRAN(&module_kv_preliminary);
+        // LOG_I("system_kv_preliminary enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_kv_preliminary exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_kv_preliminary(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("module_kv_preliminary enter\r\n");
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_kv_preliminary exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_kv_terminate);
+        break;
+    }
+    case KV_PREPARE_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_kv_prepare);
+        }
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_KV_PRELIMINARY);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+        }
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_kv_prepare(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = KV_PREPARE_SIG;
+        status = TRAN(&module_kv_prepare);
+        // LOG_I("system_kv_prepare enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_kv_prepare exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_kv_prepare(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    dido_structure_t dido_structure = {0};
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 1;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        // LOG_I("module_kv_prepare enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_kv_prepare exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_kv_terminate);
+        break;
+    }
+    case SURVIEW_READY_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_surview_ready);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case CT_READY_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_ct_ready);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_KV_PREPARE);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+        }
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_surview_ready(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = SURVIEW_READY_SIG;
+        status = TRAN(&module_surview_ready);
+        // LOG_I("system_surview_ready enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_surview_ready exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_surview_ready(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("module_surview_ready enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_surview_ready exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_kv_terminate);
+        break;
+    }
+    case SURVIEW_RADIATION_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_surview_radiation);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_SURVIEW_READY);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+            if (error != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_surview_radiation(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = SURVIEW_RADIATION_SIG;
+        status = TRAN(&module_surview_work);
+        // LOG_I("system_surview_radiation enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_surview_radiation exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_surview_work(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("module_surview_work enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_surview_work exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_kv_terminate);
+        break;
+    }
+    case KV_COMPLETE_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_kv_complete);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_SURVIEW_WORK);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+            if (error != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_ct_ready(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = CT_READY_SIG;
+        status = TRAN(&module_ct_ready);
+        // LOG_I("system_ct_ready enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_ct_ready exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_ct_ready(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("module_ct_ready enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_ct_ready exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_kv_terminate);
+        break;
+    }
+    case CT_RADIATION_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_ct_radiation);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_CT_READY);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+            if (error != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_ct_radiation(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = CT_RADIATION_SIG;
+        status = TRAN(&module_ct_work);
+        // LOG_I("system_ct_radiation enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_ct_radiation exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_ct_work(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("module_ct_work enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_ct_work exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        error = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_kv_terminate);
+        break;
+    }
+    case KV_COMPLETE_SIG:
+    {
+        if ((error == 0) && (fault_flag == 1))
+        {
+            status = TRAN(&system_kv_complete);
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_CT_WORK);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+            if (error != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+        }
+        else
+        {
+            status = HANDLED();
+        }
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t system_kv_complete(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        rtm_sm->current_state = KV_COMPLETE_SIG;
+        status = TRAN(&module_kv_complete);
+        // LOG_I("system_kv_complete enter\r\n");
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("system_kv_complete exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+static State_t module_kv_complete(void *self, Event_t const *const e)
+{
+    State_t status;
+    rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
+    app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
+    static uint32_t time = 0;
+    static uint8_t fault_flag = 0;
+    static int32_t error = 0;
+    switch (e->sig)
+    {
+    case ENTER_SIG:
+    {
+        // LOG_I("module_kv_complete enter\r\n");
+        status = HANDLED();
+        break;
+    }
+    case EXIT_SIG:
+    {
+        // LOG_I("module_kv_complete exit\r\n");
+        time = 0;
+        fault_flag = 0;
+        status = HANDLED();
+        error = 0;
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_systemOn);
+        break;
+    }
+    case TIME_SIG:
+    {
+        time++;
+        error = fault_check(rtm, STATE_MACHINE_KV_COMPLETE);
+        if (time >= RTM_ERROR_WAIT_TIME)
+        {
+            time = 0;
+            fault_flag = 1;
+        }
+        status = HANDLED();
+        break;
+    }
+    default:
+    {
+        status = IGNORED();
+        break;
+    }
+    }
+    return status;
+}
+void rtm_state_machine_ctor(rtm_StateMachine_t *self, void *parameters)
+{
+    if (self == NULL)
+    {
+        return;
+    }
+    memset(self, 0, sizeof(rtm_StateMachine_t));
+    self->parameters = parameters;
+    self->current_state = NULL_SIG;
+    stateMachine_ctor(self, system_initialization);
+    stateMachine_dispatch(self, NULL_SIG);
+}
+
+int32_t rtm_state_dispatch(rtm_StateMachine_t *self, Event_t const *e)
+{
+    if (self == NULL || e == NULL)
+    {
+        return -1;
+    }
+
+    int32_t ret = stateMachine_dispatch(self, e);
+    if (ret != 0)
+    {
+        return -2;
+    }
+
+    return 0;
+}
+rtm_state_t rtm_get_state(rtm_StateMachine_t *self)
 {
     if (self == NULL)
     {
         return 0;
     }
-    return self->signal;
-}
-/*************************************state machine start**********************/
-static void rtm_state_machine_init(stateTable_t *self, Event_t const *e)
-{
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    TRAN(state, e->sig);
-    LOG_I("rtm state machine init\r\n");
-    HAL_NVIC_SystemReset();
+    return self->current_state;
 }
 
-static void rtm_state_machine_idle(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
-
-    TRAN(signal, SYSTEM_STATE_SYSTEM_ON);
-    TRAN(state, STATE_MACHINE_IDLE);
-}
-static void rtm_state_machine_power_saver(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_POWER_SAVER);
-}
-static void rtm_state_machine_shutdown(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_SHUTDOWN);
-}
-static void rtm_state_machine_manual(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    TRAN(signal, SYSTEM_STATE_SYSTEM_ON);
-    TRAN(state, STATE_MACHINE_MANUAL);
-}
-
-static void rtm_state_machine_preliminary(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_PRELIMINARY);
-
-    rtm_event->super.sig = SYSTEM_STATE_MV_PREPARE;
-    stateTable_dispatch(self, (Event_t *)rtm_event);
-}
-static void rtm_state_machine_prepare(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_PREPARE);
-}
-static void rtm_state_machine_ready(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 1;
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_READY);
-}
-static void rtm_state_machine_work(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_WORK);
-}
-static void rtm_state_machine_complete(stateTable_t *self, Event_t const *e)
-{
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_COMPLETE);
-}
-static void rtm_state_machine_interrupt(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_INTERRUPT);
-    if( e->sig == SYSTEM_STATE_MV_READY)
-    {
-        //TODO:无故障，自发跳转到STATE_MACHINE_INTERRUPT状态，需要处理
-        rtm_event->super.sig = SYSTEM_STATE_MV_READY;
-        TRAN(state, STATE_MACHINE_READY);
-        stateTable_dispatch(self, (Event_t *)rtm_event);
-    }
-}
-static void rtm_state_machine_terminate(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_TERMINATE);
-}
-static void rtm_state_machine_kv_preliminary(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_KV_PRELIMINARY);
-}
-static void rtm_state_machine_kv_prepare(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_KV_PREPARE);
-}
-static void rtm_state_machine_surview_ready(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 1;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_SURVIEW_READY);
-}
-static void rtm_state_machine_surview_work(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_SURVIEW_WORK);
-}
-static void rtm_state_machine_ct_ready(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 1;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
-
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_CT_READY);
-}
-static void rtm_state_machine_ct_work(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_CT_WORK);
-}
-static void rtm_state_machine_kv_complete(stateTable_t *self, Event_t const *e)
-{
-    int32_t retval = 0;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    TRAN(signal, e->sig);
-    TRAN(state, STATE_MACHINE_KV_COMPLETE);
-}
-
-static void rtm_state_machine_initial(stateTable_t *self, Event_t const *e)
-{
-    rtm_state_machine_t *rtm_state_machine = (rtm_state_machine_t *)self;
-    rtm_event_t *rtm_event = (rtm_event_t *)e;
-    int32_t retval = 0;
-
-    TRAN(state, STATE_MACHINE_IDLE);
-    TRAN(signal, SYSTEM_STATE_INITIALIZATION);
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-    rtm_event->dido_structure->gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
-    // retval = osThreadFlagsWait(APP_RTM_THREAD_FLAG_ALL, osFlagsWaitAll | osFlagsNoClear, 3000);
-    // if (retval < 0)
-    // {
-    //     LOG_I("rtm thread flags wait fail, retval:%d\r\n", retval);
-    //     goto exit;
-    // }
-exit:
-    rtm_event->super.sig = SYSTEM_STATE_SYSTEM_ON;
-    stateTable_dispatch(self, (Event_t *)rtm_event);
-}
-void rtm_state_machine_ctor(stateTable_t *self)
-{
-    device_err_t device_err = DEV_EIO;
-
-    static Tran state_table[STATE_MACHINE_MAX][SYSTEM_STATE_MAX] = {0};
-    for (uint8_t i = 0; i < STATE_MACHINE_MAX; i++)
-    {
-        for (uint8_t j = 0; j < SYSTEM_STATE_MAX; j++)
-        {
-            state_table[i][j] = NULL;
-        }
-    }
-    /* 1 STATE_MACHINE_INIT */
-    state_table[STATE_MACHINE_NULL][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_idle;
-
-    /* 2 STATE_MACHINE_IDLE */
-    state_table[STATE_MACHINE_IDLE][SYSTEM_STATE_INITIALIZATION] = rtm_state_machine_init;
-    state_table[STATE_MACHINE_IDLE][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_idle;
-    state_table[STATE_MACHINE_IDLE][SYSTEM_STATE_MV_PREPARE] = rtm_state_machine_preliminary;
-    state_table[STATE_MACHINE_IDLE][SYSTEM_STATE_SHUTDOWN] = rtm_state_machine_shutdown;
-    state_table[STATE_MACHINE_IDLE][SYSTEM_STATE_POWER_SAVER] = rtm_state_machine_power_saver;
-    state_table[STATE_MACHINE_IDLE][SYSTEM_STATE_KV_PRELIMINARY] = rtm_state_machine_kv_preliminary;
-    /* 3 STATE_MACHINE_PRELIMINARY */
-    state_table[STATE_MACHINE_PRELIMINARY][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_PRELIMINARY][SYSTEM_STATE_MV_PREPARE] = rtm_state_machine_prepare;
-
-    /* 4 STATE_MACHINE_PREPARE */
-    state_table[STATE_MACHINE_PREPARE][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_PREPARE][SYSTEM_STATE_MV_READY] = rtm_state_machine_ready;
-    state_table[STATE_MACHINE_PREPARE][SYSTEM_STATE_MV_PREPARE] = rtm_state_machine_prepare;
-
-
-    /* 5 STATE_MACHINE_READY */
-    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_READY] = rtm_state_machine_ready;
-    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_RADIATION] = rtm_state_machine_work;
-    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_TERMINATE] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_READY][SYSTEM_STATE_MV_INTERRUPT] = rtm_state_machine_interrupt;
-
-    /* 6 STATE_MACHINE_WORK */
-    state_table[STATE_MACHINE_WORK][SYSTEM_STATE_MV_RADIATION] = rtm_state_machine_work;
-    state_table[STATE_MACHINE_WORK][SYSTEM_STATE_MV_COMPLETE] = rtm_state_machine_complete;
-    state_table[STATE_MACHINE_WORK][SYSTEM_STATE_MV_TERMINATE] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_WORK][SYSTEM_STATE_MV_INTERRUPT] = rtm_state_machine_interrupt;
-
-    /* 11 STATE_MACHINE_MANUAL */
-    state_table[STATE_MACHINE_MANUAL][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_idle;
-
-    /* 12 STATE_MACHINE_COMPLETE */
-    state_table[STATE_MACHINE_COMPLETE][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_idle;
-    state_table[STATE_MACHINE_COMPLETE][SYSTEM_STATE_MV_COMPLETE] = rtm_state_machine_complete;
-    state_table[STATE_MACHINE_COMPLETE][SYSTEM_STATE_MV_PREPARE] = rtm_state_machine_prepare;
-
-    /* 13 STATE_MACHINE_SHUTDOWN */
-
-    /* 14 STATE_MACHINE_POWER_SAVER */
-    state_table[STATE_MACHINE_POWER_SAVER][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_idle;
-    state_table[STATE_MACHINE_POWER_SAVER][SYSTEM_STATE_SHUTDOWN] = rtm_state_machine_shutdown;
-
-    /* 15 STATE_MACHINE_TERMINATE */
-    state_table[STATE_MACHINE_TERMINATE][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_idle;
-    state_table[STATE_MACHINE_TERMINATE][SYSTEM_STATE_MV_TERMINATE] = rtm_state_machine_terminate;
-
-    /* 16 STATE_MACHINE_INTERRUPT */
-    state_table[STATE_MACHINE_INTERRUPT][SYSTEM_STATE_MV_READY] = rtm_state_machine_interrupt;
-    state_table[STATE_MACHINE_INTERRUPT][SYSTEM_STATE_MV_TERMINATE] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_INTERRUPT][SYSTEM_STATE_MV_INTERRUPT] = rtm_state_machine_interrupt;
-
-    /* 17 STATE_MACHINE_KV_PRELIMINARY */
-    state_table[STATE_MACHINE_KV_PRELIMINARY][SYSTEM_STATE_KV_PRELIMINARY] = rtm_state_machine_kv_preliminary;
-    state_table[STATE_MACHINE_KV_PRELIMINARY][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_KV_PRELIMINARY][SYSTEM_STATE_KV_PREPARE] = rtm_state_machine_kv_prepare;
-    /* 18 STATE_MACHINE_KV_PREPARE */
-    state_table[STATE_MACHINE_KV_PREPARE][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_KV_PREPARE][SYSTEM_STATE_KV_PREPARE] = rtm_state_machine_kv_prepare;
-    state_table[STATE_MACHINE_KV_PREPARE][SYSTEM_STATE_SURVIEW_READY] = rtm_state_machine_surview_ready;
-    state_table[STATE_MACHINE_KV_PREPARE][SYSTEM_STATE_CT_READY] = rtm_state_machine_ct_ready;
-    /* 19 STATE_MACHINE_SURVIEW_READY */
-    state_table[STATE_MACHINE_SURVIEW_READY][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_SURVIEW_READY][SYSTEM_STATE_SURVIEW_READY] = rtm_state_machine_surview_ready;
-    state_table[STATE_MACHINE_SURVIEW_READY][SYSTEM_STATE_SURVIEW_RADIATION] = rtm_state_machine_surview_work;
-    /* 20 STATE_MACHINE_CT_READY */
-    state_table[STATE_MACHINE_CT_READY][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_CT_READY][SYSTEM_STATE_CT_READY] = rtm_state_machine_ct_ready;
-    state_table[STATE_MACHINE_CT_READY][SYSTEM_STATE_CT_RADIATION] = rtm_state_machine_ct_work;
-    /* 21 STATE_MACHINE_SURVIEW_WORK */
-    state_table[STATE_MACHINE_SURVIEW_WORK][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_SURVIEW_WORK][SYSTEM_STATE_SURVIEW_RADIATION] = rtm_state_machine_surview_work;
-    state_table[STATE_MACHINE_SURVIEW_WORK][SYSTEM_STATE_KV_COMPLETE] = rtm_state_machine_kv_complete;
-    /* 22 STATE_MACHINE_CT_WORK */
-    state_table[STATE_MACHINE_CT_WORK][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_terminate;
-    state_table[STATE_MACHINE_CT_WORK][SYSTEM_STATE_CT_RADIATION] = rtm_state_machine_ct_work;
-    state_table[STATE_MACHINE_CT_WORK][SYSTEM_STATE_KV_COMPLETE] = rtm_state_machine_kv_complete;
-    /* 23 STATE_MACHINE_KV_COMPLETE */
-    state_table[STATE_MACHINE_KV_COMPLETE][SYSTEM_STATE_SYSTEM_ON] = rtm_state_machine_idle;
-    state_table[STATE_MACHINE_KV_COMPLETE][SYSTEM_STATE_KV_COMPLETE] = rtm_state_machine_kv_complete;
-
-    device_err = stateTable_ctor(self,
-                                 (Tran const *)state_table,
-                                 STATE_MACHINE_MAX,
-                                 SYSTEM_STATE_MAX,
-                                 rtm_state_machine_initial);
-    if (device_err != DEV_EOK)
-    {
-        LOG_I("rtm state machine ctor fail\r\n");
-    }
-}
 /*************************************state machine end************************/

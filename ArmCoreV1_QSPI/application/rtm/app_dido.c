@@ -507,7 +507,16 @@ void app_di_get(app_dido_t *self, dido_structure_t *dido_value)
 void app_do_set(app_dido_t *self, dido_structure_t *dido_value)
 {
     osMutexAcquire(self->mutex, osWaitForever);
-    memcpy((uint8_t *)(&self->dido_structure_temp) + DO_DATA_OFFSET_START, (uint8_t *)dido_value + DO_DATA_OFFSET_START, DO_DATA_OFFSET_END - DO_DATA_OFFSET_START);
+    if (memcmp((uint8_t *)(&self->dido_structure_temp) + DO_DATA_OFFSET_START, (uint8_t *)dido_value + DO_DATA_OFFSET_START, DO_DATA_OFFSET_END - DO_DATA_OFFSET_START) != 0)
+    {
+        memcpy((uint8_t *)(&self->dido_structure_temp) + DO_DATA_OFFSET_START, (uint8_t *)dido_value + DO_DATA_OFFSET_START, DO_DATA_OFFSET_END - DO_DATA_OFFSET_START);
+        osThreadFlagsSet(self->do_thread_id, APP_RTM_THREAD_FLAG_DO_UPDATE);
+    }
     osMutexRelease(self->mutex);
-    osThreadFlagsSet(self->do_thread_id, APP_RTM_THREAD_FLAG_DO_UPDATE);
+}
+void app_do_get(app_dido_t *self, dido_structure_t *dido_value)
+{
+    osMutexAcquire(self->mutex, osWaitForever);
+    memcpy((uint8_t *)dido_value + DO_DATA_OFFSET_START, (uint8_t *)(&self->dido_structure_temp) + DO_DATA_OFFSET_START, DO_DATA_OFFSET_END - DO_DATA_OFFSET_START);
+    osMutexRelease(self->mutex);
 }

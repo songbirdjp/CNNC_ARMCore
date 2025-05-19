@@ -1,44 +1,21 @@
 /**
- * @file app_rtm_main.h
+ * @file app_state_machine.h
  * @author SI (siyunlong@cnncpm.com)
  * @brief
  * @version 0.1
- * @date 2024-09-06
+ * @date 2025-05-07
  *
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2025
  *
  */
-#ifndef _APP_RTM_MAIN_H_
-#define _APP_RTM_MAIN_H_
+#ifndef _APP_STATE_MACHINE_H_
+#define _APP_STATE_MACHINE_H_
 
-#include "dev_base.h"
-
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-    typedef struct Event
-    {
-        uint8_t sig;
-    } Event_t;
-
-    typedef void (*Tran)(struct StateTable *self, Event_t const *e);
-
-    typedef struct StateTable
-    {
-        Tran const *state_table; /*!< State table */
-        uint8_t n_states;        /*!< Number of states */
-        uint8_t n_signals;       /*!< Number of signals */
-        uint8_t state;           /*!< Current module state */
-        uint8_t signal;          /*!< Current signal */
-        Tran initial;            /*!< Initial state */
-        void *argument;          /*!< Argument for state table */
-    } stateTable_t;
-
-    typedef struct rtm_state_machine
-    {
-        stateTable_t super;
-    } rtm_state_machine_t;
 
     enum
     {
@@ -68,34 +45,81 @@ extern "C"
         STATE_MACHINE_MAX
     };
 
-    enum 
+    enum RtmSignals
     {
-        SYSTEM_STATE_NULL = 0,
-        SYSTEM_STATE_INITIALIZATION = 1,
-        SYSTEM_STATE_SYSTEM_ON = 2,
-        SYSTEM_STATE_MV_PREPARE,
-        SYSTEM_STATE_MV_READY,
-        SYSTEM_STATE_MV_RADIATION,
-        SYSTEM_STATE_MV_COMPLETE,
-        SYSTEM_STATE_MV_INTERRUPT,
-        SYSTEM_STATE_MV_TERMINATE,
+        NULL_SIG = 0,
+        INITIALIZATION_SIG,
+        SYSTEM_ON_SIG,
+        MV_PREPARE_SIG,
+        MV_READY_SIG,
+        MV_RADIATION_SIG,
+        MV_COMPLETE_SIG,
+        MV_INTERRUPT_SIG,
+        MV_TERMINATE_SIG,
 
-        SYSTEM_STATE_KV_PRELIMINARY = 10,
-        SYSTEM_STATE_KV_PREPARE,
-        SYSTEM_STATE_SURVIEW_READY,
-        SYSTEM_STATE_SURVIEW_RADIATION,
-        SYSTEM_STATE_CT_READY,
-        SYSTEM_STATE_CT_RADIATION,
-        SYSTEM_STATE_KV_COMPLETE,
-        SYSTEM_STATE_SHUTDOWN = 20,
-        SYSTEM_STATE_POWER_SAVER,
-        SYSTEM_STATE_MAX
+        KV_PRELIMINARY_SIG = 10,
+        KV_PREPARE_SIG,
+        SURVIEW_READY_SIG,
+        SURVIEW_RADIATION_SIG,
+        CT_READY_SIG,
+        CT_RADIATION_SIG,
+        KV_COMPLETE_SIG,
+        SHUTDOWN_SIG = 20,
+        POWER_SAVER_SIG,
+
+        TIME_SIG,
+        ERROR_SIG,
+        USER_MAX_SIG
+    };
+    enum sigs
+    {
+        ENTER_SIG = USER_MAX_SIG,
+        EXIT_SIG,
+        MAX_SIG,
     };
 
-    void rtm_state_machine_ctor(stateTable_t *self);
-    device_err_t stateTable_init(stateTable_t *self, Event_t const *e);
-    device_err_t stateTable_dispatch(stateTable_t *self, Event_t const *e);
-    uint8_t stateTable_get_state(stateTable_t *self);
+    typedef struct Event
+    {
+        uint8_t sig;
+    } Event_t;
+
+    enum StateRet
+    {
+        RET_SUPER,
+
+        RET_HANDLED,
+        RET_IGNORED,
+        RET_TRAN,
+    };
+
+    typedef enum StateRet State_t;
+
+    typedef State_t (*StateHandler_t)(void *const self, Event_t const *const e);
+
+    typedef struct StateMachine
+    {
+        StateHandler_t StateHandler;
+    } StateMachine_t;
+
+#define HANDLED() RET_HANDLED
+#define IGNORED() RET_IGNORED
+
+#define TRAN(target)                                                      \
+    (((StateMachine_t *)(self))->StateHandler = (StateHandler_t)(target), \
+     (State_t)RET_TRAN)
+    /******************************************************************************/
+    typedef enum RtmSignals rtm_state_t;
+
+    typedef struct rtm_StateMachine
+    {
+        StateMachine_t super;
+        rtm_state_t current_state;
+        void *parameters;
+    } rtm_StateMachine_t;
+
+    void rtm_state_machine_ctor(rtm_StateMachine_t *self, void *parameters);
+    int32_t rtm_state_dispatch(rtm_StateMachine_t *self, Event_t const *e);
+    rtm_state_t rtm_get_state(rtm_StateMachine_t *self);
 #ifdef __cplusplus
 }
 #endif

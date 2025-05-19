@@ -62,6 +62,18 @@ static void app_rtm_fault_detect_entry(void *argument)
         osDelay(100);
     }
 }
+static void app_rtm_not_ready_event(app_rtm_main_t *self)
+{
+    dido_structure_t dido_structure = {0};
+    if (self == NULL)
+    {
+        return;
+    }
+
+    app_di_get(&(self->app_dido), &dido_structure);
+
+    *(uint32_t *)&(self->not_ready_event) &= ~(self->unready_override);
+}
 osThreadId_t app_rtm_main_threadId;
 #define RTM_MAIN_THREAD_CYCLE_MS (1)
 static void app_rtm_main_thread(void *argument)
@@ -71,24 +83,14 @@ static void app_rtm_main_thread(void *argument)
     queue_frame_t queue_frame;
     rtm_status_t rtm_status = {0};
     rtm_status_t rtm_status_old = {0};
-    dido_structure_t dido_structure = {0};
 
     uint32_t current_time = 0;
     uint32_t last_time = 0;
     current_time = osKernelGetTickCount();
     last_time = current_time;
 
-    rtm_event_t rtm_event = {
-        .dido_structure = &dido_structure,
-        .super.sig = SYSTEM_STATE_SYSTEM_ON};
-
-    app_di_get(&(self->app_dido), &dido_structure);
-
-    rtm_status.fsm_state_current = SYSTEM_STATE_INITIALIZATION;
-    rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, 0x01, 0x1E, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
-
-    rtm_state_machine_ctor((stateTable_t *)&(self->state_machine));
-    stateTable_init((stateTable_t *)&(self->state_machine), (Event_t *)&rtm_event);
+    Event_t rtm_event = {0};
+    rtm_state_machine_ctor(&(self->state_machine), self);
     for (;;)
     {
         status = osMessageQueueGet(self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].module_queue, &queue_frame, NULL, 0);
@@ -107,11 +109,20 @@ static void app_rtm_main_thread(void *argument)
                 // TODO: 处理SET帧
                 if (queue_frame.payload.data[0] == 0x1F)
                 {
-                    rtm_event.super.sig = queue_frame.payload.data[1];
+                    rtm_event.sig = queue_frame.payload.data[1];
+                    rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+
+                    self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[3]);
+                    self->unready_override = *(uint32_t *)&(queue_frame.payload.data[7]);
                 }
-                 if (queue_frame.payload.data[0] == 0x02)
+                else if (queue_frame.payload.data[0] == 0x02)
                 {
-                    // TODO: 清除故障
+                    // 清除故障
+                    if (queue_frame.payload.data[1] & 0x01)
+                    {
+                        rtm_event.sig = ERROR_SIG;
+                        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                    }
                 }
             }
             else if (queue_frame.payload.type == 0x06) /*GET帧*/
@@ -124,14 +135,17 @@ static void app_rtm_main_thread(void *argument)
             }
         }
         // 轮询状态机
-        app_di_get(&(self->app_dido), &dido_structure);
+        app_rtm_not_ready_event(self);
 
-        stateTable_dispatch((stateTable_t *)&(self->state_machine), (Event_t *)&rtm_event);
+        rtm_event.sig = TIME_SIG;
+        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
 
-        app_do_set(&(self->app_dido), &dido_structure);
-        // TODO:变化时发送
-        rtm_status.fsm_state_current = stateTable_get_state((stateTable_t *)&(self->state_machine));
-        // TODO:联锁更新
+        rtm_status.fsm_state_current = rtm_get_state(&(self->state_machine));
+        rtm_status.not_ready_event = *(uint32_t *)&(self->not_ready_event);
+        rtm_status.warning_interlock = *(uint32_t *)&(self->warning_interlock);
+        rtm_status.minor_interlock = *(uint32_t *)&(self->minor_interlock);
+        rtm_status.serious_interlock = *(uint32_t *)&(self->serious_interlock);
+
         if (memcmp(&rtm_status_old, &rtm_status, sizeof(rtm_status_t)) != 0)
         {
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, 0x01, 0x1E, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
@@ -183,6 +197,7 @@ enum
 {
     OUTPUT_DATA_BEAM_ID = 0,
     OUTPUT_DATA_RADIATION_INDEX,
+    OUTPUT_DATA_RTM_ON_REQUIRE_STATE,
     OUTPUT_DATA_ICM_REQUIRE_STATE,
     OUTPUT_DATA_BGM_REQUIRE_STATE,
     OUTPUT_DATA_QAM_REQUIRE_STATE,
@@ -217,12 +232,17 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         switch (flag)
         {
         case OUTPUT_DATA_BEAM_ID:
-            flag = OUTPUT_DATA_ICM_REQUIRE_STATE;
+            flag = OUTPUT_DATA_RTM_ON_REQUIRE_STATE;
             len = (uint8_t *)&output_data.OutU8_reserved1 - (uint8_t *)&output_data.OutU8_beam_id;
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x0, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x0, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x0, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x0, &data->OutU8_beam_id, len);
+            break;
+        case OUTPUT_DATA_RTM_ON_REQUIRE_STATE:
+            flag = OUTPUT_DATA_ICM_REQUIRE_STATE;
+            len = (uint8_t *)&output_data.OutU8_icm_require_state - (uint8_t *)&output_data.OutU8_rtm_on_require_state;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], 0x2, 0x1F, &data->OutU8_rtm_on_require_state, len);
             break;
         case OUTPUT_DATA_ICM_REQUIRE_STATE:
             flag = OUTPUT_DATA_BGM_REQUIRE_STATE;
@@ -447,11 +467,10 @@ static void app_ethercat_rx_thread(void *argument)
             }
             // TODO: 处理输出数据
             ethercat_output_data_distribute(self, &output_data);
-
-            if (current_time - last_time > 1000)
-            {
-                LOG_I("%s unlink\r\n", self->module_name);
-            }
+        }
+        if (current_time - last_time > 1000)
+        {
+            LOG_I("%s unlink\r\n", self->module_name);
         }
     }
 exit:
@@ -464,6 +483,10 @@ static void app_ethercat_tx_thread(void *argument)
     osStatus_t status = osOK;
     rtm_module_info_t *self = (rtm_module_info_t *)argument;
     queue_frame_t queue_frame;
+    uint32_t current_time = 0;
+    uint32_t last_time = 0;
+    current_time = osKernelGetTickCount();
+    last_time = current_time;
     TOBJ6000 input_data = {0};
     for (;;)
     {
@@ -473,7 +496,13 @@ static void app_ethercat_tx_thread(void *argument)
             ethercat_input_data_distribute(self, &input_data, &queue_frame);
             ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
         }
-        input_data.InU8_ethercat_Link_state = !input_data.InU8_ethercat_Link_state;
+        current_time = osKernelGetTickCount();
+        if (current_time - last_time > 500)
+        {
+            last_time = current_time;
+            input_data.InU8_ethercat_Link_state = !input_data.InU8_ethercat_Link_state;
+            ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
+        }
     }
 exit:
     osThreadExit();
@@ -515,7 +544,7 @@ static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                 status = osMessageQueuePut(self->queue_group[i], &queue_frame, 0, 0);
                 if (status != osOK)
                 {
-                    // LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
+                    LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
                 }
             }
         }
@@ -532,7 +561,7 @@ static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                     status = osMessageQueuePut(self->queue_group[i], &queue_frame, 0, 0);
                     if (status != osOK)
                     {
-                        // LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
+                        LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
                     }
                 }
             }
@@ -575,12 +604,6 @@ static void app_module_rx_thread(void *argument)
             LOG_E("%s recv error, ret = %d\r\n", self->module_name, ret);
             continue;
         }
-        // LOG_I("app_module_rx_thread\r\n");
-        // for(uint8_t i = 0; i < len; i++)
-        // {
-        //     LOG_I("%x ", data[i]);
-        // }
-        // LOG_I("\r\n");
         ret = module_data_recv_handle(self, data, len);
         if (ret != 0)
         {

@@ -54,32 +54,39 @@ extern "C"
         osMessageQueueId_t queue_group[RTM_MODULE_MAX];
     } rtm_module_info_t;
 
-typedef struct app_fault_table
-    {
-    uint32_t serial_fault : 1;
-    uint32_t ethercat_fault : 1;
-    uint32_t dido_fault : 1;
-    uint32_t reserved : 6;
-} app_fault_table_t;
+typedef struct app_not_ready_event_table
+{
+    uint32_t reserved : 32;
+} app_not_ready_event_table_t;
+
+typedef struct app_serious_interlock_table
+{
+    uint32_t HvEN : 1;
+    uint32_t KVTreatmentEn : 1;
+    uint32_t MVTreatmentEn : 1;
+    uint32_t reserved : 29;
+} app_serious_interlock_table_t;
 
     typedef struct app_rtm_main
     {
         manage_info_t manage_info;
 
-    app_fault_table_t fault_table;
-        rtm_state_machine_t state_machine;
+    app_not_ready_event_table_t not_ready_event;
+    uint32_t warning_interlock;
+    uint32_t minor_interlock;
+    app_serious_interlock_table_t serious_interlock;
+
+    uint32_t interlock_override;
+    uint32_t unready_override;
+
+    // rtm_state_machine_t state_machine;
+    rtm_StateMachine_t state_machine;
 
         rtm_module_info_t rtm_module_info[RTM_MODULE_MAX];
 
         osEventFlagsId_t ethercat_Event;
         app_dido_t app_dido;
     } app_rtm_main_t;
-
-    typedef struct rtm_event
-    {
-        Event_t super;
-    dido_structure_t *dido_structure;
-    } rtm_event_t;
 
 #ifdef __cplusplus
 }
