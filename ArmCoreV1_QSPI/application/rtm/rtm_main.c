@@ -109,6 +109,10 @@ static void app_rtm_main_thread(void *argument)
                 {
                     rtm_event.super.sig = queue_frame.payload.data[1];
                 }
+                 if (queue_frame.payload.data[0] == 0x02)
+                {
+                    // TODO: 清除故障
+                }
             }
             else if (queue_frame.payload.type == 0x06) /*GET帧*/
             {
@@ -205,7 +209,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
     current_time = osKernelGetTickCount();
     if (memcmp(&output_data, data, sizeof(TOBJ7010)) == 0)
     {
-        if(current_time - last_time < 200)
+        if (current_time - last_time < 200)
         {
             return;
         }
@@ -275,7 +279,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x0, &data->OutU8_beam_id, len);
         }
 
-        len = (uint8_t *)&output_data.OutU8_rtm_on_require_state - (uint8_t *)&output_data.OutU16_radiation_index;
+        len = (uint8_t *)&output_data.OutU8_fault_clear - (uint8_t *)&output_data.OutU16_radiation_index;
         if (memcmp(&output_data.OutU16_radiation_index, &data->OutU16_radiation_index, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x1, &data->OutU16_radiation_index, len);
@@ -284,6 +288,15 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x1, &data->OutU16_radiation_index, len);
         }
 
+        len = (uint8_t *)&output_data.OutU8_ethercat_Link_state - (uint8_t *)&output_data.OutU8_fault_clear;
+        if (memcmp(&output_data.OutU8_fault_clear, &data->OutU8_fault_clear, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], 0x0, 0x2, &data->OutU8_fault_clear, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x2, &data->OutU8_fault_clear, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x2, &data->OutU8_fault_clear, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x2, &data->OutU8_fault_clear, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x2, &data->OutU8_fault_clear, len);
+        }
         len = (uint8_t *)&output_data.OutU8_icm_require_state - (uint8_t *)&output_data.OutU8_rtm_on_require_state;
         if (memcmp(&output_data.OutU8_rtm_on_require_state, &data->OutU8_rtm_on_require_state, len) != 0)
         {
@@ -366,9 +379,6 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
     // TODO:做长度判断
     switch (cmd)
     {
-    // case 0x00:
-    //     memcpy(&input_data->InU8_beam_id, queue_frame->payload.data + 1, len);
-    //     break;
     case 0x01:
         memcpy(&input_data->InU16_radiation_index, queue_frame->payload.data + 1, len);
         break;
@@ -418,14 +428,30 @@ static void app_ethercat_rx_thread(void *argument)
     uint32_t ret = 0;
     rtm_module_info_t *self = (rtm_module_info_t *)argument;
     TOBJ7010 output_data = {0};
+    uint8_t ethercat_Link_state = 0;
+    uint32_t current_time = 0;
+    uint32_t last_time = 0;
+    current_time = osKernelGetTickCount();
+    last_time = current_time;
     for (;;)
     {
-        ret = osEventFlagsWait(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT, osFlagsWaitAny, osWaitForever);
+        ret = osEventFlagsWait(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT, osFlagsWaitAny, 500);
         if (ret & APP_RTM_EVENT_FLAG_OUTPUT)
         {
             ethercat_recv_data_get((uint16_t *)&output_data, sizeof(TOBJ7010));
+
+            if (ethercat_Link_state != output_data.OutU8_ethercat_Link_state)
+            {
+                ethercat_Link_state = output_data.OutU8_ethercat_Link_state;
+                last_time = current_time;
+            }
             // TODO: 处理输出数据
             ethercat_output_data_distribute(self, &output_data);
+
+            if (current_time - last_time > 1000)
+            {
+                LOG_I("%s unlink\r\n", self->module_name);
+            }
         }
     }
 exit:
@@ -441,20 +467,13 @@ static void app_ethercat_tx_thread(void *argument)
     TOBJ6000 input_data = {0};
     for (;;)
     {
-        status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 0xFFFFFFFF);
-        if (status != osOK)
+        status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 500);
+        if (status == osOK)
         {
-            LOG_E("%s queue get error, status = %d\r\n", self->module_name, status);
-            continue;
+            ethercat_input_data_distribute(self, &input_data, &queue_frame);
+            ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
         }
-        // LOG_I("app_ethercat_tx_thread\r\n");
-        // for(uint8_t i = 0; i < queue_frame.length; i++)
-        // {
-        //     LOG_I("%x ", *((uint8_t *)&queue_frame.payload + i));
-        // }
-        // LOG_I("\r\n");
-        ethercat_input_data_distribute(self, &input_data, &queue_frame);
-        ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
+        input_data.InU8_ethercat_Link_state = !input_data.InU8_ethercat_Link_state;
     }
 exit:
     osThreadExit();
