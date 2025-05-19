@@ -400,6 +400,10 @@ static void app_ethercat_tx_thread(void *argument)
     osStatus_t status = osOK;
     rtm_module_info_t *self = (rtm_module_info_t *)argument;
     queue_frame_t queue_frame;
+    uint32_t current_time = 0;
+    uint32_t last_time = 0;
+    current_time = osKernelGetTickCount();
+    last_time = current_time;
     TOBJ6000 input_data = {0};
     for (;;)
     {
@@ -409,7 +413,13 @@ static void app_ethercat_tx_thread(void *argument)
             ethercat_input_data_distribute(self, &input_data, &queue_frame);
             ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
         }
-        input_data.InU8_ethercat_Link_state = !input_data.InU8_ethercat_Link_state;
+        current_time = osKernelGetTickCount();
+        if(current_time - last_time > 500)
+        {
+            last_time = current_time;
+            input_data.InU8_ethercat_Link_state = !input_data.InU8_ethercat_Link_state;
+            ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
+        }
     }
 exit:
     osThreadExit();
