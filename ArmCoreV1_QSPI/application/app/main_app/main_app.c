@@ -853,7 +853,11 @@ static int8_t realtime_ethercat_data_process(void)
             oldBeamIndex = oldRadiationIndex = 0;
         break;
         case CLOSE_PLAN://clear plan
-            if(rtBeamData.fsmState == FSM_IDLE)  clearPlan();
+            if(rtBeamData.fsmState == FSM_IDLE){
+                clearPlan();
+                oldBeamIndex = 0;
+                oldRadiationIndex = 0;
+            }  
         break;
         default:    break;
         }

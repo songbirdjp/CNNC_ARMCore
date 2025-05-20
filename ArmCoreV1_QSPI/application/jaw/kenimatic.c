@@ -60,8 +60,8 @@ void initSVG(struct SVG_Type* inst, uint8_t axes)
 
     inst->DynamicValues.AccelerationNeg = 100;//mm/s^2
     inst->DynamicValues.AccelerationPos = 100;
-    inst->DynamicValues.VelocityNeg = 17.5;//mm/s
-    inst->DynamicValues.VelocityPos = 17.5;
+    inst->DynamicValues.VelocityNeg = 10;//17.5;//mm/s
+    inst->DynamicValues.VelocityPos = 10;//17.5;
     inst->DynamicValues.JerkNeg = 500;//mm/s^3
     inst->DynamicValues.JerkPos = 500;
     inst->DynamicLimits.AccelerationNeg = 175;
