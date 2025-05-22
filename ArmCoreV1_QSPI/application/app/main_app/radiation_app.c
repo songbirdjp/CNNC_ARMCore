@@ -57,7 +57,7 @@ static int8_t radiation_simulation_dose_deal(uint16_t *buf, uint8_t len)
 }
 #endif
 
-#define RADIATION_FIX_RATE_SIMULATE
+// #define RADIATION_FIX_RATE_SIMULATE
 #ifdef RADIATION_FIX_RATE_SIMULATE
 static int8_t adcs7476_value_dose(uint32_t value, uint32_t value_1, uint16_t pulse_cnt);
 #endif
@@ -623,7 +623,7 @@ uint16_t one_pulse_count[1024] = {0};
 #define TIM_DELAY_PULSE_LEVEL_RESET         (1 << 3)
 #define TIM_DELAY_RUNNING_FLAG_BIT_7        (1 << 7)
 #define NORMAL_PULSE_RESET_DELAY_TIME_US    (2000)
-#define DUMMY_START_DELAY_TIME_US           (20000)
+#define DUMMY_START_DELAY_TIME_US           (100000)
 static uint8_t timer_delay_flag = 0;
 static osEventFlagsId_t timer_delay_event = NULL;
 static void PeriodElapsedCallback(TIM_HandleTypeDef *htim)
@@ -680,6 +680,7 @@ static int8_t time_delay_entry(void *argument)
     uint32_t event_flag = 0, interval_us = 0;
     enum fsm_state fsm_state_cur = FSM_STATE_MAX;
     uint8_t trigger_out_flag = 0;
+    enum dose_board board_id = DOSE_BOARD_MAX;
 
 #ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
     MX_TIM5_Init();
@@ -697,6 +698,8 @@ static int8_t time_delay_entry(void *argument)
         timer_delay_flag = 0;
         fsm_state_cur = fsm_state_get();
         trigger_out_flag = trigger_out_info_get(TRIGGER_OUT_FLAG);
+        board_id = radiation_data_value_get(DOSE_BOARD_ID);
+        interval_us = trigger_out_info_get(TRIGGER_OUT_INTERVAL);
 
         if (event_flag & TIM_DELAY_PULSE_INTERVAL)
         {
@@ -707,7 +710,7 @@ static int8_t time_delay_entry(void *argument)
                 {
                     LOG_E("dose value status update err: %d\r\n", ret);
                 }
-                if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
+                if (board_id == DOSE_BOARD_TRIGGER_OUT)
                 {
                     ret = dose_trigger_out_set(0);
                     if (ret != 0)
@@ -748,14 +751,6 @@ static int8_t time_delay_entry(void *argument)
             ret = adcs7476_value_dose(100000, 100000, 100);
             ret = dose_interpolation_check(&type, &interval_us);
 #endif
-            if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
-            {
-                ret = dose_trigger_out_set(1);
-                if (ret != 0)
-                {
-                    LOG_E("dose_trigger_out_set err: %d\r\n", ret);
-                }
-            }
             /* prepare for next pulse */
             if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1)
             {
@@ -764,16 +759,28 @@ static int8_t time_delay_entry(void *argument)
                 // uint64_t dose_interpolated = radiation_data_value_get(DOSE_INTERPOLATED_RADIATION_IDX);
                 // LOG_I("dose_accumulated_cur: %llu, dose_interpolated: %llu\r\n", dose_accumulated_cur, dose_interpolated);
 #endif
+                if (board_id == DOSE_BOARD_TRIGGER_OUT)
+                {
+                    ret = dose_trigger_out_set(1);
+                    if (ret != 0)
+                    {
+                        LOG_E("dose_trigger_out_set err: %d\r\n", ret);
+                    }
+                }
+
                 if (radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
                 {
                     type = TIM_DELAY_PULSE_INTERVAL;
                 }
                 else
                 {
-                    ret = dose_interpolation_check(&type, &interval_us);
-                    if (ret != 0)
+                    if (board_id == DOSE_BOARD_TRIGGER_OUT)
                     {
-                        LOG_E("dose interpolation check err: %d\r\n", ret);
+                        ret = dose_interpolation_check(&type, &interval_us);
+                        if (ret != 0)
+                        {
+                            LOG_E("dose interpolation check err: %d\r\n", ret);
+                        }
                     }
                 }
                 // type == 1 ? LOG_I("next: trigger a new pulse\r\n") : LOG_I("next: trigger no pulse\r\n");
@@ -811,14 +818,16 @@ static int8_t time_delay_entry(void *argument)
                 if (radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
                 {
                     type = TIM_DELAY_PULSE_INTERVAL;
-                    interval_us = trigger_out_info_get(TRIGGER_OUT_INTERVAL);
                 }
                 else
                 {
-                    ret = dose_interpolation_check(&type, &interval_us);
-                    if (ret != 0)
+                    if (board_id == DOSE_BOARD_TRIGGER_OUT)
                     {
-                        LOG_E("dose interpolation check err: %d\r\n", ret);
+                        ret = dose_interpolation_check(&type, &interval_us);
+                        if (ret != 0)
+                        {
+                            LOG_E("dose interpolation check err: %d\r\n", ret);
+                        }
                     }
                 }
 
@@ -1648,6 +1657,7 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *inter
                 LOG_E("dose radiation index update err: %d\r\n", ret);
                 return ret;
             }
+            *time_delay_type = TIM_DELAY_NO_PULSE_INTERVAL;
         }
         else
         {
@@ -1701,6 +1711,7 @@ static int8_t detect_whether_one_pulse_repeat(void)
             LOG_E("timer delay start err: %d\r\n", ret);
             return ret;
         }
+        LOG_I("---dummy start---\r\n");
 #endif
     }
     else if (fsm_state_cur == FSM_STATE_INTERRUPT)
@@ -1841,6 +1852,12 @@ static int8_t detect_whether_one_pulse_repeat(void)
         if (ret != 0)
         {
             LOG_E("radiation data value set err: %d\r\n", ret);
+            return ret;
+        }
+        ret = timer_delay_stop();
+        if (ret != 0)
+        {
+            LOG_E("timer delay stop err: %d\r\n", ret);
             return ret;
         }
     }
