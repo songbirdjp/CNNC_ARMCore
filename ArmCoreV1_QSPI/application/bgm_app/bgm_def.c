@@ -239,7 +239,7 @@ static int8_t dose_cmd_test(int8_t argc, uint8_t **argv)
 
     if(argc != 4)
     {
-        printf("dose_cmd_test: invalid arguments\r\n");
+        LOG_E("dose_cmd_test: invalid arguments\r\n");
         return -1;
     }
 
@@ -261,7 +261,7 @@ static int8_t dose_cmd_test(int8_t argc, uint8_t **argv)
         dose_fsm_state_set(id, DOSE_FSM_STATE_IDLE);
         break;
     case 4:
-        printf("state = %d\r\n", dose_fsm_state_get(id));
+        LOG_I("state = %d\r\n", dose_fsm_state_get(id));
         break;
     case 5:
         dose_state_polling(id);

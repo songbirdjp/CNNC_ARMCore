@@ -301,7 +301,7 @@ int8_t websocket_cmd_parse(APP_DATA_RECV *info)
         }
         break;
     case TAG_PLAN_DATA_CLEAR:
-        ret = clearPlan();        
+        ret = clearPlan();
         break;
     case TAG_CALI_DATA_SETTING:
         ret = cali_data_set(info);

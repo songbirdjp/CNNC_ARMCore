@@ -72,7 +72,7 @@ void AFC_MagMotorRunByStep(uint8_t dir,uint16_t _stepVal)//0x40,0x02
     _afcCmd[2] = dir;
     _afcCmd[3] = _stepVal;
     _afcCmd[4] = _stepVal >> 8;
-    printf("dir:%d,stepVal:%d\r\n",dir,_stepVal);
+    // LOG_I("dir:%d,stepVal:%d\r\n",dir,_stepVal);
     BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,5); 
 }
 
@@ -120,7 +120,7 @@ void AFC_AFTMotorRunByStep(uint8_t dir,uint16_t _stepVal)//0x41,0x02
     _afcCmd[2] = dir;
     _afcCmd[3] = _stepVal;
     _afcCmd[4] = _stepVal >> 8;
-    //printf("dir:%d,stepVal:%d\r\n",dir,_stepVal);
+    //LOG_I("dir:%d,stepVal:%d\r\n",dir,_stepVal);
     BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,5); 
 }
 /////////////////////////////////////////////////////////////0x41,0x03

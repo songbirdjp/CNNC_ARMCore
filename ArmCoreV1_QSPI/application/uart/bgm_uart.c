@@ -99,11 +99,15 @@ static int8_t uart_init_func(enum uart_id id)
 
     if (uart_init_callback[id] != NULL)
     {
-        if (id == BGM_UART_EPS_VPS)
+        uart_init_callback[id]();
+    }
+
+    if (id == BGM_UART_EPS_VPS)
+    {
+        if (uart_init_callback[id + 1] != NULL)
         {
             uart_init_callback[id + 1]();
         }
-        return uart_init_callback[id]();
     }
 
     return 0;
@@ -404,7 +408,7 @@ static int8_t uart_send_entry(void *argument)
 
     if (id == BGM_UART_EPS_VPS)
     {
-        osDelay(3000);
+        osDelay(5000);
 
         ret = uart_open(id);
         if (ret != 0)
@@ -491,6 +495,15 @@ repeat:
             }
             else
             {
+#if 0
+                uint16_t len = *(uint16_t *)&buf[UART_FRAME_SIZE_MAX - sizeof(uint16_t)];
+                LOG_I("modbus recv len: %d\r\n", len);
+                for (uint8_t i = 0; i < len; i++)
+                {
+                    LOG_I("%02x ", buf[i]);
+                }
+                LOG_I("\r\n");
+#endif
                 struct cmd_object obj = {0};
                 obj.id.byte = buf[0];
                 obj.type = buf[1];
@@ -506,7 +519,7 @@ repeat:
                 }
             }
 
-            #define UART_MODBUS_RETRY_TIMES 3
+            #define UART_MODBUS_RETRY_TIMES 50
             static uint8_t retry_times = 0;
 
             if (ret != 0)

@@ -47,11 +47,11 @@ static void trigger_out_distribute_init(void)
 {
     HAL_StatusTypeDef status = HAL_OK;
 
-    MX_TIM1_Init();
-    MX_TIM3_Init();
-    MX_TIM4_Init();
-    MX_TIM5_Init();
-    MX_TIM23_Init();
+    MX_TIM1_Init(); /* PA8 -> TIM1 */
+    MX_TIM3_Init(); /* PC7 -> QAM */
+    MX_TIM4_Init(); /* PD13 -> MOD */
+    MX_TIM5_Init(); /* get dose accumulated */
+    MX_TIM23_Init();/* PG14 -> AFC */
 
     status = HAL_TIM_RegisterCallback(&htim5, HAL_TIM_PERIOD_ELAPSED_CB_ID, PeriodElapsedCallback);
     if (status != HAL_OK)
@@ -279,14 +279,18 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         break;
     case BGM_STATE_PREPARE:
         LOG_I("---remote set to prepare---\r\n");
+#if 0
         LOG_I("dose_mode: %d\r\n", info.dose_mode);
         LOG_I("pulse_mode: %d\r\n", info.pulse_mode);
         LOG_I("cali_mode: %d\r\n", info.cali_mode);
         LOG_I("cali_prf: %d\r\n", info.cali_prf);
         LOG_I("dose_meter: %f\r\n", info.dose_meter);
+#endif
         /* 1. clear beam cumulated */
         ret = dose_beam_cumulated_clear(BGM_UART_DOSE1);
         ret |= dose_beam_cumulated_clear(BGM_UART_DOSE2);
+        ret |= dose_radiation_data_get(BGM_UART_DOSE1);
+        ret |= dose_radiation_data_get(BGM_UART_DOSE2);
         /* 2. set generate mode to 1 */
         info.dose_mode = 1;
         ret |= dose_generate_mode_set(BGM_UART_DOSE1, &info.dose_mode);
@@ -620,7 +624,7 @@ static int8_t fsm_state_update_from_local(void)
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_READY && fsm_state_dose2 == DOSE_FSM_STATE_READY)
     {
-        // dose_state_set = DOSE_FSM_STATE_READY;
+        dose_state_set = DOSE_FSM_STATE_READY;
 
         ret = fsm_state_set(BGM_STATE_READY, FSM_SOURCE_LOCAL);
         if (ret != 0)
@@ -761,6 +765,14 @@ static int8_t dose_rate_calculate(void *argument)
     
         dose1_meter_pre = dose1_meter_cur;
         dose2_meter_pre = dose2_meter_cur;
+
+        /* TODO: */
+        /* 1. 周期性核对dose1和dose2的剂量偏差，控制在10%以内？ */
+
+
+        /* 2.  */
+
+
     }
 
     return 0;

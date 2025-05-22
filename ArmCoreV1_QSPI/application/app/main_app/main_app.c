@@ -73,7 +73,7 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
     }
     obj->beam_id = recv->OutU8_BeamId;
 
-    if (obj->fsm_state != BGM_STATE_WORK)
+    if (obj->fsm_state != BGM_STATE_WORK && obj->fsm_state != BGM_STATE_COMPLETE)
     {
         obj->radiation_index = recv->OutU16_RadiationIndex;
     }
@@ -122,12 +122,12 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
     send->InU16_RadiationIndex = obj->radiation_index;
     osMutexRelease(obj->mutex);
 
-    send->InU16_NotReadyEvent = 0;
+    send->InU16_NotReadyEvent = checkPlanRecvStatus() != 0 ? 1 : 0;
 
     struct interlocks interlock = interlock_status_get();
-    send->InU32_WaringInterlock = interlock.detect_status.bytes;
-    send->InU32_MinorInterlock = interlock.extend_status.interrupt_flag << 16 | interlock.extend_status.interrupt_capture;
-    send->InU32_SeriousInterlock = interlock.extend_status.current.bytes;
+    send->InU32_WaringInterlock = 0;
+    send->InU32_MinorInterlock = interlock.detect_status.bytes; /* TODO: add two dose meter interlock */
+    send->InU32_SeriousInterlock = interlock.extend_status.current.bytes | interlock.extend_status.interrupt_capture << 16;
 
 
     send->InF_BeamOnTime = 0;

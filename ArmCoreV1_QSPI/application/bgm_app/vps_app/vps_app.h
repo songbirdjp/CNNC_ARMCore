@@ -29,6 +29,9 @@ enum vps_read_write_id
     VPS_FIRE_COUNT,
     VPS_FIRE_COUNT_UPLIMIT,
     VPS_FIRE_STOP_TIME,
+    VPS_REMOTE_MODE,
+    VPS_START_MODE,
+    VPS_REMOTE_START_ENABLE,
 };
 
 struct vps_status

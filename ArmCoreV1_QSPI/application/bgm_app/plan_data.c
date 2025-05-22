@@ -298,6 +298,15 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
     return 0;
 }
 
+int8_t checkPlanRecvStatus(void)
+{
+    if(nrtBeamData.totalBeam <= 0){
+       // LOG_E("no plan to get!\r\n");
+        return -1;
+    }
+
+    return 0;
+}
 int8_t getPlanBeamData(uint16_t beamIndex, struct one_beam_order *beam_info)
 {
     __IO uint8_t *pBeamData = (__IO uint8_t *) (SDRAM_BANK1_ADDR);

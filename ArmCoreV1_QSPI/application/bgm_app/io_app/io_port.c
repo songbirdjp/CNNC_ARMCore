@@ -545,7 +545,7 @@ static int8_t interlock_status_output(uint8_t argc, char *argv[])
     LOG_I("interrupt_flag           = %#.4x\r\n", interlock.extend_status.interrupt_flag);
     LOG_I("interrupt_capture        = %#.4x (normal is 0xFFFF)\r\n", interlock.extend_status.interrupt_capture);
     LOG_I("current                  = %#.4x\r\n", interlock.extend_status.current.bytes);
-    LOG_I("------------------------------ status ----------------------------------\r\n");
+    LOG_I("------------------------------ status ----------------------------------------\r\n");
     LOG_I("lv interlock:            = %d\r\n", interlock.detect_status.bits.LvOKDetect);
     LOG_I("hv interlock:            = %d\r\n", interlock.detect_status.bits.HvEnDetect);
     LOG_I("mod trigger:             = %d\r\n", interlock.detect_status.bits.ModTrigFB);

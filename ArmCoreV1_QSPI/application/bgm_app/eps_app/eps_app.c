@@ -20,10 +20,19 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
         return -1;
     }
 
+#if 0
+    LOG_I("[%d][eps] cmd id: %d, type: %d, len: %d, data: \r\n", id, cmd->id.byte, cmd->type, *cmd->len);
+    for (uint8_t i = 0; i < *cmd->len + 2; i++)
+    {
+        LOG_I("%.2x ", cmd->data[i]);
+    }
+    LOG_I("\r\n");
+#endif
+
     /* 1. check cmd id */
     if (cmd->id.byte != DEVICE_ADDRESS_EPS)
     {
-        LOG_E("[%d][eps] invalid cmd id: %d\r\n", id, cmd->id.byte);
+        LOG_E("[%d][eps] invalid device id: %d\r\n", id, cmd->id.byte);
         return -2;
     }
 
@@ -103,7 +112,6 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
             osMutexRelease(obj->mutex);
             break;
         default:
-            LOG_E("[%d][eps] invalid cmd id: %d\r\n", id, cmd_id);
             break;
         }
         break;
@@ -484,7 +492,7 @@ static int8_t eps_init(void)
     struct modbus_cmd_object cmd = {0};
     uint8_t data[10] = {0x01, 0x2C, 0x00, 0x01};
 
-    /* 0. read software version */
+    /* 1. read software version */
     cmd.addr = DEVICE_ADDRESS_EPS;
     cmd.type = READ_HOLDING_REGISTERS;
     cmd.cmd_id = EPS_SOFTWARE_VERSION;
@@ -498,7 +506,7 @@ static int8_t eps_init(void)
         return -1;
     }
 
-    /* 1. read 001: status */
+    /* 2. read 001: status */
     cmd.cmd_id = EPS_RUN_STATUS;
     data[0] = 0x00;
     data[1] = 0x00;
@@ -512,7 +520,7 @@ static int8_t eps_init(void)
         return -2;
     }
 
-    /* 2. read 002: voltage */
+    /* 3. read 002: voltage */
     cmd.cmd_id = EPS_VOLTAGE_OUTPUT;
     data[0] = 0x00;
     data[1] = 0x01;
@@ -526,7 +534,7 @@ static int8_t eps_init(void)
         return -3;
     }
 
-    /* 3. read 003: current */
+    /* 4. read 003: current */
     cmd.cmd_id = EPS_CURRENT_OUTPUT;
     data[0] = 0x00;
     data[1] = 0x02;
@@ -540,7 +548,7 @@ static int8_t eps_init(void)
         return -4;
     }
 
-    // /* 4. link menu init */
+    /* 5. link menu init */
     // ret = eps_link_menu_init();
     // if (ret != 0)
     // {
@@ -581,7 +589,7 @@ static int8_t eps_read_test(uint8_t argc, char **argv)
     struct modbus_cmd_object cmd = {0};
     uint8_t buf[16] = {0};
 
-    uint16_t reg_addr = atoi(argv[1]);
+    uint16_t reg_addr = strtoul(argv[1], NULL, 16);
     uint16_t len = atoi(argv[2]);
     buf[0] = reg_addr >> 8;
     buf[1] = reg_addr;
@@ -602,7 +610,7 @@ static int8_t eps_write_test(uint8_t argc, char **argv)
     struct modbus_cmd_object cmd = {0};
     uint8_t buf[16] = {0};
 
-    uint16_t reg_addr = atoi(argv[1]);
+    uint16_t reg_addr = strtoul(argv[1], NULL, 16);
     uint16_t data = atoi(argv[2]);
     buf[0] = reg_addr >> 8;
     buf[1] = reg_addr;

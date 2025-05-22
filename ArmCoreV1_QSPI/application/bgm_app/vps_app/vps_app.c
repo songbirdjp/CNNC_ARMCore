@@ -20,10 +20,19 @@ static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
         return -1;
     }
 
+#if 0
+    LOG_I("[%d][vps] cmd id: %d, type: %d, len: %d, data: \r\n", id, cmd->id.byte, cmd->type, *cmd->len);
+    for (uint8_t i = 0; i < *cmd->len + 2; i++)
+    {
+        LOG_I("%.2x ", cmd->data[i]);
+    }
+    LOG_I("\r\n");
+#endif
+
     /* 1. check cmd id */
     if (cmd->id.byte != DEVICE_ADDRESS_VPS)
     {
-        LOG_E("[%d][vps] invalid cmd id: %d\r\n", id, cmd->id.byte);
+        LOG_E("[%d][vps] invalid device id: %d\r\n", id, cmd->id.byte);
         return -2;
     }
 
@@ -505,6 +514,7 @@ static int8_t vps_init(void)
     /* 1. read software version */
     cmd.addr = DEVICE_ADDRESS_VPS;
     cmd.type = READ_HOLDING_REGISTERS;
+    cmd.cmd_id = VPS_SOFTWARE_VERSION;
     cmd.len = 4;
     cmd.data = data;
 
@@ -515,8 +525,9 @@ static int8_t vps_init(void)
         return -1;
     }
 
-    /* 1. set 205 is remote */
+    /* 2. set 205 is remote */
     cmd.type = WRITE_SINGLE_REGISTER;
+    cmd.cmd_id = VPS_REMOTE_MODE;
     cmd.len = 4;
     cmd.data = data;
     data[0] = 0x00;
@@ -531,7 +542,8 @@ static int8_t vps_init(void)
         return -2;
     }
 
-    /* 2. set 203 is remote */
+    /* 3. set 203 is remote */
+    cmd.cmd_id = VPS_START_MODE;
     data[0] = 0x00;
     data[1] = 0xCA;
     data[2] = 0x00;
@@ -544,7 +556,7 @@ static int8_t vps_init(void)
         return -3;
     }
 
-    /* 3. set 207 is remote voltage */
+    /* 4. set 207 is remote voltage */
     // data[0] = 0x00;
     // data[1] = 0xCE;
     // data[2] = 0x0F;
@@ -557,7 +569,8 @@ static int8_t vps_init(void)
     //     return -4;
     // }
 
-    /* 4. set 202 is remote start */
+    /* 5. set 202 is remote start */
+    cmd.cmd_id = VPS_REMOTE_START_ENABLE;
     data[0] = 0x00;
     data[1] = 0xC9;
     data[2] = 0x00;
@@ -570,7 +583,7 @@ static int8_t vps_init(void)
         return -5;
     }
 
-    // /* 5. set link menu */
+    /* 6. set link menu */
     // ret = vps_link_menu_init();
     // if (ret != 0)
     // {
@@ -611,7 +624,7 @@ static int8_t vps_read_test(uint8_t argc, char **argv)
     struct modbus_cmd_object cmd = {0};
     uint8_t buf[16] = {0};
 
-    uint16_t reg_addr = atoi(argv[1]);
+    uint16_t reg_addr = strtoul(argv[1], NULL, 16);
     uint16_t len = atoi(argv[2]);
     buf[0] = reg_addr >> 8;
     buf[1] = reg_addr;
@@ -632,7 +645,7 @@ static int8_t vps_write_test(uint8_t argc, char **argv)
     struct modbus_cmd_object cmd = {0};
     uint8_t buf[16] = {0};
 
-    uint16_t reg_addr = atoi(argv[1]);
+    uint16_t reg_addr = strtoul(argv[1], NULL, 16);
     uint16_t data = atoi(argv[2]);
     buf[0] = reg_addr >> 8;
     buf[1] = reg_addr;

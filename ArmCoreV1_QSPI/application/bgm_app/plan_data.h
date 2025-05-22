@@ -89,6 +89,7 @@ int8_t clearPlan(void);
 int8_t nrtRecvPlan(APP_DATA_RECV *info);
 int32_t planFeedback(uint8_t sn, uint8_t tag_fb);
 
+int8_t checkPlanRecvStatus(void);
 int8_t getPlanBeamData(uint16_t beamIndex, struct one_beam_order *beam_info);
 
 #ifdef __cplusplus
