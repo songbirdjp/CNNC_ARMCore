@@ -93,6 +93,11 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
 
     //head
     memcpy(&frameHead, data, headLength);
+    if(frameHead.beamType != BEAM_TYPE_MV)
+    {
+         nrtBeamData.errorCode = 0xf0;
+         return 0;
+    }   
  //   LOG_I("head1: %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength);
 
     if((u8LenTotal != PLAN_DATA_LENGTH) || (frameHead.frmLength != PLAN_PAYLOAD_LENGTH))

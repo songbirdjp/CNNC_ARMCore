@@ -608,6 +608,12 @@ static int8_t fsm_state_update_from_local(void)
         }
         dose_state_set = DOSE_FSM_STATE_PRELIMINARY;
 
+        ret = fsm_state_set(BGM_STATE_PRELIMINARY, FSM_SOURCE_LOCAL);
+        if (ret != 0)
+        {
+            LOG_E("fsm state set err: %d\r\n", ret);
+        }
+
         osMutexAcquire(obj->mutex, osWaitForever);
         obj->dose_fsm_state_flag = DOSE_PRELIMINARY_FLAG;
         osMutexRelease(obj->mutex);
