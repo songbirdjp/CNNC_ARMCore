@@ -68,6 +68,8 @@ extern "C"
         POWER_SAVER_SIG,
 
         TIME_SIG,
+        MANUAL_ENTER_SIG,
+        MANUAL_EXIT_SIG,
         ERROR_SIG,
         USER_MAX_SIG
     };
@@ -108,6 +110,42 @@ extern "C"
     (((StateMachine_t *)(self))->StateHandler = (StateHandler_t)(target), \
      (State_t)RET_TRAN)
     /******************************************************************************/
+
+    typedef struct app_not_ready_event_table
+    {
+        uint32_t emergency_stop : 1; // emergency stop, 0: normal, 1: emergency stop
+        uint32_t door_open : 1;      // door open, 0: door open, 1: door close
+        uint32_t reserved : 30;
+    } app_not_ready_event_table_t;
+
+    typedef struct app_serious_interlock_table
+    {
+        uint32_t emergency_stop : 1;
+        uint32_t door_open : 1;
+        uint32_t HvEN : 1;
+        uint32_t KVTreatmentEn : 1;
+
+        uint32_t MVTreatmentEn : 1;
+        uint32_t MoveEN : 1;
+        uint32_t reserved : 26;
+    } app_serious_interlock_table_t;
+
+    typedef struct app_interlock_table
+    {
+        app_not_ready_event_table_t not_ready_event;
+        uint32_t warning_interlock;
+        uint32_t minor_interlock;
+        app_serious_interlock_table_t serious_interlock;
+    } interlock_table_t;
+
+    typedef struct rtm_fault_check
+    {
+        uint32_t cur_time;
+        uint32_t last_time;
+        uint8_t fault_clear_flag;
+        interlock_table_t interlock_table;
+    } rtm_fault_check_t;
+
     typedef enum RtmSignals rtm_state_t;
 
     typedef struct rtm_StateMachine

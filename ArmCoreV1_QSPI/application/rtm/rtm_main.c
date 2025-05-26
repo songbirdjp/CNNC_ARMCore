@@ -58,47 +58,6 @@ typedef struct
 static int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len);
 static app_rtm_main_t app_rtm;
 
-static void app_rtm_fault_detect_entry(void *argument)
-{
-    app_rtm_main_t *self = (app_rtm_main_t *)argument;
-    for (;;)
-    {
-        osDelay(100);
-    }
-}
-static void app_rtm_not_ready_event(app_rtm_main_t *self)
-{
-    dido_structure_t dido_structure = {0};
-    if (self == NULL)
-    {
-        return;
-    }
-
-    app_di_get(&(self->app_dido), &dido_structure);
-
-    if ((0 == dido_structure.tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_EMERGENCY4) ||
-        (0 == dido_structure.tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_EMERGENCY2) ||
-        (0 == dido_structure.tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_EMERGENCY3) ||
-        (0 == dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_CITB_EMERGENCY1) ||
-        (0 == dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_CITB_EMERGENCY5))
-    {
-        self->not_ready_event.emergency_stop = 1; // 紧急触发
-    }
-    else
-    {
-        self->not_ready_event.emergency_stop = 0; // 正常
-    }
-    if ((dido_structure.tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
-        (dido_structure.tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1))
-    {
-        self->not_ready_event.door_open = 1; // 门开
-    }
-    else
-    {
-        self->not_ready_event.door_open = 0; // 门关
-    }
-    *(uint32_t *)&(self->not_ready_event) &= ~(self->unready_override);
-}
 osThreadId_t app_rtm_main_threadId;
 #define RTM_MAIN_THREAD_CYCLE_MS (1)
 static void app_rtm_main_thread(void *argument)
@@ -114,6 +73,7 @@ static void app_rtm_main_thread(void *argument)
     current_time = osKernelGetTickCount();
     last_time = current_time;
 
+    uint8_t system_state_require = 0;
     Event_t rtm_event = {0};
     rtm_state_machine_ctor(&(self->state_machine), self);
     for (;;)
@@ -121,56 +81,95 @@ static void app_rtm_main_thread(void *argument)
         status = osMessageQueueGet(self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].module_queue, &queue_frame, NULL, 0);
         if (status == osOK)
         {
-            if (queue_frame.payload.type == 0x03) /*参数配置帧*/
+            uint8_t type = queue_frame.payload.type;
+            uint8_t cmd = queue_frame.payload.data[0];
+            switch (type)
             {
-                // TODO: 处理参数配置帧
-            }
-            else if (queue_frame.payload.type == 0x04) /*参数获取帧*/
+            case 0x03: /*参数配置帧*/
+                break;
+            case 0x04: /*参数获取帧*/
+                break;
+            case 0x05: /*SET帧*/
             {
-                // TODO: 处理参数获取帧
-            }
-            else if (queue_frame.payload.type == 0x05) /*SET帧*/
-            {
-                // TODO: 处理SET帧
-                if (queue_frame.payload.data[0] == 0x16)
+                switch (cmd)
                 {
-                    rtm_event.sig = queue_frame.payload.data[1];
-                    rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                case 0x16: /*系统状态设置*/
+                {
+                    system_state_require = queue_frame.payload.data[1];
 
                     self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[3]);
                     self->unready_override = *(uint32_t *)&(queue_frame.payload.data[7]);
                     self->led_belt = *(uint16_t *)&(queue_frame.payload.data[11]);
                 }
-                else if (queue_frame.payload.data[0] == 0x02)
+                break;
+                case 0x02: /*故障清除*/
                 {
-                    // 清除故障
                     if (queue_frame.payload.data[1] & 0x01)
                     {
                         rtm_event.sig = ERROR_SIG;
                         rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
                     }
                 }
+                break;
+                case 0x91: /*FKP按键*/
+                {
+#define FKP_KEY_VALUE_MASK 0x0020
+#define FKP_KEY_VALUE_EN_MASK 0x0001
+                    uint16_t fkp_key_value = *(uint16_t *)&(queue_frame.payload.data[1]);
+                    if (((fkp_key_value & FKP_KEY_VALUE_MASK) != 0) && ((fkp_key_value & FKP_KEY_VALUE_EN_MASK) != 0))
+                    {
+                        // LOG_I("FKP KEY PRESS\r\n");
+                        rtm_event.sig = MANUAL_ENTER_SIG;
+                        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                    }
+                    else
+                    {
+                        // LOG_I("FKP KEY RELEASE\r\n");
+                        rtm_event.sig = MANUAL_EXIT_SIG;
+                        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                    }
+                }
+                break;
+                case 0xA1: /*CPG按键*/
+                {
+#define CPG_KEY_VALUE_MASK 0x00001FAE
+#define CPG_KEY_VALUE_EN_MASK 0x00000001
+                    uint32_t cpg_key_value = *(uint32_t *)&(queue_frame.payload.data[1]);
+                    if (((cpg_key_value & CPG_KEY_VALUE_MASK) != 0) && ((cpg_key_value & CPG_KEY_VALUE_EN_MASK) != 0))
+                    {
+                        rtm_event.sig = MANUAL_ENTER_SIG;
+                        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                    }
+                    else
+                    {
+                        rtm_event.sig = MANUAL_EXIT_SIG;
+                        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                    }
+                }
+                break;
+                default:
+                    break;
+                }
+                break;
             }
-            else if (queue_frame.payload.type == 0x06) /*GET帧*/
-            {
-                // TODO: 处理GET帧
-            }
-            else
-            {
-                // TODO: 处理未知帧
+            case 0x06: /*GET帧*/
+                break;
+            default:
+                break;
             }
         }
         // 轮询状态机
-        app_rtm_not_ready_event(self);
+        rtm_event.sig = system_state_require;
+        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
 
         rtm_event.sig = TIME_SIG;
         rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
 
         rtm_status.fsm_state_current = rtm_get_state(&(self->state_machine));
-        rtm_status.not_ready_event = *(uint32_t *)&(self->not_ready_event);
-        rtm_status.warning_interlock = *(uint32_t *)&(self->warning_interlock);
-        rtm_status.minor_interlock = *(uint32_t *)&(self->minor_interlock);
-        rtm_status.serious_interlock = *(uint32_t *)&(self->serious_interlock);
+        rtm_status.not_ready_event = *(uint32_t *)&(self->interlock_table.not_ready_event);
+        rtm_status.warning_interlock = *(uint32_t *)&(self->interlock_table.warning_interlock);
+        rtm_status.minor_interlock = *(uint32_t *)&(self->interlock_table.minor_interlock);
+        rtm_status.serious_interlock = *(uint32_t *)&(self->interlock_table.serious_interlock);
 
         if (memcmp(&rtm_status_old, &rtm_status, sizeof(rtm_status_t)) != 0)
         {
@@ -414,7 +413,7 @@ static void app_ethercat_tx_thread(void *argument)
             ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
         }
         current_time = osKernelGetTickCount();
-        if(current_time - last_time > 500)
+        if (current_time - last_time > 500)
         {
             last_time = current_time;
             input_data.InU8_ethercat_Link_state = !input_data.InU8_ethercat_Link_state;
@@ -597,11 +596,12 @@ static void app_fkp_rx_thread(void *argument)
         {
             continue;
         }
+        LOG_I("FkpButton:%x\r\n", recv_data.fkp_recv_structure.FkpButton);
         if (memcmp(&recv_data, &recv_data_bak, sizeof(recv_data)) != 0)
         {
             memcpy(&recv_data_bak, &recv_data, sizeof(recv_data));
             ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_FKP].queue_group[RTM_MODULE_RTM_OFF_PLC],
-                                          0x80 | 0x100 | 0x01,
+                                          0x80 | 0x100 | 0x01 | 0x40,
                                           0x91,
                                           &recv_data.fkp_recv_structure.FkpButton,
                                           2);
@@ -610,7 +610,16 @@ static void app_fkp_rx_thread(void *argument)
                 LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
             }
             ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_FKP].queue_group[RTM_MODULE_RTM_ON],
-                                          0x80 | 0x100 | 0x01,
+                                          0x80 | 0x100 | 0x01 | 0x40,
+                                          0x91,
+                                          &recv_data.fkp_recv_structure.FkpButton,
+                                          2);
+            if (ret != 0)
+            {
+                LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
+            }
+            ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_FKP].queue_group[RTM_MODULE_RTM_OFF_ARM],
+                                          0x80 | 0x100 | 0x01 | 0x40,
                                           0x91,
                                           &recv_data.fkp_recv_structure.FkpButton,
                                           2);
@@ -668,17 +677,25 @@ static void app_fkp_tx_thread(void *argument)
         {
             memcpy(&(send_data.fkp_send_structure.FkpLedBlink), queue_frame.payload.data + 1, 2);
         }
-        // send_data.fkp_send_structure.DeliveredDose = 1.1;
-        // send_data.fkp_send_structure.TotalDose = 1.5;
-        // send_data.fkp_send_structure.FkpLedBlink = 0x00;
+        // static float DeliveredDose = 0;
+        // DeliveredDose += 1.0;
+        // if(DeliveredDose >= 100.0)
+        // {
+        //     DeliveredDose = 0;
+        // }
+        // send_data.fkp_send_structure.DeliveredDose = DeliveredDose;
+        // LOG_I("DeliveredDose:%f\r\n", send_data.fkp_send_structure.DeliveredDose);
+        // send_data.fkp_send_structure.DeliveredDose = 1.0;
+        // send_data.fkp_send_structure.TotalDose = 100.0;
+        // send_data.fkp_send_structure.FkpLedBlink = 00;
         // send_data.fkp_send_structure.power_off = 0x00;
-        // send_data.fkp_send_structure.beep = 50;
-        // send_data.fkp_send_structure.year = 2025;
-        // send_data.fkp_send_structure.month = 12;
-        // send_data.fkp_send_structure.day = 31;
-        // send_data.fkp_send_structure.hour = 23;
-        // send_data.fkp_send_structure.minute = 59;
-        // send_data.fkp_send_structure.fractions = 26;
+        // send_data.fkp_send_structure.beep = 00;
+        // send_data.fkp_send_structure.year = 0;
+        // send_data.fkp_send_structure.month = 0;
+        // send_data.fkp_send_structure.day = 0;
+        // send_data.fkp_send_structure.hour = 0;
+        // send_data.fkp_send_structure.minute = 0;
+        // send_data.fkp_send_structure.fractions = 0;
         crc = hardware_crc_calculate(CRC32, (uint8_t *)&send_data + 2, tx_len - 6);
         crc ^= 0xFFFFFFFF;
         send_data.crc = crc;
@@ -732,7 +749,7 @@ static void app_cpg_rx_thread(void *argument)
         {
             CpgButton_bak = CpgButton;
             ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_RTM_OFF_PLC],
-                                          0x80 | 0x100 | 0x01,
+                                          0x80 | 0x100 | 0x01 | 0x40,
                                           0xA1,
                                           &CpgButton,
                                           sizeof(CpgButton));
@@ -741,7 +758,16 @@ static void app_cpg_rx_thread(void *argument)
                 LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
             }
             ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_RTM_ON],
-                                          0x80 | 0x100 | 0x01,
+                                          0x80 | 0x100 | 0x01 | 0x40,
+                                          0xA1,
+                                          &CpgButton,
+                                          sizeof(CpgButton));
+            if (ret != 0)
+            {
+                LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
+            }
+            ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_RTM_OFF_ARM],
+                                          0x80 | 0x100 | 0x01 | 0x40,
                                           0xA1,
                                           &CpgButton,
                                           sizeof(CpgButton));
@@ -918,7 +944,7 @@ int app_rtm_data_handle_create(void)
     {
         return -4;
     }
-    device_err = dev_uart_init(self->uart_fkp, DEV_UART_IOCTL_USE_DMA, 5, sizeof(fkp_recv_structure_t) * 2);
+    device_err = dev_uart_init(self->uart_fkp, DEV_UART_IOCTL_USE_DMA, 5, (sizeof(fkp_recv_structure_t) + sizeof(serial_frame_format_t) + sizeof(uint32_t)) * 2);
     if (device_err != DEV_EOK)
     {
         return -5;

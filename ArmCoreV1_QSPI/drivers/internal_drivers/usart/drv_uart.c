@@ -517,25 +517,25 @@ static int32_t drv_uartx_init(void)
         return -1;
     }
     ret = drv_uart_register(uart_drv_get(&huart3),
-                                    &huart3,
-                                    UART_DEV_NAME_USART3,
-                                    UART_TYPE_FULL_DUPLEX);
+                            &huart3,
+                            UART_DEV_NAME_USART3,
+                            UART_TYPE_FULL_DUPLEX);
     if (ret != 0)
     {
         return -2;
     }
     ret = drv_uart_register(uart_drv_get(&huart4),
-                                    &huart4,
-                                    UART_DEV_NAME_UART4,
-                                    UART_TYPE_FULL_DUPLEX);
+                            &huart4,
+                            UART_DEV_NAME_UART4,
+                            UART_TYPE_FULL_DUPLEX);
     if (ret != 0)
     {
         return -3;
     }
     ret = drv_uart_register(uart_drv_get(&huart5),
-                                    &huart5,
-                                    UART_DEV_NAME_UART5,
-                                    UART_TYPE_FULL_DUPLEX);
+                            &huart5,
+                            UART_DEV_NAME_UART5,
+                            UART_TYPE_FULL_DUPLEX);
     if (ret != 0)
     {
         return -4;
