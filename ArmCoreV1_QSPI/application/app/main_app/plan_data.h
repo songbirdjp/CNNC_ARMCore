@@ -36,7 +36,7 @@ struct beam_data
     osMutexId_t mutex;
 };
 
-enum beam_type
+enum radiation_type
 {
     BEAM_TYPE_NONE = 0,
     BEAM_TYPE_KV,

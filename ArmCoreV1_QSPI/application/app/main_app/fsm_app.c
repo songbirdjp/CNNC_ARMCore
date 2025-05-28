@@ -44,6 +44,7 @@ int8_t fsm_state_switch(enum fsm_state new_state)
         break;
     case FSM_STATE_IDLE:
         ret = dose_hv_enable_set(0);
+        ret |= dose_trigger_out_set(1);
         break;
     case FSM_STATE_PRELIMINARY:
         ret = dose_hv_enable_set(0);
@@ -60,6 +61,7 @@ int8_t fsm_state_switch(enum fsm_state new_state)
     case FSM_STATE_MANUAL:
         break;
     case FSM_STATE_COMPLETE:
+        ret = dose_trigger_out_set(1);
         break;
     case FSM_STATE_SHUTDOWN:
         break;

@@ -17,7 +17,7 @@ static struct control_para control_data =
     .board_id = DOSE_BOARD_TRIGGER_OUT,
     .calibration = {.adc_factor = {2376000, 2376000, 2376000, 2376000, 2376000}, 
                     .dac_factor = 30,
-                    .trig_interval_min = 6000},
+                    .trig_interval_min = 20000},
     .treatment = {.prf_hz = 1},
     .interlock = {.threshold_dose_rate = {.low = 10, .high = 10}, 
                   .threshold_dose_cp = {.low = 10, .high = 10}, 
@@ -196,8 +196,10 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             obj->treatment.ri_src = (cmd->data[2] == 0) ? 0 : 1;
             break;
         case 0x01:
-            LOG_I("dose beam meter set: %f\r\n", (cmd->data[3] << 8 | cmd->data[2]) / 10.0);
-            ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, (cmd->data[3] << 8 | cmd->data[2]) / 10.0);
+            uint32_t meter = cmd->data[2] | cmd->data[3] << 8 | cmd->data[4] << 16 | cmd->data[5] << 24;
+
+            LOG_I("dose beam meter set: %f\r\n", *(float *)&meter);
+            ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, *(float *)&meter);
             if (ret != 0)
             {
                 LOG_E("beam data dose meter set err: %d\r\n", ret);
@@ -228,23 +230,25 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             // LOG_I("cp_ri_map[%d]: %d\r\n", cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4]);
             break;
         case 0x05:
-            ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, cmd->data[3] << 8 | cmd->data[2], (cmd->data[5] << 8 | cmd->data[4]) / 10.0);
+            uint32_t dose_cumulative = cmd->data[4] | cmd->data[5] << 8 | cmd->data[6] << 16 | cmd->data[7] << 24;
+            ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, cmd->data[3] << 8 | cmd->data[2], *(float *)&dose_cumulative);
             if (ret != 0)
             {
                 LOG_E("beam data ri cumulative set err: %d\r\n", ret);
             }
-            ret = beam_data_value_set(0, BEAM_RI_DOSE_RATE, cmd->data[3] << 8 | cmd->data[2], (cmd->data[7] << 8 | cmd->data[6]) / 10.0);
+            uint32_t dose_rate = cmd->data[8] | cmd->data[9] << 8 | cmd->data[10] << 16 | cmd->data[11] << 24;
+            ret = beam_data_value_set(0, BEAM_RI_DOSE_RATE, cmd->data[3] << 8 | cmd->data[2], *(float *)&dose_rate);
             if (ret != 0)
             {
                 LOG_E("beam data ri dose rate set err: %d\r\n", ret);
             }
-            ret = beam_data_value_set(0, BEAM_RI_TIME_EXPECTED, cmd->data[3] << 8 | cmd->data[2], cmd->data[9] << 8 | cmd->data[8]);
+            uint32_t time_expected = cmd->data[12] | cmd->data[13] << 8 | cmd->data[14] << 16 | cmd->data[15] << 24;
+            ret = beam_data_value_set(0, BEAM_RI_TIME_EXPECTED, cmd->data[3] << 8 | cmd->data[2], *(float *)&time_expected);
             if (ret != 0)
             {
                 LOG_E("beam data ri time expected set err: %d\r\n", ret);
             }
-            // LOG_I("ri_data[%d]: dose: %d, dose_rate: %d, dose_expect_time: %d ms\r\n", 
-            //             cmd->data[3] << 8 | cmd->data[2], cmd->data[5] << 8 | cmd->data[4], cmd->data[7] << 8 | cmd->data[6], cmd->data[9] << 8 | cmd->data[8]);
+            // LOG_I("ri_data[%d]: dose: %f, dose_rate: %f, dose_expect_time: %f ms\r\n", cmd->data[3] << 8 | cmd->data[2], *(float *)&dose_cumulative, *(float *)&dose_rate, *(float *)&time_expected);
             break;
         case 0x06:
             ret = beam_data_value_set(0, BEAM_TYPE, 0, cmd->data[2]);
@@ -649,6 +653,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             break;
         case 0x02:
             ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
+            ret |= dose_value_status_set(DOSE_RATE_CURRENT, 0);
             ret |= dose_value_status_set(ONE_PULSE_DOSE, 0);
             ret |= dose_value_status_set(ONE_PULSE_COUNT, 0);
             if (ret != 0)
@@ -792,8 +797,13 @@ int8_t radiation_status_get(uint8_t *buf, uint16_t *len)
     double dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
     float dose = (float)(dose_cumulated / control_data_get()->calibration.adc_factor[0]);
     memcpy(&buf[7], (float *)&dose, sizeof(float));   /* dose cumulated */
-    buf[11] = data->treatment.prf_hz; /* PRF */
-    memcpy(&buf[12], &data->interlock.one_pulse.count_abnormal, sizeof(uint16_t));    /* pulse abnormal */
+
+    double dose_rate = dose_value_status_get(DOSE_RATE_CURRENT);
+    float dose_rate_f = (float)(dose_rate / control_data_get()->calibration.adc_factor[0]);
+    memcpy(&buf[11], (float *)&dose_rate_f, sizeof(float)); /* dose rate */
+
+    buf[15] = data->treatment.prf_hz; /* PRF */
+    memcpy(&buf[16], &data->interlock.one_pulse.count_abnormal, sizeof(uint16_t));    /* pulse abnormal */
     uint8_t one_pulse_valid = dose_value_status_get(ONE_PULSE_COMPLETE);
     uint32_t one_pulse_dose = dose_value_status_get(ONE_PULSE_DOSE);
     ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0);
@@ -801,12 +811,12 @@ int8_t radiation_status_get(uint8_t *buf, uint16_t *len)
     {
         LOG_E("dose value status set err: %d\r\n", ret);
     }
-    buf[14] = one_pulse_valid;    /* one pulse valid */
-    memcpy(&buf[15], &one_pulse_dose, sizeof(uint32_t));  /* dose one pulse */
+    buf[18] = one_pulse_valid;    /* one pulse valid */
+    memcpy(&buf[19], &one_pulse_dose, sizeof(uint32_t));  /* dose one pulse */
 
     osMutexRelease(data->mutex);
 
-    *len = 19;
+    *len = 23;
 
     return ret;
 }
@@ -872,6 +882,41 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
     return ret;
 }
 
+// #define LOG_OUTPUT_TO_ARM_IO
+#ifdef LOG_OUTPUT_TO_ARM_IO
+enum log_output_type
+{
+    LOG_OUTPUT_MSG = 0,
+};
+static int8_t dose_debug_cmd_parse(struct dose_object *cmd)
+{
+    int8_t ret = 0;
+
+    switch (cmd->data[0])
+    {
+    case 0x01:
+        switch (cmd->data[1])
+        {
+        case LOG_OUTPUT_MSG:
+            shell_cmd_parse_entry(&cmd->data[2], *cmd->len - 2);
+            break;        
+        default:
+            LOG_E("invalid dose uart debug sub cmd type: %d\r\n", cmd->data[1]);
+            return -1;
+            break;
+        }
+        break;
+    
+    default:
+        LOG_E("invalid dose uart debug cmd type: %d\r\n", cmd->data[0]);
+        return -2;
+        break;
+    }
+
+    return 0;
+}
+#endif
+
 static int8_t dose_cmd_parse(struct dose_object *obj)
 {
     if (obj == NULL)
@@ -934,6 +979,18 @@ static int8_t dose_cmd_parse(struct dose_object *obj)
         break;
     case 0x84:  /* realtime data feedback */
         break;
+#ifdef LOG_OUTPUT_TO_ARM_IO
+    case 0x05:  /* log cmd frame */
+        ret = dose_debug_cmd_parse(&cmd);
+        if (ret != 0)
+        {
+            LOG_E("dose_debug_cmd_parse err: %d\r\n", ret);
+            return -2;
+        }
+        break;
+    case 0x85:  /* log data feedback */
+        break;
+#endif
     default:
         LOG_E("invalid cmd type: %d\r\n", cmd.type);
         return -2;
@@ -1196,20 +1253,75 @@ static int8_t dose_uart_thread_init(void)
 }
 INIT_APP_EXPORT(dose_uart_thread_init);
 
+#ifdef LOG_OUTPUT_TO_ARM_IO
+int8_t log_output_write(uint8_t *buf, uint16_t len)
+{
+#if 0
+    printf("send data: ");
+    for (uint8_t i = 0; i < len; i++)
+    {
+        printf("%02x ", buf[i]);
+    }
+    printf("\r\n");
+#endif
+
+    int8_t ret = 0;
+    uint8_t msg[128] = {0};
+    msg[0] = 0x01;
+    msg[1] = LOG_OUTPUT_MSG;
+    memcpy(&msg[2], buf, len);
+    len += 2;
+
+    struct dose_object cmd = {0};
+
+    cmd.id.bits.cmd_id = DOSE_UART_ID;
+    cmd.id.bits.cmd_ack = 1;
+    cmd.type = 0x85;
+    cmd.len = &len;
+    cmd.data = msg;
+
+    ret = dose_uart_cmd_write(&cmd);
+    if (ret != 0)
+    {
+        LOG_E("dose uart cmd write err: %d\r\n", ret);
+        return -1;
+    }
+
+    return 0;
+}
+static int8_t log_output_bridge_init(void)
+{
+    struct ulog_write_func_info info = {
+        .func_init = NULL,
+        .func_callback = log_output_write,
+        .index = 3,
+        .level = ULOG_INFO_LEVEL};
+
+    int8_t ret = ulog_write_func_register(&info);
+    if (ret != 0)
+    {
+        printf("console log register err:%d\r\n", ret);
+        return ret;
+    }
+    
+    return 0;
+}
+INIT_COMPONENT_EXPORT(log_output_bridge_init);
+#endif
 
 #ifndef DOSE_UART_TEST
 #include "shell.h"
-
 static int8_t dose_uart_cmd_send(uint8_t argc, char **argv)
 {
     int8_t ret = 0;
     struct dose_object cmd = {0};
     uint8_t data[10] = {0};
+    uint16_t len = 10;
 
     cmd.id.bits.cmd_id = DOSE_UART_ID;
     cmd.id.bits.cmd_ack = 1;
     cmd.type = 0x40;
-    *cmd.len = 10;
+    cmd.len = &len;
     cmd.data = data;
 
     for (uint8_t i = 0; i < *cmd.len; i++)
