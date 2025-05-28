@@ -39,9 +39,25 @@ struct bgm_data_info *bgm_data_info_get(void)
 
 static osEventFlagsId_t trigger_out_event_flag = NULL;
 #define TRIGGER_OUT_EVENT_FLAG  (1 << 0)
+static uint32_t trigger_out_cnt = 0;
+#include "shell.h"
+static int8_t trigger_out_cnt_get(void)
+{
+    LOG_I("trigger_out_cnt: %d\r\n", trigger_out_cnt);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(trigger_out_cnt_get, trigger_out_cnt_get, get trigger out count);
+static void trigger_out_cnt_clear(void)
+{
+    trigger_out_cnt = 0;
+}
+MSH_CMD_EXPORT_ALIAS(trigger_out_cnt_clear, trigger_out_cnt_clear, clear trigger out count);
+
 static void PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     osEventFlagsSet(trigger_out_event_flag, TRIGGER_OUT_EVENT_FLAG);
+    trigger_out_cnt++;
 }
 static void trigger_out_distribute_init(void)
 {
@@ -60,9 +76,9 @@ static void trigger_out_distribute_init(void)
     }
 
     status |= HAL_TIM_Base_Stop(&htim1);
-    status |= HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-    status |= HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-    status |= HAL_TIM_PWM_Start(&htim23, TIM_CHANNEL_3);
+    status |= HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_2);
+    status |= HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2);
+    status |= HAL_TIM_PWM_Stop(&htim23, TIM_CHANNEL_3);
     status |= HAL_TIM_Base_Stop_IT(&htim5);
     if (status != HAL_OK)
     {
@@ -72,9 +88,9 @@ static void trigger_out_distribute_init(void)
 static void trigger_out_enable(uint8_t en)
 {
     en == 0 ? HAL_TIM_Base_Stop(&htim1) : HAL_TIM_Base_Start(&htim1);
-}
-static void dose_accumulated_get_enable(uint8_t en)
-{
+    en == 0 ? HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_2) : HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+    en == 0 ? HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_2) : HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+    en == 0 ? HAL_TIM_PWM_Stop(&htim23, TIM_CHANNEL_3) : HAL_TIM_PWM_Start(&htim23, TIM_CHANNEL_3);
     // en == 0 ? HAL_TIM_Base_Stop_IT(&htim5) : HAL_TIM_Base_Start_IT(&htim5);
 }
 static int8_t trigger_out_entry(void *argument)
@@ -265,8 +281,12 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         ret |= dose_pulse_mode_set(BGM_UART_DOSE1, &info.pulse_mode);
         ret |= dose_pulse_mode_set(BGM_UART_DOSE2, &info.pulse_mode);
         /* 5. set dummy dose meter */
-        ret |= dose_meter_value_set(BGM_UART_DOSE1, info.dose_meter_dummy);
-        ret |= dose_meter_value_set(BGM_UART_DOSE2, info.dose_meter_dummy);
+        if (info.dose_meter_dummy < 0.1f)
+        {
+            info.dose_meter_dummy = 300.0f;
+        }
+        ret |= dose_meter_value_set(BGM_UART_DOSE1, &info.dose_meter_dummy);
+        ret |= dose_meter_value_set(BGM_UART_DOSE2, &info.dose_meter_dummy);
         /* 6. set dose board to dummy */
         ret |= dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
         ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
@@ -310,8 +330,8 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
             ret |= dose_prf_value_set(BGM_UART_DOSE1, &info.cali_prf);
             ret |= dose_prf_value_set(BGM_UART_DOSE2, &info.cali_prf);
             /* 4.2 set dose meter */
-            ret |= dose_meter_value_set(BGM_UART_DOSE1, info.dose_meter);
-            ret |= dose_meter_value_set(BGM_UART_DOSE2, info.dose_meter);
+            ret |= dose_meter_value_set(BGM_UART_DOSE1, &info.dose_meter);
+            ret |= dose_meter_value_set(BGM_UART_DOSE2, &info.dose_meter);
             /* 4.3 set beam info */
             // osMutexAcquire(obj->mutex, osWaitForever);
             // uint8_t deliver_type = obj->deliver_type;
@@ -473,17 +493,17 @@ static int8_t fsm_state_set(enum bgm_fsm_state state_request, enum fsm_source_t 
         {
         case BGM_STATE_IDLE:
             trigger_out_enable(0);
-            dose_accumulated_get_enable(0);
             break;
         case BGM_STATE_READY:
             trigger_out_enable(1);
             break;
         case BGM_STATE_WORK:
-            dose_accumulated_get_enable(1);
+            break;
+        case BGM_STATE_COMPLETE:
+            trigger_out_enable(0);
             break;
         case BGM_STATE_TERMINATE:
             trigger_out_enable(0);
-            dose_accumulated_get_enable(0);
             break;
         default:
             break;
@@ -509,10 +529,11 @@ static int8_t fsm_state_update_from_local(void)
     static enum dose_fsm_state dose_state_set = DOSE_FSM_STATE_MAX;
     enum dose_fsm_state fsm_state_dose1 = DOSE_FSM_STATE_MAX, fsm_state_dose2 = DOSE_FSM_STATE_MAX;
     struct bgm_data_info *obj = bgm_data_info_get();
-    enum bgm_fsm_state state_current = BGM_STATE_MAX;
+    enum bgm_fsm_state state_current = BGM_STATE_MAX, state_request = BGM_STATE_MAX;
 
     osMutexAcquire(obj->mutex, osWaitForever);
     state_current = obj->fsm_state;
+    state_request = obj->fsm_state_request;
     osMutexRelease(obj->mutex);
 
 
@@ -569,6 +590,11 @@ static int8_t fsm_state_update_from_local(void)
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_TERMINATE || fsm_state_dose2 == DOSE_FSM_STATE_TERMINATE)
     {
+        if (state_request == BGM_STATE_IDLE)
+        {
+            return 0;
+        }
+
         if (dose_state_set == DOSE_FSM_STATE_TERMINATE)
         {
             return 0;
@@ -594,11 +620,11 @@ static int8_t fsm_state_update_from_local(void)
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_PRELIMINARY_BEGIN && fsm_state_dose2 == DOSE_FSM_STATE_PRELIMINARY_BEGIN)
     {
-        ret = fsm_state_set(BGM_STATE_PRELIMINARY, FSM_SOURCE_LOCAL);
-        if (ret != 0)
-        {
-            LOG_E("fsm state set err: %d\r\n", ret);
-        }
+        // ret = fsm_state_set(BGM_STATE_PRELIMINARY, FSM_SOURCE_LOCAL);
+        // if (ret != 0)
+        // {
+        //     LOG_E("fsm state set err: %d\r\n", ret);
+        // }
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_PRELIMINARY && fsm_state_dose2 == DOSE_FSM_STATE_PRELIMINARY)
     {
@@ -747,34 +773,37 @@ static void system_fsm_state_entry(void *argument)
 static int8_t dose_rate_calculate(void *argument)
 {
     int8_t ret = 0;
-
-    static float dose1_meter_pre = 0, dose2_meter_pre = 0;
     float dose1_meter_cur = 0, dose2_meter_cur = 0;
+    enum bgm_fsm_state state_current = BGM_STATE_MAX;
     float dose1_rate = 0, dose2_rate = 0;
+    struct bgm_data_info *obj = bgm_data_info_get();
 
     for (;;)
     {
         osDelay(500);
 
-        dose1_meter_cur = dose_meter_value_get(BGM_UART_DOSE1);
-        dose2_meter_cur = dose_meter_value_get(BGM_UART_DOSE2);
-    
-        dose1_rate = (dose1_meter_cur - dose1_meter_pre) * 2 * 60;  /* calculate period is 500ms */
-        dose2_rate = (dose2_meter_cur - dose2_meter_pre) * 2 * 60;
-    
-        ret = dose_rate_value_set(BGM_UART_DOSE1, &dose1_rate);
-        ret |= dose_rate_value_set(BGM_UART_DOSE2, &dose2_rate);
-        if (ret != 0)
+        osMutexAcquire(obj->mutex, osWaitForever);
+        state_current = obj->fsm_state;
+        osMutexRelease(obj->mutex);
+
+        if (state_current != BGM_STATE_WORK)
         {
-            LOG_E("dose rate set err: %d\r\n", ret);
+            ret = dose_rate_value_set(BGM_UART_DOSE1, &dose1_rate);
+            ret |= dose_rate_value_set(BGM_UART_DOSE2, &dose2_rate);
+            if (ret != 0)
+            {
+                LOG_E("dose rate set err: %d\r\n", ret);
+            }
         }
     
-        dose1_meter_pre = dose1_meter_cur;
-        dose2_meter_pre = dose2_meter_cur;
-
         /* TODO: */
         /* 1. 周期性核对dose1和dose2的剂量偏差，控制在10%以内？ */
-
+        dose1_meter_cur = dose_meter_value_get(BGM_UART_DOSE1);
+        dose2_meter_cur = dose_meter_value_get(BGM_UART_DOSE2);
+        if (fabs(dose1_meter_cur - dose2_meter_cur) / dose1_meter_cur > 0.1)
+        {
+            LOG_E("dose meter difference exceed 10\% limit\r\n");
+        }
 
         /* 2.  */
 
@@ -833,7 +862,7 @@ static int8_t fsm_thread_init(void)
 
     osThreadAttr_t dose_rate_calculate_attributes = {
     .name = "dose_rate_calculate_thread",
-    .stack_size = 256 * 4,
+    .stack_size = 1024 * 4,
     .priority = (osPriority_t)osPriorityNormal,
     };
 

@@ -329,6 +329,10 @@ static int8_t ioe_read(struct extend_status *stat)
         interrupt_flag_prev = interrupt_flag;
         stat->interrupt_flag = interrupt_flag;
         stat->interrupt_capture = interrupt_capture;
+
+        LOG_I("interrupt_flag: %#.4x\r\n", stat->interrupt_flag);
+        LOG_I("interrupt_capture: %#.4x\r\n", stat->interrupt_capture);
+        LOG_I("current: %#.4x\r\n", stat->current.bytes);
     }
 
     stat->current.bytes = recv_buf[6] | recv_buf[7] << 8;
@@ -341,10 +345,6 @@ static int8_t ioe_read(struct extend_status *stat)
     }
     LOG_I("\r\n");
 #endif
-
-    // LOG_I("interrupt_flag: %#.4x\r\n", stat->interrupt_flag);
-    // LOG_I("interrupt_capture: %#.4x\r\n", stat->interrupt_capture);
-    // LOG_I("current: %#.4x\r\n", stat->current.bytes);
 
     return 0;
 }

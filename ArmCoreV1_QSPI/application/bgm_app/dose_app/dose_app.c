@@ -292,7 +292,8 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
             obj->treatment.ri_src = cmd->data[2];
             break;
         case 0x01:
-            LOG_I("[%d]: dose meter set %f ok\r\n", id, (float)(cmd->data[3] << 8 | cmd->data[2]) / 10.0f);
+            uint32_t meter = cmd->data[2] | cmd->data[3] << 8 | cmd->data[4] << 16 | cmd->data[5] << 24;
+            LOG_I("[%d]: dose meter set %f ok\r\n", id, *(float *)&meter);
             break;
         case 0x02:
         case 0x03:
@@ -580,11 +581,14 @@ static int8_t dose_realtime_frame_parse(enum uart_id id, struct cmd_object *cmd)
         obj->status.interlock.bytes = cmd->data[3] << 8 | cmd->data[2];
         obj->realtime.control_point = cmd->data[5] << 8 | cmd->data[4];
         obj->realtime.radiation_index = cmd->data[7] << 8 | cmd->data[6];
-        obj->realtime.dose_cumulated = *(float *)&cmd->data[8];
-        obj->realtime.prf_current = cmd->data[12];
-        obj->interlock.one_pulse.count_abnormal= cmd->data[14] << 8 | cmd->data[13];
-        obj->realtime.one_pulse_valid_flag = cmd->data[15];
-        obj->realtime.one_pulse_dose = *(uint32_t *)&cmd->data[16];
+        uint32_t dose_cumulated = cmd->data[8] | cmd->data[9] << 8 | cmd->data[10] << 16 | cmd->data[11] << 24;
+        obj->realtime.dose_cumulated = *(float *)&dose_cumulated;
+        uint32_t dose_rate = cmd->data[12] | cmd->data[13] << 8 | cmd->data[14] << 16 | cmd->data[15] << 24;
+        obj->realtime.dose_rate = *(float *)&dose_rate;
+        obj->realtime.prf_current = cmd->data[16];
+        obj->interlock.one_pulse.count_abnormal= cmd->data[18] << 8 | cmd->data[17];
+        obj->realtime.one_pulse_valid_flag = cmd->data[19];
+        obj->realtime.one_pulse_dose = cmd->data[20] | cmd->data[21] << 8 | cmd->data[22] << 16 | cmd->data[23] << 24;;
         // LOG_I("[%d]: recv dose realtime frame: %f\r\n", id, obj->realtime.dose_cumulated);
         break;
     default:
@@ -622,14 +626,17 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                 obj->status.interlock.bytes = cmd->data[5] << 8 | cmd->data[4];
                 obj->realtime.control_point = cmd->data[7] << 8 | cmd->data[6];
                 obj->realtime.radiation_index = cmd->data[9] << 8 | cmd->data[8];
-                obj->realtime.dose_cumulated = *(float *)&cmd->data[10];
-                obj->realtime.prf_current = cmd->data[14];
-                obj->interlock.one_pulse.count_abnormal= cmd->data[16] << 8 | cmd->data[15];
-                obj->realtime.one_pulse_valid_flag = cmd->data[17];
-                obj->realtime.one_pulse_dose = *(uint32_t *)&cmd->data[18];
+                uint32_t dose_cumulated = cmd->data[10] | cmd->data[11] << 8 | cmd->data[12] << 16 | cmd->data[13] << 24;
+                obj->realtime.dose_cumulated = *(float *)&dose_cumulated;
+                uint32_t dose_rate = cmd->data[14] | cmd->data[15] << 8 | cmd->data[16] << 16 | cmd->data[17] << 24;
+                obj->realtime.dose_rate = *(float *)&dose_rate;
+                obj->realtime.prf_current = cmd->data[18];
+                obj->interlock.one_pulse.count_abnormal= cmd->data[20] << 8 | cmd->data[19];
+                obj->realtime.one_pulse_valid_flag = cmd->data[21];
+                obj->realtime.one_pulse_dose = cmd->data[22] | cmd->data[23] << 8 | cmd->data[24] << 16 | cmd->data[25] << 24;
                 osMutexRelease(obj->mutex);
 
-                // LOG_I("[%d] recv dose realtime data: %f\r\n", id, obj->realtime.dose_cumulated);
+                // LOG_I("[%d]: recv dose realtime data: %f\r\n", id, obj->realtime.dose_cumulated);
             }
             break;
         case REAL_TIME_DATA_TYPE_RI:
@@ -639,12 +646,12 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                 obj->realtime.radiation_index = cmd->data[3] << 8 | cmd->data[2];
                 osMutexRelease(obj->mutex);
 
-                LOG_I("[%d] recv dose radiation index: %d\r\n", id, obj->realtime.radiation_index);
+                LOG_I("[%d]: recv dose radiation index: %d\r\n", id, obj->realtime.radiation_index);
 
                 ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_BROADCAST, UART_CMD_SEND_RADIATION_INDEX, &cmd->data[2], *cmd->len - 2);
                 if (ret != 0)
                 {
-                    LOG_E("cmd to rtm upload err: %d\r\n", ret);
+                    LOG_E("[%d]: cmd to rtm upload err: %d\r\n", id, ret);
                 }
             }
             break;
@@ -655,24 +662,58 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
             ret |= cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM, UART_DATA_CMD_SEND_QAM, &cmd->data[2], *cmd->len - 2);
             if (ret != 0)
             {
-                LOG_E("cmd to rtm upload err: %d\r\n", ret);
+                LOG_E("[%d]: cmd to rtm upload err: %d\r\n", id, ret);
             }
             break;
         default:
-            LOG_E("invalid realtime data sub cmd: %x\r\n", cmd->data[1]);
+            LOG_E("[%d]: invalid realtime data sub cmd: %x\r\n", id, cmd->data[1]);
             ret = -1;
             break;
         }
         break;
 
     default:
-        LOG_E("invalid realtime data cmd: %x\r\n", cmd->data[0]);
+        LOG_E("[%d]: invalid realtime data cmd: %x\r\n", id, cmd->data[0]);
         ret = -2;
         break;
     }
 
     return ret;
 }
+
+// #define LOG_OUTPUT_TO_ARM_IO
+#ifdef LOG_OUTPUT_TO_ARM_IO
+enum log_output_type
+{
+    LOG_OUTPUT_MSG = 0,
+};
+static int8_t dose_log_frame_parse(enum uart_id id, struct cmd_object *cmd)
+{
+    int8_t ret = 0;
+
+    switch (cmd->data[0])
+    {
+    case 0x01:
+        switch (cmd->data[1])
+        {
+        case LOG_OUTPUT_MSG:
+            LOG_E("[%d]: dose msg: %s\r\n", id, (char *)&cmd->data[2]);
+            break;
+        default:
+            LOG_E("[%d]: invalid log data sub cmd: %x\r\n", id, cmd->data[1]);
+            break;
+        }
+        break;
+    
+    default:
+        LOG_E("[%d]: invalid log data cmd: %x\r\n", id, cmd->data[0]);
+        return -2;
+        break;
+    }
+
+    return 0;
+}
+#endif
 
 static int8_t dose_cmd_parse(enum uart_id id, struct cmd_object *cmd)
 {
@@ -702,6 +743,16 @@ static int8_t dose_cmd_parse(enum uart_id id, struct cmd_object *cmd)
             return -2;
         }
         break;
+#ifdef LOG_OUTPUT_TO_ARM_IO
+    case 0x85:  /* dose log frame */
+        ret = dose_log_frame_parse(id, cmd);
+        if (ret != 0)
+        {
+            LOG_E("[%d]: dose_log_frame_parse err: %d\r\n", id, ret);
+            return -2;
+        }
+        break;
+#endif
     case 0x81:  /* handshake frame */
         ret = dose_handshake_frame_parse(id, cmd);
         if (ret != 0)
@@ -960,8 +1011,8 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
     {
         buf[offset++] = 0x42;
         buf[offset++] = 0x06;
-        buf[offset++] = BEAM_TYPE_MV;
         buf[offset++] = 0;
+        buf[offset++] = RADIATION_TYPE_MV;
         buf[offset++] = *(uint8_t *)data;
         ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
@@ -979,9 +1030,8 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         offset = 0;
         buf[offset++] = 0x42;
         buf[offset++] = 0x01;
-        uint16_t beam_meter = beam_info->info->beamMeterSet * 10.0f;
-        buf[offset++] = beam_meter;
-        buf[offset++] = beam_meter >> 8;
+        memcpy(&buf[offset], &beam_info->info->beamMeterSet, sizeof(float));
+        offset += sizeof(float);
         ret = dose_cmd_write(id, 0x02, buf, offset);
         LOG_I("[%d]: beam meter set: %f\r\n", id, beam_info->info->beamMeterSet);
         /* 3. beam cp & ri num */
@@ -998,7 +1048,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         offset = 0;
         buf[offset++] = 0x42;
         buf[offset++] = 0x04;
-        for (uint8_t i = 0; i < beam_info->info->CPQuantityInBeam; i++)    /* cp num */
+        for (uint16_t i = 0; i < beam_info->info->CPQuantityInBeam; i++)    /* cp num */
         {
             buf[offset++] = i + 1;   /* cp index */
             buf[offset++] = (i + 1) >> 8;
@@ -1015,15 +1065,13 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         {
             buf[offset++] = i + 1;
             buf[offset++] = (i + 1) >> 8;
-            uint16_t dose = beam_info->ri_data[i].fCumulativeDose * 10.0f;
-            buf[offset++] = dose;   /* ri dose value, need *10 */
-            buf[offset++] = dose >> 8;
-            uint16_t dose_rate = beam_info->ri_data[i].fDoseRate * 10.0f;
-            buf[offset++] = dose_rate;   /* ri dose rate value, unit: MU/min */
-            buf[offset++] = dose_rate >> 8;
-            uint16_t dose_expect_time = beam_info->ri_data[i].DeliveryTime * 1000.0f;
-            buf[offset++] = dose_expect_time;   /* ri dose expect time value, unit: ms */
-            buf[offset++] = dose_expect_time >> 8;
+            memcpy(&buf[offset], &beam_info->ri_data[i].fCumulativeDose, sizeof(float));    /* ri dose value, unit: MU */
+            offset += sizeof(float);
+            memcpy(&buf[offset], &beam_info->ri_data[i].fDoseRate, sizeof(float));  /* ri dose rate value, unit: MU/min */
+            offset += sizeof(float);
+            float dose_expect_time = beam_info->ri_data[i].DeliveryTime * 1000.0f;  /* ri dose expect time value, unit: ms */
+            memcpy(&buf[offset], &dose_expect_time, sizeof(float));
+            offset += sizeof(float);
 
             ret = dose_cmd_write(id, 0x02, buf, offset);
             offset = 2;
@@ -1032,8 +1080,8 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         offset = 0;
         buf[offset++] = 0x42;
         buf[offset++] = 0x06;
-        buf[offset++] = beam_info->info->beamType;
         buf[offset++] = 0;
+        buf[offset++] = beam_info->info->radiationType;
         buf[offset++] = beam_info->info->deliveryType;
         ret = dose_cmd_write(id, 0x02, buf, offset);
         /* 7. beam lock and validate */
@@ -1059,8 +1107,8 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         offset = 0;
         buf[offset++] = 0x42;
         buf[offset++] = 0x01;
-        buf[offset++] = *(uint16_t *)data;
-        buf[offset++] = *(uint16_t *)data >> 8;
+        memcpy(&buf[offset], (float *)data, sizeof(float));
+        offset += sizeof(float);
         ret = dose_cmd_write(id, 0x02, buf, offset);
 
         offset = 0;
@@ -1155,3 +1203,33 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
 
     return ret;
 }
+
+
+#ifdef LOG_OUTPUT_TO_ARM_IO
+#include "shell.h"
+static int8_t dose_cmd_send(uint8_t argc, uint8_t **argv)
+{
+    uint8_t buf[128] = {0};
+    uint8_t offset = 0;
+
+    /* 
+     * argv[1]: uart id
+     * argv[2]: dose cmd
+     * argv[3-n]: dose cmd args
+    */
+
+    enum uart_id id = atoi(argv[1]);
+    memcpy(buf, argv[2], strlen(argv[2]));
+    offset = strlen(argv[2]);
+
+    for (uint8_t i = 3; i < argc; i++)
+    {
+        buf[offset++] = ' ';
+        memcpy(buf + offset, argv[i], strlen(argv[i]));
+        offset += strlen(argv[i]);
+    }
+
+    return dose_cmd_write(id, 0x05, buf, offset);
+}
+MSH_CMD_EXPORT_ALIAS(dose_cmd_send, dose_cmd_send, dose cmd send);
+#endif

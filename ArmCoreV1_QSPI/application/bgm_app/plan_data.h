@@ -13,10 +13,10 @@ extern "C" {
 #define CP_IN_PACK 32
 
 typedef enum{
-    BEAM_TYPE_NONE = 0,
-    BEAM_TYPE_KV,
-    BEAM_TYPE_MV
-}BEAM_TYPE;
+    RADIATION_TYPE_NONE = 0,
+    RADIATION_TYPE_KV,
+    RADIATION_TYPE_MV
+}RADIATION_TYPE;
 
 typedef enum{
     DELIVER_TYPE_NONE = 0,
@@ -35,9 +35,9 @@ typedef struct {
     uint16_t frmLength;
     uint16_t totalPackInOneBeam;
     uint16_t packIndexInOneBeam;
-    uint8_t beamType;
-    uint8_t radiationType;
-    uint8_t deliveryType;
+    uint8_t beamType;       /* 摄野类型：0：none, 1: static, 2: dynamic */
+    uint8_t radiationType;  /* 束流类型： 0：none, 1: KV, 2: MV */
+    uint8_t deliveryType;   /* 治疗类型： 0：none, 1: VMAT, 2: SWIMRT, 3: SSIMRT, 4: CRT, 5: HiMAT, 6: SURVIEW, 7: CT */
     uint8_t reserved;
     uint16_t CPQuantityInPack;
     uint16_t RIQuantityInPack;
@@ -69,7 +69,7 @@ typedef struct {
 
 typedef struct {
     uint16_t beamID;
-    uint8_t beamType;
+    uint8_t radiationType;
     uint8_t deliveryType;
     float doseRateSet;
     float beamMeterSet;

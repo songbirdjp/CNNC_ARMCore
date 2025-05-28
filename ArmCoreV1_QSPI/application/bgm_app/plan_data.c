@@ -93,7 +93,7 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
 
     //head
     memcpy(&frameHead, data, headLength);
-    if(frameHead.beamType != BEAM_TYPE_MV)
+    if(frameHead.radiationType != RADIATION_TYPE_MV)
     {
          nrtBeamData.errorCode = 0xf0;
          return 0;
@@ -179,7 +179,7 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
             return -1;
         }
         pBeamData = pSDRAM;
-        sdFixData.beamType = frameHead.beamType;
+        sdFixData.radiationType = frameHead.radiationType;
         sdFixData.deliveryType = frameHead.deliveryType;
         memcpy(pBeamData, &sdFixData, sdFixDataLen);
         pBeamData += sdFixDataLen;
@@ -425,7 +425,7 @@ static int8_t ExecuteConsoleCmd(uint16_t _consoleCmd, uint8_t _consoleInt)
             memcpy(&sdFixData, beam_info.info, sdFixDataLen);
 
             LOG_I("beam:\r\n");
-            LOG_I("%d %d %f %f %d %d\r\n", sdFixData.beamID,sdFixData.beamType,sdFixData.deliveryType,sdFixData.doseRateSet,sdFixData.beamMeterSet,sdFixData.CPQuantityInBeam,sdFixData.RIQuantityInBeam);
+            LOG_I("%d %d %f %f %d %d\r\n", sdFixData.beamID,sdFixData.radiationType,sdFixData.deliveryType,sdFixData.doseRateSet,sdFixData.beamMeterSet,sdFixData.CPQuantityInBeam,sdFixData.RIQuantityInBeam);
 
             memcpy(cp, beam_info.cp_ri_map, MAX_CP_IN_BEAM*2);
 

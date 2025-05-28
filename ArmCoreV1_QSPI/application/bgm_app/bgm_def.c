@@ -39,13 +39,11 @@ int8_t dose_dac_value_set(enum uart_id id, uint32_t *value)
     return dose_data_info_set(id, DOSE_INFO_DAC_CALI, (void *)value, 0);
 }
 
-int8_t dose_meter_value_set(enum uart_id id, float dose_meter)
+int8_t dose_meter_value_set(enum uart_id id, float *dose_meter)
 {
     int8_t ret = 0;
 
-    uint16_t value = (uint16_t)(dose_meter * 10.0f);
-
-    ret = dose_data_info_set(id, DOSE_INFO_METER_SET, &value, 0);
+    ret = dose_data_info_set(id, DOSE_INFO_METER_SET, (void *)dose_meter, 0);
     if(ret != 0)
     {
         LOG_E("dose info set err: %d\r\n", ret);
@@ -279,7 +277,7 @@ static int8_t dose_cmd_test(int8_t argc, uint8_t **argv)
         dose_radiation_index_set(id, value, 0);
         break;
     case 10:
-        dose_meter_value_set(id, value);
+        dose_meter_value_set(id, &value);
         break;
     case 11:
         dose_prf_value_set(id, &value);
