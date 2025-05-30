@@ -62,12 +62,14 @@ int8_t WriteArrayToFlash(uint16_t *data, uint32_t len)
     return 0;
 }
 AFCApplicationParam_t AFCApplicationParam = {   .whichData = 1,
-                                                .positionDeadzone = 100,
+                                                .positionDeadzone = 5,
                                                 .A1In_Para = 1,
                                                 .A2In_Para = 1,
                                                 .B1In_Para = 0,
                                                 .B2In_Para = 0,
-                                                .positionStep = 30};
+                                                .positionStep = 10,
+                                                .positionUpperLimit = 19890,
+                                                .positionLowerLimit = 18210};
 uint16_t *AFCApplicationParamGet(void)
 {
     return &AFCApplicationParam;
@@ -98,18 +100,18 @@ void MagMotorCtrlbyADC(uint16_t *data)
     {
         obj->positionCalculated = obj->positionCurrent;
     }
-  
+   
     
-    if(obj->positionCurrent > 19900)
+    if(obj->positionCurrent > obj->positionUpperLimit)
     {
-        obj->positionCalculated = 19890;
+        obj->positionCalculated = obj->positionUpperLimit - 10;
     }
-    else if(obj->positionCurrent < 18200)
+    else if(obj->positionCurrent < obj->positionLowerLimit)
     {
-        obj->positionCalculated = 18210;
+        obj->positionCalculated = obj->positionLowerLimit + 10;
     }
-    LOG_I("posCalculated = %d\r\n\r\n",obj->positionCalculated);
-    LOG_I("pos = %d\r\n\r\n",obj->positionCurrent);
+    // LOG_I("posCalculated = %d\r\n\r\n",obj->positionCalculated);
+    // LOG_I("pos = %d\r\n\r\n",obj->positionCurrent);
 }
 void Shell_ChangeCalPos(uint8_t argc, char *argv[])
 {

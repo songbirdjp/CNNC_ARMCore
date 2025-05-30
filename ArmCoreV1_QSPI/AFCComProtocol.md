@@ -62,7 +62,10 @@
 |          | 0x02       | Magnetron电机步进运动 | 3Bytes: Byte0: 方向 Byte1-2: 步进值 |          | 0x02       | 发送Magnetron电机步进运动 | 3Bytes: Byte0: 方向 Byte1-2: 步进值 |
 |          | 0x03       | 获得Magnetron电机当前位置 | 无 |          | 0x03       | 发送Magnetron电机当前位置 | 2 Byte:位置 |
 |          | 0x04       | Magnetron设置预置位 | 2Byte:位置 |          | 0x04       | 收到Magnetron预置位 | 2Byte:位置 |
-|  | 0x05 | Magnetron设置死区 | 2Byte |  | 0x05 | 收到Magnetron设置死区 | 2Byte |
+|  | 0x05 | Magnetron设置死区 | 2Bytes |  | 0x05 | 收到Magnetron设置死区 | 2Byte |
+| | 0x06 | Magnetron设置运动上限 | 2Bytes | | 0x06 | 收到Magnetron设置运动上限 | 2Bytes |
+| | 0x07 | Magnetron设置运动下限 | 2Bytes | | 0x07 | 收到Magnetron设置运动下限 | 2Bytes |
+| | 0x08 | Magnetron设置采样位置 | 2Bytes | | 0x08 | 收到Magnetron设置采样位置 | 2Bytes |
 | 0x41         | 0x00       | 询问AFT电机寻零是否完成 | 无               | 0x41         | 0x00       | AFT电机寻零完成信号         | 1byte: 0x00 未完成 0x01 完成 |
 |          | 0x01       | AFT电机点动 | 2Byte:位置                                            |          | 0x01       | 收到AFT电机点动 | 2 Byte:位置                                                  |
 |          | 0x02       | AFT电机步进运动 | 3Bytes: Byte0: 方向 Byte1-2: 步进值           |          | 0x02       | AFT电机步进运动 | 1Byte：占空比                                                |
@@ -86,6 +89,8 @@
 |              |            |                             |                                                            |              |            |                             |                                                              |
 |              |            |                             |                                                            |              |            |                             |                                                              |
 |              |            |                             |                                                            |              |            |                             |                                                              |
+
+
 
 
 

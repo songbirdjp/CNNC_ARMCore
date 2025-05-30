@@ -13,6 +13,8 @@ typedef struct
     uint16_t positionDeadzone;
     uint16_t Sample_Delay;
     uint16_t whichData;//0-8
+    uint16_t positionUpperLimit;
+    uint16_t positionLowerLimit;
 } AFCApplicationParam_t;
 uint16_t *AFCApplicationParamGet(void);
 #endif

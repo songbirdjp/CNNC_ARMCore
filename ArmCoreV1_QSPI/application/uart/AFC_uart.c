@@ -32,11 +32,19 @@ static int8_t AFC_uart_cmd_write(struct AFC_object *cmd)
     osStatus_t stat = osOK;
     struct AFC_uart send_buf = {0};
     uint8_t offset = sizeof(struct AFC_object) - sizeof(uint8_t *);
-
-    memcpy(send_buf.buf, cmd, sizeof(struct AFC_object));
+    // LOG_I("A=cmd->id: %d\r\n", cmd->id);
+    // LOG_I("A=cmd->type: %d\r\n", cmd->type);
+    // LOG_I("A=cmd->len: %d\r\n", cmd->len);
+    // LOG_I("A=cmd->data: ");
+    // for (uint8_t i = 0; i < cmd->len; i++)
+    // {
+    //     LOG_I("%02x ", cmd->data[i]);
+    // }
+    memcpy(send_buf.buf, cmd, offset);
     memcpy(&send_buf.buf[offset], cmd->data, cmd->len);
     send_buf.len = offset + cmd->len;
     stat = osMessageQueuePut(AFC_uart_send_queue, &send_buf, 0, 0);
+  
     if (stat != osOK)
     {
         LOG_E("AFC uart send queue put err: %d\r\n", stat);
