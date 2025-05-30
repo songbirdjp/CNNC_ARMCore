@@ -133,7 +133,7 @@ static void app_rtm_main_thread(void *argument)
                 case 0xA1: /*CPG按键*/
                 {
 #define CPG_KEY_VALUE_MASK 0x00001FAE
-#define CPG_KEY_VALUE_EN_MASK 0x00000001
+#define CPG_KEY_VALUE_EN_MASK 0x00000041
                     uint32_t cpg_key_value = *(uint32_t *)&(queue_frame.payload.data[1]);
                     if (((cpg_key_value & CPG_KEY_VALUE_MASK) != 0) && ((cpg_key_value & CPG_KEY_VALUE_EN_MASK) != 0))
                     {
@@ -170,7 +170,7 @@ static void app_rtm_main_thread(void *argument)
         rtm_status.warning_interlock = *(uint32_t *)&(self->interlock_table.warning_interlock);
         rtm_status.minor_interlock = *(uint32_t *)&(self->interlock_table.minor_interlock);
         rtm_status.serious_interlock = *(uint32_t *)&(self->interlock_table.serious_interlock);
-
+        
         if (memcmp(&rtm_status_old, &rtm_status, sizeof(rtm_status_t)) != 0)
         {
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON].module_queue, 0x01, 0x61, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
@@ -1089,3 +1089,312 @@ int app_rtm_data_handle_create(void)
     return 0;
 }
 INIT_APP_EXPORT(app_rtm_data_handle_create)
+
+// #define PSM_TEST
+#ifdef PSM_TEST
+#include "shell.h"
+static int8_t psm_test(int argc, char *argv[])
+{
+    int32_t ret = 0;
+    uint16_t FkpButton = 0;
+    uint32_t CpgButton = 0;
+    if (argc < 4)
+    {
+        goto usage;
+    }
+    if (0 == strcmp(argv[1], "fkp"))
+    {
+        if (0 == strcmp(argv[2], "unload+en"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                FkpButton = 0x21;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                FkpButton = 0x00;
+            }
+        }
+        else
+        {
+            goto usage;
+        }
+        ret = rtm_set_data_distribute(app_rtm.rtm_module_info[RTM_MODULE_FKP].queue_group[RTM_MODULE_PSM],
+                                      0x80 | 0x100 | 0x01 | 0x40,
+                                      0x91,
+                                      &FkpButton,
+                                      sizeof(FkpButton));
+        if (ret != 0)
+        {
+            LOG_I("fkp set data distribute error, ret = %d\r\n", ret);
+        }
+        ret = rtm_set_data_distribute(app_rtm.rtm_module_info[RTM_MODULE_FKP].queue_group[RTM_MODULE_RTM_OFF_ARM],
+                                      0x80 | 0x100 | 0x01 | 0x40,
+                                      0x91,
+                                      &FkpButton,
+                                      2);
+        if (ret != 0)
+        {
+            LOG_I("fkp set data distribute error, ret = %d\r\n", ret);
+        }
+        ret = rtm_set_data_distribute(app_rtm.rtm_module_info[RTM_MODULE_FKP].queue_group[RTM_MODULE_RTM_ON],
+                                      0x80 | 0x100 | 0x01 | 0x40,
+                                      0x91,
+                                      &FkpButton,
+                                      sizeof(FkpButton));
+        if (ret != 0)
+        {
+            LOG_I("fkp set data distribute error, ret = %d\r\n", ret);
+        }
+    }
+    else if (0 == strcmp(argv[1], "cpg"))
+    {
+        if (0 == strcmp(argv[2], "setup+en"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x03;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "setup+EN"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x42;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "load+en"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x05;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "load+EN"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x44;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "unload+en"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x09;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "unload+EN"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x48;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "right"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0xC0;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "left"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x140;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "in"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x240;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "out"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x440;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "up"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x840;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "down"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x1040;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else if (0 == strcmp(argv[2], "brake"))
+        {
+            if (0 == strcmp(argv[3], "enable"))
+            {
+                CpgButton = 0x8040;
+            }
+            else if (0 == strcmp(argv[3], "disable"))
+            {
+                CpgButton = 0x00;
+            }
+        }
+        else
+        {
+            goto usage;
+        }
+        ret = rtm_set_data_distribute(app_rtm.rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_PSM],
+                                      0x80 | 0x100 | 0x01 | 0x40,
+                                      0xA1,
+                                      &CpgButton,
+                                      sizeof(CpgButton));
+        if (ret != 0)
+        {
+            LOG_I("cpg set data distribute error, ret = %d\r\n", ret);
+        }
+        ret = rtm_set_data_distribute(app_rtm.rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_RTM_OFF_ARM],
+                                      0x80 | 0x100 | 0x01 | 0x40,
+                                      0xA1,
+                                      &CpgButton,
+                                      sizeof(CpgButton));
+        if (ret != 0)
+        {
+            LOG_I("cpg set data distribute error, ret = %d\r\n", ret);
+        }
+        ret = rtm_set_data_distribute(app_rtm.rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_RTM_ON],
+                                      0x80 | 0x100 | 0x01 | 0x40,
+                                      0xA1,
+                                      &CpgButton,
+                                      sizeof(CpgButton));
+        if (ret != 0)
+        {
+            LOG_I("cpg set data distribute error, ret = %d\r\n", ret);
+        }
+    }
+    else if (0 == strcmp(argv[1], "icm"))
+    {
+        struct rtm_icm_data
+        {
+            float psm_position_x_tar;
+            float psm_position_y_tar;
+            float psm_position_z_tar;
+            float psm_position_x_r_tar;
+            float psm_position_y_r_tar;
+            float psm_position_z_r_tar;
+            float psm_velocity_x_tar;
+            float psm_velocity_y_tar;
+            float psm_velocity_z_tar;
+            float psm_velocity_x_r_tar;
+            float psm_velocity_y_r_tar;
+            float psm_velocity_z_r_tar;
+            uint8_t psm_move_ctrl;
+            uint8_t reserved[3];
+        } __attribute__((aligned(1), packed)) icm_data = {
+            0};
+        if (argc < 15)
+        {
+            goto usage;
+        }
+
+        icm_data.psm_position_x_tar = atof(argv[2]);
+        icm_data.psm_position_y_tar = atof(argv[3]);
+        icm_data.psm_position_z_tar = atof(argv[4]);
+        icm_data.psm_position_x_r_tar = atof(argv[5]);
+        icm_data.psm_position_y_r_tar = atof(argv[6]);
+        icm_data.psm_position_z_r_tar = atof(argv[7]);
+        icm_data.psm_velocity_x_tar = atof(argv[8]);
+        icm_data.psm_velocity_y_tar = atof(argv[9]);
+        icm_data.psm_velocity_z_tar = atof(argv[10]);
+        icm_data.psm_velocity_x_r_tar = atof(argv[11]);
+        icm_data.psm_velocity_y_r_tar = atof(argv[12]);
+        icm_data.psm_velocity_z_r_tar = atof(argv[13]);
+        icm_data.psm_move_ctrl = atoi(argv[14]);
+        ret = rtm_set_data_distribute(app_rtm.rtm_module_info[RTM_MODULE_RTM_OFF_ARM].queue_group[RTM_MODULE_PSM],
+                                      0x100,
+                                      0x22,
+                                      &icm_data,
+                                      sizeof(icm_data));
+        if (ret != 0)
+        {
+            LOG_I("icm set data distribute error, ret = %d\r\n", ret);
+        }
+        LOG_I("icm set data:\r\n");
+        LOG_I("psm_position_x_tar = %f\r\n", icm_data.psm_position_x_tar);
+        LOG_I("psm_position_y_tar = %f\r\n", icm_data.psm_position_y_tar);
+        LOG_I("psm_position_z_tar = %f\r\n", icm_data.psm_position_z_tar);
+        LOG_I("psm_position_x_r_tar = %f\r\n", icm_data.psm_position_x_r_tar);
+        LOG_I("psm_position_y_r_tar = %f\r\n", icm_data.psm_position_y_r_tar);
+        LOG_I("psm_position_z_r_tar = %f\r\n", icm_data.psm_position_z_r_tar);
+        LOG_I("psm_velocity_x_tar = %f\r\n", icm_data.psm_velocity_x_tar);
+        LOG_I("psm_velocity_y_tar = %f\r\n", icm_data.psm_velocity_y_tar);
+        LOG_I("psm_velocity_z_tar = %f\r\n", icm_data.psm_velocity_z_tar);
+        LOG_I("psm_velocity_x_r_tar = %f\r\n", icm_data.psm_velocity_x_r_tar);
+        LOG_I("psm_velocity_y_r_tar = %f\r\n", icm_data.psm_velocity_y_r_tar);
+        LOG_I("psm_velocity_z_r_tar = %f\r\n", icm_data.psm_velocity_z_r_tar);
+        LOG_I("psm_move_ctrl = %d\r\n", icm_data.psm_move_ctrl);
+    }
+    else
+    {
+        goto usage;
+    }
+
+    return 0;
+usage:
+    LOG_I("usage: %s\n", argv[0]);
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(psm_test, psm_test, psm test);
+#endif

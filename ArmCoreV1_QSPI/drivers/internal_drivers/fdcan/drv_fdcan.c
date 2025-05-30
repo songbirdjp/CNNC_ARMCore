@@ -5,7 +5,7 @@ static void ErrorCallback(FDCAN_HandleTypeDef *hfdcan)
 {
     struct device_fdcan *fdcan = (struct device_fdcan *)hfdcan;
 
-    printf("device %s error code: %#.8x\r\n", fdcan->name, hfdcan->ErrorCode);  /* refer to HAL_FDCAN_Error_Code */
+    // printf("device %s error code: %#.8x\r\n", fdcan->name, hfdcan->ErrorCode);  /* refer to HAL_FDCAN_Error_Code */
 }
 
 static void RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
@@ -64,7 +64,7 @@ static void ErrorStatusCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t ErrorStatu
 {
     struct device_fdcan *fdcan = (struct device_fdcan *)hfdcan;
 
-    printf("device %s error status: %#.8x\r\n", fdcan->name, ErrorStatusITs);   /* only indicate EP、EW and BO in ErrorStatusITs */
+    // printf("device %s error status: %#.8x\r\n", fdcan->name, ErrorStatusITs);   /* only indicate EP、EW and BO in ErrorStatusITs */
 }
 
 

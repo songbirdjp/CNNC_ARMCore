@@ -191,6 +191,7 @@ static int8_t ethercat_timestamp_sync(void)
 */
 static void Ethercatfunc(void *argument)
 {
+    osDelay(100);
   /* USER CODE BEGIN Ethercatfunc */
     ethercat_slave_init();
 
@@ -214,7 +215,7 @@ static void ethercat_slave_entry(void *argument)
   /* USER CODE BEGIN ethercat_slave_entry */
   /* Infinite loop */
   int32_t ret = 0;
-  osDelay(100); /* wait ethercat init complete */
+  osDelay(200); /* wait ethercat init complete */
 
   for(;;)
   {
