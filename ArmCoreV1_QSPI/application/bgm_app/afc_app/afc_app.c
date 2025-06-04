@@ -16,14 +16,14 @@ static int8_t afc_handshake_frame_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
 
-    LOG_I("AFC Handshake success\r\n");
     afc_info.hw_version = cmd->data[1];
-    afc_info.sw_version[0] = cmd->data[2];
+    afc_info.sw_version[0] = cmd->data[2] + 0x30;
     afc_info.sw_version[1] = '.';
-    afc_info.sw_version[2] = cmd->data[3];
+    afc_info.sw_version[2] = cmd->data[3] + 0x30;
     afc_info.sw_version[3] = '.';
-    afc_info.sw_version[4] = cmd->data[4];
-    LOG_I("AFC hw version: %d\r\n", afc_info.hw_version);
+    afc_info.sw_version[4] = cmd->data[4] + 0x30;
+
+    LOG_I("AFC hw version: %#.2x\r\n", afc_info.hw_version);
     LOG_I("AFC sw version: %s\r\n", afc_info.sw_version);
 
     return ret;
@@ -46,7 +46,7 @@ static int8_t afc_command_frame_parse(struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x05:
-            for (int i = 2; i <= 18; i++) 
+            for (int i = 2; i <= 18; i++)
             {
                 LOG_I("Data[%d]: %x\r\n", i, cmd->data[i]);
             }

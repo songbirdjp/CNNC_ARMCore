@@ -323,7 +323,7 @@ static int8_t link_status_entry(void *argument)
             }
             else if (event_flags & UART_RX_HEARTBEAT_CMD_EVENT)
             {
-   
+
             }
             else if (event_flags & UART_RX_REBOOT_CMD_EVENT)
             {
@@ -525,7 +525,7 @@ repeat:
             if (ret != 0)
             {
                 LOG_E("[%d]: retry times: %d\r\n", id, retry_times);
-                
+
                 if (retry_times++ < UART_MODBUS_RETRY_TIMES)
                 {
                     osDelay(50);

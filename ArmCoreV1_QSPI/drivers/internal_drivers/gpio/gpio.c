@@ -162,6 +162,9 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(W5500_INTn_GPIO_Port, &GPIO_InitStruct);
 
+  /*AnalogSwitch Config */
+  HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PC2, SYSCFG_SWITCH_PC2_CLOSE);
+
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(EXTI2_IRQn);

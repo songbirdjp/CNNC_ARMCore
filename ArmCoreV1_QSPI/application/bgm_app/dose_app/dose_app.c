@@ -180,15 +180,15 @@ static int8_t dose_handshake_frame_parse(enum uart_id id, struct cmd_object *cmd
     osMutexAcquire(obj->mutex, osWaitForever);
 
     obj->status.hw_version = cmd->data[1];
-    obj->status.sw_version[0] = cmd->data[2];
+    obj->status.sw_version[0] = cmd->data[2] + 0x30;
     obj->status.sw_version[1] = '.';
-    obj->status.sw_version[2] = cmd->data[3];
+    obj->status.sw_version[2] = cmd->data[3] + 0x30;
     obj->status.sw_version[3] = '.';
-    obj->status.sw_version[4] = cmd->data[4];
+    obj->status.sw_version[4] = cmd->data[4] + 0x30;
 
     osMutexRelease(obj->mutex);
 
-    // LOG_I("[%d]: hw version: %d\r\n", id, obj->status.hw_version);
+    // LOG_I("[%d]: hw version: %#.2x\r\n", id, obj->status.hw_version);
     // LOG_I("[%d]: sw version: %s\r\n", id, obj->status.sw_version);
 
     return ret;
@@ -368,7 +368,7 @@ static int8_t dose_interlock_parse(enum uart_id id, struct cmd_object *cmd)
             break;
         case 0x07:
             obj->interlock.communication_timeout = cmd->data[3] << 8 | cmd->data[2];
-            break;        
+            break;
         default:
             ret = -1;
             break;
@@ -966,7 +966,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
     case DOSE_INFO_FSM_STATE_GET:
         buf[offset++] = 0xC0;
         buf[offset++] = 0x01;
-        ret = dose_cmd_write(id, 0x02, buf, offset);    
+        ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
     case DOSE_INFO_ADC_CALI:
         buf[offset++] = 0x01;
@@ -1025,7 +1025,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x43;
         buf[offset++] = 0x00;
         buf[offset++] = 0x00;
-        ret = dose_cmd_write(id, 0x02, buf, offset);        
+        ret = dose_cmd_write(id, 0x02, buf, offset);
         /* 2. beam meter set */
         offset = 0;
         buf[offset++] = 0x42;
@@ -1115,7 +1115,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x43;
         buf[offset++] = 0x00;
         buf[offset++] = 0x01;
-        ret = dose_cmd_write(id, 0x02, buf, offset);        
+        ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
     case DOSE_INFO_PRF_SET:
         buf[offset++] = 0x43;
@@ -1133,7 +1133,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x43;
         buf[offset++] = 0x00;
         buf[offset++] = 0x01;
-        ret = dose_cmd_write(id, 0x02, buf, offset);   
+        ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
     case DOSE_INFO_GENERATE_MODE_SET:
         buf[offset++] = 0x43;
@@ -1151,7 +1151,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x43;
         buf[offset++] = 0x00;
         buf[offset++] = 0x01;
-        ret = dose_cmd_write(id, 0x02, buf, offset);           
+        ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
     case DOSE_INFO_PULSE_MODE_SET:
         buf[offset++] = 0x43;
@@ -1169,7 +1169,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x43;
         buf[offset++] = 0x00;
         buf[offset++] = 0x01;
-        ret = dose_cmd_write(id, 0x02, buf, offset);   
+        ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
     case DOSE_INFO_RADIATION_SET:
         buf[offset++] = 0x00;

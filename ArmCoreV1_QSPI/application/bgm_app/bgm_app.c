@@ -271,8 +271,8 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         ret |= dose_dac_value_set(BGM_UART_DOSE1, &info.cali_dose1_dac);
         ret |= dose_dac_value_set(BGM_UART_DOSE2, &info.cali_dose2_dac);
         /* 2. clear beam cumulated */
-        ret |= dose_beam_cumulated_clear(BGM_UART_DOSE1);
-        ret |= dose_beam_cumulated_clear(BGM_UART_DOSE2);
+        // ret |= dose_beam_cumulated_clear(BGM_UART_DOSE1);
+        // ret |= dose_beam_cumulated_clear(BGM_UART_DOSE2);
         /* 3. set generate mode to 0 */
         info.dose_mode = 0;
         ret |= dose_generate_mode_set(BGM_UART_DOSE1, &info.dose_mode);
@@ -307,10 +307,10 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         LOG_I("dose_meter: %f\r\n", info.dose_meter);
 #endif
         /* 1. clear beam cumulated */
-        ret = dose_beam_cumulated_clear(BGM_UART_DOSE1);
-        ret |= dose_beam_cumulated_clear(BGM_UART_DOSE2);
-        ret |= dose_radiation_data_get(BGM_UART_DOSE1);
-        ret |= dose_radiation_data_get(BGM_UART_DOSE2);
+        // ret = dose_beam_cumulated_clear(BGM_UART_DOSE1);
+        // ret |= dose_beam_cumulated_clear(BGM_UART_DOSE2);
+        // ret |= dose_radiation_data_get(BGM_UART_DOSE1);
+        // ret |= dose_radiation_data_get(BGM_UART_DOSE2);
         /* 2. set generate mode to 1 */
         info.dose_mode = 1;
         ret |= dose_generate_mode_set(BGM_UART_DOSE1, &info.dose_mode);
@@ -749,7 +749,7 @@ static int8_t fsm_state_update_from_remote(void)
 static void system_fsm_state_entry(void *argument)
 {
     int8_t ret = 0;
-  
+
     for (;;)
     {
         osDelay(100);
@@ -774,28 +774,28 @@ static int8_t dose_rate_calculate(void *argument)
 {
     int8_t ret = 0;
     float dose1_meter_cur = 0, dose2_meter_cur = 0;
-    enum bgm_fsm_state state_current = BGM_STATE_MAX;
-    float dose1_rate = 0, dose2_rate = 0;
-    struct bgm_data_info *obj = bgm_data_info_get();
+    // enum bgm_fsm_state state_current = BGM_STATE_MAX;
+    // float dose1_rate = 0, dose2_rate = 0;
+    // struct bgm_data_info *obj = bgm_data_info_get();
 
     for (;;)
     {
         osDelay(500);
 
-        osMutexAcquire(obj->mutex, osWaitForever);
-        state_current = obj->fsm_state;
-        osMutexRelease(obj->mutex);
+        // osMutexAcquire(obj->mutex, osWaitForever);
+        // state_current = obj->fsm_state;
+        // osMutexRelease(obj->mutex);
 
-        if (state_current != BGM_STATE_WORK)
-        {
-            ret = dose_rate_value_set(BGM_UART_DOSE1, &dose1_rate);
-            ret |= dose_rate_value_set(BGM_UART_DOSE2, &dose2_rate);
-            if (ret != 0)
-            {
-                LOG_E("dose rate set err: %d\r\n", ret);
-            }
-        }
-    
+        // if (state_current != BGM_STATE_WORK)
+        // {
+        //     ret = dose_rate_value_set(BGM_UART_DOSE1, &dose1_rate);
+        //     ret |= dose_rate_value_set(BGM_UART_DOSE2, &dose2_rate);
+        //     if (ret != 0)
+        //     {
+        //         LOG_E("dose rate set err: %d\r\n", ret);
+        //     }
+        // }
+
         /* TODO: */
         /* 1. 周期性核对dose1和dose2的剂量偏差，控制在10%以内？ */
         dose1_meter_cur = dose_meter_value_get(BGM_UART_DOSE1);
