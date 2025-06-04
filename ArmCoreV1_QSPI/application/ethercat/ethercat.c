@@ -170,10 +170,10 @@ static int8_t ethercat_timestamp_sync(void)
 {
     uint64_t timestamp_local = timestamp_ns_get();
     int64_t diff = timestamp_local - u64Timestamp;
-
+#define UTC_OFFSET_NS 28800000000000 /* 8 hours */
     if (llabs(diff) > 2000000)  /* -> ECAT_CheckTimer */
     {
-        timestamp_ns_set(ethercat_timestamp_get());
+        timestamp_ns_set(ethercat_timestamp_get() + UTC_OFFSET_NS);
 #if 0
         #include "ulog.h"
         LOG_I("------sync timestamp------\r\n");
@@ -191,6 +191,7 @@ static int8_t ethercat_timestamp_sync(void)
 */
 static void Ethercatfunc(void *argument)
 {
+    osDelay(100);
   /* USER CODE BEGIN Ethercatfunc */
     ethercat_slave_init();
 
@@ -214,7 +215,7 @@ static void ethercat_slave_entry(void *argument)
   /* USER CODE BEGIN ethercat_slave_entry */
   /* Infinite loop */
   int32_t ret = 0;
-  osDelay(100); /* wait ethercat init complete */
+  osDelay(200); /* wait ethercat init complete */
 
   for(;;)
   {

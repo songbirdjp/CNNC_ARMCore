@@ -42,6 +42,7 @@ extern "C"
     {
         manage_info_t manage_info;
         const char *module_name;
+        const char *module_type;
         uint32_t ID;
         osPriority_t module_priority;
         heartbeat_t heartbeat_info_rx; // receive heartbeat info
