@@ -64,6 +64,9 @@ typedef struct{
     uint8_t motorFindZeroOK;
     AFTBrakeTypeDef motorBrakeStatus;
 } MotorCtrlParam_TypeDef;
+
+extern MotorFindingZeroFSM_t MagMotorState;
+
 void motorCtrlByPWM(motorTypeDef motorType,float dutyCycle);
 MotorCtrlParam_TypeDef *MAG_motorParam_get(void);
 MotorCtrlParam_TypeDef *AFT_motorParam_get(void);

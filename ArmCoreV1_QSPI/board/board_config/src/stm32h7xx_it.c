@@ -74,8 +74,10 @@ extern TIM_HandleTypeDef htim8;
 extern TIM_HandleTypeDef htim24;
 extern DMA_HandleTypeDef hdma_uart9_rx;
 extern DMA_HandleTypeDef hdma_uart9_tx;
+extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern UART_HandleTypeDef huart9;
+extern UART_HandleTypeDef huart1;
 extern WWDG_HandleTypeDef hwwdg1;
 /* USER CODE BEGIN EV */
 
@@ -271,6 +273,20 @@ void DMA1_Stream1_IRQHandler(void)
 }
 
 /**
+  * @brief This function handles DMA1 stream2 global interrupt.
+  */
+void DMA1_Stream2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream2_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 stream3 global interrupt.
   */
 void DMA1_Stream3_IRQHandler(void)
@@ -342,6 +358,20 @@ void TIM4_IRQHandler(void)
   /* USER CODE BEGIN TIM4_IRQn 1 */
 
   /* USER CODE END TIM4_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART1 global interrupt.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+
+  /* USER CODE END USART1_IRQn 1 */
 }
 
 /**
@@ -489,19 +519,19 @@ void BDMA_Channel0_IRQHandler(void)
   /* USER CODE END BDMA_Channel0_IRQn 1 */
 }
 
-// /**
-//   * @brief This function handles UART9 global interrupt.
-//   */
-// void UART9_IRQHandler(void)
-// {
-//   /* USER CODE BEGIN UART9_IRQn 0 */
+/**
+  * @brief This function handles UART9 global interrupt.
+  */
+void UART9_IRQHandler(void)
+{
+  /* USER CODE BEGIN UART9_IRQn 0 */
 
-//   /* USER CODE END UART9_IRQn 0 */
-//   HAL_UART_IRQHandler(&huart9);
-//   /* USER CODE BEGIN UART9_IRQn 1 */
+  /* USER CODE END UART9_IRQn 0 */
+  HAL_UART_IRQHandler(&huart9);
+  /* USER CODE BEGIN UART9_IRQn 1 */
 
-//   /* USER CODE END UART9_IRQn 1 */
-// }
+  /* USER CODE END UART9_IRQn 1 */
+}
 
 /**
   * @brief This function handles TIM24 global interrupt.

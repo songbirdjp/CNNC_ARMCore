@@ -372,9 +372,9 @@ int main(void)
   system_heap_init();
 
   /* Console initialize */
-  device_console_init(CONSOLE_NAME_DEFAULT);
+  device_console_init();
   system_info_print();
-  system_fun_init(); 
+  system_fun_init();
 
 //   printf("----this is bootloader----\r\n");
 
