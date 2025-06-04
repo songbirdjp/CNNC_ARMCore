@@ -2,6 +2,6 @@
 #define __CONFIG_H__
 
 #define GIT_BRANCH  "bgm_dose_develop"
-#define GIT_HASH    "f458a82c8b9f820e0293a770f2c81211d3aaa569"
+#define GIT_HASH    "a53f739d039d0b5290e29dfe2582e52e2ad2117e"
 
 #endif

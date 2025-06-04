@@ -19,6 +19,7 @@ enum pulse_state
     ONE_PULSE_DOSE,
     DOSE_ACCUMULATED,
     DOSE_RATE_CURRENT,
+    PRF_CURRENT,
 };
 
 int8_t dose_value_status_set(enum pulse_state state, uint64_t value);

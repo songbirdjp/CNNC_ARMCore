@@ -17,7 +17,7 @@ static struct control_para control_data =
     .board_id = DOSE_BOARD_TRIGGER_OUT,
     .calibration = {.adc_factor = {2376000, 2376000, 2376000, 2376000, 2376000}, 
                     .dac_factor = 30,
-                    .trig_interval_min = 20000},
+                    .trig_interval_min = 4000},
     .treatment = {.prf_hz = 1},
     .interlock = {.threshold_dose_rate = {.low = 10, .high = 10}, 
                   .threshold_dose_cp = {.low = 10, .high = 10}, 
@@ -38,7 +38,7 @@ int8_t control_data_pointer_get(void **ptr)
     }
 
     *ptr = (void *)control_data_get();
-    
+
     return 0;
 }
 
@@ -161,7 +161,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
     struct control_para *obj = control_data_get();
 
     osMutexAcquire(obj->mutex, osWaitForever);
-    
+
     switch (cmd->data[0])
     {
     case 0x40:
@@ -448,7 +448,7 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
     }
 
     int8_t ret = 0;
-    
+
     switch (state)
     {
     case FSM_STATE_INIT:
@@ -802,7 +802,7 @@ int8_t radiation_status_get(uint8_t *buf, uint16_t *len)
     float dose_rate_f = (float)(dose_rate / control_data_get()->calibration.adc_factor[0]);
     memcpy(&buf[11], (float *)&dose_rate_f, sizeof(float)); /* dose rate */
 
-    buf[15] = data->treatment.prf_hz; /* PRF */
+    buf[15] = dose_value_status_get(PRF_CURRENT);//data->treatment.prf_hz; /* PRF */
     memcpy(&buf[16], &data->interlock.one_pulse.count_abnormal, sizeof(uint16_t));    /* pulse abnormal */
     uint8_t one_pulse_valid = dose_value_status_get(ONE_PULSE_COMPLETE);
     uint32_t one_pulse_dose = dose_value_status_get(ONE_PULSE_DOSE);
@@ -861,7 +861,7 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
                 {
                     LOG_E("dose_uart_radiation_index_update_callback err: %d\r\n", ret);
                 }
-            }            
+            }
             LOG_I("dose uart radiation index: %d\r\n", obj->radiation.index);
         }
         break;
@@ -899,14 +899,14 @@ static int8_t dose_debug_cmd_parse(struct dose_object *cmd)
         {
         case LOG_OUTPUT_MSG:
             shell_cmd_parse_entry(&cmd->data[2], *cmd->len - 2);
-            break;        
+            break;
         default:
             LOG_E("invalid dose uart debug sub cmd type: %d\r\n", cmd->data[1]);
             return -1;
             break;
         }
         break;
-    
+
     default:
         LOG_E("invalid dose uart debug cmd type: %d\r\n", cmd->data[0]);
         return -2;
@@ -932,7 +932,7 @@ static int8_t dose_cmd_parse(struct dose_object *obj)
     cmd.type = obj->data[2];
     cmd.len = (uint16_t *)&obj->data[3];
     cmd.data = obj->data + 5;
-    
+
 #if 0
     for (uint8_t i = 0; i < *(cmd.len); i++)
     {
@@ -1147,7 +1147,7 @@ static int8_t link_status_entry(void *argument)
             }
             else if (event_flags & UART_RX_HEARTBEAT_CMD_EVENT)
             {
-   
+
             }
             else if (event_flags & UART_RX_REBOOT_CMD_EVENT)
             {
@@ -1303,7 +1303,7 @@ static int8_t log_output_bridge_init(void)
         printf("console log register err:%d\r\n", ret);
         return ret;
     }
-    
+
     return 0;
 }
 INIT_COMPONENT_EXPORT(log_output_bridge_init);
