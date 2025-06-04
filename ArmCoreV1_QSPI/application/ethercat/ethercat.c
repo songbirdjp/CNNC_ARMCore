@@ -203,7 +203,7 @@ static void Ethercatfunc(void *argument)
 
         ethercat_slave_main_loop();
 
-        ethercat_timestamp_sync();
+        // ethercat_timestamp_sync();
 
         osDelay(2);
     }

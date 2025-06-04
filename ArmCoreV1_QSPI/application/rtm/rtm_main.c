@@ -19,6 +19,7 @@
 #include "fdcan_port.h"
 #include "app_cpg.h"
 #include "hw_crc.h"
+#include "timestamp.h"
 typedef struct
 {
     uint32_t id_ack;
@@ -170,7 +171,7 @@ static void app_rtm_main_thread(void *argument)
         rtm_status.warning_interlock = *(uint32_t *)&(self->interlock_table.warning_interlock);
         rtm_status.minor_interlock = *(uint32_t *)&(self->interlock_table.minor_interlock);
         rtm_status.serious_interlock = *(uint32_t *)&(self->interlock_table.serious_interlock);
-        
+
         if (memcmp(&rtm_status_old, &rtm_status, sizeof(rtm_status_t)) != 0)
         {
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON].module_queue, 0x01, 0x61, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
@@ -432,6 +433,19 @@ int32_t uart_protocol_set_rx_callback(struct uart_protocol *const self,
 {
     return 0;
 }
+
+int32_t uart_protocol_pnt_rx_callback(struct uart_protocol *const self,
+                                            uint32_t ID,
+                                            const uint8_t *data,
+                                            uint16_t *len,
+                                            void *arg)
+{
+    uint64_t timestamp_ns = 0;
+    memcpy(&timestamp_ns, data, *len);
+    timestamp_ns_set(timestamp_ns);
+    return 0;
+}
+
 static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                                        uint8_t *data,
                                        uint16_t len)
@@ -505,6 +519,19 @@ static void app_module_rx_thread(void *argument)
         LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
         goto exit;
     }
+    if (strcmp(self->module_name, "SLAVE"))
+    {
+        ret = uart_protocol_rx_RegisterCallback(&self->uart_protocol,
+                                                UART_PROTOCOL_PNT_RX_CB_ID,
+                                                uart_protocol_pnt_rx_callback,
+                                                NULL);
+        if (ret != 0)
+        {
+            LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
+            goto exit;
+        }
+    }
+
     ret = uart_protocol_open(&self->uart_protocol);
     if (ret != 0)
     {
@@ -530,12 +557,37 @@ static void app_module_rx_thread(void *argument)
 exit:
     osThreadExit();
 }
+
+int32_t uart_protocol_pnt_tx_callback(struct uart_protocol *const self,
+                                            uint8_t *data,
+                                            uint16_t *len,
+                                            void *arg)
+{
+    uint64_t timestamp_ns = timestamp_ns_get();
+    memcpy(data, &timestamp_ns, sizeof(uint64_t));
+    *len = sizeof(uint64_t);
+    return 0;
+}
+
 static void app_module_tx_thread(void *argument)
 {
     int32_t ret = 0;
     osStatus_t status = osOK;
     rtm_module_info_t *self = (rtm_module_info_t *)argument;
     queue_frame_t queue_frame;
+
+    if (strcmp(self->module_name, "MASTER"))
+    {
+        ret = uart_protocol_tx_RegisterCallback(&self->uart_protocol,
+                                                UART_PROTOCOL_PNT_TX_CB_ID,
+                                                uart_protocol_pnt_tx_callback,
+                                                NULL);
+        if (ret != 0)
+        {
+            LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
+            goto exit;
+        }
+    }
 
     ret = uart_protocol_open(&self->uart_protocol);
     if (ret != 0)
@@ -849,6 +901,14 @@ int app_rtm_data_handle_create(void)
     self->rtm_module_info[RTM_MODULE_CPG].module_name = "CPG";
     self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].module_name = "RTM_OFF_ARM";
     self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].module_name = "RTM_OFF_PLC";
+
+    self->rtm_module_info[RTM_MODULE_RTM_ON].module_type = "SLAVE";
+    // self->rtm_module_info[RTM_MODULE_GMM].module_type = "MASTER";
+    // self->rtm_module_info[RTM_MODULE_PSM].module_type = "MASTER";
+    self->rtm_module_info[RTM_MODULE_FKP].module_type = "MASTER";
+    self->rtm_module_info[RTM_MODULE_CPG].module_type = "MASTER";
+    self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].module_type = "MASTER";
+    self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].module_type = "MASTER";
 
     self->rtm_module_info[RTM_MODULE_RTM_ON].ID = 0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20;
     // self->rtm_module_info[RTM_MODULE_GMM].ID = 0x80;
