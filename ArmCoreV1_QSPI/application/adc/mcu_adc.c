@@ -7,7 +7,6 @@ int8_t board_power_limit_fault_get(void)
 {
     /*
     * channel 4(PC4): MCUADC5V
-    * channel 7(PA7): MCUADC12
     * channel 8(PC5): MCUADCREF
     */
     int8_t ret = 0;
@@ -16,23 +15,22 @@ int8_t board_power_limit_fault_get(void)
     struct adc_object *adc1 = adc_object_get(DEVICE_NAME_ADC1_DEFAULT);
 
     osMutexAcquire(adc1->mutex, osWaitForever);
-    memcpy(result, adc1->data, (adc1->channel_num + 1) * sizeof(uint16_t));
+    memcpy(result, adc1->data, adc1->channel_num * sizeof(uint16_t));
     osMutexRelease(adc1->mutex);
 
     ret = adc_sample_data_amend(result, ADC_CHANNEL_NUM_MAX);
     if (ret != 0)
     {
+        LOG_E("adc sample data amend err: %d\r\n", ret);
         return ret;
     }
 
-    uint16_t adc_p5v = result[0] * 3 / 2;  /* unit: mV */
-    uint32_t adc_n500v = result[1] * 201;
-    uint16_t adc_n5v = result[2] * 2;
+    uint16_t adc_p5v = result[0] * 2;  /* unit: mV */
+    uint16_t adc_ref = result[1] * 2;
 
 #if 0
     LOG_I("adc_p5v: %u mv\r\n", adc_p5v);
-    LOG_I("adc_n500v: %u mv\r\n", adc_n500v);
-    LOG_I("adc_n5v: %u mv\r\n", adc_n5v);
+    LOG_I("adc_ref: %u mv\r\n", adc_ref);
 #endif
 
     if (abs(adc_p5v - 5000) > 5000 * POWER_DIFF_TOLERANCE)
@@ -40,12 +38,7 @@ int8_t board_power_limit_fault_get(void)
         ret |= (1 << 0);
     }
 
-    if (abs(adc_n500v - 392000) > 392000 * POWER_DIFF_TOLERANCE)
-    {
-        ret |= (1 << 1);
-    }
-
-    if (abs(adc_n5v - 5000) > 5000 * POWER_DIFF_TOLERANCE)
+    if (abs(adc_ref - 5000) > 5000 * POWER_DIFF_TOLERANCE)
     {
         ret |= (1 << 2);
     }
@@ -75,12 +68,9 @@ float mcu_adc_value_get(enum mcu_adc_channel channel)
     switch (channel)
     {
     case MCU_ADC_CHANNEL_P5V:
-        value = (float)result * 3 / 2;  /* unit: mV */
+        value = (float)result * 2;  /* unit: mV */
         break;
-    case MCU_ADC_CHANNEL_N500V:
-        value = (float)result * 201;
-        break;
-    case MCU_ADC_CHANNEL_N5V:
+    case MCU_ADC_CHANNEL_REF:
         value = (float)result * 2;
         break;
     default:
@@ -111,28 +101,21 @@ static int8_t mcu_adc_sample_start(uint16_t sample_interval_10ns)
     return 0;
 }
 
-osEventFlagsId_t adc_event = NULL;
+static osEventFlagsId_t adc_event = NULL;
 static int8_t mcu_adc_init(void)
 {
-    adc_event = osEventFlagsNew(NULL);
-    if (adc_event == NULL)
-    {
-        LOG_E("adc_event create failed\r\n");
-        return -1;
-    }
-
     int8_t ret = adc_init(DEVICE_NAME_ADC1_DEFAULT, adc_event);
     if (ret != 0)
     {
         LOG_E("%s init err: %d\r\n", DEVICE_NAME_ADC1_DEFAULT, ret);
-        return -2;
+        return -1;
     }
 
     ret = adc_init(DEVICE_NAME_ADC3_DEFAULT, adc_event);
     if (ret != 0)
     {
         LOG_E("%s init err: %d\r\n", DEVICE_NAME_ADC3_DEFAULT, ret);
-        return -3;
+        return -2;
     }
 
     return 0;
@@ -149,13 +132,6 @@ static int8_t mcu_adc_data_convert_process(struct adc_object *obj)
     memcpy(obj->data, obj->result, obj->channel_num * sizeof(uint16_t));
     osMutexRelease(obj->mutex);
 
-    if (obj == adc_object_get(DEVICE_NAME_ADC3_DEFAULT))
-    {
-        struct adc_object *adc1 = adc_object_get(DEVICE_NAME_ADC1_DEFAULT);
-        adc1->data[adc1->channel_num] = __HAL_ADC_CONVERT_DATA_RESOLUTION(obj->data[3], ADC_RESOLUTION_12B, ADC_RESOLUTION_16B);
-    }
-
-
 #if 0
     static uint16_t ref_vol = 0;
     if (obj == adc_object_get(DEVICE_NAME_ADC3_DEFAULT))
@@ -164,14 +140,12 @@ static int8_t mcu_adc_data_convert_process(struct adc_object *obj)
         LOG_I("Vref: %u mv\r\n", ref_vol);
         LOG_I("temperature: %u\r\n", __HAL_ADC_CALC_TEMPERATURE(ref_vol, obj->data[1], ADC_RESOLUTION_16B));
         LOG_I("vbat: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[2], ADC_RESOLUTION_12B) * 4);
-        LOG_I("adc_n5v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[3], ADC_RESOLUTION_12B));
     }
 
     if (obj == adc_object_get(DEVICE_NAME_ADC1_DEFAULT))
     {
         LOG_I("adc_p5v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[0], ADC_RESOLUTION_16B));
-        LOG_I("adc_n500v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[1], ADC_RESOLUTION_16B));
-        LOG_I("adc_n5v: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[2], ADC_RESOLUTION_16B));
+        LOG_I("adc_ref: %u mv\r\n", __HAL_ADC_CALC_DATA_TO_VOLTAGE(ref_vol, obj->data[1], ADC_RESOLUTION_16B));
     }
 #endif
 
@@ -220,6 +194,13 @@ static int8_t mcu_adc_data_convert_entry(void *argument)
 
 static int8_t mcu_adc_thread_init(void)
 {
+    adc_event = osEventFlagsNew(NULL);
+    if (adc_event == NULL)
+    {
+        LOG_E("adc_event create failed\r\n");
+        return -1;
+    }
+
     osThreadAttr_t attr = {
         .name = "mcu_adc_data_convert_thread",
         .stack_size = 1024 * 4,
@@ -230,12 +211,12 @@ static int8_t mcu_adc_thread_init(void)
     if (tid == NULL)
     {
         LOG_E("thread mcu adc data convert create failed\r\n");
-        return -1;
+        return -2;
     }
 
     return 0;
 }
-// INIT_APP_EXPORT(mcu_adc_thread_init);
+INIT_APP_EXPORT(mcu_adc_thread_init);
 
 #ifdef MCU_ADC_TEST
 #include "shell.h"

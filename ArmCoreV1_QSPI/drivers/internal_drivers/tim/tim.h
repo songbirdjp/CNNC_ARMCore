@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -44,6 +44,8 @@ extern TIM_HandleTypeDef htim5;
 
 extern TIM_HandleTypeDef htim6;
 
+extern TIM_HandleTypeDef htim7;
+
 extern TIM_HandleTypeDef htim8;
 
 extern TIM_HandleTypeDef htim23;
@@ -60,6 +62,7 @@ void MX_TIM3_Init(void);
 void MX_TIM4_Init(void);
 void MX_TIM5_Init(void);
 void MX_TIM6_Init(void);
+void MX_TIM7_Init(void);
 void MX_TIM8_Init(void);
 void MX_TIM23_Init(void);
 void MX_TIM24_Init(void);

@@ -1,7 +1,7 @@
 set(current_path ${CMAKE_CURRENT_LIST_DIR})
 
 set(include_path ${include_path}
-    # "${current_path}/adc" 
+    "${current_path}/adc" 
     "${current_path}/bdma" 
     "${current_path}/crc" 
     "${current_path}/dma" 
@@ -9,6 +9,7 @@ set(include_path ${include_path}
     "${current_path}/flash" 
     # "${current_path}/fmc" 
     "${current_path}/gpio" 
+    # "${current_path}/i2c" 
     "${current_path}/iwdg" 
     "${current_path}/lptim" 
     "${current_path}/mdma" 
@@ -21,7 +22,7 @@ set(include_path ${include_path}
     PARENT_SCOPE)
 
 set(src_path ${src_path}
-    # "${current_path}/adc/*.*" 
+    "${current_path}/adc/*.*" 
     "${current_path}/bdma/*.*" 
     "${current_path}/crc/*.*" 
     "${current_path}/dma/*.*" 
@@ -29,6 +30,7 @@ set(src_path ${src_path}
     "${current_path}/flash/*.*" 
     # "${current_path}/fmc/*.*" 
     "${current_path}/gpio/*.*" 
+    # "${current_path}/i2c/*.*" 
     "${current_path}/iwdg/*.*" 
     "${current_path}/lptim/*.*" 
     "${current_path}/mdma/*.*" 

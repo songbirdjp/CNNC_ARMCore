@@ -107,7 +107,6 @@ uint8_t sock_remained_byte[_WIZCHIP_SOCK_NUM_] = {0,}; // set by wiz_recv_data()
 int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
 {
     CHECK_SOCKNUM();
-    //printf("socket\n");
     switch(protocol)
     {
         case Sn_MR_TCP :
@@ -131,7 +130,6 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
          break;
 #endif
         default :
-         printf("socket recvfrom SOCKERR_SOCKMODE\r\n");
             return SOCKERR_SOCKMODE;
     }
     //M20150601 : For SF_TCP_ALIGN & W5300
@@ -175,7 +173,7 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
 #if _WIZCHIP_ == 5300
     setSn_MR(sn, ((uint16_t)(protocol | (flag & 0xF0))) | (((uint16_t)(flag & 0x02)) << 7) );
 #else
-        setSn_MR(sn, (protocol | (flag & 0xF0)));
+    setSn_MR(sn, (protocol | (flag & 0xF0)));
 #endif
     if(!port)
     {
@@ -187,6 +185,7 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
     while(getSn_CR(sn));
     //A20150401 : For release the previous sock_io_mode
     sock_io_mode &= ~(1 <<sn);
+    //
     sock_io_mode |= ((flag & SF_IO_NONBLOCK) << sn);
     sock_is_sending &= ~(1<<sn);
     sock_in_use |= (1<<sn);    
@@ -194,6 +193,7 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
     //M20150601 : repalce 0 with PACK_COMPLETED
     //sock_pack_info[sn] = 0;
     sock_pack_info[sn] = PACK_COMPLETED;
+    //
     while(getSn_SR(sn) == SOCK_CLOSED);
     return (int8_t)sn;
 }
@@ -201,17 +201,44 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
 int8_t close(uint8_t sn)
 {
     CHECK_SOCKNUM();
-    printf("Closing socket %d, status: %d\n", sn, getSn_SR(sn));
-
-    setSn_CR(sn, Sn_CR_CLOSE);
-    while (getSn_CR(sn));
+//A20160426 : Applied the erratum 1 of W5300
+#if   (_WIZCHIP_ == 5300)
+    //M20160503 : Wrong socket parameter. s -> sn
+   //if( ((getSn_MR(s)& 0x0F) == Sn_MR_TCP) && (getSn_TX_FSR(s) != getSn_TxMAX(s)) )
+   if( ((getSn_MR(sn)& 0x0F) == Sn_MR_TCP) && (getSn_TX_FSR(sn) != getSn_TxMAX(sn)) )
+   {
+      uint8_t destip[4] = {0, 0, 0, 1};
+      // TODO
+      // You can wait for completing to sending data;
+      // wait about 1 second;
+      // if you have completed to send data, skip the code of erratum 1
+      // ex> wait_1s();
+      //     if (getSn_TX_FSR(s) == getSn_TxMAX(s)) continue;
+      //
+      //M20160503 : The socket() of close() calls close() itself again. It occures a infinite loop - close()->socket()->close()->socket()-> ~
+      //socket(s,Sn_MR_UDP,0x3000,0);
+      //sendto(s,destip,1,destip,0x3000); // send the dummy data to an unknown destination(0.0.0.1).
+      setSn_MR(sn,Sn_MR_UDP);
+      setSn_PORTR(sn, 0x3000);
+      setSn_CR(sn,Sn_CR_OPEN);
+      while(getSn_CR(sn) != 0);
+      while(getSn_SR(sn) != SOCK_UDP);
+      sendto(sn,destip,1,destip,0x3000); // send the dummy data to an unknown destination(0.0.0.1).
+   };
+#endif
+    setSn_CR(sn,Sn_CR_CLOSE);
+    /* wait to process the command... */
+    while( getSn_CR(sn) );
+    /* clear all interrupt of the socket. */
     setSn_IR(sn, 0xFF);
-    sock_io_mode &= ~(1 << sn);
-    sock_is_sending &= ~(1 << sn);
-    sock_in_use &= ~(1 << sn);
+    //A20150401 : Release the sock_io_mode of socket n.
+    sock_io_mode &= ~(1<<sn);
+    //
+    sock_is_sending &= ~(1<<sn);
+    sock_in_use &= ~(1<<sn);
     sock_remained_size[sn] = 0;
     sock_pack_info[sn] = 0;
-    while (getSn_SR(sn) != SOCK_CLOSED);
+    while(getSn_SR(sn) != SOCK_CLOSED);
     return SOCK_OK;
 }
 
@@ -226,7 +253,7 @@ int8_t listen(uint8_t sn)
     {
         close(sn);
         return SOCKERR_SOCKCLOSED;
-    } 
+    }
     return SOCK_OK;
 }
 
@@ -403,7 +430,6 @@ int32_t recv(uint8_t sn, uint8_t * buf, uint16_t len)
             else
             {
                 close(sn);
-                // printf("Socket %d closing, called from %s, state: 0x%02X\n", sn, caller_name, getSn_SR(sn));
                 return SOCKERR_SOCKSTATUS;
             }
         }
@@ -484,7 +510,6 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
             break;
 //   #endif
         default:
-            printf("sendto SOCKERR_SOCKMODE\r\n");
             return SOCKERR_SOCKMODE;
     }
     CHECK_SOCKDATA();
@@ -575,10 +600,6 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
 int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t *port)
 {
 //M20150601 : For W5300
-// if (sn == 4)
-// {
-//     printf("recvfrom sn = %d\n", sn);
-// }
 #if _WIZCHIP_ == 5300
     uint16_t mr;
    uint16_t mr1;
@@ -598,7 +619,6 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
 
     switch((mr=getSn_MR(sn)) & 0x0F)
     {
-        
         case Sn_MR_UDP:
         case Sn_MR_IPRAW:
         case Sn_MR_MACRAW:
@@ -608,7 +628,6 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
          break;
 #endif
         default:
-            printf("recvfrom SOCKERR_SOCKMODE\r\n");
             return SOCKERR_SOCKMODE;
     }
     CHECK_SOCKDATA();
@@ -617,10 +636,6 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
         while(1)
         {
             pack_len = getSn_RX_RSR(sn);
-            // if (sn == 4)
-            // {
-            //     printf("pack_len: 0x%x\n", pack_len);
-            // }
             if(getSn_SR(sn) == SOCK_CLOSED) return SOCKERR_SOCKCLOSED;
             if( (sock_io_mode & (1<<sn)) && (pack_len == 0) ) return SOCK_BUSY;
             if(pack_len != 0) break;
@@ -657,10 +672,6 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
                 addr[1] = head[1];
                 addr[2] = head[2];
                 addr[3] = head[3];
-                for (int i = 0; i < 8; i++ )
-                {
-                    printf("head[%d] = %x\n", i, head[i]);
-                }
                 *port = head[4];
                 *port = (*port << 8) + head[5];
                 sock_remained_size[sn] = head[6];
@@ -924,10 +935,7 @@ int8_t  getsockopt(uint8_t sn, sockopt_type sotype, void* arg)
             //CHECK_SOCKMODE(Sn_MR_TCP);
 #if _WIZCHIP_ != 5300
             if((getSn_MR(sn) == Sn_MR_TCP))
-            {
-                printf("getsockopt socketSOCKERR_SOCKMODE\r\n");
                 return SOCKERR_SOCKMODE;
-            }
 #endif
             *(uint8_t*)arg = sock_pack_info[sn];
             break;

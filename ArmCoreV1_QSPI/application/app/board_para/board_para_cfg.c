@@ -3,7 +3,6 @@
 #include "cJSON.h"
 #include "json_struct.h"
 #include "FreeRTOS.h"
-#include "task.h"
 #include "shell.h"
 #include "init_call.h"
 #include "utilities.h"

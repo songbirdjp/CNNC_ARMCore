@@ -2,9 +2,9 @@
 ```
 ArmCoreV1_QSPI
 ├─ .cproject
-├─ .gitignore
 ├─ .mxproject
 ├─ .project
+├─ AFCComProtocol.md
 ├─ application
 │  ├─ adc
 │  │  ├─ adc_port.c
@@ -17,6 +17,9 @@ ArmCoreV1_QSPI
 │  │  ├─ adcs7476_port.c
 │  │  └─ adcs7476_port.h
 │  ├─ app
+│  │  ├─ AFC_APP
+│  │  │  ├─ AFCapp.c
+│  │  │  └─ AFCapp.h
 │  │  ├─ board_para
 │  │  │  ├─ board_para_cfg.c
 │  │  │  ├─ board_para_cfg.h
@@ -34,16 +37,8 @@ ArmCoreV1_QSPI
 │  │  ├─ main_app
 │  │  │  ├─ fsm_app.c
 │  │  │  ├─ fsm_app.h
-│  │  │  ├─ gpio_app.c
-│  │  │  ├─ gpio_app.h
-│  │  │  ├─ interlock_app.c
-│  │  │  ├─ interlock_app.h
 │  │  │  ├─ main_app.c
-│  │  │  ├─ main_app.h
-│  │  │  ├─ plan_data.c
-│  │  │  ├─ plan_data.h
-│  │  │  ├─ radiation_app.c
-│  │  │  └─ radiation_app.h
+│  │  │  └─ main_app.h
 │  │  └─ sys_cfg
 │  │     ├─ config.h
 │  │     ├─ sys_cfg.c
@@ -68,6 +63,9 @@ ArmCoreV1_QSPI
 │  │  ├─ ltc2632.h
 │  │  ├─ ltc2632_port.c
 │  │  └─ ltc2632_port.h
+│  ├─ motor
+│  │  ├─ motorctrl.c
+│  │  └─ motorctrl.h
 │  ├─ system_common
 │  │  ├─ memorymap.c
 │  │  ├─ memorymap.h
@@ -75,15 +73,18 @@ ArmCoreV1_QSPI
 │  │  ├─ syscalls.c
 │  │  └─ sysmem.c
 │  ├─ tcp
-│  │  ├─ tcp_client.c
-│  │  ├─ tcp_client.h
-│  │  ├─ tcp_server.c
-│  │  └─ tcp_server.h
+│  │  ├─ tcp_tasks.c
+│  │  ├─ tcp_tasks.h
+│  │  ├─ websocket.c
+│  │  ├─ websocket.h
+│  │  ├─ websocket_console.c
+│  │  └─ websocket_console.h
 │  └─ uart
-│     ├─ dose_uart.c
-│     ├─ dose_uart.h
+│     ├─ AFC_uart.c
+│     ├─ AFC_uart.h
 │     ├─ uart_port.c
 │     └─ uart_port.h
+├─ AutoFreqCtrlBoard.pdf
 ├─ board
 │  ├─ board_config
 │  │  ├─ inc
@@ -156,6 +157,9 @@ ArmCoreV1_QSPI
 │  ├─ shell
 │  │  ├─ shell.c
 │  │  └─ shell.h
+│  ├─ timestamp
+│  │  ├─ timestamp.c
+│  │  └─ timestamp.h
 │  ├─ uart_frame
 │  │  ├─ frame_format.c
 │  │  ├─ frame_format.h
@@ -172,7 +176,6 @@ ArmCoreV1_QSPI
 │     └─ ymodem.h
 ├─ config.cmake
 ├─ config.h.in
-├─ DoseBoard.pdf
 ├─ drivers
 │  ├─ CMakeLists.txt
 │  ├─ external_drivers
@@ -252,6 +255,11 @@ ArmCoreV1_QSPI
 │     │  ├─ drv_gpio.h
 │     │  ├─ gpio.c
 │     │  └─ gpio.h
+│     ├─ i2c
+│     │  ├─ drv_i2c.c
+│     │  ├─ drv_i2c.h
+│     │  ├─ i2c.c
+│     │  └─ i2c.h
 │     ├─ iwdg
 │     │  ├─ iwdg.c
 │     │  └─ iwdg.h
@@ -285,9 +293,14 @@ ArmCoreV1_QSPI
 │     └─ wwdg
 │        ├─ wwdg.c
 │        └─ wwdg.h
+├─ EcScript
 ├─ EcScript.exe
 ├─ ETHERCAT_CNNCPM.ioc
+├─ file_reorganize
 ├─ file_reorganize.exe
+├─ file_time_update
+├─ file_time_update.exe
+├─ info_generation
 ├─ info_generation.exe
 ├─ libraries
 │  ├─ CMakeLists.txt
@@ -425,6 +438,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_uart.c
 │        ├─ stm32h7xx_hal_uart_ex.c
 │        └─ stm32h7xx_hal_wwdg.c
+├─ makefile_update
 ├─ makefile_update.exe
 ├─ Middlewares
 │  ├─ CMakeLists.txt
@@ -585,7 +599,7 @@ ArmCoreV1_QSPI
 │     └─ sdoserv.h
 ├─ st_link.cfg
 └─ 使用说明
-   ├─ ARM CORE固件模块复用使用指南V1.1.pdf
+   ├─ ARM CORE固件模块复用使用指南V1.2.pdf
    └─ 工程修改说明
       ├─ demo1
       │  ├─ Demo1.md

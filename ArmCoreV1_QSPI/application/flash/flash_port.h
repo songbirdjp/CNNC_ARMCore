@@ -34,7 +34,7 @@ extern "C" {
 * sector 6: 0x081C0000 - 0x081DFFFF (128k)  -> reserved
 * sector 7: 0x081E0000 - 0x081FFFFF (128k)  -> reserved
 */
-static int8_t device_flash_init(void);
+
 int8_t device_flash_erase(uint8_t *device_name, uint32_t offset, uint32_t size);
 int8_t device_flash_read(uint8_t *device_name, uint32_t offset, uint8_t *buf, uint32_t len, uint32_t timeout);
 int8_t device_flash_write(uint8_t *device_name, uint32_t offset, uint8_t *buf, uint32_t len, uint32_t timeout);

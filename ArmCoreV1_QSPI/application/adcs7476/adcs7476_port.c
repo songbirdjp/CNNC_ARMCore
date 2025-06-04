@@ -51,12 +51,9 @@ int8_t device_adcs7476_init(uint8_t *device_name)
     if (!memcmp(device_name, DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT, sizeof(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT)))
     {
         ret = spi_init(device_adcs7476_master_get(), device_name, SPI_MASTER);
-        //printf("111ret: %d\r\n", ret); 
     }
     else if (!memcmp(device_name, DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT, sizeof(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT)))
     {
-
-       
         ret = spi_init(device_adcs7476_slave_get(), device_name, SPI_SLAVE);
     }
     else
@@ -94,9 +91,7 @@ int8_t device_adcs7476_open(uint8_t *device_name)
 
     return ret;
 }
-extern SPI_HandleTypeDef hspi1;
-extern SPI_HandleTypeDef hspi3;
-extern SPI_HandleTypeDef hspi6;
+
 static int8_t device_adcs7476_data_buf_init(uint8_t *device_name, uint8_t *rx_buf, uint16_t len)
 {
     HAL_StatusTypeDef status = HAL_OK;
@@ -110,7 +105,8 @@ static int8_t device_adcs7476_data_buf_init(uint8_t *device_name, uint8_t *rx_bu
             printf("malloc tx_buf failed\r\n");
             return -1;
         }
-        status = HAL_SPI_TransmitReceive_DMA(device_adcs7476_master_get(), tx_buf, rx_buf, len); 
+        
+        status = HAL_SPI_TransmitReceive_DMA(device_adcs7476_master_get(), tx_buf, rx_buf, len);
     }
     else if (!memcmp(device_name, DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT, sizeof(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT)))
     {
@@ -132,6 +128,7 @@ static int8_t device_adcs7476_data_buf_init(uint8_t *device_name, uint8_t *rx_bu
 
         return -3;
     }
+
     return 0;
 }
 
@@ -176,6 +173,7 @@ int8_t device_adcs7476_buffer_init(uint8_t *device_name, uint8_t *buf, uint16_t 
         printf("device %s buffer init err: %d\r\n", device_name, ret);
         return -4;
     }
+
     return device_adcs7476_data_buf_init(device_name, buf, len);
 }
 
@@ -470,7 +468,6 @@ static int8_t adcs7476_test(int8_t argc, char **argv)
         return -1;
     }
 
-
     ret = adcs7476_test_cfg(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     if (ret != 0)
     {
@@ -520,4 +517,3 @@ static int8_t adcs7476_test(int8_t argc, char **argv)
 }
 MSH_CMD_EXPORT_ALIAS(adcs7476_test, adcs7476_test, test adcs7476);
 #endif
-

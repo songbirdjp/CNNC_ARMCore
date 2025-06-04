@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -34,8 +34,6 @@ extern "C" {
 
 extern SPI_HandleTypeDef hspi1;
 
-extern SPI_HandleTypeDef hspi3;
-
 extern SPI_HandleTypeDef hspi6;
 
 /* USER CODE BEGIN Private defines */
@@ -43,7 +41,6 @@ extern SPI_HandleTypeDef hspi6;
 /* USER CODE END Private defines */
 
 void MX_SPI1_Init(void);
-void MX_SPI3_Init(void);
 void MX_SPI6_Init(void);
 
 /* USER CODE BEGIN Prototypes */

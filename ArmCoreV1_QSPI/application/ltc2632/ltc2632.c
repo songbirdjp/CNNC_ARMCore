@@ -123,7 +123,7 @@ static int8_t ltc2632_thread_init(void)
 
     return 0;
 }
-// INIT_APP_EXPORT(ltc2632_thread_init);
+INIT_APP_EXPORT(ltc2632_thread_init);
 
 #ifdef LTC2632_TEST
 #include "shell.h"

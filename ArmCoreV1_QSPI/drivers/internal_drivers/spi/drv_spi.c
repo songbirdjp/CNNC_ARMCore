@@ -1,14 +1,15 @@
 #include "drv_spi.h"
 #include "utilities.h"
 #include "spi.h"
-#include "tim.h"
+
 #define SPI_SEND_SUCCEED_EVENT      (1<<0)
 #define SPI_RECV_SUCCEED_EVENT      (1<<1)
 
 static void ErrorCallback(SPI_HandleTypeDef *hspi)
 {
     DEVICE_SPI *spi = (DEVICE_SPI *)hspi;
-    printf("SPI error on %s: ErrorCode = %lu\r\n", spi->name, hspi->ErrorCode);
+    
+    printf("%s err\r\n", spi->name);
 }
 static void TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
@@ -30,8 +31,8 @@ static void RxCpltCallback(SPI_HandleTypeDef *hspi)
         {
             ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
             if (ret != osOK)
-            {   
-                printf("%s 111queue put err:%d\r\n", spi->name, ret);
+            {
+                printf("%s queue put err:%d\r\n", spi->name, ret);
             }
         }
 
@@ -49,12 +50,13 @@ static void TxRxCpltCallback(SPI_HandleTypeDef *hspi)
     if (spi->master_or_slave == SPI_MASTER)
     {
         osEventFlagsSet(spi->rx_event, SPI_RECV_SUCCEED_EVENT);
+
         if (spi->rx_queue != NULL)
         {
             ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
             if (ret != osOK)
             {
-                printf("%s 222queue put err:%d\r\n", spi->name, ret);
+                printf("%s queue put err:%d\r\n", spi->name, ret);
             }
         }
 
@@ -794,30 +796,15 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     /* 1. init hardware */
     __disable_irq();
 
-    if (!memcmp(device_name, DEVICE_NAME_SPI3, sizeof(DEVICE_NAME_SPI3)))
+    if (!memcmp(device_name, DEVICE_NAME_SPI1, sizeof(DEVICE_NAME_SPI1)))
     {
-        
-        MX_SPI3_Init();
-        memcpy(spi, &hspi3, sizeof(SPI_HandleTypeDef));
-        if (hspi3.hdmarx->Init.Mode == DMA_CIRCULAR)
-        {
-            extern DMA_HandleTypeDef hdma_spi3_rx;
-            hdma_spi3_rx.Parent = (void *)spi;
-        }
-    }
-    else if (!memcmp(device_name, DEVICE_NAME_SPI1, sizeof(DEVICE_NAME_SPI1)))
-    {
-        //printf("111 spi1\r\n");
         MX_SPI1_Init();
-         //printf("222 spi1\r\n");
         memcpy(spi, &hspi1, sizeof(SPI_HandleTypeDef));
         if (hspi1.hdmarx->Init.Mode == DMA_CIRCULAR)
         {
-            //printf("333\r\n");
             extern DMA_HandleTypeDef hdma_spi1_rx;
             hdma_spi1_rx.Parent = (void *)spi;
         }
-        //printf("444\r\n");
     }
     else if (!memcmp(device_name, DEVICE_NAME_SPI6, sizeof(DEVICE_NAME_SPI6)))
     {

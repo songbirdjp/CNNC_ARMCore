@@ -2,10 +2,6 @@
 #include "drv_spi.h"
 #include "init_call.h"
 #include "ulog.h"
-#include "drv_flash.h"
-#include "flash_port.h"
-#include <stdbool.h>
-#include "stm32h7xx_hal.h"
 
 #define ADC7476_MASTER_FLAG (1 << 0)
 #define ADC7476_SLAVE_FLAG  (1 << 1)
@@ -35,12 +31,10 @@ struct adcs7476_object *adcs7476_object_get(uint8_t *device_name)
 {
     if (!memcmp(device_name, DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT, sizeof(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT)))
     {
-        //printf("object_getspi1\r\n");
         return &adcs7476_object_master;
     }
     else if (!memcmp(device_name, DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT, sizeof(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT)))
     {
-       // printf("object_getspi6\r\n");
         return &adcs7476_object_slave;
     }
     else
@@ -88,9 +82,8 @@ static int8_t adcs7476_object_init(uint8_t *device_name, osEventFlagsId_t event)
     }
 
     int8_t ret = device_adcs7476_init(device_name);
-    // printf("initobject %s ret: %d\r\n", device_name, ret);
     if (ret != 0)
-    {   
+    {
         printf("adcs7476 %s init failed\r\n", device_name);
         return -2;
     }
@@ -304,37 +297,7 @@ static int8_t adcs7476_sample_init(void)
     return 0;
 }
 
-
-
-
-
-#define FLASH_ADDRESS_BASE                  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
-#define FLASH_VALID_SIZE                    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
-
-#define FLASH_AFC_ADC1_BASE                 FLASH_ADDRESS_BASE// 0x080C0000UL
-#define FLASH_AFC_ADC2_BASE                 FLASH_ADDRESS_BASE + FLASH_SECTOR_SIZE// 0x080E0000UL 
-/*
-* bank1:
-* sector 0: 0x08000000 - 0x0801FFFF (128k)  -> bootloader 1
-* sector 1: 0x08020000 - 0x0803FFFF (128k)  -> bootloader 2
-* sector 2: 0x08040000 - 0x0805FFFF (128k)  -> application
-* sector 3: 0x08060000 - 0x0807FFFF (128k)  -> reserved
-* sector 4: 0x08080000 - 0x0809FFFF (128k)  -> reserved
-* sector 5: 0x080A0000 - 0x080BFFFF (128k)  -> config data, such as log info, etc.
-* sector 6: 0x080C0000 - 0x080DFFFF (128k)  -> log 1
-* sector 7: 0x080E0000 - 0x080FFFFF (128k)  -> log 2
-*/
-int32_t len;  
-uint32_t flash_addr = FLASH_ADDRESS_BASE;
-uint32_t flash_AFC_Offset = 0;
-uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
-static DEVICE_FLASH flash_bank1 = {0};
-static DEVICE_FLASH *device_flash_get(void)
-{
-    return &flash_bank1;
-}
 #include "tim.h"
-extern DEVICE_FLASH *flash;
 uint8_t tim4Delaytimes = 12;
 uint16_t* AFC_ADCSampleRecvProcess(void)
 {
@@ -373,15 +336,7 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
     //     tim4Delaytimes = 12;
     // }
     // tim4Delaytimes--;
-    // flash->write(flash, flash_AFC_Offset, combined_data, 16 * sizeof(uint16_t), 1000);
-    // flash_AFC_Offset += 16 * sizeof(uint16_t);
-    // LOG_E("flash_AFC_Offset: %d\r\n", flash_AFC_Offset);
-    // uint16_t read_data[16] = {0};
-    // flash->read(flash, flash_AFC_Offset - 16 * sizeof(uint16_t), read_data, 16 * sizeof(uint16_t), 1000);
-    // for (uint8_t i = 0; i < 16; i++)
-    // {
-    //     LOG_E("read_data[%d] = %x\r\n", i, read_data[i]);
-    // }
+
     if (callback != NULL)
     {
         callback();

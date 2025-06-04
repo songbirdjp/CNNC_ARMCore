@@ -318,7 +318,7 @@ static int8_t fpga_thread_init(void)
 
     return 0;
 }
-// INIT_APP_EXPORT(fpga_thread_init);
+INIT_APP_EXPORT(fpga_thread_init);
 
 int8_t recv_from_fpga_data_start(void)
 {

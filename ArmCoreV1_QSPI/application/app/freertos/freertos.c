@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -204,21 +204,13 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-    osDelay(1000);//delay 1s
-    // HAL_GPIO_WritePin(GPIOG, GPIO_PIN_4, GPIO_PIN_SET);
     /* Infinite loop */
 
-    uint32_t count = 0;
     for(;;)
     {
-        // HAL_GPIO_TogglePin(GPIoG, GPIO_PIN_5);
+        osDelay(500);
 
-        osDelay(10);
-
-        if (count++ % 50 == 0)
-        {
-            HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_4);
-        }
+        HAL_GPIO_TogglePin(GPIOG, GPIO_PIN_4);
     }
   /* USER CODE END StartDefaultTask */
 }

@@ -1,9 +1,9 @@
 #include "w5500_port.h"
 #include "socket.h"
 #include "tcp_tasks.h"
-#include "stdbool.h"
+#include <stdbool.h>
 #include "init_call.h"
-#include "main.h"
+#include <stdio.h>
 
 #define SOCK_TCPS   0
 
@@ -65,41 +65,52 @@ int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg))
     return device_w5500_rx_callback_register(fun_cb);
 }
 
+uint8_t tcp_socket_state_get(uint8_t sn)
+{
+    return getSn_SR(sn);
+}
+
 #ifdef IS_TCP_SERVER
 CLIENT_INFO client[MAX_CLIENT_NUM] = {-1};
 
-void tcp_server_init(void)
+static void tcp_server_init(void)
 {
     for (uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
     {
         client[i].socketNum = -1;
-        client[i].clientType = -1;
+        client[i].clientType = 0;
     }
-}					
+}
+
+void clearClientInfo(uint8_t s)
+{
+    client[s].connectStatus = 0;
+    client[s].clientType = 0;
+    client[s].socketNum = -1;
+    client[s].loopCnt = 0; 
+}
+
 static int8_t do_tcp_server_send(uint8_t sn)
 {
     int8_t ret = 0;
-    uint8_t status = getSn_SR(sn);
 
-    // printf("Socket %d status: %d\n", sn, status);
-
-    switch (status)
+    switch (getSn_SR(sn))
     {
     case SOCK_INIT:
-        listen(sn);
+        ret = listen(sn);
         break;
     case SOCK_ESTABLISHED:
-        tcp_establish_cb(sn);
+        tcp_establish_cb(sn); // period feedback here
         break;
     case SOCK_CLOSE_WAIT:
         osDelay(500);
-        close(sn);
+        ret = disconnect(sn);
         break;
     case SOCK_CLOSED:
+        clearClientInfo(sn);
         ret = socket(sn, Sn_MR_TCP, 80, 0);
         break;
-    default:
-        break;
+    default:    break;
     }
 
     return ret;
@@ -166,6 +177,7 @@ static int8_t tcp_init(osMessageQueueId_t queue)
 #ifdef IS_TCP_SERVER
     tcp_server_init();
 #endif
+
     return 0;
 }
 
@@ -178,7 +190,17 @@ static uint8_t tcp_link_detect(void)
 
 static int8_t tcp_link_state_recover(void)
 {
+#ifdef IS_TCP_SERVER
+    int8_t ret = 0;
+    for (uint8_t sn = 0; sn < MAX_CLIENT_NUM; sn++)
+    {
+        ret |= device_w5500_link_state_recover(sn);
+		clearClientInfo(sn);
+    }
+    return ret;
+#else
     return device_w5500_link_state_recover(socket_num_get());
+#endif
 }
 
 static int8_t tcp_data_recv_with_block(void)
@@ -223,7 +245,7 @@ static void TCPSendTask(void *argument)
         for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
         {
             ret = do_tcp_server_send(i);
-            if (ret != 0)
+            if (ret < 0)
             {
                 printf("do_tcp_server_send err:%d sn = %d\r\n", ret, i);
             }
@@ -280,7 +302,7 @@ static int8_t tcp_thread_init(void)
     };
      osThreadAttr_t tcp_send_attributes = {
     .name = "tcp_send_thread",
-    .stack_size = 4096 * 4,
+    .stack_size = 2048 * 4,
     .priority = (osPriority_t) osPriorityNormal,
     };
     osMutexAttr_t tcp_access_mutex_attributes = {

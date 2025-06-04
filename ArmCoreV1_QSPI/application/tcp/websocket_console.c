@@ -5,19 +5,13 @@
 #include "shell.h"
 #include <stddef.h>
 
-uint8_t websocket_console_sn = 0;
-
-uint8_t *get_websocket_console_sn(void) 
-{
-    return &websocket_console_sn;
-}
-
+static uint8_t websocket_console_sn = 0xFF;
 static int8_t websocket_write(uint8_t *buf, uint32_t len)
 {
     return ws_send(websocket_console_sn, buf, len, 1, 0, WDT_TXTDATA);
 }
 
-int8_t websocket_cmd_parse(uint8_t sn, uint8_t *buf, uint16_t len)
+int8_t websocket_shell_cmd_parse(uint8_t sn, uint8_t *buf, uint16_t len)
 {
     uint8_t *header = "[shell]";
 
@@ -36,7 +30,8 @@ static int8_t websocket_log_init(void)
     struct ulog_write_func_info info = {
     .func_init = NULL,
     .func_callback = websocket_write,
-    .index = 2};
+    .index = 2,
+    .level = ULOG_INFO_LEVEL};
 
     int8_t ret = ulog_write_func_register(&info);
     if (ret != 0)

@@ -76,6 +76,7 @@ static void Sync1Isr_callback(void)
 }
 #endif
 
+#undef USING_OSPI_OPTION_FUNCTION
 #ifdef USING_OSPI_OPTION_FUNCTION
 static DEVICE_OSPI_OPT device_lan9252_opt = {0};
 static int8_t lan9252_opt_before_write(DEVICE_OSPI *spi)

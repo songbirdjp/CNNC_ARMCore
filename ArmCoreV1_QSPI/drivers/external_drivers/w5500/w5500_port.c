@@ -1,5 +1,5 @@
 #include "drv_spi.h"
-#include "stdbool.h"
+#include <stdbool.h>
 #include "socket.h"
 
 static DEVICE_SPI device_w5500 = {0};
@@ -9,18 +9,7 @@ DEVICE_SPI *device_w5500_get(void)
     return &device_w5500;
 }
 
-// void SPI1_IRQHandler(void)
-// {
-//   /* USER CODE BEGIN SPI1_IRQn 0 */
-
-//   /* USER CODE END SPI1_IRQn 0 */
-//   HAL_SPI_IRQHandler((SPI_HandleTypeDef *)device_w5500_get());
-//   /* USER CODE BEGIN SPI1_IRQn 1 */
-
-//   /* USER CODE END SPI1_IRQn 1 */
-// }
-
-void SPI3_IRQHandler(void)
+void SPI1_IRQHandler(void)
 {
   /* USER CODE BEGIN SPI1_IRQn 0 */
 
@@ -32,26 +21,28 @@ void SPI3_IRQHandler(void)
 }
 
 static void w5500_irq_callback(void)
-{   
+{
     struct node_info
     {
         uint8_t *name;
         DEVICE_IRQ_LIST *node
-    }info = {"irq_line_2", NULL};
+    }info = {"irq_line_4", NULL};
 
     if (device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_IRQ_NODE_FIND, (void *)&info) == 0)
     {
         osEventFlagsSet(info.node->node_data->irq_event, info.node->node_data->irq_event_flag);
     }
+    
 }
+
 
 static void w5500_select(void)
 {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_10, GPIO_PIN_RESET);
 }
 static void w5500_deselect(void)
 {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOG, GPIO_PIN_10, GPIO_PIN_SET);
 }
 static void w5500_reset_ctrl(uint8_t flag)
 {
@@ -130,39 +121,25 @@ static int8_t w5500_chip_init(wiz_NetInfo *net_info)
 }
 
 #define USING_SENDOK_INTERRUPT
-// static void W5500_interrupt_init(uint8_t sn)
-// {
-//     intr_kind int_mask = IK_WOL | IK_PPPOE_TERMINATED | IK_DEST_UNREACH | IK_IP_CONFLICT | (1 << (8 + sn));
-//     wizchip_setinterruptmask(int_mask);
-    
-// #ifdef USING_SENDOK_INTERRUPT
-//     setSn_IMR(sn, Sn_IR_SENDOK | Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
-// #else
-//     setSn_IMR(sn, Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
-// #endif
-
-//     uint16_t intlevel = 2000;
-//     ctlwizchip(CW_SET_INTRTIME, (void *)&intlevel);
-
-//     /*set tcp timeout value*/
-//     wiz_NetTimeout net_timeout = {1, 16384};
-//     wizchip_settimeout(&net_timeout);
-
-//     setSn_KPALVTR(sn, 1);
-// }
 static void W5500_interrupt_init(uint8_t max_interrupt)
 {
     uint8_t sn;
 
-    intr_kind int_mask = IK_WOL | IK_PPPOE_TERMINATED | IK_DEST_UNREACH | IK_IP_CONFLICT ;
-    for(sn = 0; sn < max_interrupt; sn++)  int_mask |= (1 << (8 + sn));
+    intr_kind int_mask = IK_WOL | IK_PPPOE_TERMINATED | IK_DEST_UNREACH | IK_IP_CONFLICT;
+    for(sn = 0; sn < max_interrupt; sn++)
+    {
+        int_mask |= (1 << (8 + sn));
+    }
     ctlwizchip(CW_SET_INTRMASK, (void *)&int_mask);
     
+    for (sn = 0; sn < max_interrupt; sn++)
+    {
 #ifdef USING_SENDOK_INTERRUPT
-    setSn_IMR(sn, Sn_IR_SENDOK | Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
+        setSn_IMR(sn, Sn_IR_SENDOK | Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
 #else
-    setSn_IMR(sn, Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
+        setSn_IMR(sn, Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
 #endif
+    }
 
     uint16_t intlevel = 2000;
     ctlwizchip(CW_SET_INTRTIME, (void *)&intlevel);
@@ -171,7 +148,10 @@ static void W5500_interrupt_init(uint8_t max_interrupt)
     wiz_NetTimeout net_timeout = {1, 16384};
     wizchip_settimeout(&net_timeout);
 
-    for(sn = 0; sn < max_interrupt; sn++)   setSn_KPALVTR(sn, 1);
+    for(sn = 0; sn < max_interrupt; sn++)
+    {
+        setSn_KPALVTR(sn, 12);// 1 minutes, to detect and release disconnected socket
+    }
 }
 
 static void W5500_interrupt_status_print(uint8_t sn)
@@ -189,122 +169,6 @@ static void W5500_interrupt_status_print(uint8_t sn)
     // }
 }
 #include "tcp_tasks.h"
-// static int32_t w5500_irq_process(void)
-// {
-//     uint16_t interrupt_type = 0; // SIR << 8 | IR
-//     uint8_t reg_ir = 0, reg_sir = 0, reg_sn_ir = 0;
-//     uint8_t sn = 0;
-//     uint32_t clr_cnt = 0;
-//     int32_t recv_ret = 0;
-   
-//     if (ctlwizchip(CW_GET_INTERRUPT, &interrupt_type) != 0)
-//     {
-//         printf("W5500 get interrupt err\r\n");
-//     }
-
-//     reg_ir = interrupt_type & 0xFF;
-//     reg_sir = interrupt_type >> 8;
-
-//     if (reg_ir)
-//     {
-//         printf("IR interrupt:%x\r\n", reg_ir);
-//         setIR(reg_ir);
-//         while(getIR() & reg_ir);
-//     }
-
-//     for (uint8_t i = 0; i < _WIZCHIP_SOCK_NUM_; i++)
-//     {
-//         if (reg_sir & (1 << i))
-//         {
-//             sn = i;
-//             break;
-//         }
-//     }
-
-//     reg_sn_ir = getSn_IR(sn);  
-
-//     if (reg_sn_ir) // 清除中断标志位
-//     {
-//         // printf("reg_sn_ir:%x\r\n", reg_sn_ir);
-//         (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: Connected to server succeed\r\n", sn) : NULL;
-//         (reg_sn_ir & Sn_IR_DISCON) ? printf("tcp client disconnect to server\r\n") : NULL;
-//         // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp client recv interrupt\r\n") : NULL;
-//         (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("tcp client timeout interrupt\r\n") : NULL;
-//         // (reg_sn_ir & Sn_IR_SENDOK) ? socket_sending_status_set(socket_sending_status_get() & (~(1<<sn))) : NULL;
-
-//         if (reg_sn_ir & Sn_IR_SENDOK)
-//         {
-//             uint8_t sending_state = 0;
-//             ctlsocket(sn, CS_GET_SENDING_STATE, &sending_state);
-//             sending_state &= ~(1<<sn);
-//             ctlsocket(sn, CS_SET_SENDING_STATE, &sending_state);
-//         }
-
-//         setSn_IR(sn, reg_sn_ir); // 清除中断标志位
-
-//         while(getSn_IR(sn))
-//         {
-//             if (++clr_cnt % 5 == 0)
-//             {
-//                 reg_sn_ir = getSn_IR(sn);
-//                 setSn_IR(sn, reg_sn_ir);
-//             }
-//         }
-//         (clr_cnt != 0) ? printf("clr_cnt: %u\r\n", clr_cnt) : NULL;
-        
-//     }
-
-//     DEVICE_SPI *dev = device_w5500_get();
-//     int32_t recv_len = 0;
-
-//     // printf("sn:%d\r\n", sn);
-
-//     switch (getSn_SR(sn))                  /*获取socket的状态*/
-//     {
-//         case SOCK_CLOSED:/*socket处于关闭状态*/
-//             break;
-
-//         case SOCK_INIT:                      /*socket处于初始化状态*/
-//             break;
-
-//         case SOCK_ESTABLISHED:               /*socket处于连接建立状态*/
-//             recv_len = getSn_RX_RSR(sn);            /*获取接收的数据长度*/
-//             if (recv_len > 0)  //接收到数据
-//             {
-//                 recv_ret = recv(sn, dev->rx_buf, recv_len);     /*接收来自Server的数据*/
-//                 if (recv_ret <= SOCK_BUSY)
-//                 {
-//                     printf("tcp client receive err:%d\r\n", recv_ret);
-//                     return recv_ret;
-//                 }
-//                // *(uint16_t *)&dev->rx_buf[dev->rx_buf_len] = recv_len;  /* TODO: must according to static TCP_DATA_t */
-//                 TCP_DATA_t rxBufTmp = {0};
-//                 rxBufTmp.sn = sn;
-//                 rxBufTmp.Len = recv_len;
-//                 memcpy(rxBufTmp.gDATABUF, dev->rx_buf, recv_len);
-//                 recv_ret = osMessageQueuePut(dev->rx_queue, &rxBufTmp, 0, 100);
-//                 if (recv_ret != osOK)
-//                 {
-//                     printf("w5500 queue put err:%d\r\n", recv_ret);
-//                     return recv_ret;
-//                 }
-                
-//                 if (dev->rx_cb != NULL)
-//                 {
-//                     dev->rx_cb(dev);
-//                 }
-//             }
-//             break;
-
-//         case SOCK_CLOSE_WAIT:        /*socket处于等待关闭状态*/
-//             break;
-
-//         default:
-//             break;
-//     }
-
-//     return recv_len;
-// }
 static int32_t w5500_irq_process(void)
 {
     uint16_t interrupt_type = 0; // SIR << 8 | IR
@@ -317,6 +181,7 @@ static int32_t w5500_irq_process(void)
     {
         printf("W5500 get interrupt err\r\n");
     }
+
     reg_ir = interrupt_type & 0xFF;
     reg_sir = interrupt_type >> 8;
 
@@ -341,10 +206,10 @@ static int32_t w5500_irq_process(void)
     if (reg_sn_ir) // 清除中断标志位
     {
         // printf("reg_sn_ir:%x\r\n", reg_sn_ir);
-        (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: Connected to peer succeed\r\n", sn) : NULL;
-        (reg_sn_ir & Sn_IR_DISCON) ? printf("disconnect to peer\r\n") : NULL;
+        (reg_sn_ir & Sn_IR_CON) ? printf("socket %d: connect to peer succeed\r\n", sn) : NULL;
+        (reg_sn_ir & Sn_IR_DISCON) ? printf("socket %d: disconnect to peer\r\n", sn) : NULL;
         // (reg_sn_ir & Sn_IR_RECV) ? printf("tcp recv interrupt\r\n") : NULL;
-        (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("tcp timeout interrupt\r\n") : NULL;
+        (reg_sn_ir & Sn_IR_TIMEOUT) ? printf("socket %d: tcp timeout interrupt\r\n", sn) : NULL;
         // (reg_sn_ir & Sn_IR_SENDOK) ? socket_sending_status_set(socket_sending_status_get() & (~(1<<sn))) : NULL;
 
         if (reg_sn_ir & Sn_IR_SENDOK)
@@ -523,8 +388,8 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
 #endif
 
 #ifdef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
-    device_w5500_irq_init(&device_w5500, "irq_line_2");
-    gpio_pin_irq_callback_register("GPIOE_2", w5500_irq_callback);//cjh change for afc ex  ethernet
+    device_w5500_irq_init(&device_w5500, "irq_line_4");
+    gpio_pin_irq_callback_register("GPIOD_4", w5500_irq_callback);
 #endif
 
     ret = device_w5500_get()->open(device_w5500_get());
@@ -534,7 +399,7 @@ int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name)
         return ret;
     }
 
-    return w5500_chip_init(net_info);;
+    return w5500_chip_init(net_info);
 }
 
 int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len)
@@ -558,18 +423,6 @@ int8_t device_w5500_rx_callback_register(void (*callback)(void *arg))
     return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_SET_RX_CALLBACK, (void *)callback);
 }
 
-// int8_t device_w5500_interrupt_init(uint8_t sn)
-// {
-//     if (sn > 7)
-//     {
-//         return -1;
-//     }
-
-//     W5500_interrupt_init(sn);
-
-//     return 0;
-// }
-
 int8_t device_w5500_interrupt_init(uint8_t max_interrupt)
 {
     if (max_interrupt > 8)
@@ -589,7 +442,7 @@ uint8_t device_w5500_phy_link_status_get(void)
 
 int8_t device_w5500_link_state_recover(uint8_t sn)
 {
-    if (sn > 7)
+    if (sn >= _WIZCHIP_SOCK_NUM_)
     {
         return -1;
     }
@@ -601,7 +454,7 @@ int8_t device_w5500_link_state_recover(uint8_t sn)
     if (sock_open_status == true)
     {
         close(sn);
-        // printf("close socket:%d\r\n", sn);
+        printf("close socket:%d\r\n", sn);
     }
 
     return 0;
@@ -613,7 +466,7 @@ int8_t device_w5500_data_recv_with_block(void)
         uint8_t *name;
         char splitter;
         uint32_t timeout
-    }info = {"irq_line_2", ' ', osWaitForever};
+    }info = {"irq_line_4", ' ', osWaitForever};
 
     return device_w5500_get()->ioctl(device_w5500_get(), SPI_CMD_IRQ_WAIT_WITH_BLOCK, (void *)&info);
 }

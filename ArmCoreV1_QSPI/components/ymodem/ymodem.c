@@ -960,7 +960,7 @@ static int8_t ymodem_thread_init(uint8_t argc, uint8_t **argv)
 
     return 0;
 }
-// INIT_APP_EXPORT(ymodem_thread_init);
+INIT_APP_EXPORT(ymodem_thread_init);
 
 static int8_t ymodem_start(uint8_t argc, uint8_t **argv)
 {

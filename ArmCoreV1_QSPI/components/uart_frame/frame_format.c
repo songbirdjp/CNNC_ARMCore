@@ -104,12 +104,12 @@ int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t
     }
 
     /* 2. check crc32 */
-    HAL_StatusTypeDef stat = hardware_crc_config(CRC32);
-    if (stat != HAL_OK)
-    {
-        LOG_E("hw crc32 config error\r\n");
-        return -3;
-    }
+    // HAL_StatusTypeDef stat = hardware_crc_config(CRC32);
+    // if (stat != HAL_OK)
+    // {
+    //     LOG_E("hw crc32 config error\r\n");
+    //     return -3;
+    // }
 
     uint16_t len = buf[4] | buf[4 + 1] << 8;
     LOG_I("len = %d\r\n",len);
@@ -118,7 +118,7 @@ int8_t frame_format_parse(struct frame_statistics *stats, uint8_t *buf, uint16_t
         LOG_E("size error: %d, %d\r\n", size, len);
         ret = -4;
     }
-    uint32_t crc_cal = hardware_crc_calculate(&buf[2], len + 4) ^ 0xFFFFFFFF;
+    uint32_t crc_cal = hardware_crc_calculate(CRC32, &buf[2], len + 4) ^ 0xFFFFFFFF;
     uint32_t crc_recv = buf[len + 6] | buf[len + 6 +1] << 8 | buf[len + 6 + 2] << 16 | buf[len + 6 + 3] << 24;
     if (crc_cal != crc_recv)
     {
@@ -212,14 +212,14 @@ int8_t frame_format_pack_and_send(struct frame_statistics *stats, uint8_t *buf, 
     memcpy(&buf_send[FRAME_DATA_OFFSET], buf, len);//14
 
     /* 5. fill crc32 */
-    HAL_StatusTypeDef stat = hardware_crc_config(CRC32);
-    if (stat != HAL_OK)
-    {
-        LOG_E("hw crc32 config error\r\n");
-        return -2;
-    }
+    // HAL_StatusTypeDef stat = hardware_crc_config(CRC32);
+    // if (stat != HAL_OK)
+    // {
+    //     LOG_E("hw crc32 config error\r\n");
+    //     return -2;
+    // }
     // LOG_I("len: %d\r\n", len);
-    uint32_t crc_cal = hardware_crc_calculate(&buf_send[FRAME_COUNT_OFFSET], len + 1 + FRAME_COUNT_LEN + FRAME_PAYLOAD_LEN_LEN + 7) ^ 0xFFFFFFFF;
+    uint32_t crc_cal = hardware_crc_calculate(CRC32, &buf_send[FRAME_COUNT_OFFSET], len + 1 + FRAME_COUNT_LEN + FRAME_PAYLOAD_LEN_LEN + 7) ^ 0xFFFFFFFF;
     buf_send[len + FRAME_DATA_OFFSET] = crc_cal & 0xFF;
     buf_send[len + FRAME_DATA_OFFSET + 1] = (crc_cal >> 8) & 0xFF;
     buf_send[len + FRAME_DATA_OFFSET + 2] = (crc_cal >> 16) & 0xFF;

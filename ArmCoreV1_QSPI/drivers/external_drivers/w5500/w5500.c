@@ -96,8 +96,7 @@ uint8_t  WIZCHIP_READ(uint32_t AddrSel)
 void     WIZCHIP_WRITE(uint32_t AddrSel, uint8_t wb )
 {
     uint8_t spi_data[4];
-    // printf("WIZCHIP_WRITE  AddrSel= %x\n",AddrSel);
-    // printf("WIZCHIP_WRITE wb = %x\n",AddrSel);
+
     WIZCHIP_CRITICAL_ENTER();
     WIZCHIP.CS._select();
 

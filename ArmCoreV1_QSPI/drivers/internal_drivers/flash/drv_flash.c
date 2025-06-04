@@ -1,7 +1,7 @@
 #include "drv_flash.h"
 #include "stm32h7xx_hal.h"
 #include "init_call.h"
-#include "ulog.h"
+
 #define FLASH_OPERATION_SUCCEED_EVENT    (1 << 0)
 
 #ifdef OS_FREERTOS
@@ -46,12 +46,12 @@ void HAL_FLASH_OperationErrorCallback(uint32_t ReturnValue)
 }
 #endif
 
-uint32_t flash_sector_get(uint32_t address)
+static uint32_t flash_sector_get(uint32_t address)
 {
     return (address - FLASH_BASE) / FLASH_SECTOR_SIZE;
 }
 
-int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, uint32_t address_end, uint32_t timeout)   /* 不包含address_end地址所在的扇区 */
+static int8_t flash_erase_sector(DEVICE_FLASH *flash, uint32_t address_start, uint32_t address_end, uint32_t timeout)   /* 不包含address_end地址所在的扇区 */
 {
     if (flash == NULL)
     {
@@ -142,7 +142,7 @@ out:
     return ret;
 }
 
-int8_t flash_open(DEVICE_FLASH *flash)
+static int8_t flash_open(DEVICE_FLASH *flash)
 {
     if (flash->open_state)
     {
@@ -157,7 +157,7 @@ int8_t flash_open(DEVICE_FLASH *flash)
     return 0;
 }
 
-int8_t flash_close(DEVICE_FLASH *flash)
+static int8_t flash_close(DEVICE_FLASH *flash)
 {
     if (flash->open_state)
     {
@@ -186,13 +186,14 @@ int8_t flash_close(DEVICE_FLASH *flash)
     return 0;
 }
 
-int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
+static int8_t flash_write(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
 {
     if (flash == NULL || buf == NULL || size == 0)
     {
         printf("ptr is null or size is 0\r\n");
         return -1;
     }
+
     if (offset + size > flash->size || offset % 32 != 0)
     {
         return -2;
@@ -276,7 +277,7 @@ out:
     return ret;
 }
 
-int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
+static int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t size, uint32_t timeout)
 {
     if (flash == NULL || buf == NULL || size == 0 || offset & 0x3 != 0)
     {
@@ -322,7 +323,7 @@ int8_t flash_read(DEVICE_FLASH *flash, uint32_t offset, uint8_t *buf, uint32_t s
     return 0;
 }
 
-int8_t flash_ioctl(DEVICE_FLASH *flash, uint8_t cmd, void *arg)
+static int8_t flash_ioctl(DEVICE_FLASH *flash, uint8_t cmd, void *arg)
 {
     if (flash == NULL || arg == NULL)
     {
@@ -354,7 +355,7 @@ int8_t flash_init(DEVICE_FLASH *flash, uint8_t *device_name)
 {
     if (flash == NULL || device_name == NULL)
     {
-        printf("cjh1ptr is null\r\n");
+        printf("ptr is null\r\n");
         return -1;
     }
 
@@ -427,12 +428,8 @@ int8_t flash_operation_address_set(DEVICE_FLASH *flash, uint32_t addr_base, uint
 #ifndef FLASH_TEST
 #include "shell.h"
 
-#define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)//0x08000000UL + 0x00020000UL* 6 = 0x080C0000UL
-#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2) //0x00020000UL * 2 = 0x00040000UL
-
-#define FLASH_AFC_ADC1_BASE                 FLASH_ADDRESS_BASE// 0x080C0000UL
-#define FLASH_AFC_ADC1_OFFSET               FLASH_SECTOR_SIZE * 6
-#define FLASH_AFC_ADC2_OFFSET                 FLASH_SECTOR_SIZE * 7// 0x080E0000UL 
+#define FLASH_ADDRESS_BASE  (FLASH_BASE + FLASH_SECTOR_SIZE * 6)
+#define FLASH_VALID_SIZE    (FLASH_SECTOR_SIZE * 2)
 
 static DEVICE_FLASH flash_bank1 = {0};
 static DEVICE_FLASH *device_flash_get(void)
@@ -479,6 +476,7 @@ int8_t flash_test(uint8_t argc, char *argv[])
     uint32_t CRC_Result = 0;
     uint8_t data[1024] = {0};
     uint32_t flash_cfg[2] = {FLASH_ADDRESS_BASE, FLASH_VALID_SIZE};
+
     switch (atoi(argv[1]))
     {
     case 0:
@@ -505,21 +503,21 @@ int8_t flash_test(uint8_t argc, char *argv[])
             return -3;
         }
 
-        for (uint32_t i = 0; i < 256; i += 16) 
+        for (uint32_t i = 0; i < sizeof(data); i += 16)
         {
-            LOG_E("%08x: ", FLASH_ADDRESS_BASE + i);
-            for (uint32_t j = 0; j < 256; j++)
+            printf("%08x: ", FLASH_ADDRESS_BASE + i);
+            for (uint32_t j = 0; j < 16; j++)
             {
-                LOG_E("%02x ", data[i + j]);
+                printf("%02x ", data[i + j]);
             }
-            LOG_E("\r\n");
+            printf("\r\n");
         }
         break;
 
     case 2:
         for (uint32_t i = 0; i < sizeof(data); i++)
         {
-            data[i] = i; 
+            data[i] = i;
         }
 
         ret = flash->write(flash, 0, data, sizeof(data), 1000);

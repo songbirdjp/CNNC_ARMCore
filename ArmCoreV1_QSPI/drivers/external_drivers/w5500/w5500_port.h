@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define DEVICE_NAME_DEFAULT     "spi3"
+#define DEVICE_NAME_DEFAULT     "spi1"
 
 int8_t device_w5500_init(wiz_NetInfo *net_info, uint8_t *device_name);
 int8_t device_w5500_rx_buffer_init(uint8_t *buf, uint16_t len);

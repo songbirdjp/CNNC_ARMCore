@@ -12,8 +12,7 @@ extern "C" {
 enum mcu_adc_channel
 {
     MCU_ADC_CHANNEL_P5V = 0,
-    MCU_ADC_CHANNEL_N500V,
-    MCU_ADC_CHANNEL_N5V,
+    MCU_ADC_CHANNEL_REF,
 };
 
 float mcu_adc_value_get(enum mcu_adc_channel channel);

@@ -13,7 +13,7 @@ extern "C" {
 #define DEVICE_NAME_ADC3_DEFAULT    "ADC3"
 
 #define ADC1_CHANNEL_NUM            2
-#define ADC3_CHANNEL_NUM            4
+#define ADC3_CHANNEL_NUM            3
 
 #define ADC_CHANNEL_NUM_MAX         (ADC1_CHANNEL_NUM > ADC3_CHANNEL_NUM ? ADC1_CHANNEL_NUM : ADC3_CHANNEL_NUM)
 
