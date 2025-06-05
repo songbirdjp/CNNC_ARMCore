@@ -55,30 +55,16 @@ extern "C"
         osMessageQueueId_t queue_group[RTM_MODULE_MAX];
     } rtm_module_info_t;
 
-typedef struct app_not_ready_event_table
-{
-    uint32_t reserved : 32;
-} app_not_ready_event_table_t;
-
-typedef struct app_serious_interlock_table
-{
-    uint32_t HvEN : 1;
-    uint32_t KVTreatmentEn : 1;
-    uint32_t MVTreatmentEn : 1;
-    uint32_t reserved : 29;
-} app_serious_interlock_table_t;
 
     typedef struct app_rtm_main
     {
         manage_info_t manage_info;
 
-    app_not_ready_event_table_t not_ready_event;
-    uint32_t warning_interlock;
-    uint32_t minor_interlock;
-    app_serious_interlock_table_t serious_interlock;
+        rtm_fault_check_t fault_check;
+        interlock_table_t interlock_table;
 
-    uint32_t interlock_override;
-    uint32_t unready_override;
+        uint32_t interlock_override;
+        uint32_t unready_override;
 
     // rtm_state_machine_t state_machine;
     rtm_StateMachine_t state_machine;

@@ -55,26 +55,6 @@ typedef struct
 static int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len);
 static app_rtm_main_t app_rtm;
 
-static void app_rtm_fault_detect_entry(void *argument)
-{
-    app_rtm_main_t *self = (app_rtm_main_t *)argument;
-    for (;;)
-    {
-        osDelay(100);
-    }
-}
-static void app_rtm_not_ready_event(app_rtm_main_t *self)
-{
-    dido_structure_t dido_structure = {0};
-    if (self == NULL)
-    {
-        return;
-    }
-
-    app_di_get(&(self->app_dido), &dido_structure);
-
-    *(uint32_t *)&(self->not_ready_event) &= ~(self->unready_override);
-}
 osThreadId_t app_rtm_main_threadId;
 #define RTM_MAIN_THREAD_CYCLE_MS (1)
 static void app_rtm_main_thread(void *argument)
@@ -90,6 +70,7 @@ static void app_rtm_main_thread(void *argument)
     current_time = osKernelGetTickCount();
     last_time = current_time;
 
+    uint8_t system_state_require = 0;
     Event_t rtm_event = {0};
     rtm_state_machine_ctor(&(self->state_machine), self);
     for (;;)
@@ -97,26 +78,27 @@ static void app_rtm_main_thread(void *argument)
         status = osMessageQueueGet(self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].module_queue, &queue_frame, NULL, 0);
         if (status == osOK)
         {
-            if (queue_frame.payload.type == 0x03) /*参数配置帧*/
+            uint8_t type = queue_frame.payload.type;
+            uint8_t cmd = queue_frame.payload.data[0];
+            switch (type)
             {
-                // TODO: 处理参数配置帧
-            }
-            else if (queue_frame.payload.type == 0x04) /*参数获取帧*/
+            case 0x03: /*参数配置帧*/
+                break;
+            case 0x04: /*参数获取帧*/
+                break;
+            case 0x05: /*SET帧*/
             {
-                // TODO: 处理参数获取帧
-            }
-            else if (queue_frame.payload.type == 0x05) /*SET帧*/
-            {
-                // TODO: 处理SET帧
-                if (queue_frame.payload.data[0] == 0x1F)
+                switch (cmd)
                 {
-                    rtm_event.sig = queue_frame.payload.data[1];
-                    rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                case 0x1F: /*系统状态设置*/
+                {
+                    system_state_require = queue_frame.payload.data[1];
 
                     self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[3]);
                     self->unready_override = *(uint32_t *)&(queue_frame.payload.data[7]);
+                    break;
                 }
-                else if (queue_frame.payload.data[0] == 0x02)
+                case 0x02: /*故障清除*/
                 {
                     // 清除故障
                     if (queue_frame.payload.data[1] & 0x01)
@@ -124,28 +106,29 @@ static void app_rtm_main_thread(void *argument)
                         rtm_event.sig = ERROR_SIG;
                         rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
                     }
+                    break;
                 }
+                }
+                break;
             }
-            else if (queue_frame.payload.type == 0x06) /*GET帧*/
-            {
-                // TODO: 处理GET帧
-            }
-            else
-            {
-                // TODO: 处理未知帧
+            case 0x06: /*GET帧*/
+                break;
+            default:
+                break;
             }
         }
         // 轮询状态机
-        app_rtm_not_ready_event(self);
+        rtm_event.sig = system_state_require;
+        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
 
         rtm_event.sig = TIME_SIG;
         rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
 
         rtm_status.fsm_state_current = rtm_get_state(&(self->state_machine));
-        rtm_status.not_ready_event = *(uint32_t *)&(self->not_ready_event);
-        rtm_status.warning_interlock = *(uint32_t *)&(self->warning_interlock);
-        rtm_status.minor_interlock = *(uint32_t *)&(self->minor_interlock);
-        rtm_status.serious_interlock = *(uint32_t *)&(self->serious_interlock);
+        rtm_status.not_ready_event = *(uint32_t *)&(self->interlock_table.not_ready_event);
+        rtm_status.warning_interlock = *(uint32_t *)&(self->interlock_table.warning_interlock);
+        rtm_status.minor_interlock = *(uint32_t *)&(self->interlock_table.minor_interlock);
+        rtm_status.serious_interlock = *(uint32_t *)&(self->interlock_table.serious_interlock);
 
         if (memcmp(&rtm_status_old, &rtm_status, sizeof(rtm_status_t)) != 0)
         {
@@ -513,10 +496,10 @@ int32_t uart_protocol_set_rx_callback(struct uart_protocol *const self,
 }
 
 int32_t uart_protocol_pnt_rx_callback(struct uart_protocol *const self,
-                                            uint32_t ID,
-                                            const uint8_t *data,
-                                            uint16_t *len,
-                                            void *arg)
+                                      uint32_t ID,
+                                      const uint8_t *data,
+                                      uint16_t *len,
+                                      void *arg)
 {
     uint64_t timestamp_ns = 0;
     memcpy(&timestamp_ns, data, *len);
@@ -637,9 +620,9 @@ exit:
 }
 
 int32_t uart_protocol_pnt_tx_callback(struct uart_protocol *const self,
-                                            uint8_t *data,
-                                            uint16_t *len,
-                                            void *arg)
+                                      uint8_t *data,
+                                      uint16_t *len,
+                                      void *arg)
 {
     uint64_t timestamp_ns = timestamp_ns_get();
     memcpy(data, &timestamp_ns, sizeof(uint64_t));
@@ -665,7 +648,7 @@ static void app_module_tx_thread(void *argument)
             goto exit;
         }
     }
-    
+
     ret = uart_protocol_open(&self->uart_protocol);
     if (ret != 0)
     {
