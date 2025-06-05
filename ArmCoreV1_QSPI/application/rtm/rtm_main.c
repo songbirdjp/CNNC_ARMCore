@@ -849,6 +849,8 @@ static void app_cpg_tx_thread(void *argument)
     int8_t ret = 0;
     uint16_t tx_len = sizeof(cpg_send_structure_t);
     cpg_send_structure_t send_data = {0}, send_data_bak = {0};
+    memset(&send_data, 0, sizeof(cpg_send_structure_t));
+    memset(&send_data_bak, 0, sizeof(cpg_send_structure_t));
     for (;;)
     {
         status = osMessageQueueGet(self->rtm_module_info[RTM_MODULE_CPG].module_queue, &queue_frame, NULL, 0xFFFFFFFF);

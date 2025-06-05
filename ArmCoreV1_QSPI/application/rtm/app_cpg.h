@@ -29,7 +29,7 @@ extern "C"
         uint8_t Vibration;
         uint8_t Backlight;
         uint8_t buzzer;
-        uint8_t Reserve[8];
+        uint8_t Reserve[48];
     } __attribute__((aligned(1), packed)) cpg_send_structure_t;
 
     typedef struct cpg_recv_structure
@@ -40,7 +40,7 @@ extern "C"
         uint32_t FirmWareVersion;
 
         uint32_t CpgButton;
-        uint8_t Reserve[8];
+        uint8_t Reserve[52];
     } __attribute__((aligned(1), packed)) cpg_recv_structure_t;
 
 #ifdef __cplusplus
