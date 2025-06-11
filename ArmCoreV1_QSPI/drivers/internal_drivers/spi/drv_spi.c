@@ -1,6 +1,7 @@
 #include "drv_spi.h"
 #include "utilities.h"
 #include "spi.h"
+#include "ulog.h"
 
 #define SPI_SEND_SUCCEED_EVENT      (1<<0)
 #define SPI_RECV_SUCCEED_EVENT      (1<<1)
@@ -8,7 +9,7 @@
 static void ErrorCallback(SPI_HandleTypeDef *hspi)
 {
     DEVICE_SPI *spi = (DEVICE_SPI *)hspi;
-    
+
     printf("%s err\r\n", spi->name);
 }
 static void TxCpltCallback(SPI_HandleTypeDef *hspi)
@@ -32,7 +33,7 @@ static void RxCpltCallback(SPI_HandleTypeDef *hspi)
             ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
             if (ret != osOK)
             {
-                printf("%s queue put err:%d\r\n", spi->name, ret);
+                LOG_E("%s queue put err:%d\r\n", spi->name, ret);
             }
         }
 
@@ -56,7 +57,7 @@ static void TxRxCpltCallback(SPI_HandleTypeDef *hspi)
             ret = osMessageQueuePut(spi->rx_queue, spi->rx_buf, 0, 0);
             if (ret != osOK)
             {
-                printf("%s queue put err:%d\r\n", spi->name, ret);
+                LOG_E("%s queue put err:%d\r\n", spi->name, ret);
             }
         }
 
@@ -403,13 +404,13 @@ static int8_t spi_dma_rx_buf_init(DEVICE_SPI *spi, uint8_t *buf, uint16_t len)
         printf("ptr is null\r\n");
         return -1;
     }
-    
+
     if (len == 0)
     {
         printf("len is zero\r\n");
         return -2;
     }
-    
+
     spi->rx_buf = buf;
     spi->rx_buf_len = len;
 
@@ -446,7 +447,7 @@ static int8_t device_irq_node_add(DEVICE_SPI *spi, IRQ_INFO_NODE *node)
             printf("device irq %s malloc err\r\n", node->node_name);
             return -2;
         }
-        
+
         spi->irq_list->next = NULL;
         spi->irq_list->node_data = node;
 
@@ -514,7 +515,7 @@ static int8_t device_irq_node_delete(DEVICE_SPI *spi, uint8_t *node_name)
 
     DEVICE_IRQ_LIST *ptr = spi->irq_list;
     DEVICE_IRQ_LIST *ptr_pre = NULL;
-    
+
     while (ptr != NULL && strcmp(ptr->node_data->node_name, node_name) != 0)
     {
         ptr_pre = ptr;
@@ -607,7 +608,7 @@ static int8_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, ch
         return -1;
     }
 
-    int8_t ret = 0;   
+    int8_t ret = 0;
 
     uint8_t name_buf[50] = {0};
     uint8_t *argv[5] = {NULL};
@@ -622,7 +623,7 @@ static int8_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, ch
     for (uint8_t i = 0; i < name_num; i++)
     {
         ret = device_irq_node_find(spi, argv[i], &node_res);
-        if (ret == 0 && node_res != NULL) 
+        if (ret == 0 && node_res != NULL)
         {
             flag |= node_res->node_data->irq_event_flag;
             event = node_res->node_data->irq_event;
@@ -635,7 +636,7 @@ static int8_t device_irq_wait_with_block(DEVICE_SPI *spi, uint8_t *node_name, ch
 
         // printf("[%d]: %s\r\n", i, argv[i]);
     }
- 
+
     uint32_t ret_val = osEventFlagsWait(event, flag, osFlagsWaitAny, timeout);
     if ((ret_val & flag) != ret_val)
     {
@@ -709,7 +710,7 @@ static int8_t spi_ioctl(DEVICE_SPI *spi, uint8_t cmd, void *arg)
             printf("device %s irq node add err:%d\r\n", spi->name, ret);
         }
         break;
-    
+
     case SPI_CMD_IRQ_NODE_DEL:
         ret = device_irq_node_delete(spi, (uint8_t *)arg);
         if (ret != 0)
@@ -851,7 +852,7 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     .name = "spi_tx_event"
     };
     spi->tx_event = osEventFlagsNew(&spi_tx_event_attributes);
-    
+
     const osEventFlagsAttr_t spi_rx_event_attributes = {
     .name = "spi_rx_event"
     };
@@ -865,7 +866,7 @@ int8_t spi_init(DEVICE_SPI *spi, uint8_t *device_name, SPI_MODE mode)
     // }
 
     // spi->rx_buf_len = sizeof(struct CmdMessage) - sizeof(uint16_t); /* indicate rx buf max len */
-    
+
     /* 4. register callback function */
     HAL_SPI_RegisterCallback((SPI_HandleTypeDef *)spi, HAL_SPI_ERROR_CB_ID, ErrorCallback);
     HAL_SPI_RegisterCallback((SPI_HandleTypeDef *)spi, HAL_SPI_TX_COMPLETE_CB_ID, TxCpltCallback);

@@ -2,6 +2,7 @@
 #include "ltc2632_port.h"
 #include "cmsis_os2.h"
 #include "init_call.h"
+#include "ulog.h"
 
 static osMessageQueueId_t ltc2632_queue = NULL;
 struct ltc2632_object ltc2632_data = {.value.bits.cmd = 0x02, .out_a_value = 1500, .out_b_value = 1500};
@@ -15,14 +16,14 @@ int8_t ltc2632_data_write(struct ltc2632_object *buf)
 {
     if (buf == NULL)
     {
-        printf("buf is NULL\r\n");
+        LOG_E("buf is NULL\r\n");
         return -1;
     }
 
     osStatus_t stat = osMessageQueuePut(ltc2632_queue, buf, 0, 0);
     if (stat != osOK)
     {
-        printf("ltc2632_data_write err: %d\r\n", stat);
+        LOG_E("ltc2632_data_write err: %d\r\n", stat);
         return -2;
     }
 
@@ -43,7 +44,7 @@ uint16_t ltc2632_data_value_get(uint8_t channel)
         value = ltc2632->out_b_value;
         break;
     default:
-        printf("invalid channel: %d\r\n", channel);
+        LOG_E("invalid channel: %d\r\n", channel);
         value = 0;
         break;
     }
@@ -58,14 +59,14 @@ static int8_t ltc2632_init(void)
     ret = device_ltc2632_init(DEVICE_LTC2632_NAME_DEFAULT);
     if (ret != 0)
     {
-        printf("device_ltc2632_init err: %d\r\n", ret);
+        LOG_E("device_ltc2632_init err: %d\r\n", ret);
         return -1;
     }
 
     ret = device_ltc2632_open();
     if (ret != 0)
     {
-        printf("device_ltc2632_open err: %d\r\n", ret);
+        LOG_E("device_ltc2632_open err: %d\r\n", ret);
         return -2;
     }
 
@@ -81,7 +82,7 @@ static int8_t ltc2632_process_entry(void *argument)
     ret = ltc2632_init();
     if (ret != 0)
     {
-        printf("ltc2632_init err: %d\r\n", ret);
+        LOG_E("ltc2632_init err: %d\r\n", ret);
         return -1;
     }
 
@@ -92,7 +93,7 @@ static int8_t ltc2632_process_entry(void *argument)
         ret = device_ltc2632_write(&buf, 1, 1000);
         if (ret != 0)
         {
-            printf("device_ltc2632_write err: %d\r\n", ret);
+            LOG_E("device_ltc2632_write err: %d\r\n", ret);
         }
     }
 
@@ -101,7 +102,7 @@ static int8_t ltc2632_process_entry(void *argument)
 
 static int8_t ltc2632_thread_init(void)
 {
-    ltc2632_queue = osMessageQueueNew(15, sizeof(struct ltc2632_object), NULL);
+    ltc2632_queue = osMessageQueueNew(32, sizeof(struct ltc2632_object), NULL);
     if (ltc2632_queue == NULL)
     {
         printf("ltc2632_queue create failed\r\n");

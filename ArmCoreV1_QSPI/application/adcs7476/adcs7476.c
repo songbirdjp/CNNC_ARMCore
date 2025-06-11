@@ -107,7 +107,7 @@ static int8_t adcs7476_object_init(uint8_t *device_name, osEventFlagsId_t event)
         return -4;
     }
 
-    obj->queue = osMessageQueueNew(15, sizeof(uint16_t) * obj->buf_len, NULL);
+    obj->queue = osMessageQueueNew(32, sizeof(uint16_t) * obj->buf_len, NULL);
     if (obj->queue == NULL)
     {
         printf("queue create failed\r\n");
@@ -140,7 +140,7 @@ static int8_t adcs7476_object_init(uint8_t *device_name, osEventFlagsId_t event)
     return 0;
 }
 
-int8_t adcs7476_object_data_read(uint8_t *device_name, uint16_t *data, uint8_t len, uint32_t timeout)
+int8_t adcs7476_object_data_read(uint8_t *device_name, uint16_t *data, uint16_t len, uint32_t timeout)
 {
     if (device_name == NULL || data == NULL)
     {
@@ -273,25 +273,18 @@ static int8_t adcs7476_sample_init(void)
 {
     int8_t ret = 0;
 
-    adcs7476_event = osEventFlagsNew(NULL);
-    if (adcs7476_event == NULL)
-    {
-        printf("osEventFlagsNew failed\r\n");
-        return -1;
-    }
-
     ret = adcs7476_object_init(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT, adcs7476_event);
     if (ret != 0)
     {
         printf("adcs7476 master init err: %d\r\n", ret);
-        return -2;
+        return -1;
     }
 
     ret = adcs7476_object_init(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT, adcs7476_event);
     if (ret != 0)
     {
         printf("adcs7476 slave init err: %d\r\n", ret);
-        return -3;
+        return -2;
     }
 
     return 0;
@@ -311,37 +304,40 @@ static int8_t adcs7476_sample_data_recv_process(void)
 {
     int8_t ret = 0;
     uint32_t event_flag = 0;
-    static uint16_t recv_tmp[BUF_LEN] = {0};
-    static uint16_t recv_tmp_1[BUF_LEN] = {0};
+    uint16_t recv_tmp[BUF_LEN] = {0};
+    uint16_t recv_tmp_1[BUF_LEN] = {0};
 
     struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
 
-    event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, osWaitForever);
-
-    osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
-    osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
-
-    osMutexAcquire(obj_master->mutex, osWaitForever);
-    memcpy(obj_master->data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
-    osMutexRelease(obj_master->mutex);
-
-    osMutexAcquire(obj_slave->mutex, osWaitForever);
-    memcpy(obj_slave->data, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
-    osMutexRelease(obj_slave->mutex);
-
-    if (callback != NULL)
+    for (;;)
     {
-        callback();
-    }
+        event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, osWaitForever);
+
+        osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
+        osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
+
+        osMutexAcquire(obj_master->mutex, osWaitForever);
+        memcpy(obj_master->data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
+        osMutexRelease(obj_master->mutex);
+
+        osMutexAcquire(obj_slave->mutex, osWaitForever);
+        memcpy(obj_slave->data, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
+        osMutexRelease(obj_slave->mutex);
+
+        if (callback != NULL)
+        {
+            callback();
+        }
 
 #if 0
-    for (uint8_t i = 0; i < obj_master->buf_len; i++)
-    {
-        printf("recv_tmp[%d] = %d\r\n", i, recv_tmp[i]);
-        printf("recv_tmp_1[%d] = %d\r\n", i, recv_tmp_1[i]);
-    }
+        for (uint8_t i = 0; i < obj_master->buf_len; i++)
+        {
+            printf("recv_tmp[%d] = %d\r\n", i, recv_tmp[i]);
+            printf("recv_tmp_1[%d] = %d\r\n", i, recv_tmp_1[i]);
+        }
 #endif
+    }
 
     return 0;
 }
@@ -371,14 +367,11 @@ static int8_t adcs7476_sample_entry(void *argument)
         return -3;
     }
 
-    for (;;)
+    ret = adcs7476_sample_data_recv_process();
+    if (ret != 0)
     {
-        ret = adcs7476_sample_data_recv_process();
-        if (ret != 0)
-        {
-            printf("adcs7476 sample data recv process err: %d\r\n", ret);
-            return -4;
-        }
+        printf("adcs7476 sample data recv process err: %d\r\n", ret);
+        return -4;
     }
 
     return 0;
@@ -386,6 +379,13 @@ static int8_t adcs7476_sample_entry(void *argument)
 
 static int8_t adcs7476_sample_thread_init(void)
 {
+    adcs7476_event = osEventFlagsNew(NULL);
+    if (adcs7476_event == NULL)
+    {
+        printf("osEventFlagsNew failed\r\n");
+        return -1;
+    }
+
     osThreadAttr_t thread_attr = {
     .name = "adcs7476_sample_thread",
     .stack_size = 1024 * 4,
@@ -396,7 +396,7 @@ static int8_t adcs7476_sample_thread_init(void)
     if (thread_id == NULL)
     {
         printf("thread adcs7476 sample create failed\r\n");
-        return -1;
+        return -2;
     }
 
     return 0;

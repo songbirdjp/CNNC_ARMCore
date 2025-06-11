@@ -761,7 +761,7 @@ static int8_t dose_command_frame_parse(struct dose_object *cmd)
     return ret;
 }
 
-int8_t radiation_status_get(uint8_t *buf, uint16_t *len)
+int8_t radiation_status_get(uint8_t *buf, uint16_t *len, uint32_t trigger_interval_ms)
 {
     int8_t ret = 0;
 
@@ -790,33 +790,34 @@ int8_t radiation_status_get(uint8_t *buf, uint16_t *len)
     stat.cali_lock = data->calibration.status.bits.lock;
     stat.normal = data->treatment.dose_mode == 1;
 
-    buf[0] = *(uint8_t *)&stat;   /* status */
-    memcpy(&buf[1], &interlock, sizeof(uint16_t));    /* interlock */
-    memcpy(&buf[3], &data->radiation.cp, sizeof(uint16_t));   /* cp */
-    memcpy(&buf[5], &data->radiation.index, sizeof(uint16_t));    /* radiation index */
+    buf[0] = *(uint8_t *)&stat;     /* status */
+    buf[1] = fsm_state_get();       /* fsm state */
+    memcpy(&buf[2], &interlock, sizeof(uint16_t));    /* interlock */
+    memcpy(&buf[4], &data->radiation.cp, sizeof(uint16_t));   /* cp */
+    memcpy(&buf[6], &data->radiation.index, sizeof(uint16_t));    /* radiation index */
+    float dose_meter = beam_data_value_get(0, BEAM_DOSE_METER, 0);
+    memcpy(&buf[8], (float *)&dose_meter, sizeof(float));  /* dose meter */
     double dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
     float dose = (float)(dose_cumulated / control_data_get()->calibration.adc_factor[0]);
-    memcpy(&buf[7], (float *)&dose, sizeof(float));   /* dose cumulated */
-
+    memcpy(&buf[12], (float *)&dose, sizeof(float));   /* dose cumulated */
     double dose_rate = dose_value_status_get(DOSE_RATE_CURRENT);
     float dose_rate_f = (float)(dose_rate / control_data_get()->calibration.adc_factor[0]);
-    memcpy(&buf[11], (float *)&dose_rate_f, sizeof(float)); /* dose rate */
+    memcpy(&buf[16], (float *)&dose_rate_f, sizeof(float)); /* dose rate */
 
-    buf[15] = dose_value_status_get(PRF_CURRENT);//data->treatment.prf_hz; /* PRF */
-    memcpy(&buf[16], &data->interlock.one_pulse.count_abnormal, sizeof(uint16_t));    /* pulse abnormal */
+    buf[20] = dose_value_status_get(PRF_CURRENT);//data->treatment.prf_hz; /* PRF */
+    memcpy(&buf[21], &data->interlock.one_pulse.count_abnormal, sizeof(uint16_t));    /* pulse abnormal */
     uint8_t one_pulse_valid = dose_value_status_get(ONE_PULSE_COMPLETE);
     uint32_t one_pulse_dose = dose_value_status_get(ONE_PULSE_DOSE);
-    ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0);
-    if (ret != 0)
-    {
-        LOG_E("dose value status set err: %d\r\n", ret);
-    }
-    buf[18] = one_pulse_valid;    /* one pulse valid */
-    memcpy(&buf[19], &one_pulse_dose, sizeof(uint32_t));  /* dose one pulse */
+    buf[23] = one_pulse_valid;    /* one pulse valid */
+    memcpy(&buf[24], &one_pulse_dose, sizeof(uint32_t));  /* dose one pulse */
+
+    uint64_t timestamp = timestamp_ns_get();
+    memcpy(&buf[28], &trigger_interval_ms, sizeof(uint32_t));  /* trigger interval */
+    memcpy(&buf[32], &timestamp, sizeof(uint64_t));  /* timestamp */
 
     osMutexRelease(data->mutex);
 
-    *len = 23;
+    *len = 40;
 
     return ret;
 }
@@ -862,11 +863,11 @@ static int8_t dose_realtime_frame_parse(struct dose_object *cmd)
                     LOG_E("dose_uart_radiation_index_update_callback err: %d\r\n", ret);
                 }
             }
-            LOG_I("dose uart radiation index: %d\r\n", obj->radiation.index);
+            // LOG_I("dose uart radiation index: %d\r\n", obj->radiation.index);
         }
         break;
     case 0x01:  /* get radiation status */
-        ret = radiation_status_get(&cmd->data[1], cmd->len);
+        ret = radiation_status_get(&cmd->data[1], cmd->len, 0);
         if (ret != 0)
         {
             LOG_E("radiation status get err: %d\r\n", ret);

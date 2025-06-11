@@ -11,7 +11,7 @@
 #include "ulog.h"
 #include "timestamp.h"
 
-// #define RADIATION_SIMULATION_MODE
+// #define RADIATION_SIMULATION_MODE    /* used for different plan data test */
 #ifdef RADIATION_SIMULATION_MODE
 /* NOTE: modify pulse interval for simulation mode if needed */
 static uint8_t radiation_simulation_trigger_out_flag = 0;
@@ -27,8 +27,8 @@ static int8_t radiation_simulation_dose_deal(uint16_t *buf, uint8_t len)
     {
         for (uint16_t i = 0; i < BUF_LEN; i++)
         {
-            dose_simulated[i] = i * 2 + 50;
-            dose_simulated_1[i] =  (BUF_LEN - i - 1) * 2 + 50;
+            dose_simulated[i] = i * 2 + 3000;
+            dose_simulated_1[i] =  (BUF_LEN - i - 1) * 2 + 3000;
         }
     }
 
@@ -647,6 +647,7 @@ static uint16_t one_pulse_count[1024] = {0};
 #define DUMMY_START_DELAY_TIME_US           (500000)
 static uint8_t timer_delay_flag = 0;
 static osEventFlagsId_t timer_delay_event = NULL;
+static uint64_t timestamp_start = 0, timestamp_mid = 0, timestamp_end = 0;
 static void PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     HAL_StatusTypeDef status = HAL_TIM_Base_Stop_IT(htim);
@@ -654,6 +655,17 @@ static void PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         LOG_E("HAL_TIM_Base_Stop_IT err: %d\r\n", status);
     }
+
+    // if ((timer_delay_flag & ~TIM_DELAY_RUNNING_FLAG_BIT_7) == TIM_DELAY_PULSE_INTERVAL)
+    // {
+    //     dose_trigger_out_set(0);
+    //     timestamp_start = timestamp_ns_get();
+    // }
+    // else if ((timer_delay_flag & ~TIM_DELAY_RUNNING_FLAG_BIT_7) == TIM_DELAY_PULSE_LEVEL_RESET)
+    // {
+    //     dose_trigger_out_set(1);
+    //     timestamp_mid = timestamp_ns_get();
+    // }
 
     osEventFlagsSet(timer_delay_event, timer_delay_flag & ~TIM_DELAY_RUNNING_FLAG_BIT_7);
 }
@@ -698,7 +710,7 @@ static int8_t time_delay_entry(void *argument)
 {
     int8_t ret = 0;
     uint8_t type = 0;
-    uint32_t event_flag = 0, interval_us = 0;
+    uint32_t event_flag = 0, interval_us = 0, time_diff = 0;
     enum fsm_state fsm_state_cur = FSM_STATE_MAX;
     uint8_t trigger_out_flag = 0;
     enum dose_board board_id = DOSE_BOARD_MAX;
@@ -748,9 +760,15 @@ static int8_t time_delay_entry(void *argument)
 #endif
 
 #ifdef RADIATION_SIMULATION_MODE
+                    if (radiation_simulation_trigger_out_flag != 0)
+                    {
+                        LOG_E("trigger out error\r\n");
+                    }
                     radiation_simulation_trigger_out_flag = 1;
 #endif
                 }
+
+                time_diff = (timestamp_ns_get() - timestamp_start) / 1000;
                 /* reset trigger out level */
                 ret = timer_delay_start(TIM_DELAY_PULSE_LEVEL_RESET, NORMAL_PULSE_RESET_DELAY_TIME_US);
                 if (ret != 0)
@@ -1199,7 +1217,7 @@ enum real_time_data_type
 static int8_t dose_data_upload(enum real_time_data_type type)
 {
     int8_t ret = 0;
-    uint8_t buf[50] = {0};
+    uint8_t buf[64] = {0};
     uint16_t offset = 0;
 
     buf[offset++] = 0x01;
@@ -1212,7 +1230,8 @@ static int8_t dose_data_upload(enum real_time_data_type type)
             uint16_t len = 0;
 
             buf[offset++] = 0x01;
-            ret = radiation_status_get(&buf[offset], &len);
+            uint32_t trigger_interval = 0;//fsm_state_get() == FSM_STATE_WORK ? trigger_interval_calculate_ms() : 0;
+            ret = radiation_status_get(&buf[offset], &len, trigger_interval);
             if (ret != 0)
             {
                 LOG_E("radiation status get err: %d\r\n", ret);
@@ -1308,6 +1327,14 @@ static int8_t dose_data_upload_once(enum fsm_state state)
                 LOG_E("dose accumulated set err: %d\r\n", ret);
                 return ret;
             }
+
+            /* clear radiation index */
+            ret = radiation_data_value_set(DOSE_RADIATION_IDX_CURRENT, 0);
+            if (ret != 0)
+            {
+                LOG_E("radiation data value set err: %d\r\n", ret);
+                return ret;
+            }
         }
 
         /* clear dose rate */
@@ -1327,7 +1354,7 @@ static int8_t dose_data_upload_once(enum fsm_state state)
         }
 
         ret = dose_data_upload(REAL_TIME_DATA_TYPE_RADIATION);
-        ret |= dose_data_upload(REAL_TIME_DATA_TYPE_QAM);
+        // ret |= dose_data_upload(REAL_TIME_DATA_TYPE_QAM);
         if (ret != 0)
         {
             LOG_E("dose data upload err: %d\r\n", ret);
@@ -1395,16 +1422,16 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt)
                     return ret;
                 }
 
-                /* 3. update trigger interval for qam */
-                if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
-                {
-                    ret = dose_data_upload(REAL_TIME_DATA_TYPE_QAM);
-                    if (ret != 0)
-                    {
-                        LOG_E("dose data upload err: %d\r\n", ret);
-                        return ret;
-                    }
-                }
+                // /* 3. update trigger interval for qam */
+                // if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_TRIGGER_OUT)
+                // {
+                //     ret = dose_data_upload(REAL_TIME_DATA_TYPE_QAM);
+                //     if (ret != 0)
+                //     {
+                //         LOG_E("dose data upload err: %d\r\n", ret);
+                //         return ret;
+                //     }
+                // }
             }
         }
         break;
@@ -1544,19 +1571,19 @@ static int8_t dose_interpolation_calculate(void)
     uint64_t dose_interpolated = 0;
 
     /* record timestamp */
-    uint32_t time_current_ms = osKernelGetTickCount() * 1000 / osKernelGetTickFreq();
-    ret = radiation_data_value_set(TIME_RADIATION_IDX_BEGIN, time_current_ms);
-    if (ret != 0)
-    {
-        LOG_E("radiation data value set err: %d\r\n", ret);
-        return ret;
-    }
-    ret = radiation_data_value_set(TIME_RADIATION_IDX_END, time_current_ms + time_radiation_index);
-    if (ret != 0)
-    {
-        LOG_E("radiation data value set err: %d\r\n", ret);
-        return ret;
-    }
+    // uint32_t time_current_ms = osKernelGetTickCount() * 1000 / osKernelGetTickFreq();
+    // ret = radiation_data_value_set(TIME_RADIATION_IDX_BEGIN, time_current_ms);
+    // if (ret != 0)
+    // {
+    //     LOG_E("radiation data value set err: %d\r\n", ret);
+    //     return ret;
+    // }
+    // ret = radiation_data_value_set(TIME_RADIATION_IDX_END, time_current_ms + time_radiation_index);
+    // if (ret != 0)
+    // {
+    //     LOG_E("radiation data value set err: %d\r\n", ret);
+    //     return ret;
+    // }
 
 #if 0
     LOG_I("dose_radiation_index: %llu\r\n", dose_radiation_index);
@@ -1670,20 +1697,20 @@ static int8_t dose_radiation_index_update(uint32_t time_excess_ms)
     //     LOG_E("radiation data value set err: %d\r\n", ret);
     //     return ret;
     // }
-    ret = radiation_data_value_set(TIME_RADIATION_IDX_ELAPSE, time_excess_ms + radiation_data_value_get(PULSE_INTERVAL_MIN) / 1000);    /* ms */
-    if (ret != 0)
-    {
-        LOG_E("radiation data value set err: %d\r\n", ret);
-        return ret;
-    }
+    // ret = radiation_data_value_set(TIME_RADIATION_IDX_ELAPSE, time_excess_ms + radiation_data_value_get(PULSE_INTERVAL_MIN) / 1000);    /* ms */
+    // if (ret != 0)
+    // {
+    //     LOG_E("radiation data value set err: %d\r\n", ret);
+    //     return ret;
+    // }
 
-    /* 4. check cp limit */
-    ret = control_point_limit_check();
-    if (ret != 0)
-    {
-        LOG_E("dose cp limit check err: %d\r\n", ret);
-        return ret;
-    }
+    // /* 4. check cp limit */
+    // ret = control_point_limit_check();
+    // if (ret != 0)
+    // {
+    //     LOG_E("dose cp limit check err: %d\r\n", ret);
+    //     return ret;
+    // }
 
     return ret;
 }
@@ -1697,13 +1724,13 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *inter
     uint64_t dose_radiation_index = radiation_data_value_get(DOSE_RADIATION_IDX);
 
     *interval_us = trigger_out_info_get(TRIGGER_OUT_INTERVAL);
-    uint32_t time_elapse_ms = radiation_data_value_get(TIME_RADIATION_IDX_ELAPSE) + *interval_us / 1000;
-    ret = radiation_data_value_set(TIME_RADIATION_IDX_ELAPSE, time_elapse_ms);
-    if (ret != 0)
-    {
-        LOG_E("radiation data value set err: %d\r\n", ret);
-        return ret;
-    }
+    // uint32_t time_elapse_ms = radiation_data_value_get(TIME_RADIATION_IDX_ELAPSE) + *interval_us / 1000;
+    // ret = radiation_data_value_set(TIME_RADIATION_IDX_ELAPSE, time_elapse_ms);
+    // if (ret != 0)
+    // {
+    //     LOG_E("radiation data value set err: %d\r\n", ret);
+    //     return ret;
+    // }
 
     if (dose_accumulated_cur < dose_radiation_index)
     {
@@ -1736,10 +1763,10 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *inter
     {
         if (deliver_type == DELIVER_TYPE_SWIMRT || deliver_type == DELIVER_TYPE_CRT) /* 主动轴 */
         {
-            uint32_t time_expected_ms = (radiation_data_value_get(TIME_RADIATION_IDX_END) + UINT32_MAX - radiation_data_value_get(TIME_RADIATION_IDX_BEGIN)) % UINT32_MAX;
+            // uint32_t time_expected_ms = (radiation_data_value_get(TIME_RADIATION_IDX_END) + UINT32_MAX - radiation_data_value_get(TIME_RADIATION_IDX_BEGIN)) % UINT32_MAX;
 
             /* 0. just delay to consume surplus time */
-            time_elapse_ms < time_expected_ms ? osDelay(time_expected_ms - time_elapse_ms) : NULL;
+            // time_elapse_ms < time_expected_ms ? osDelay(time_expected_ms - time_elapse_ms) : NULL;
 
             /* 1. update radiation index */
             // LOG_I("----update radiation index----\r\n");
@@ -1943,12 +1970,6 @@ static int8_t detect_whether_one_pulse_repeat(void)
             return ret;
         }
         ret = radiation_data_value_set(DOSE_RATE_INTERPOLATED_RADIATION_IDX, 0);
-        if (ret != 0)
-        {
-            LOG_E("radiation data value set err: %d\r\n", ret);
-            return ret;
-        }
-        ret = radiation_data_value_set(DOSE_RADIATION_IDX_CURRENT, 0);
         if (ret != 0)
         {
             LOG_E("radiation data value set err: %d\r\n", ret);
@@ -2267,6 +2288,15 @@ static int8_t dose_rate_calculate(void *argument)
         }
         trigger_out_count_pre = trigger_out_count;
 
+        /* 3. upload data to arm io periodically */
+        // if (fsm_state_get() != FSM_STATE_WORK)
+        {
+            ret = dose_data_upload(REAL_TIME_DATA_TYPE_RADIATION);
+            if (ret != 0)
+            {
+                LOG_E("dose data upload err: %d\r\n", ret);
+            }
+        }
     }
 
     return 0;
@@ -2420,7 +2450,7 @@ static int8_t dose_dummy_mode_test(uint8_t argc, char **argv)
 {
     int8_t ret = 0;
 
-    /* clear dose meter value */
+    /* 1. clear dose meter value */
     ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
     if (ret != 0)
     {
@@ -2435,21 +2465,12 @@ static int8_t dose_dummy_mode_test(uint8_t argc, char **argv)
         LOG_E("radiation data value set err: %d\r\n", ret);
         return ret;
     }
-    /* 3. update fsm state */
-    enum fsm_state state = atoi(argv[1]);
 
-    if (state == FSM_STATE_PRELIMINARY_BEGIN)
-    {
-        ret = radiation_data_value_set(DOSE_GENERATION_MODE, 0);
-        ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);
-    }
-    else if (state == FSM_STATE_WORK)
-    {
-        ret = radiation_data_value_set(DOSE_GENERATION_MODE, 1);
-        ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);
-    }
+    /* 3. set dose mode and pulse mode */
+    ret = radiation_data_value_set(DOSE_GENERATION_MODE, 0);
+    ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);
 
-    return 0;
+    return ret;
 }
 MSH_CMD_EXPORT_ALIAS(dose_dummy_mode_test, dose_dummy_mode_test, dose dummy mode test);
 
@@ -2473,19 +2494,9 @@ static int8_t dose_radiation_mode_test(uint8_t argc, char **argv)
         return ret;
     }
 
-    /* 3. update fsm state */
-    enum fsm_state state = atoi(argv[1]);
-
-    if (state == FSM_STATE_PRELIMINARY_BEGIN)
-    {
-        ret = radiation_data_value_set(DOSE_GENERATION_MODE, 0);
-        ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);
-    }
-    else if (state == FSM_STATE_WORK)
-    {
-        ret = radiation_data_value_set(DOSE_GENERATION_MODE, 1);
-        ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);  /* fix prf */
-    }
+    /* 3. set dose mode and pulse mode */
+    ret = radiation_data_value_set(DOSE_GENERATION_MODE, 1);
+    ret |= radiation_data_value_set(PULSE_GENERATION_MODE, 0);  /* fix prf */
 
     return ret;
 }
@@ -2517,7 +2528,7 @@ static int8_t dose_interpolation_init_test(uint8_t argc, char **argv)
     }
 
     /* 2. set dose meter value */
-    ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, 10);
+    ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, 1000);
     if (ret != 0)
     {
         LOG_E("radiation data value set err: %d\r\n", ret);
@@ -2525,8 +2536,8 @@ static int8_t dose_interpolation_init_test(uint8_t argc, char **argv)
     }
 
     /* 3. set plan data */
-    #define TOTAL_CP    5
-    #define TOTAL_RI    10
+    #define TOTAL_CP    100
+    #define TOTAL_RI    1000
     ret = beam_data_value_set(0, BEAM_TOTAL_CP, 0, TOTAL_CP);
     if (ret != 0)
     {
@@ -2538,16 +2549,16 @@ static int8_t dose_interpolation_init_test(uint8_t argc, char **argv)
         LOG_E("beam data total ri set err: %d\r\n", ret);
     }
 
-    for (uint8_t i = 0; i < TOTAL_CP; i++)
+    for (uint16_t i = 0; i < TOTAL_CP; i++)
     {
-        ret = beam_data_value_set(0, BEAM_CP_RI_MAP, i, 2 * i + 1);
+        ret = beam_data_value_set(0, BEAM_CP_RI_MAP, i, 10 * i + 9);
         if (ret != 0)
         {
             LOG_E("beam data cp ri map set err: %d\r\n", ret);
         }
     }
 
-    for (uint8_t i = 0; i < TOTAL_RI; i++)
+    for (uint16_t i = 0; i < TOTAL_RI; i++)
     {
         ret = beam_data_value_set(0, BEAM_RI_CUMULATIVE, i, i + 1);
         if (ret != 0)
@@ -2559,7 +2570,7 @@ static int8_t dose_interpolation_init_test(uint8_t argc, char **argv)
         {
             LOG_E("beam data ri dose rate set err: %d\r\n", ret);
         }
-        ret = beam_data_value_set(0, BEAM_RI_TIME_EXPECTED, i, 500); /* unit: ms, can modify here to test for vmat or crt */
+        ret = beam_data_value_set(0, BEAM_RI_TIME_EXPECTED, i, 4); /* unit: ms, can modify here to test for vmat or crt */
         if (ret != 0)
         {
             LOG_E("beam data ri time expected set err: %d\r\n", ret);
@@ -2714,9 +2725,9 @@ static int8_t beam_data_info_get(uint8_t argc, char **argv)
     LOG_I("pulse symmetry: %llu\r\n", radiation_data_value_get(PULSE_SYMMETRY));
     LOG_I("dose limit: %llu\r\n", radiation_data_value_get(DOSE_LIMIT));
     LOG_I("dose rate limit: %llu\r\n", radiation_data_value_get(DOSE_RATE_LIMIT));
-    LOG_I("dose radiation index current: %llu\r\n", radiation_data_value_get(DOSE_RADIATION_IDX_CURRENT));
-    LOG_I("dose control point current: %llu\r\n", radiation_data_value_get(DOSE_CONTROL_POINT_CURRENT));
-    LOG_I("dose control point prev radiation index: %llu\r\n", radiation_data_value_get(DOSE_CONTROL_POINT_PREV_RADIATION_IDX));
+    LOG_I("radiation index current: %llu\r\n", radiation_data_value_get(DOSE_RADIATION_IDX_CURRENT));
+    LOG_I("control point current: %llu\r\n", radiation_data_value_get(DOSE_CONTROL_POINT_CURRENT));
+    LOG_I("control point prev radiation index: %llu\r\n", radiation_data_value_get(DOSE_CONTROL_POINT_PREV_RADIATION_IDX));
 
     return 0;
 }

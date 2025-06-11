@@ -45,7 +45,7 @@ struct calibration_para
             uint8_t valid : 1;  /* 0: invalid 1: valid */
             uint8_t reserved : 6;
         }bits;
-        
+
         uint8_t byte;
     }status;
 
@@ -64,7 +64,7 @@ struct treatment_para
             uint8_t check : 1;  /* 0: fail  1: pass */
             uint8_t reserved : 6;
         }bits;
-        
+
         uint8_t byte;
     }status;
 
@@ -119,7 +119,7 @@ struct radiation_point_para
 
 struct control_para
 {
-    enum dose_board board_id;    
+    enum dose_board board_id;
     struct calibration_para calibration;
     struct treatment_para treatment;
     struct interlock_para interlock;
@@ -131,7 +131,7 @@ struct control_para
 int8_t radiation_index_update_callback(int8_t (*cb)(uint32_t time_excess_ms));
 int8_t control_data_pointer_get(void **ptr);
 int8_t dose_uart_cmd_write(struct dose_object *cmd);
-int8_t radiation_status_get(uint8_t *buf, uint16_t *len);
+int8_t radiation_status_get(uint8_t *buf, uint16_t *len, uint32_t trigger_interval_ms);
 
 #ifdef __cplusplus
 }

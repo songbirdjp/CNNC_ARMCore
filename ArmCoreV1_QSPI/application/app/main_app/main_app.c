@@ -2,6 +2,8 @@
 #include "init_call.h"
 #include "cmsis_os2.h"
 #include "radiation_app.h"
+#include "adcs7476.h"
+#include "ulog.h"
 
 static osEventFlagsId_t adcs7476_event = NULL;
 #define ADCS7476_CONVERT_COMPLETE_EVENT   (1 << 0)
@@ -28,7 +30,7 @@ static int8_t data_process_entry(void *argument)
         ret = adcs7476_value_process();
         if (ret != 0)
         {
-            printf("data process err: %d\r\n", ret);
+            LOG_E("data process err: %d\r\n", ret);
         }
     }
 
