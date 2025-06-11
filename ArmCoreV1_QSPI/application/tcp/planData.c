@@ -113,14 +113,6 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             return -1;
         }
 
-        if(frameHead.packIndexInOneBeam > lastPackIndex)    lastPackIndex = frameHead.packIndexInOneBeam;
-        else{
-            secondPosFeedback.errorCode = 0xf5;
-            printf("recv error #5: last index= %d index = %d!!! \r\n", frameHead.packIndexInOneBeam, lastPackIndex);
-            frameHead.packIndexInOneBeam = lastPackIndex;
-            return -1;
-        }
-
         if ((frameHead.packIndexInOneBeam > frameHead.totalPackInOneBeam) || (frameHead.packIndexInOneBeam < 1)) {
             secondPosFeedback.errorCode = 0xf2;
             printf("recv error #2: total pack = %d, pack index = %d!!!\r\n",
@@ -133,18 +125,28 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             printf("recv error #3: bank no = %d!!! \r\n", frameHead.bankNo);
             return -1;
         }
-        uint16_t saveLength,sdramLength;
-        uint8_t *pBeamData;
-         if((SDRAM_BANK1_ADDR + SDRAM_BANK1_SIZE - (uint32_t)pSDRAM) < frameHead.frmLength) 
-         {
+        
+        if((SDRAM_BANK1_ADDR + SDRAM_BANK1_SIZE - (uint32_t)pSDRAM) < frameHead.frmLength) 
+        {
             secondPosFeedback.errorCode = 0xf6;
             printf("recv error #6: sdram is full, clear it!!! \r\n");
             return -1; 
-         }
-         pBeamData = pSDRAM;
+        }
+
+        if(frameHead.packIndexInOneBeam > lastPackIndex)    lastPackIndex = frameHead.packIndexInOneBeam;
+        else{
+            secondPosFeedback.errorCode = 0xf5;
+            printf("recv error #5: last index= %d index = %d!!! \r\n", frameHead.packIndexInOneBeam, lastPackIndex);
+            frameHead.packIndexInOneBeam = lastPackIndex;
+            return -1;
+        }
+
+        uint16_t saveLength,sdramLength;
+        uint8_t *pBeamData = pSDRAM;
 
         if (frameHead.packIndexInOneBeam == 1)
         {
+            ++rtBeamData.totalBeam;
           //  uint8_t temp[frameHead.frmLength];
          //   printf("recv plan %dB-> first pack of beam!\r\n", u8LenTotal);
             saveLength = frameHead.frmLength+4;
@@ -215,13 +217,19 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             //record each beam info
             // 1 beam in SDRAM: totalRI + BeamIndex + (RI1 + RI2 + ...+RI(totalRI)), sizeof(RI) = RT_PAYLOAD_LEN
             rtBeamData.beamIndex = (data[15] << 8) + data[14];//current beam index
-            rtBeamData.totalRIInBeam[rtBeamData.beamIndex] = (data[13] << 8) + data[12];
-            rtBeamData.oneBeamSize[rtBeamData.beamIndex] =
-                    4 + RT_SDRAM_PAYLOAD_LEN
-                    * rtBeamData.totalRIInBeam[rtBeamData.beamIndex];
-            if (++rtBeamData.totalBeam >= MAX_BEAM_NUM) printf("Warn: beam > 30, will not be sent to FPGA!\r\n");
+            // rtBeamData.totalRIInBeam[rtBeamData.beamIndex] = (data[13] << 8) + data[12];
+            // rtBeamData.oneBeamSize[rtBeamData.beamIndex] =
+            //         4 + RT_SDRAM_PAYLOAD_LEN
+            //         * rtBeamData.totalRIInBeam[rtBeamData.beamIndex];
+            uint8_t beamBufIndex = 0;
+            if(rtBeamData.totalBeam > 0)    beamBufIndex = rtBeamData.totalBeam - 1;
+            rtBeamData.totalRIInBeam[beamBufIndex] = (data[13] << 8) + data[12];
+            rtBeamData.oneBeamSize[beamBufIndex] =
+                     4 + RT_SDRAM_PAYLOAD_LEN
+                     * rtBeamData.totalRIInBeam[beamBufIndex];
+            if (rtBeamData.totalBeam >= MAX_BEAM_NUM) printf("Warn: beam > 30, will not be sent to FPGA!\r\n");
             printf("Beam %d transfer finish, size is %d, crc is %u\r\n",
-                   rtBeamData.beamIndex, rtBeamData.oneBeamSize[rtBeamData.beamIndex], crcInData);
+                   rtBeamData.beamIndex, rtBeamData.oneBeamSize[beamBufIndex], crcInData);
 #if 0
             pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
             pBeamData = pSDRAM + 6;
@@ -251,6 +259,12 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             printf("recv error #3: bank no = %d!!! \r\n", frameHead.bankNo);
             return -1;
         }
+        // printf("table:");
+        // for(uint16_t m = 0; m < 256; m++)   printf("%d ", CrcTable[m]);
+        // printf("\r\n");
+        // printf("data:");
+        // for(uint16_t n = 0; n < frameHead.frmLength; n++)   printf("%d ", data[6+n]);
+        // printf("\r\n");
         crcCal = 0xffffffff;
         crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
         crcCal ^= 0xffffffff;
@@ -295,10 +309,10 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
 
    // rtBeamData.totalBeam = 2;
   //  rtBeamData.totalRIInBeam[1] = 0x704;
-    if((beamIndex <= 0) || (RIIndex <= 0) || (RIIndex > rtBeamData.totalRIInBeam[beamIndex]))
+    if((beamIndex <= 0) || (RIIndex <= 0)/* || (RIIndex > rtBeamData.totalRIInBeam[beamIndex])*/)
     {
-        printf("Error: Invalid beam/RI index %d,%d,%d,%d\r\n",
-               rtBeamData.totalBeam,rtBeamData.totalRIInBeam[beamIndex],beamIndex,RIIndex);
+        printf("Error: Invalid beam/RI index %d,%d,%d\r\n",
+               rtBeamData.totalBeam,beamIndex,RIIndex);
         return;
     }
    // printf("BEAM%d.RI%d\r\n", beamIndex, RIIndex);
@@ -317,7 +331,7 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
         localBeamIndex = (pBeamData[3] << 8) + pBeamData[2];
         if(localBeamIndex != beamIndex)
         {
-            pBeamData += rtBeamData.oneBeamSize[localBeamIndex];
+            pBeamData += rtBeamData.oneBeamSize[skipBeamCnt];
             if(++skipBeamCnt >=  rtBeamData.totalBeam){
                 printf("Can't find beam%d\r\n", beamIndex);
                 return;

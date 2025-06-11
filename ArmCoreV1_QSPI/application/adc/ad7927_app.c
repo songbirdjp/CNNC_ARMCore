@@ -66,12 +66,14 @@ void calculateDualChannelDiff(uint8_t ch, uint16_t value)
             secondPosFeedback.jawSecondPos[Y] = value;
             break;
         case XJAW_SECOND_FEEDBACK_CH:   
-            secondPosFeedback.jawSecondPos[X] = value;   
+            secondPosFeedback.jawSecondPos[X] = value;  
+           // printf("XJAW_SECOND_FEEDBACK_CH %d\r\n",value); 
             break;
         default:    
             printf("Invalid second feedback channel\r\n");  
             return;
     }
+    
 #if 0
     if(value > jawParameterByAxes[axes].jawMaxADSetting)   interlockFeedback.jawInterlock[axes] |= 0x100;
     if(value > MAX_ADC_VALUE)   interlockFeedback.jawInterlock[axes] |= 0x20;
