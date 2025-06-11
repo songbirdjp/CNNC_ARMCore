@@ -110,21 +110,18 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
 
     if(frameHead.packIndexInOneBeam == 1)
     {
+        if(++nrtBeamData.totalBeam >= MAX_BEAM_NUM){
+            nrtBeamData.errorCode = 0xf8;
+            LOG_E("recv error #8:total beam %d > 30!\r\n",nrtBeamData.totalBeam);
+            return -1;
+        }    
+
         lastPackIndex = 0;
         nrtBeamData.beamIndex = data[headLength];//current beam index
-    }   
 
-    nrtBeamData.totalCPInBeam[nrtBeamData.beamIndex] += frameHead.CPQuantityInPack;
-    nrtBeamData.totalRIInBeam[nrtBeamData.beamIndex] += frameHead.RIQuantityInPack;
-   // LOG_I("3: %d %d\r\n",frameHead.CPQuantityInPack, frameHead.RIQuantityInPack);
-
-    if(frameHead.packIndexInOneBeam == (lastPackIndex + 1))    lastPackIndex = frameHead.packIndexInOneBeam;
-    else{
-        nrtBeamData.errorCode = 0xf5;
-        LOG_E("recv error #5: current index= %d last index = %d!!! \r\n", frameHead.packIndexInOneBeam, lastPackIndex);
-        frameHead.packIndexInOneBeam = lastPackIndex;
-        return -1;
-    }
+        nrtBeamData.totalCPInBeam[nrtBeamData.totalBeam - 1] = 0;
+        nrtBeamData.totalRIInBeam[nrtBeamData.totalBeam - 1] = 0;
+    }  
 
     if((frameHead.packIndexInOneBeam > frameHead.totalPackInOneBeam) || (frameHead.packIndexInOneBeam < 1)) 
     {
@@ -156,28 +153,46 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
         return -1;
     }
 
+    if(frameHead.packIndexInOneBeam == (lastPackIndex + 1))    lastPackIndex = frameHead.packIndexInOneBeam;
+    else
+    {
+        nrtBeamData.errorCode = 0xf5;
+        LOG_E("recv error #5: current index= %d last index = %d!!! \r\n", frameHead.packIndexInOneBeam, lastPackIndex);
+        frameHead.packIndexInOneBeam = lastPackIndex;
+        return -1;
+    }
+
     /*save data to sdram*/
     uint16_t saveDataIndex = headLength;
     __IO uint8_t *pBeamData;
-    SDRAM_DATA sdFixData = {0};
+    static SDRAM_DATA sdFixData = {0};
     uint16_t sdFixDataLen = sizeof(SDRAM_DATA);
     uint16_t riDataLen = sizeof(RADIATION_POINT_DATA);
+    uint8_t beamBufIndex = 0;
 
-    if (frameHead.packIndexInOneBeam == 1)
+    if(frameHead.packIndexInOneBeam == 1)   memcpy(&sdFixData, &data[saveDataIndex], sdFixDataLen);
+    if(nrtBeamData.totalBeam > 0)    beamBufIndex = nrtBeamData.totalBeam - 1;
+    nrtBeamData.totalCPInBeam[beamBufIndex] += frameHead.CPQuantityInPack;
+    nrtBeamData.totalRIInBeam[beamBufIndex] += frameHead.RIQuantityInPack;
+   // LOG_I("3: %d %d\r\n",frameHead.CPQuantityInPack, frameHead.RIQuantityInPack);
+    if(nrtBeamData.totalCPInBeam[beamBufIndex] > sdFixData.CPQuantityInBeam)
     {
-        memcpy(&sdFixData, &data[saveDataIndex], sdFixDataLen);
-        if(nrtBeamData.totalCPInBeam[nrtBeamData.beamIndex] > sdFixData.CPQuantityInBeam)
-        {
-            nrtBeamData.errorCode = 0xf3;
-            LOG_E("recv error #3: CP SUM: %d  Plan total CP: %d!!! \r\n", nrtBeamData.totalCPInBeam[nrtBeamData.beamIndex], sdFixData.CPQuantityInBeam);
-            return -1;
-        }
-        if(nrtBeamData.totalRIInBeam[nrtBeamData.beamIndex] > sdFixData.RIQuantityInBeam)
-        {
-            nrtBeamData.errorCode = 0xf7;
-            LOG_E("recv error #7: RI SUM: %d, Plan total RI: %d!!! \r\n", nrtBeamData.totalRIInBeam[nrtBeamData.beamIndex],sdFixData.RIQuantityInBeam);
-            return -1;
-        }
+        nrtBeamData.totalCPInBeam[beamBufIndex] -= frameHead.CPQuantityInPack;
+        lastPackIndex -= 1;
+        nrtBeamData.errorCode = 0xf3;
+        LOG_E("recv error #3: CP SUM: %d  Plan total CP: %d!!! \r\n", nrtBeamData.totalCPInBeam[beamBufIndex], sdFixData.CPQuantityInBeam);
+        return -1;
+    }
+    if(nrtBeamData.totalRIInBeam[beamBufIndex] > sdFixData.RIQuantityInBeam)
+    {
+        nrtBeamData.totalRIInBeam[beamBufIndex] -= frameHead.RIQuantityInPack;
+        lastPackIndex -= 1;
+        nrtBeamData.errorCode = 0xf7;
+        LOG_E("recv error #7: RI SUM: %d, Plan total RI: %d!!! \r\n", nrtBeamData.totalRIInBeam[beamBufIndex],sdFixData.RIQuantityInBeam);
+        return -1;
+    }
+    if (frameHead.packIndexInOneBeam == 1)
+    { 
         pBeamData = pSDRAM;
         sdFixData.radiationType = frameHead.radiationType;
         sdFixData.deliveryType = frameHead.deliveryType;
@@ -185,9 +200,10 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
         pBeamData += sdFixDataLen;
         nrtBeamData.pCPData = pBeamData;
         nrtBeamData.pRIData = nrtBeamData.pCPData +  MAX_CP_IN_BEAM*2;
-        nrtBeamData.oneBeamSize[nrtBeamData.beamIndex] += sdFixDataLen; //length fix area, beamID,doseRateSet,beamMeterSet,totalCP,totalRI
-        nrtBeamData.oneBeamSize[nrtBeamData.beamIndex] += MAX_CP_IN_BEAM*2;//cp area, always 512B in one beam in sdram
-    }   
+        nrtBeamData.oneBeamSize[beamBufIndex] += sdFixDataLen; //length fix area, beamID,doseRateSet,beamMeterSet,totalCP,totalRI
+        nrtBeamData.oneBeamSize[beamBufIndex] += MAX_CP_IN_BEAM*2;//cp area, always 512B in one beam in sdram
+    } 
+   
     saveDataIndex += sdFixDataLen;
     memcpy(nrtBeamData.pCPData, &data[saveDataIndex], frameHead.CPQuantityInPack*2);//update cp area
     // LOG_I("cp %d %x|",frameHead.CPQuantityInPack, nrtBeamData.pCPData);
@@ -206,95 +222,19 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
     // }
     // LOG_I("\r\n");
     nrtBeamData.pRIData += frameHead.RIQuantityInPack*riDataLen;
-    nrtBeamData.oneBeamSize[nrtBeamData.beamIndex] += frameHead.RIQuantityInPack*riDataLen;
- #if 0  
-//     for(i=0; i<frameHead.CPQuantityInPack*2; i++) //update CP data area
-//     {
-//         *nrtBeamData.pCPData++ = data[saveDataIndex + i];
-//         nrtBeamData.oneBeamSize[nrtBeamData.beamIndex]++;
-//   //      LOG_I("%d ", data[saveDataIndex + i]);
-//     }
-   // LOG_I("\r\n");
+    nrtBeamData.oneBeamSize[beamBufIndex] += frameHead.RIQuantityInPack*riDataLen;
 
-    // if (frameHead.packIndexInOneBeam == 1)
-    // {
-      //  saveDataIndex += 32*2;
-      //  uint16_t planTotalRI = (data[saveDataIndex + 1] << 8) + data[saveDataIndex];
-        // if(nrtBeamData.totalRIInBeam[nrtBeamData.beamIndex] > sdData.RIQuantityInBeam)
-        // {
-        //     nrtBeamData.errorCode = 0xf7;
-        //     LOG_E("recv error #7: RI SUM: %d, Plan total RI: %d!!! \r\n", nrtBeamData.totalRIInBeam[nrtBeamData.beamIndex],sdData.RIQuantityInBeam);
-        //     return -1;
-        // }
-
-     //   pBeamData += MAX_CP_IN_BEAM*2; //skip CP data area  
-        // for(i=0; i<2; i++)//totalRI, 2B
-        // {
-        //     *pBeamData++ = data[saveDataIndex + i];
-        //        // LOG_I("%d ", info->gDATABUF[12+i]);
-        // }
-//         memcpy(pBeamData, &data[saveDataIndex],2);
-//         nrtBeamData.pRIData = pBeamData;
-//         nrtBeamData.oneBeamSize[nrtBeamData.beamIndex] += 2;
-//     }
-
-//     saveDataIndex += 2;
-//    // LOG_I("RI ");
-//     for(i=0; i<frameHead.RIQuantityInPack*sizeof(RADIATION_POINT_DATA); i++) //update RI data area 
-//     {
-//         *nrtBeamData.pRIData++ =data[saveDataIndex + i];
-//         nrtBeamData.oneBeamSize[nrtBeamData.beamIndex]++;
-//        // if(frameHead.packIndexInOneBeam == 1)  LOG_I("%x ",data[saveDataIndex + i]);
-//     }
-    // float tmp1,tmp2,tmp3;
-    // uint16_t ri = (data[saveDataIndex + 1] << 8) + data[saveDataIndex];
-    // memcpy(&tmp1, &data[saveDataIndex + 2],4);
-    // memcpy(&tmp2, &data[saveDataIndex + 6],4);
-    // memcpy(&tmp3, &data[saveDataIndex + 10],4);
-   // LOG_I("%d %f %f %f\r\n",ri,tmp1,tmp2,tmp3);
-#endif
     if (frameHead.packIndexInOneBeam == frameHead.totalPackInOneBeam) //the last pack in one beam
     {
-        if(++nrtBeamData.totalBeam >= MAX_BEAM_NUM){
-            LOG_E("warn: beam:%d > 30!\r\n",nrtBeamData.totalBeam);
-            return -1;
-        }    
         lastPackIndex = 0;
-        pSDRAM += nrtBeamData.oneBeamSize[nrtBeamData.beamIndex];
+        pSDRAM += nrtBeamData.oneBeamSize[beamBufIndex];
             //record each beam info
-        LOG_I("Beam %d transfer finish, size is %uB\r\n", nrtBeamData.beamIndex, nrtBeamData.oneBeamSize[nrtBeamData.beamIndex]);
+        LOG_I("Beam %d transfer finish, size is %uB\r\n", nrtBeamData.beamIndex, nrtBeamData.oneBeamSize[beamBufIndex]);
     }
     nrtBeamData.packIndexInOneBeam = frameHead.packIndexInOneBeam;
     nrtBeamData.errorCode = 0xf0; //ok
    // LOG_I("recv success #0 %d!!! \r\n",nrtBeamData.errorCode);
   //  }
-    #if 0
-    else if(frameHead.frmTag == PARAM_SETTING_TAG)
-    {
-        LOG_I("recv parameter %d bytes ", u8LenTotal);
-        if (frameHead.frmLength != (u8LenTotal - 10)) {
-            rtBeamData.errorCode = 0xf1;
-            LOG_E("recv error #1: tcp buf len = %d frame len =%d!!! \r\n", u8LenTotal, frameHead.frmLength);
-            return -1;
-        }
-
-        crcCal = 0xffffffff;
-        crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
-        crcCal ^= 0xffffffff;
-        last = u8LenTotal - 1;
-        frameEnd.crcHigh = (data[last-2] << 8) + data[last - 3];
-        frameEnd.crcLow = (data[last] << 8) + data[last - 1];
-        crcInData = (frameEnd.crcHigh << 16) + frameEnd.crcLow;
-        if (crcInData != crcCal)
-        {
-            rtBeamData.errorCode = 0xf4;
-            LOG_E("recv error #4: crc error: %u %u!!! \r\n", crcInData, crcCal);
-            return -1;
-        }
-
-        LOG_I("crc:%u\r\n", crcInData);
-    }
-    #endif
 
     memset(&info, 0, sizeof(info));
     memset(&frameHead, 0, sizeof(frameHead));
@@ -328,9 +268,9 @@ int8_t getPlanBeamData(uint16_t beamIndex, struct one_beam_order *beam_info)
         }
         // LOG_I("find %d:beam id %d\r\n",skipBeamCnt, localBeamIndex);
         if(localBeamIndex != beamIndex){
-            pBeamData += nrtBeamData.oneBeamSize[localBeamIndex];
+            pBeamData += nrtBeamData.oneBeamSize[skipBeamCnt];
             if(++skipBeamCnt >=  nrtBeamData.totalBeam){
-                LOG_E("Can't find beam%d\r\n", beamIndex);
+                LOG_E("Can't find beam%d total %d\r\n", beamIndex,nrtBeamData.totalBeam );
                 return -1;
             }
         }

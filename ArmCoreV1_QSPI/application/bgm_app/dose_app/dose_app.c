@@ -562,34 +562,51 @@ static int8_t dose_realtime_frame_parse(enum uart_id id, struct cmd_object *cmd)
         }
         else
         {
-            LOG_I("[%d]: set radiation index: %d\r\n", id, cmd->data[2] << 8 | cmd->data[1]);
+            // LOG_I("[%d]: set radiation index: %d\r\n", id, cmd->data[2] << 8 | cmd->data[1]);
         }
         break;
     case 0x01:
 #if 0
         LOG_I("[%d]: dose state: %#.2x\r\n", id, cmd->data[1]);
-        LOG_I("[%d]: dose interlock: %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
-        LOG_I("[%d]: dose current cp: %d\r\n", id, cmd->data[5] << 8 | cmd->data[4]);
-        LOG_I("[%d]: dose current radiation index: %d\r\n", id, cmd->data[7] << 8 | cmd->data[6]);
-        LOG_I("[%d]: dose current cumulative: %f (MU)\r\n", id, *(float *)&cmd->data[8]);
-        LOG_I("[%d]: dose current prf: %d\r\n", id, cmd->data[12]);
-        LOG_I("[%d]: dose abnormal pulse count: %d\r\n", id, cmd->data[14] << 8 | cmd->data[13]);
-        LOG_I("[%d]: dose one pulse valid flag: %d\r\n", id, cmd->data[15]);
-        LOG_I("[%d]: dose one pulse code: %d\r\n", id, *(uint32_t *)&cmd->data[16]);
+        LOG_I("[%d]: dose fsm state: %d\r\n", id, cmd->data[2]);
+        LOG_I("[%d]: dose interlock: %#.4x\r\n", id, cmd->data[4] << 8 | cmd->data[3]);
+        LOG_I("[%d]: dose current cp: %d\r\n", id, cmd->data[6] << 8 | cmd->data[5]);
+        LOG_I("[%d]: dose current radiation index: %d\r\n", id, cmd->data[8] << 8 | cmd->data[7]);
+        LOG_I("[%d]: dose meter: %f (MU)\r\n", id, *(float *)&cmd->data[9]);
+        LOG_I("[%d]: dose current cumulative: %f (MU)\r\n", id, *(float *)&cmd->data[13]);
+        LOG_I("[%d]: dose current dose rate: %f (MU/min)\r\n", id, *(float *)&cmd->data[17]);
+        LOG_I("[%d]: dose current prf: %d\r\n", id, cmd->data[21]);
+        LOG_I("[%d]: dose abnormal pulse count: %d\r\n", id, cmd->data[23] << 8 | cmd->data[22]);
+        LOG_I("[%d]: dose one pulse valid flag: %d\r\n", id, cmd->data[24]);
+        LOG_I("[%d]: dose one pulse code: %d\r\n", id, *(uint32_t *)&cmd->data[25]);
 #endif
         obj->realtime.state.byte = cmd->data[1];
-        obj->status.interlock.bytes = cmd->data[3] << 8 | cmd->data[2];
-        obj->realtime.control_point = cmd->data[5] << 8 | cmd->data[4];
-        obj->realtime.radiation_index = cmd->data[7] << 8 | cmd->data[6];
-        uint32_t dose_cumulated = cmd->data[8] | cmd->data[9] << 8 | cmd->data[10] << 16 | cmd->data[11] << 24;
+        obj->fsm_state = cmd->data[2];
+        obj->status.interlock.bytes = cmd->data[4] << 8 | cmd->data[3];
+        obj->realtime.control_point = cmd->data[6] << 8 | cmd->data[5];
+        obj->realtime.radiation_index = cmd->data[8] << 8 | cmd->data[7];
+        uint32_t dose_cumulated = cmd->data[13] | cmd->data[14] << 8 | cmd->data[15] << 16 | cmd->data[16] << 24;
         obj->realtime.dose_cumulated = *(float *)&dose_cumulated;
-        uint32_t dose_rate = cmd->data[12] | cmd->data[13] << 8 | cmd->data[14] << 16 | cmd->data[15] << 24;
+        uint32_t dose_rate = cmd->data[17] | cmd->data[18] << 8 | cmd->data[19] << 16 | cmd->data[20] << 24;
         obj->realtime.dose_rate = *(float *)&dose_rate;
-        obj->realtime.prf_current = cmd->data[16];
-        obj->interlock.one_pulse.count_abnormal= cmd->data[18] << 8 | cmd->data[17];
-        obj->realtime.one_pulse_valid_flag = cmd->data[19];
-        obj->realtime.one_pulse_dose = cmd->data[20] | cmd->data[21] << 8 | cmd->data[22] << 16 | cmd->data[23] << 24;;
+        obj->realtime.prf_current = cmd->data[21];
+        obj->interlock.one_pulse.count_abnormal= cmd->data[23] << 8 | cmd->data[22];
+        obj->realtime.one_pulse_valid_flag = cmd->data[24];
+        obj->realtime.one_pulse_dose = cmd->data[25] | cmd->data[26] << 8 | cmd->data[27] << 16 | cmd->data[28] << 24;;
         // LOG_I("[%d]: recv dose realtime frame: %f\r\n", id, obj->realtime.dose_cumulated);
+
+        if (id == BGM_UART_DOSE1)
+        {
+            /* to fkp and qam */
+            uint8_t buf[32] = {0};
+            memcpy(&buf[0], &cmd->data[9], 8); /* dose meter、dose cumulated */
+            memcpy(&buf[8], &cmd->data[29], 12);/* trigger interval、timestamp */
+            ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM | RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, buf, 20);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: cmd to rtm upload err: %d\r\n", id, ret);
+            }
+        }
         break;
     default:
         LOG_E("[%d]: invalid realtime cmd type: %x\r\n", id, cmd->data[0]);
@@ -623,20 +640,37 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
 
                 osMutexAcquire(obj->mutex, osWaitForever);
                 obj->realtime.state.byte = cmd->data[3];
-                obj->status.interlock.bytes = cmd->data[5] << 8 | cmd->data[4];
-                obj->realtime.control_point = cmd->data[7] << 8 | cmd->data[6];
-                obj->realtime.radiation_index = cmd->data[9] << 8 | cmd->data[8];
-                uint32_t dose_cumulated = cmd->data[10] | cmd->data[11] << 8 | cmd->data[12] << 16 | cmd->data[13] << 24;
+                obj->fsm_state = cmd->data[4];
+                obj->status.interlock.bytes = cmd->data[6] << 8 | cmd->data[5];
+                obj->realtime.control_point = cmd->data[8] << 8 | cmd->data[7];
+                obj->realtime.radiation_index = cmd->data[10] << 8 | cmd->data[9];
+                // uint32_t dose_meter = cmd->data[11] | cmd->data[12] << 8 | cmd->data[13] << 16 | cmd->data[14] << 24;
+                uint32_t dose_cumulated = cmd->data[15] | cmd->data[16] << 8 | cmd->data[17] << 16 | cmd->data[18] << 24;
+
                 obj->realtime.dose_cumulated = *(float *)&dose_cumulated;
-                uint32_t dose_rate = cmd->data[14] | cmd->data[15] << 8 | cmd->data[16] << 16 | cmd->data[17] << 24;
+                uint32_t dose_rate = cmd->data[19] | cmd->data[20] << 8 | cmd->data[21] << 16 | cmd->data[22] << 24;
                 obj->realtime.dose_rate = *(float *)&dose_rate;
-                obj->realtime.prf_current = cmd->data[18];
-                obj->interlock.one_pulse.count_abnormal= cmd->data[20] << 8 | cmd->data[19];
-                obj->realtime.one_pulse_valid_flag = cmd->data[21];
-                obj->realtime.one_pulse_dose = cmd->data[22] | cmd->data[23] << 8 | cmd->data[24] << 16 | cmd->data[25] << 24;
+                obj->realtime.prf_current = cmd->data[23];
+                obj->interlock.one_pulse.count_abnormal= cmd->data[25] << 8 | cmd->data[24];
+                obj->realtime.one_pulse_valid_flag = cmd->data[26];
+                obj->realtime.one_pulse_dose = cmd->data[27] | cmd->data[28] << 8 | cmd->data[29] << 16 | cmd->data[30] << 24;
                 osMutexRelease(obj->mutex);
 
                 // LOG_I("[%d]: recv dose realtime data: %f\r\n", id, obj->realtime.dose_cumulated);
+
+                if (id == BGM_UART_DOSE1)
+                {
+                    /* to fkp and qam */
+                    uint8_t buf[32] = {0};
+                    memcpy(&buf[0], &cmd->data[11], 8); /* dose meter、dose cumulated */
+                    memcpy(&buf[8], &cmd->data[31], 12);/* trigger interval、timestamp */
+
+                    // ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM | RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, buf, 20);
+                    if (ret != 0)
+                    {
+                        LOG_E("[%d]: cmd to rtm upload err: %d\r\n", id, ret);
+                    }
+                }
             }
             break;
         case REAL_TIME_DATA_TYPE_RI:
@@ -646,7 +680,7 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                 obj->realtime.radiation_index = cmd->data[3] << 8 | cmd->data[2];
                 osMutexRelease(obj->mutex);
 
-                LOG_I("[%d]: recv dose radiation index: %d\r\n", id, obj->realtime.radiation_index);
+                // LOG_I("[%d]: recv dose radiation index: %d\r\n", id, obj->realtime.radiation_index);
 
                 ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_BROADCAST, UART_CMD_SEND_RADIATION_INDEX, &cmd->data[2], *cmd->len - 2);
                 if (ret != 0)
@@ -658,7 +692,7 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
         case REAL_TIME_DATA_TYPE_QAM:
             /* 1. to fkp */
             ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, &cmd->data[2], 8);
-            /* 2. to rtm */
+            /* 2. to qam */
             ret |= cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM, UART_DATA_CMD_SEND_QAM, &cmd->data[2], *cmd->len - 2);
             if (ret != 0)
             {

@@ -166,8 +166,13 @@ void AFC_SetAFTMotorDeadZone(uint16_t deadZone)
 
 #define AFC_SHELL_CMD
 #ifdef AFC_SHELL_CMD
-MSH_CMD_EXPORT_ALIAS(BGM2AFC_Handshake,B2AHS,"Dose Board Handshake Set");
-MSH_CMD_EXPORT_ALIAS(AFC_SetAFCControlMode,AFCCTRLMODE,"Set AFC Control Mode");
+MSH_CMD_EXPORT_ALIAS(BGM2AFC_Handshake,B2AHS,"afc Board Handshake Set");
+static int8_t set_afc_ctrl_mode(int8_t argc, uint8_t **argv)
+{
+    AFC_SetAFCControlMode(atoi(argv[1]));
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(set_afc_ctrl_mode,AFCCTRLMODE,"Set AFC Control Mode");
 MSH_CMD_EXPORT_ALIAS(AFC_SetAFCSampleMode,AFCSAMPLEMODE,"Set AFC Sample Mode");
 void Shell_AFC_SetADCSampleDelay(int8_t argc, uint8_t **argv)
 {

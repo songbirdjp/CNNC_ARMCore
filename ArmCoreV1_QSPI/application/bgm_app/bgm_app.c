@@ -542,12 +542,12 @@ static int8_t fsm_state_update_from_local(void)
     fsm_state_dose1 = dose1_fsm_state;
     fsm_state_dose2 = dose2_fsm_state;
 #else
-    ret = dose_state_polling(BGM_UART_DOSE1);
-    ret |= dose_state_polling(BGM_UART_DOSE2);
-    if (ret != 0)
-    {
-        LOG_E("dose fsm polling err: %d\r\n", ret);
-    }
+    // ret = dose_state_polling(BGM_UART_DOSE1);
+    // ret |= dose_state_polling(BGM_UART_DOSE2);
+    // if (ret != 0)
+    // {
+    //     LOG_E("dose fsm polling err: %d\r\n", ret);
+    // }
 
     /* 1. get dose fsm state */
     fsm_state_dose1 = dose_fsm_state_get(BGM_UART_DOSE1);
@@ -610,13 +610,22 @@ static int8_t fsm_state_update_from_local(void)
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_IDLE && fsm_state_dose2 == DOSE_FSM_STATE_IDLE)
     {
-        dose_state_set = DOSE_FSM_STATE_IDLE;
 
         ret = fsm_state_set(BGM_STATE_IDLE, FSM_SOURCE_LOCAL);
         if (ret != 0)
         {
             LOG_E("fsm state set err: %d\r\n", ret);
         }
+
+        if (dose_state_set == DOSE_FSM_STATE_IDLE)
+        {
+            return 0;
+        }
+        dose_state_set = DOSE_FSM_STATE_IDLE;
+
+        /* set afc to preset mode */
+        AFC_SetAFCControlMode(0);
+
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_PRELIMINARY_BEGIN && fsm_state_dose2 == DOSE_FSM_STATE_PRELIMINARY_BEGIN)
     {
@@ -671,6 +680,14 @@ static int8_t fsm_state_update_from_local(void)
         {
             LOG_E("fsm state set err: %d\r\n", ret);
         }
+
+        if (dose_state_set == DOSE_FSM_STATE_WORK)
+        {
+            return 0;
+        }
+        dose_state_set = DOSE_FSM_STATE_WORK;
+        /* set afc to auto mode */
+        AFC_SetAFCControlMode(2);
     }
     else if (fsm_state_dose1 == DOSE_FSM_STATE_COMPLETE || fsm_state_dose2 == DOSE_FSM_STATE_COMPLETE)
     {
@@ -802,7 +819,7 @@ static int8_t dose_rate_calculate(void *argument)
         dose2_meter_cur = dose_meter_value_get(BGM_UART_DOSE2);
         if (fabs(dose1_meter_cur - dose2_meter_cur) / dose1_meter_cur > 0.1)
         {
-            LOG_E("dose meter difference exceed 10\% limit\r\n");
+            // LOG_E("dose meter difference exceed 10%% limit\r\n");
         }
 
         /* 2.  */
@@ -931,6 +948,7 @@ static int8_t bgm_info_get(uint8_t argc, char **argv)
 
     LOG_I("beam_id: %d\r\n", info.beam_id);
     LOG_I("radiation_index: %d\r\n", info.radiation_index);
+    LOG_I("dose1 radiation_index: %d\r\n", dose_radiation_index_get(BGM_UART_DOSE1));
     LOG_I("dose_mode: %d\r\n", info.dose_mode);
     LOG_I("pulse_mode: %d\r\n", info.pulse_mode);
     LOG_I("cali_mode: %d\r\n", info.cali_mode);

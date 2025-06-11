@@ -65,7 +65,7 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
     {
         obj->fsm_state_request = recv->OutU8_RequireState;
     }
-    
+
     if (last_fsm_state != obj->fsm_state_request)
     {
         obj->fsm_state_request_pre = last_fsm_state;

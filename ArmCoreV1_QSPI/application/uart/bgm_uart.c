@@ -553,11 +553,7 @@ static int8_t uart_thread_init(void)
     static enum uart_id uart_id[BGM_UART_MAX] = {BGM_UART_AFC, BGM_UART_DOSE1, BGM_UART_DOSE2, BGM_UART_RTM, BGM_UART_EPS_VPS};
 
     osThreadId_t thread_id = NULL;
-    osThreadAttr_t attr = {
-        .name = "link_status_thread",
-        .stack_size = 256 * 4,
-        .priority = osPriorityNormal,
-    };
+    osThreadAttr_t attr = {0};
 
     for (uint8_t i = 0; i < UART_PROTOCOL_NUM; i++)
     {
@@ -568,6 +564,9 @@ static int8_t uart_thread_init(void)
             return -1;
         }
 
+        attr.name = "uart_link_status_thread";
+        attr.stack_size = 256 * 4,
+        attr.priority = osPriorityNormal,
         thread_id = osThreadNew(link_status_entry, &uart_id[i], &attr);
         if (thread_id == NULL)
         {
@@ -603,6 +602,8 @@ static int8_t uart_thread_init(void)
         }
 
         attr.name = "uart_send_thread";
+        attr.stack_size = 1024 * 4;
+        attr.priority = osPriorityAboveNormal;
         thread_id = osThreadNew(uart_send_entry, &uart_id[i], &attr);
         if (thread_id == NULL)
         {
