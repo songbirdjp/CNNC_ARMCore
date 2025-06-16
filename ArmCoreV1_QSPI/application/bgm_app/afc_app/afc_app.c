@@ -8,23 +8,30 @@ struct afc_info_t
 {
     uint8_t hw_version;
     uint8_t sw_version[6];
+
+    uint16_t encoder_value; /* mag encoder value */
 };
 
 static struct afc_info_t afc_info = {0};
+static struct afc_info_t *afc_info_obj_get(void)
+{
+    return &afc_info;
+}
 
 static int8_t afc_handshake_frame_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
+    struct afc_info_t *info = afc_info_obj_get();
 
-    afc_info.hw_version = cmd->data[1];
-    afc_info.sw_version[0] = cmd->data[2] + 0x30;
-    afc_info.sw_version[1] = '.';
-    afc_info.sw_version[2] = cmd->data[3] + 0x30;
-    afc_info.sw_version[3] = '.';
-    afc_info.sw_version[4] = cmd->data[4] + 0x30;
+    info->hw_version = cmd->data[1];
+    info->sw_version[0] = cmd->data[2] + 0x30;
+    info->sw_version[1] = '.';
+    info->sw_version[2] = cmd->data[3] + 0x30;
+    info->sw_version[3] = '.';
+    info->sw_version[4] = cmd->data[4] + 0x30;
 
-    LOG_I("AFC hw version: %#.2x\r\n", afc_info.hw_version);
-    LOG_I("AFC sw version: %s\r\n", afc_info.sw_version);
+    LOG_I("AFC hw version: %#.2x\r\n", info->hw_version);
+    LOG_I("AFC sw version: %s\r\n", info->sw_version);
 
     return ret;
 }
@@ -33,10 +40,21 @@ static int8_t afc_command_frame_parse(struct cmd_object *cmd)
 {
     int8_t ret = 0;
     uint16_t offset = 0;
+    struct afc_info_t *info = afc_info_obj_get();
 
     switch (cmd->data[0])   /* first cmd */
     {
     case 0x40:
+        switch (cmd->data[1])
+        {
+        case 0x03:
+            info->encoder_value = cmd->data[2] | cmd->data[3] << 8;
+            LOG_I("Encoder value: %d\r\n", info->encoder_value);
+            break;
+        default:
+            ret = -1;
+            break;
+        }
         break;
     case 0x41:
         break;
@@ -87,6 +105,7 @@ static int8_t afc_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     /* 1. check cmd id */
     if (cmd->id.bits.cmd_id != BGM_UART_ID)
     {
+        LOG_E("invalid cmd id: %d\r\n", cmd->id.bits.cmd_id);
         return 0;
     }
 

@@ -196,7 +196,12 @@ void Shell_AFC_MagMotorRunByStep(int8_t argc, uint8_t **argv)//0x40,0x02
     AFC_MagMotorRunByStep(dir,_stepVal);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_AFC_MagMotorRunByStep,AFCMAGSTEP,"Mag Motor Run By Step");
-MSH_CMD_EXPORT_ALIAS(AFC_MagMotorGetEncValue,AFCMAGENC,"Mag Motor Get Enc Value");
+static int8_t get_mag_motor_enc_value(int8_t argc, uint8_t **argv)
+{
+    AFC_MagMotorGetEncValue();
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(get_mag_motor_enc_value,AFCMAGENC,"Mag Motor Get Enc Value");
 void Shell_AFC_MagMotorSetPresetPos(int8_t argc, uint8_t **argv)//0x40,0x04
 {
     uint16_t pos = (strtol((char *)argv[2], NULL, 16) << 8) | strtol((char *)argv[1], NULL, 16);

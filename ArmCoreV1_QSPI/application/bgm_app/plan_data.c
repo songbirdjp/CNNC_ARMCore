@@ -261,11 +261,11 @@ int8_t getPlanBeamData(uint16_t beamIndex, struct one_beam_order *beam_info)
     while(1)
     {
         localBeamIndex = (pBeamData[1] << 8) + pBeamData[0];
-        if (localBeamIndex >= MAX_BEAM_NUM)
-        {
-            LOG_E("invalid beam index: %d\r\n", localBeamIndex);
-            return -1;
-        }
+        // if (localBeamIndex >= MAX_BEAM_NUM)
+        // {
+        //     LOG_E("invalid beam index: %d\r\n", localBeamIndex);
+        //     return -1;
+        // }
         // LOG_I("find %d:beam id %d\r\n",skipBeamCnt, localBeamIndex);
         if(localBeamIndex != beamIndex){
             pBeamData += nrtBeamData.oneBeamSize[skipBeamCnt];

@@ -3,7 +3,7 @@
 
 #include "bgm_uart.h"
 #include "dose_app.h"
-
+#include "afc_app.h"
 
 int8_t dose_handshake(enum uart_id id);
 int8_t dose_adc_value_set(enum uart_id id, uint32_t *value);
@@ -28,5 +28,7 @@ int8_t dose_radiation_data_get(enum uart_id id);
 int8_t dose_radiation_index_set(enum uart_id id, uint16_t index, uint8_t emergency);
 
 void BGM_SendCmd(enum uart_id uartID, uint8_t cmdType, uint8_t *cmdData, uint8_t len);
+
+int8_t afc_encoder_value_get(void);
 
 #endif /* __BGM_DEF_H__ */

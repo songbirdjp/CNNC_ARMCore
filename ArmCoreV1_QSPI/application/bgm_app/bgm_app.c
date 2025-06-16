@@ -797,7 +797,7 @@ static int8_t dose_rate_calculate(void *argument)
 
     for (;;)
     {
-        osDelay(500);
+        osDelay(200);
 
         // osMutexAcquire(obj->mutex, osWaitForever);
         // state_current = obj->fsm_state;
@@ -811,6 +811,13 @@ static int8_t dose_rate_calculate(void *argument)
         //     {
         //         LOG_E("dose rate set err: %d\r\n", ret);
         //     }
+        // }
+
+        /* 0. get afc encoder value */
+        // ret = afc_encoder_value_get();
+        // if (ret != 0)
+        // {
+        //     LOG_E("afc encoder value get err: %d\r\n", ret);
         // }
 
         /* TODO: */

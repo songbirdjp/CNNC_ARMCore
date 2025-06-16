@@ -311,3 +311,8 @@ void BGM_SendCmd(enum uart_id uartID, uint8_t cmdType, uint8_t *cmdData, uint8_t
     BGMCmdToSend.data = cmdData;
     uart_cmd_write(uartID,&BGMCmdToSend);
 }
+
+int8_t afc_encoder_value_get(void)
+{
+    AFC_MagMotorGetEncValue();
+}
