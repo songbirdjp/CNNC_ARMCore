@@ -25,7 +25,6 @@ enum pulse_state
 int8_t dose_value_status_set(enum pulse_state state, uint64_t value);
 uint64_t dose_value_status_get(enum pulse_state state);
 
-int8_t adcs7476_value_process(void);
 
 #ifdef __cplusplus
 }

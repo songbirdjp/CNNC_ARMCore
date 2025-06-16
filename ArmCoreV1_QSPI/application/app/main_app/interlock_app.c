@@ -171,7 +171,7 @@ static int8_t interlock_status_update(void)
         stat->value.bits.adcs7476_1_limit_high = (ret & (1 << 1)) ? 1 : 0;
         stat->value.bits.adcs7476_1_limit_low = (ret & (1 << 0)) ? 1 : 0;
     }
-    
+
     ret = adcs7476_object_data_limit_fault_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
     if (ret > 0)
     {

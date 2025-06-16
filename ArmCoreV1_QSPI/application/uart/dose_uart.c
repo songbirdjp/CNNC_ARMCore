@@ -1204,23 +1204,24 @@ static int8_t dose_uart_thread_init(void)
     }
 
     osThreadAttr_t attr = {
-    .name = "dose_uart_recv_thread",
+    .name = "link_status_thread",
     .stack_size = 1024 * 4,
     .priority = osPriorityAboveNormal,
     };
 
-    osThreadId_t thread_id = osThreadNew(dose_uart_recv_entry, NULL, &attr);
-    if (thread_id == NULL)
-    {
-        LOG_E("thread dose uart create failed\r\n");
-        return -2;
-    }
-
-    attr.name = "link_status_thread";
-    thread_id = osThreadNew(link_status_entry, NULL, &attr);
+    osThreadId_t thread_id = osThreadNew(link_status_entry, NULL, &attr);
     if (thread_id == NULL)
     {
         LOG_E("thread link status create failed\r\n");
+        return -2;
+    }
+
+    attr.name = "uart_recv_thread";
+    attr.priority = osPriorityAboveNormal5;
+    thread_id = osThreadNew(dose_uart_recv_entry, NULL, &attr);
+    if (thread_id == NULL)
+    {
+        LOG_E("thread uart recv create failed\r\n");
         return -3;
     }
 
@@ -1231,11 +1232,11 @@ static int8_t dose_uart_thread_init(void)
         return -4;
     }
 
-    attr.name = "dose_uart_send_thread";
+    attr.name = "uart_send_thread";
     thread_id = osThreadNew(dose_uart_send_entry, NULL, &attr);
     if (thread_id == NULL)
     {
-        LOG_E("thread dose uart send create failed\r\n");
+        LOG_E("thread uart send create failed\r\n");
         return -5;
     }
 
@@ -1276,7 +1277,7 @@ int8_t log_output_write(uint8_t *buf, uint16_t len)
     struct dose_object cmd = {0};
 
     cmd.id.bits.cmd_id = DOSE_UART_ID;
-    cmd.id.bits.cmd_ack = 1;
+    cmd.id.bits.cmd_ack = 0;
     cmd.type = 0x85;
     cmd.len = &len;
     cmd.data = msg;
@@ -1310,7 +1311,7 @@ static int8_t log_output_bridge_init(void)
 INIT_COMPONENT_EXPORT(log_output_bridge_init);
 #endif
 
-#ifndef DOSE_UART_TEST
+#ifdef DOSE_UART_TEST
 #include "shell.h"
 static int8_t dose_uart_cmd_send(uint8_t argc, char **argv)
 {

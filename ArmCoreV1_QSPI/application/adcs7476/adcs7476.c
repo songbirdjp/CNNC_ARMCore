@@ -19,7 +19,7 @@ struct adcs7476_object
     uint16_t limit_h;
     uint16_t limit_l;
 
-    uint8_t buf_len;
+    uint16_t buf_len;
     uint16_t *buf;
 };
 
@@ -244,7 +244,7 @@ int8_t adcs7476_object_data_limit_fault_get(uint8_t *device_name)
         return -3;
     }
 
-    for (uint8_t i = 0; i < BUF_LEN; i++)
+    for (uint16_t i = 0; i < BUF_LEN; i++)
     {
         if (buf[i] > limit_h)
         {
@@ -259,9 +259,9 @@ int8_t adcs7476_object_data_limit_fault_get(uint8_t *device_name)
     return 0;
 }
 
-static void (*callback)(void) = NULL;
+static void (*callback)(uint16_t *buf, uint16_t *buf_1, uint16_t len) = NULL;
 
-int8_t adcs7476_object_data_callback_register(void (*cb)(void *arg))
+int8_t adcs7476_object_data_callback_register(void (*cb)(uint16_t *buf, uint16_t *buf_1, uint16_t len))
 {
     callback = cb;
 
@@ -299,7 +299,8 @@ int8_t adcs7476_sample_enable(uint8_t enable)
 {
     return device_adcs7476_sample_enable(enable);
 }
-
+#include "ulog.h"
+#include "timestamp.h"
 static int8_t adcs7476_sample_data_recv_process(void)
 {
     int8_t ret = 0;
@@ -310,6 +311,8 @@ static int8_t adcs7476_sample_data_recv_process(void)
     struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
 
+    uint64_t start = 0, end = 0, count = 0;
+
     for (;;)
     {
         event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, osWaitForever);
@@ -317,18 +320,36 @@ static int8_t adcs7476_sample_data_recv_process(void)
         osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
         osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
 
-        osMutexAcquire(obj_master->mutex, osWaitForever);
-        memcpy(obj_master->data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
-        osMutexRelease(obj_master->mutex);
+        if (osMessageQueueGetCount(obj_master->queue) != 0)
+        {
+            LOG_E("master: %d\r\n", osMessageQueueGetCount(obj_master->queue));
+        }
+        if (osMessageQueueGetCount(obj_slave->queue) != 0)
+        {
+            LOG_E("slave: %d\r\n", osMessageQueueGetCount(obj_slave->queue));
+        }
 
-        osMutexAcquire(obj_slave->mutex, osWaitForever);
-        memcpy(obj_slave->data, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
-        osMutexRelease(obj_slave->mutex);
+        // osMutexAcquire(obj_master->mutex, osWaitForever);
+        // memcpy(obj_master->data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
+        // osMutexRelease(obj_master->mutex);
+
+        // osMutexAcquire(obj_slave->mutex, osWaitForever);
+        // memcpy(obj_slave->data, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
+        // osMutexRelease(obj_slave->mutex);
+
+        // start = timestamp_ns_get();
 
         if (callback != NULL)
         {
-            callback();
+            callback(recv_tmp, recv_tmp_1, obj_master->buf_len);
         }
+
+        // end = timestamp_ns_get();
+
+        // if (count++ % 1000 == 0)
+        // {
+        //     LOG_I("time: %lld\r\n", (end - start) / 1000);
+        // }
 
 #if 0
         for (uint8_t i = 0; i < obj_master->buf_len; i++)
@@ -403,7 +424,7 @@ static int8_t adcs7476_sample_thread_init(void)
 }
 INIT_APP_EXPORT(adcs7476_sample_thread_init);
 
-#ifdef ADCS7476_SAMPLE_TEST
+#ifndef ADCS7476_SAMPLE_TEST
 #include "shell.h"
 
 static int adcs7476_sample_test(int argc, char **argv)
@@ -414,9 +435,18 @@ static int adcs7476_sample_test(int argc, char **argv)
         printf("adcs7476_sample_test: invalid parameter\r\n");
     }
 
-    adcs7476_sample_interval_set(atoi(argv[1]));
-
-    adcs7476_sample_enable(1);
+    switch (atoi(argv[1]))
+    {
+    case 0:
+        adcs7476_sample_interval_set(atoi(argv[2]));
+        adcs7476_sample_enable(1);
+        break;
+    case 1:
+        adcs7476_sample_enable(atoi(argv[2]));
+        break;
+    default:
+        break;
+    }
 
     return 0;
 }

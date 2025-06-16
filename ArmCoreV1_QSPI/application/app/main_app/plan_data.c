@@ -126,7 +126,7 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
 {
     struct beam_data *beam_data = beam_data_get(beam_id);
 
-    if (beam_data == NULL) 
+    if (beam_data == NULL)
     {
         LOG_E("invalid beam_id: %d\n", beam_id);
         return -1;

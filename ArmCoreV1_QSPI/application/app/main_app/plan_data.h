@@ -13,7 +13,7 @@ struct radiation_point_data
 {
     float dose_cumulative;
     float dose_rate;        /* Unit: MU/min */
-    uint16_t time_expected; /* Unit: ms */
+    uint32_t time_expected; /* Unit: ms */
 };
 
 #define BEAMS_MAX           1
