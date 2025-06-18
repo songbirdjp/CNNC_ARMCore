@@ -21,7 +21,7 @@
 extern "C"
 {
 #endif
-#define UART_PROTOCOL_DATA_MAX_LENGTH (512)
+#define UART_PROTOCOL_DATA_MAX_LENGTH (256)
 
     /**************************************private*****************************/
 

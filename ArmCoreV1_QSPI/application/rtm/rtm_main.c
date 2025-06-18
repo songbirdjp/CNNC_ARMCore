@@ -580,7 +580,7 @@ static void app_module_rx_thread(void *argument)
         LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
         goto exit;
     }
-    if (strcmp(self->module_name, "SLAVE"))
+    if (strcmp(self->module_type, "SLAVE") == 0)
     {
         ret = uart_protocol_rx_RegisterCallback(&self->uart_protocol,
                                                 UART_PROTOCOL_PNT_RX_CB_ID,
@@ -636,7 +636,7 @@ static void app_module_tx_thread(void *argument)
     rtm_module_info_t *self = (rtm_module_info_t *)argument;
     queue_frame_t queue_frame;
 
-    if (strcmp(self->module_name, "MASTER"))
+    if (strcmp(self->module_type, "MASTER") == 0)
     {
         ret = uart_protocol_tx_RegisterCallback(&self->uart_protocol,
                                                 UART_PROTOCOL_PNT_TX_CB_ID,

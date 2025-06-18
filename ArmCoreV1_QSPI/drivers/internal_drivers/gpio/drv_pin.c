@@ -37,14 +37,12 @@ static driver_pin_t driver_pin_E4 = {0};
 static driver_pin_t driver_pin_E2 = {0};
 static driver_pin_t driver_pin_B10 = {0};
 static driver_pin_t driver_pin_B11 = {0};
-void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin)
-{
 
-}
-void HAL_GPIO_EXTI_Falling_Callback(uint16_t GPIO_Pin)
-{
+// void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+// {
+//     uint8_t pin_index = POSITION_VAL(GPIO_Pin);
 
-}
+// }
 static device_err_t driver_pin_open(device_pin_t *const self)
 {
     dev_assert(self != NULL);
@@ -135,100 +133,3 @@ void driver_pin_init(void)
     driver_pin_register(&driver_pin_B11, GPIOB, GPIO_PIN_11, DEVICE_NAME_PIN_RUN_LED_6);
 }
 INIT_BOARD_EXPORT(driver_pin_init);
-/********************************TEST******************************************/
-static void pin_test_rising_callback_high(device_pin_t *self)
-{
-    printf("rising exti high\r\n");
-    printf("pin state:%s\r\n",self->pin_state ? "SET" : "RESET");
-}
-static void pin_test_rising_callback_middle(device_pin_t *self)
-{
-    printf("rising exti middle\r\n");
-}
-static void pin_test_rising_callback_low(device_pin_t *self)
-{
-    printf("rising exti low\r\n");
-}
-static void pin_test_falling_callback_high(device_pin_t *self)
-{
-    printf("falling exti high\r\n");
-    printf("pin state:%s\r\n",self->pin_state ? "SET" : "RESET");
-}
-static void pin_test_falling_callback_middle(device_pin_t *self)
-{
-    printf("falling exti middle\r\n");
-}
-static void pin_test_falling_callback_low(device_pin_t *self)
-{
-    printf("falling exti low\r\n");
-}
-int8_t pin_test(void)
-{
-    int8_t ret = 0;
-    pin_msg_t pin_msg_r;
-    device_t *device_pin15 = NULL;
-
-    driver_pin_init();
-
-    device_pin15 = device_find("PA.15");
-
-    if (device_pin15 == NULL)
-    {
-        return -1;
-    }
-    ret = device_open(device_pin15);
-    if (ret != 0)
-    {
-        return -2;
-    }
-    ret = device_ioctl(device_pin15,
-                       PIN_CMD_SET_IRQ_HANDLE_RISING_CALLBACK_HIGH,
-                       pin_test_rising_callback_high);
-    if (ret != 0)
-    {
-        return -3;
-    }
-    ret = device_ioctl(device_pin15,
-                       PIN_CMD_SET_IRQ_HANDLE_FALLING_CALLBACK_HIGH,
-                       pin_test_falling_callback_high);
-    if (ret != 0)
-    {
-        return -3;
-    }
-    ret = device_ioctl(device_pin15,
-                       PIN_CMD_SET_IRQ_HANDLE_RISING_CALLBACK_LOW,
-                       pin_test_rising_callback_low);
-    if (ret != 0)
-    {
-        return -3;
-    }
-    ret = device_ioctl(device_pin15,
-                       PIN_CMD_SET_IRQ_HANDLE_FALLING_CALLBACK_LOW,
-                       pin_test_falling_callback_low);
-    if (ret != 0)
-    {
-        return -3;
-    }
-    ret = device_ioctl(device_pin15,
-                       PIN_CMD_SET_IRQ_HANDLE_RISING_CALLBACK_MIDDLE,
-                       pin_test_rising_callback_middle);
-    if (ret != 0)
-    {
-        return -3;
-    }
-    ret = device_ioctl(device_pin15,
-                       PIN_CMD_SET_IRQ_HANDLE_FALLING_CALLBACK_MIDDLE,
-                       pin_test_falling_callback_middle);
-    if (ret != 0)
-    {
-        return -3;
-    }
-    while (1)
-    {
-        ret = device_read(device_pin15, &pin_msg_r, 0, 0);
-        if (ret != 0)
-        {
-            return -3;
-        }
-    }
-}
