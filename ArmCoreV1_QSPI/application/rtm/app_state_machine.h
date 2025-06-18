@@ -115,7 +115,8 @@ extern "C"
     {
         uint32_t emergency_stop : 1; // emergency stop, 0: normal, 1: emergency stop
         uint32_t door_open : 1;      // door open, 0: door open, 1: door close
-        uint32_t reserved : 30;
+        uint32_t search_state : 1;           // search state, 0: search, 1: not search
+        uint32_t reserved : 29;
     } app_not_ready_event_table_t;
 
     typedef struct app_serious_interlock_table

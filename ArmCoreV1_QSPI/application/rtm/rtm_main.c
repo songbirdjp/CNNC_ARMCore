@@ -20,6 +20,7 @@
 #include "app_cpg.h"
 #include "hw_crc.h"
 #include "timestamp.h"
+#include "app_search.h"
 typedef struct
 {
     uint32_t id_ack;
@@ -159,6 +160,7 @@ static void app_rtm_main_thread(void *argument)
                 break;
             }
         }
+        search_state_machine(&self->app_dido);
         // 轮询状态机
         rtm_event.sig = system_state_require;
         rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
@@ -272,7 +274,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         }
     }
     else
-    {
+    {   
         len = (uint8_t *)&output_data.OutU8_gmm_fsm_state_current - (uint8_t *)&output_data.OutU16_radiation_index;
         if (memcmp(&output_data.OutU16_radiation_index, &data->OutU16_radiation_index, len) != 0)
         {
@@ -519,7 +521,7 @@ static void app_module_rx_thread(void *argument)
         LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
         goto exit;
     }
-    if (strcmp(self->module_name, "SLAVE"))
+    if (strcmp(self->module_type, "SLAVE") == 0)
     {
         ret = uart_protocol_rx_RegisterCallback(&self->uart_protocol,
                                                 UART_PROTOCOL_PNT_RX_CB_ID,
@@ -576,7 +578,7 @@ static void app_module_tx_thread(void *argument)
     rtm_module_info_t *self = (rtm_module_info_t *)argument;
     queue_frame_t queue_frame;
 
-    if (strcmp(self->module_name, "MASTER"))
+    if (strcmp(self->module_type, "MASTER") == 0)
     {
         ret = uart_protocol_tx_RegisterCallback(&self->uart_protocol,
                                                 UART_PROTOCOL_PNT_TX_CB_ID,
@@ -851,6 +853,11 @@ static void app_cpg_tx_thread(void *argument)
     cpg_send_structure_t send_data = {0}, send_data_bak = {0};
     memset(&send_data, 0, sizeof(cpg_send_structure_t));
     memset(&send_data_bak, 0, sizeof(cpg_send_structure_t));
+
+    send_data.OffGantryUnitInfo = 0xFFFF;
+    send_data.BoardID = 0x01;
+    send_data.HardwareVersion = 0x01;
+    send_data.FirmWareVersion = 0x01;
     for (;;)
     {
         status = osMessageQueueGet(self->rtm_module_info[RTM_MODULE_CPG].module_queue, &queue_frame, NULL, 0xFFFFFFFF);

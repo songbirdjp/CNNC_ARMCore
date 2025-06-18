@@ -179,6 +179,15 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.serious_interlock.door_open = 0;
         self->interlock_table.not_ready_event.door_open = 0;
     }
+    if(dido_structure.tca9535_0x01_u.tca9535_0x01_bit.DI_TREATMENT_ROOM_DOOR_READY != 1)
+    {
+       self->interlock_table.not_ready_event.search_state = 1;
+       retval = -1;
+    }
+    else
+    {
+       self->interlock_table.not_ready_event.search_state = 0;
+    }
     // HvEn check
     if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn ^ dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn)
     {
