@@ -217,7 +217,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         {
         case OUTPUT_DATA_BEAM_ID:
             flag = OUTPUT_DATA_RTM_ON_REQUIRE_STATE;
-            len = (uint8_t *)&output_data.OutU8_reserved1 - (uint8_t *)&output_data.OutU8_beam_id;
+            len = (uint8_t *)&output_data.OutU8_state_sync - (uint8_t *)&output_data.OutU8_beam_id;
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x0, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x0, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x0, &data->OutU8_beam_id, len);
@@ -254,13 +254,13 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x80, 0x19, &data->OutU8_gmm_require_state, len);
             break;
         case OUTPUT_DATA_PSM_REQUIRE_STATE:
-            flag = OUTPUT_DATA_FKP_LED_BLINK;
+            flag = OUTPUT_DATA_BEAM_ID;
             len = (uint8_t *)&output_data.OutU8_fkp_led_blink - (uint8_t *)&output_data.OutU8_psm_require_state;
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x1A, &data->OutU8_psm_require_state, len);
             break;
         case OUTPUT_DATA_FKP_LED_BLINK:
             flag = OUTPUT_DATA_CPG_LED_BLINK;
-            len = (uint8_t *)&output_data.OutU8_cpg_led_blink - (uint8_t *)&output_data.OutU8_fkp_led_blink;
+            len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_fkp_led_blink;
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x17, &data->OutU8_fkp_led_blink, len);
             break;
         case OUTPUT_DATA_CPG_LED_BLINK:
@@ -274,13 +274,20 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
     }
     else
     {
-        len = (uint8_t *)&output_data.OutU8_reserved1 - (uint8_t *)&output_data.OutU8_beam_id;
+        len = (uint8_t *)&output_data.OutU8_state_sync - (uint8_t *)&output_data.OutU8_beam_id;
         if (memcmp(&output_data.OutU8_beam_id, &data->OutU8_beam_id, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x0, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x0, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x0, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x0, &data->OutU8_beam_id, len);
+        }
+
+        len = (uint8_t *)&output_data.OutU16_radiation_index - (uint8_t *)&output_data.OutU8_state_sync;
+        if (memcmp(&output_data.OutU8_state_sync, &data->OutU8_state_sync, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x08 | 0x80, 0x1E, &data->OutU8_state_sync, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x08 | 0x80, 0x1E, &data->OutU8_state_sync, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_fault_clear - (uint8_t *)&output_data.OutU16_radiation_index;
@@ -343,10 +350,28 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x1A, &data->OutU8_psm_require_state, len);
         }
 
-        len = (uint8_t *)&output_data.OutU8_cpg_led_blink - (uint8_t *)&output_data.OutU8_fkp_led_blink;
+        len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_fkp_led_blink;
         if (memcmp(&output_data.OutU8_fkp_led_blink, &data->OutU8_fkp_led_blink, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x17, &data->OutU8_fkp_led_blink, len);
+        }
+
+        len = (uint8_t *)&output_data.OutU8_fkp_fractions - (uint8_t *)&output_data.OutU16_fkp_year;
+        if (memcmp(&output_data.OutU16_fkp_year, &data->OutU16_fkp_year, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1B, &data->OutU16_fkp_year, len);
+        }
+
+        len = (uint8_t *)&output_data.OutU8_fkp_systemCurrentState - (uint8_t *)&output_data.OutU8_fkp_fractions;
+        if (memcmp(&output_data.OutU8_fkp_fractions, &data->OutU8_fkp_fractions, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1C, &data->OutU8_fkp_fractions, len);
+        }
+
+        len = (uint8_t *)&output_data.OutU8_cpg_led_blink - (uint8_t *)&output_data.OutU8_fkp_systemCurrentState;
+        if (memcmp(&output_data.OutU8_fkp_systemCurrentState, &data->OutU8_fkp_systemCurrentState, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1D, &data->OutU8_fkp_systemCurrentState, len);
         }
 
         len = sizeof(output_data.OutU8_cpg_led_blink);

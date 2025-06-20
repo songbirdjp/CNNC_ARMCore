@@ -82,6 +82,13 @@
 * SubIndex 46 - Reference to 0x7010.46<br>
 * SubIndex 47 - Reference to 0x7010.47<br>
 * SubIndex 48 - Reference to 0x7010.48<br>
+* SubIndex 49 - Reference to 0x7010.49<br>
+* SubIndex 50 - Reference to 0x7010.50<br>
+* SubIndex 51 - Reference to 0x7010.51<br>
+* SubIndex 52 - Reference to 0x7010.52<br>
+* SubIndex 53 - Reference to 0x7010.53<br>
+* SubIndex 54 - Reference to 0x7010.54<br>
+* SubIndex 55 - Reference to 0x7010.55<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -132,7 +139,14 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex45 - Reference to 0x7010.45 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex46 - Reference to 0x7010.46 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex47 - Reference to 0x7010.47 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex48 - Reference to 0x7010.48 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex48 - Reference to 0x7010.48 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex49 - Reference to 0x7010.49 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex50 - Reference to 0x7010.50 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex51 - Reference to 0x7010.51 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex52 - Reference to 0x7010.52 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex53 - Reference to 0x7010.53 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex54 - Reference to 0x7010.54 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex55 - Reference to 0x7010.55 */
 
 /**
 * \brief Object/Entry names
@@ -185,7 +199,14 @@ OBJCONST UCHAR OBJMEM aName0x1601[] = "OutputData process data mapping\000"
 "SubIndex 045\000"
 "SubIndex 046\000"
 "SubIndex 047\000"
-"SubIndex 048\000\377";
+"SubIndex 048\000"
+"SubIndex 049\000"
+"SubIndex 050\000"
+"SubIndex 051\000"
+"SubIndex 052\000"
+"SubIndex 053\000"
+"SubIndex 054\000"
+"SubIndex 055\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -242,6 +263,13 @@ UINT32 SI45; /* Subindex45 - Reference to 0x7010.45 */
 UINT32 SI46; /* Subindex46 - Reference to 0x7010.46 */
 UINT32 SI47; /* Subindex47 - Reference to 0x7010.47 */
 UINT32 SI48; /* Subindex48 - Reference to 0x7010.48 */
+UINT32 SI49; /* Subindex49 - Reference to 0x7010.49 */
+UINT32 SI50; /* Subindex50 - Reference to 0x7010.50 */
+UINT32 SI51; /* Subindex51 - Reference to 0x7010.51 */
+UINT32 SI52; /* Subindex52 - Reference to 0x7010.52 */
+UINT32 SI53; /* Subindex53 - Reference to 0x7010.53 */
+UINT32 SI54; /* Subindex54 - Reference to 0x7010.54 */
+UINT32 SI55; /* Subindex55 - Reference to 0x7010.55 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1601;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -251,7 +279,7 @@ TOBJ1601;
 */
 PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={48,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100908,0x70100A08,0x70100B20,0x70100C20,0x70100D08,0x70100E08,0x70100F10,0x70101020,0x70101120,0x70101220,0x70101308,0x70101408,0x70101520,0x70101620,0x70101708,0x70101808,0x70101920,0x70101A20,0x70101B08,0x70101C08,0x70101D20,0x70101E20,0x70101F08,0x70102008,0x70102120,0x70102220,0x70102308,0x70102408,0x70102508,0x70102608,0x70102720,0x70102820,0x70102908,0x70102A08,0x70102B20,0x70102C20,0x70102D08,0x70102E08,0x70102F08,0x70103008}
+={55,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100908,0x70100A08,0x70100B20,0x70100C20,0x70100D08,0x70100E08,0x70100F10,0x70101020,0x70101120,0x70101220,0x70101308,0x70101408,0x70101520,0x70101620,0x70101708,0x70101808,0x70101920,0x70101A20,0x70101B08,0x70101C08,0x70101D20,0x70101E20,0x70101F08,0x70102008,0x70102120,0x70102220,0x70102308,0x70102408,0x70102508,0x70102608,0x70102720,0x70102820,0x70102908,0x70102A08,0x70102B20,0x70102C20,0x70102D08,0x70102E08,0x70102F10,0x70103008,0x70103108,0x70103208,0x70103308,0x70103408,0x70103508,0x70103608,0x70103708}
 #endif
 ;
 /** @}*/
@@ -1327,7 +1355,7 @@ PROTO TOBJ6000 InputData0x6000
 * SubIndex 2 - OutU8_Reserved0<br>
 * SubIndex 3 - OutU32_FirmWareVersion<br>
 * SubIndex 4 - OutU8_beam_id<br>
-* SubIndex 5 - OutU8_reserved1<br>
+* SubIndex 5 - OutU8_state_sync<br>
 * SubIndex 6 - OutU16_radiation_index<br>
 * SubIndex 7 - OutU8_fault_clear<br>
 * SubIndex 8 - OutU8_ethercat_Link_state<br>
@@ -1369,8 +1397,15 @@ PROTO TOBJ6000 InputData0x6000
 * SubIndex 44 - OutU32_psm_unready_override<br>
 * SubIndex 45 - OutU8_fkp_led_blink<br>
 * SubIndex 46 - OutU8_fkp_vibration<br>
-* SubIndex 47 - OutU8_cpg_led_blink<br>
-* SubIndex 48 - OutU8_cpg_vibration<br>
+* SubIndex 47 - OutU16_fkp_year<br>
+* SubIndex 48 - OutU8_fkp_month<br>
+* SubIndex 49 - OutU8_fkp_day<br>
+* SubIndex 50 - OutU8_fkp_hour<br>
+* SubIndex 51 - OutU8_fkp_minute<br>
+* SubIndex 52 - OutU8_fkp_fractions<br>
+* SubIndex 53 - OutU8_fkp_systemCurrentState<br>
+* SubIndex 54 - OutU8_cpg_led_blink<br>
+* SubIndex 55 - OutU8_cpg_vibration<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -1378,7 +1413,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex2 - OutU8_Reserved0 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex3 - OutU32_FirmWareVersion */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex4 - OutU8_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex5 - OutU8_reserved1 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex5 - OutU8_state_sync */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex6 - OutU16_radiation_index */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex7 - OutU8_fault_clear */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex8 - OutU8_ethercat_Link_state */
@@ -1420,8 +1455,15 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex44 - OutU32_psm_unready_override */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex45 - OutU8_fkp_led_blink */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex46 - OutU8_fkp_vibration */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex47 - OutU8_cpg_led_blink */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex48 - OutU8_cpg_vibration */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex47 - OutU16_fkp_year */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex48 - OutU8_fkp_month */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex49 - OutU8_fkp_day */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex50 - OutU8_fkp_hour */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex51 - OutU8_fkp_minute */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex52 - OutU8_fkp_fractions */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex53 - OutU8_fkp_systemCurrentState */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex54 - OutU8_cpg_led_blink */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex55 - OutU8_cpg_vibration */
 
 /**
 * \brief Object/Entry names
@@ -1431,7 +1473,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU8_Reserved0\000"
 "OutU32_FirmWareVersion\000"
 "OutU8_beam_id\000"
-"OutU8_reserved1\000"
+"OutU8_state_sync\000"
 "OutU16_radiation_index\000"
 "OutU8_fault_clear\000"
 "OutU8_ethercat_Link_state\000"
@@ -1473,6 +1515,13 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU32_psm_unready_override\000"
 "OutU8_fkp_led_blink\000"
 "OutU8_fkp_vibration\000"
+"OutU16_fkp_year\000"
+"OutU8_fkp_month\000"
+"OutU8_fkp_day\000"
+"OutU8_fkp_hour\000"
+"OutU8_fkp_minute\000"
+"OutU8_fkp_fractions\000"
+"OutU8_fkp_systemCurrentState\000"
 "OutU8_cpg_led_blink\000"
 "OutU8_cpg_vibration\000\377";
 #endif //#ifdef _OBJD_
@@ -1487,7 +1536,7 @@ UINT8 OutU8_BoardID; /* Subindex1 - OutU8_BoardID */
 UINT8 OutU8_Reserved0; /* Subindex2 - OutU8_Reserved0 */
 UINT32 OutU32_FirmWareVersion; /* Subindex3 - OutU32_FirmWareVersion */
 UINT8 OutU8_beam_id; /* Subindex4 - OutU8_beam_id */
-UINT8 OutU8_reserved1; /* Subindex5 - OutU8_reserved1 */
+UINT8 OutU8_state_sync; /* Subindex5 - OutU8_state_sync */
 UINT16 OutU16_radiation_index; /* Subindex6 - OutU16_radiation_index */
 UINT8 OutU8_fault_clear; /* Subindex7 - OutU8_fault_clear */
 UINT8 OutU8_ethercat_Link_state; /* Subindex8 - OutU8_ethercat_Link_state */
@@ -1529,8 +1578,15 @@ UINT32 OutU32_psm_interlock_override; /* Subindex43 - OutU32_psm_interlock_overr
 UINT32 OutU32_psm_unready_override; /* Subindex44 - OutU32_psm_unready_override */
 UINT8 OutU8_fkp_led_blink; /* Subindex45 - OutU8_fkp_led_blink */
 UINT8 OutU8_fkp_vibration; /* Subindex46 - OutU8_fkp_vibration */
-UINT8 OutU8_cpg_led_blink; /* Subindex47 - OutU8_cpg_led_blink */
-UINT8 OutU8_cpg_vibration; /* Subindex48 - OutU8_cpg_vibration */
+UINT16 OutU16_fkp_year; /* Subindex47 - OutU16_fkp_year */
+UINT8 OutU8_fkp_month; /* Subindex48 - OutU8_fkp_month */
+UINT8 OutU8_fkp_day; /* Subindex49 - OutU8_fkp_day */
+UINT8 OutU8_fkp_hour; /* Subindex50 - OutU8_fkp_hour */
+UINT8 OutU8_fkp_minute; /* Subindex51 - OutU8_fkp_minute */
+UINT8 OutU8_fkp_fractions; /* Subindex52 - OutU8_fkp_fractions */
+UINT8 OutU8_fkp_systemCurrentState; /* Subindex53 - OutU8_fkp_systemCurrentState */
+UINT8 OutU8_cpg_led_blink; /* Subindex54 - OutU8_cpg_led_blink */
+UINT8 OutU8_cpg_vibration; /* Subindex55 - OutU8_cpg_vibration */
 } OBJ_STRUCT_PACKED_END
 __attribute__((aligned(1), packed))TOBJ7010;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -1540,7 +1596,7 @@ __attribute__((aligned(1), packed))TOBJ7010;
 */
 PROTO TOBJ7010 OutputData0x7010
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={48,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+={55,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -1554,7 +1610,7 @@ PROTO TOBJ7010 OutputData0x7010
 #ifdef _OBJD_
 TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1601 */
-{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 48 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 55 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
 /* Object 0x1A00 */
 {NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 108 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
 /* Object 0x1C12 */
@@ -1564,7 +1620,7 @@ TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x6000 */
 {NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 108 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
 /* Object 0x7010 */
-{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 48 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 55 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
 {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL}};
 #endif    //#ifdef _OBJD_
 
