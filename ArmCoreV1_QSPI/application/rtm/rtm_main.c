@@ -350,22 +350,22 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x1A, &data->OutU8_psm_require_state, len);
         }
 
-        len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_fkp_led_blink;
+        len = (uint8_t *)&output_data.OutU8_fkp_vibration - (uint8_t *)&output_data.OutU8_fkp_led_blink;
         if (memcmp(&output_data.OutU8_fkp_led_blink, &data->OutU8_fkp_led_blink, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x17, &data->OutU8_fkp_led_blink, len);
         }
 
-        len = (uint8_t *)&output_data.OutU8_fkp_fractions - (uint8_t *)&output_data.OutU16_fkp_year;
-        if (memcmp(&output_data.OutU16_fkp_year, &data->OutU16_fkp_year, len) != 0)
+        len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_fkp_vibration;
+        if (memcmp(&output_data.OutU8_fkp_vibration, &data->OutU8_fkp_vibration, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1B, &data->OutU16_fkp_year, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1B, &data->OutU8_fkp_vibration, len);
         }
 
-        len = (uint8_t *)&output_data.OutU8_fkp_systemCurrentState - (uint8_t *)&output_data.OutU8_fkp_fractions;
-        if (memcmp(&output_data.OutU8_fkp_fractions, &data->OutU8_fkp_fractions, len) != 0)
+        len = (uint8_t *)&output_data.OutU8_fkp_systemCurrentState - (uint8_t *)&output_data.OutU16_fkp_year;
+        if (memcmp(&output_data.OutU16_fkp_year, &data->OutU16_fkp_year, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1C, &data->OutU8_fkp_fractions, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1C, &data->OutU16_fkp_year, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_cpg_led_blink - (uint8_t *)&output_data.OutU8_fkp_systemCurrentState;
