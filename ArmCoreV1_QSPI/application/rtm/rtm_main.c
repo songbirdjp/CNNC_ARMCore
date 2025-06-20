@@ -1169,7 +1169,7 @@ int app_rtm_data_handle_create(void)
 }
 INIT_APP_EXPORT(app_rtm_data_handle_create)
 
-#define FKP_TEST
+// #define FKP_TEST
 #ifdef FKP_TEST
 #include "shell.h"
 static struct
@@ -1183,7 +1183,7 @@ static osTimerId_t timerId = NULL;
 void fkp_osTimerFunc(void *argument)
 {
 
-    DoseData.dose_cumulated += 0.01;
+    DoseData.dose_cumulated += 0.1;
     if (DoseData.dose_cumulated > DoseData.dose_meter)
     {
         DoseData.dose_cumulated = DoseData.dose_meter;
