@@ -179,14 +179,14 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.serious_interlock.door_open = 0;
         self->interlock_table.not_ready_event.door_open = 0;
     }
-    if(dido_structure.tca9535_0x01_u.tca9535_0x01_bit.DI_TREATMENT_ROOM_DOOR_READY != 1)
+    if (dido_structure.tca9535_0x01_u.tca9535_0x01_bit.DI_TREATMENT_ROOM_DOOR_READY != 1)
     {
-       self->interlock_table.not_ready_event.search_state = 1;
-       retval = -1;
+        self->interlock_table.not_ready_event.search_state = 1;
+        retval = -1;
     }
     else
     {
-       self->interlock_table.not_ready_event.search_state = 0;
+        self->interlock_table.not_ready_event.search_state = 0;
     }
     // HvEn check
     if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn ^ dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn)
@@ -620,6 +620,8 @@ static State_t module_powerSaver(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
+        uint8_t fkp_power_state = 0x01;
+        rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], 0x200, 0x62, &fkp_power_state, sizeof(fkp_power_state));
         // LOG_I("module_powerSaver enter\r\n");
         status = HANDLED();
         break;
@@ -627,6 +629,8 @@ static State_t module_powerSaver(void *self, Event_t const *const e)
     case EXIT_SIG:
     {
         // LOG_I("module_powerSaver exit\r\n");
+        uint8_t fkp_power_state = 0x00;
+        rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], 0x200, 0x62, &fkp_power_state, sizeof(fkp_power_state));
         status = HANDLED();
         break;
     }

@@ -76,6 +76,8 @@ extern "C"
         uart_dev_t *uart_fkp;
     } app_rtm_main_t;
 
+
+    int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len);
 #ifdef __cplusplus
 }
 #endif

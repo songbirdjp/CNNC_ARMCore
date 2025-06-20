@@ -57,7 +57,7 @@ typedef struct
     uint32_t serious_interlock;
 } __attribute__((aligned(1), packed)) rtm_status_t;
 
-static int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len);
+int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len);
 static app_rtm_main_t app_rtm;
 
 osThreadId_t app_rtm_main_threadId;
@@ -194,7 +194,7 @@ exit:
     osThreadExit();
 }
 
-static int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len)
+int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len)
 {
     if (queue_id == NULL || data == NULL || len == 0 || len > UART_PROTOCOL_DATA_MAX_LENGTH)
     {
@@ -274,7 +274,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         }
     }
     else
-    {   
+    {
         len = (uint8_t *)&output_data.OutU8_gmm_fsm_state_current - (uint8_t *)&output_data.OutU16_radiation_index;
         if (memcmp(&output_data.OutU16_radiation_index, &data->OutU16_radiation_index, len) != 0)
         {
@@ -332,6 +332,9 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
     {
     case 0x00:
         memcpy(&input_data->InU8_beam_id, queue_frame->payload.data + 1, len);
+        break;
+    case 0x1E:
+        memcpy(&input_data->InU8_state_sync, queue_frame->payload.data + 1, len);
         break;
     case 0x01:
         memcpy(&input_data->InU16_radiation_index, queue_frame->payload.data + 1, len);
@@ -437,10 +440,10 @@ int32_t uart_protocol_set_rx_callback(struct uart_protocol *const self,
 }
 
 int32_t uart_protocol_pnt_rx_callback(struct uart_protocol *const self,
-                                            uint32_t ID,
-                                            const uint8_t *data,
-                                            uint16_t *len,
-                                            void *arg)
+                                      uint32_t ID,
+                                      const uint8_t *data,
+                                      uint16_t *len,
+                                      void *arg)
 {
     uint64_t timestamp_ns = 0;
     memcpy(&timestamp_ns, data, *len);
@@ -561,9 +564,9 @@ exit:
 }
 
 int32_t uart_protocol_pnt_tx_callback(struct uart_protocol *const self,
-                                            uint8_t *data,
-                                            uint16_t *len,
-                                            void *arg)
+                                      uint8_t *data,
+                                      uint16_t *len,
+                                      void *arg)
 {
     uint64_t timestamp_ns = timestamp_ns_get();
     memcpy(data, &timestamp_ns, sizeof(uint64_t));
@@ -650,7 +653,7 @@ static void app_fkp_rx_thread(void *argument)
         {
             continue;
         }
-        LOG_I("FkpButton:%x\r\n", recv_data.fkp_recv_structure.FkpButton);
+        // LOG_I("FkpButton:%x\r\n", recv_data.fkp_recv_structure.FkpButton);
         if (memcmp(&recv_data, &recv_data_bak, sizeof(recv_data)) != 0)
         {
             memcpy(&recv_data_bak, &recv_data, sizeof(recv_data));
@@ -726,30 +729,37 @@ static void app_fkp_tx_thread(void *argument)
             LOG_E("%s queue get error, status = %d\r\n", self->rtm_module_info[RTM_MODULE_FKP].module_name, status);
             continue;
         }
-
-        if (queue_frame.payload.type == 0x05 && queue_frame.payload.data[0] == 0x17)
+        uint8_t type = queue_frame.payload.type;
+        uint8_t cmd = queue_frame.payload.data[0];
+        uint16_t len = queue_frame.payload.length - 1;
+        if (type == 0x05)
         {
-            memcpy(&(send_data.fkp_send_structure.FkpLedBlink), queue_frame.payload.data + 1, 2);
+            switch (cmd)
+            {
+            case 0x17:
+                memcpy(&send_data.fkp_send_structure.FkpLedBlink, queue_frame.payload.data + 1, len);
+                break;
+            case 0x1B:
+                memcpy(&send_data.fkp_send_structure.year, queue_frame.payload.data + 1, len);
+                break;
+            case 0x1C:
+                memcpy(&send_data.fkp_send_structure.fractions, queue_frame.payload.data + 1, len);
+                break;
+            case 0x1D:
+                memcpy(&send_data.fkp_send_structure.SystemCurrentState, queue_frame.payload.data + 1, len);
+                break;
+            case 0x62:
+                memcpy(&send_data.fkp_send_structure.power_off, queue_frame.payload.data + 1, len);
+                break;
+            case 0x33:
+                memcpy(&send_data.fkp_send_structure.TotalDose, queue_frame.payload.data + 1, 8);
+                break;
+            default:
+                continue;
+                break;
+            }
         }
-        // static float DeliveredDose = 0;
-        // DeliveredDose += 1.0;
-        // if(DeliveredDose >= 100.0)
-        // {
-        //     DeliveredDose = 0;
-        // }
-        // send_data.fkp_send_structure.DeliveredDose = DeliveredDose;
-        // LOG_I("DeliveredDose:%f\r\n", send_data.fkp_send_structure.DeliveredDose);
-        // send_data.fkp_send_structure.DeliveredDose = 1.0;
-        // send_data.fkp_send_structure.TotalDose = 100.0;
-        // send_data.fkp_send_structure.FkpLedBlink = 00;
-        // send_data.fkp_send_structure.power_off = 0x00;
-        // send_data.fkp_send_structure.beep = 00;
-        // send_data.fkp_send_structure.year = 0;
-        // send_data.fkp_send_structure.month = 0;
-        // send_data.fkp_send_structure.day = 0;
-        // send_data.fkp_send_structure.hour = 0;
-        // send_data.fkp_send_structure.minute = 0;
-        // send_data.fkp_send_structure.fractions = 0;
+        send_data.fkp_send_structure.beep = 70;
         crc = hardware_crc_calculate(CRC32, (uint8_t *)&send_data + 2, tx_len - 6);
         crc ^= 0xFFFFFFFF;
         send_data.crc = crc;
@@ -757,11 +767,11 @@ static void app_fkp_tx_thread(void *argument)
         if (memcmp(&send_data, &send_data_bak, sizeof(send_data)) != 0)
         {
             memcpy(&send_data_bak, &send_data, sizeof(send_data));
-            device_err = dev_uart_send(self->uart_fkp, (uint8_t *)&send_data, tx_len, 0);
-            // if (device_err != DEV_EOK)
-            // {
-            //     continue;
-            // }
+            device_err = dev_uart_send(self->uart_fkp, (uint8_t *)&send_data, tx_len, 100);
+            if (device_err != DEV_EOK)
+            {
+                continue;
+            }
         }
     }
 exit:
@@ -1158,6 +1168,76 @@ int app_rtm_data_handle_create(void)
     return 0;
 }
 INIT_APP_EXPORT(app_rtm_data_handle_create)
+
+#define FKP_TEST
+#ifdef FKP_TEST
+#include "shell.h"
+static struct
+{
+    float dose_meter;
+    float dose_cumulated;
+    uint32_t trigger_interval;
+    uint64_t timestamp;
+} __attribute__((aligned(1), packed)) DoseData ;
+static osTimerId_t timerId = NULL;
+void fkp_osTimerFunc(void *argument)
+{
+
+    DoseData.dose_cumulated += 0.01;
+    if (DoseData.dose_cumulated > DoseData.dose_meter)
+    {
+        DoseData.dose_cumulated = DoseData.dose_meter;
+        osTimerStop(timerId);
+    }
+    rtm_set_data_distribute(app_rtm.rtm_module_info->queue_group[RTM_MODULE_FKP], 0x200, 0x33, &DoseData, sizeof(DoseData));
+}
+
+static int8_t fkp_test(int argc, char *argv[])
+{
+    if (argc < 2)
+    {
+        goto usage;
+    }
+    if (timerId == NULL)
+    {
+        timerId = osTimerNew(fkp_osTimerFunc, osTimerPeriodic, NULL, NULL);
+    }
+
+    if (0 == strcmp(argv[1], "dose"))
+    {
+        if (0 == strcmp(argv[2], "start"))
+        {
+            if (osTimerIsRunning(timerId))
+            {
+                return -1;
+            }
+            DoseData.dose_meter = 500.0f;
+            DoseData.dose_cumulated = 0.0f;
+            osTimerStart(timerId, 100);
+            return 0;
+        }
+        else if (0 == strcmp(argv[2], "stop"))
+        {
+            if (!osTimerIsRunning(timerId))
+            {
+                return -1;
+            }
+            osTimerStop(timerId);
+            return 0;
+        }
+        else
+        {
+            goto usage;
+        }
+    }
+    return 0;
+usage:
+    LOG_I("usage: %s\n", argv[0]);
+    return 0;
+}
+
+MSH_CMD_EXPORT_ALIAS(fkp_test, fkp_test, fkp test);
+#endif
 
 // #define PSM_TEST
 #ifdef PSM_TEST

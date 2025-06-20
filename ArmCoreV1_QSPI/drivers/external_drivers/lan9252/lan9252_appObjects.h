@@ -562,7 +562,7 @@ PROTO TOBJ1C13 sTxPDOassign
 * SubIndex 2 - InU8_Reserved0<br>
 * SubIndex 3 - InU32_FirmWareVersion<br>
 * SubIndex 4 - InU8_beam_id<br>
-* SubIndex 5 - InU8_reserved1<br>
+* SubIndex 5 - InU8_state_sync<br>
 * SubIndex 6 - InU16_radiation_index<br>
 * SubIndex 7 - InU8_fault_clear<br>
 * SubIndex 8 - InU8_ethercat_Link_state<br>
@@ -605,7 +605,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex2 - InU8_Reserved0 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex3 - InU32_FirmWareVersion */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex4 - InU8_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex5 - InU8_reserved1 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex5 - InU8_state_sync */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex6 - InU16_radiation_index */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex7 - InU8_fault_clear */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex8 - InU8_ethercat_Link_state */
@@ -650,7 +650,7 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 "InU8_Reserved0\000"
 "InU32_FirmWareVersion\000"
 "InU8_beam_id\000"
-"InU8_reserved1\000"
+"InU8_state_sync\000"
 "InU16_radiation_index\000"
 "InU8_fault_clear\000"
 "InU8_ethercat_Link_state\000"
@@ -698,7 +698,7 @@ UINT8 InU8_BoardID; /* Subindex1 - InU8_BoardID */
 UINT8 InU8_Reserved0; /* Subindex2 - InU8_Reserved0 */
 UINT32 InU32_FirmWareVersion; /* Subindex3 - InU32_FirmWareVersion */
 UINT8 InU8_beam_id; /* Subindex4 - InU8_beam_id */
-UINT8 InU8_reserved1; /* Subindex5 - InU8_reserved1 */
+UINT8 InU8_state_sync; /* Subindex5 - InU8_state_sync */
 UINT16 InU16_radiation_index; /* Subindex6 - InU16_radiation_index */
 UINT8 InU8_fault_clear; /* Subindex7 - InU8_fault_clear */
 UINT8 InU8_ethercat_Link_state; /* Subindex8 - InU8_ethercat_Link_state */
