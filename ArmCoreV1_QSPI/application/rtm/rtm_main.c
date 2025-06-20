@@ -740,10 +740,10 @@ static void app_fkp_tx_thread(void *argument)
                 memcpy(&send_data.fkp_send_structure.FkpLedBlink, queue_frame.payload.data + 1, len);
                 break;
             case 0x1B:
-                memcpy(&send_data.fkp_send_structure.year, queue_frame.payload.data + 1, len);
+                memcpy(&send_data.fkp_send_structure.Vibration, queue_frame.payload.data + 1, len);
                 break;
             case 0x1C:
-                memcpy(&send_data.fkp_send_structure.fractions, queue_frame.payload.data + 1, len);
+                memcpy(&send_data.fkp_send_structure.year, queue_frame.payload.data + 1, len);
                 break;
             case 0x1D:
                 memcpy(&send_data.fkp_send_structure.SystemCurrentState, queue_frame.payload.data + 1, len);
