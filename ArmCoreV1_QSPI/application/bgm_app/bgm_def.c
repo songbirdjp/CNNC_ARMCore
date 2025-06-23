@@ -67,12 +67,17 @@ int8_t dose_rate_value_set(enum uart_id id, float *dose_rate)
         LOG_E("dose info get err: %d\r\n", ret);
     }
 
-    return ret;  
+    return ret;
 }
 
 float dose_rate_value_get(enum uart_id id)
 {
     return dose_data_info_get(id, DOSE_INFO_DOSE_RATE_GET, NULL);
+}
+
+uint8_t dose_prf_value_get(enum uart_id id)
+{
+    return dose_data_info_get(id, DOSE_INFO_PRF_GET, NULL);
 }
 
 int8_t dose_prf_value_set(enum uart_id id, uint8_t *prf)
@@ -227,6 +232,16 @@ int8_t dose_radiation_index_set(enum uart_id id, uint16_t index, uint8_t emergen
     }
 
     return ret;
+}
+
+int8_t dose_radiation_enable_set(enum uart_id id, uint8_t *data)
+{
+    return dose_data_info_set(id, DOSE_INFO_RADIATION_ENABLE_SET, data, 0);
+}
+
+int8_t dose_fault_clear(enum uart_id id)
+{
+    return dose_data_info_set(id, DOSE_INFO_FAULT_ALL_CLEAR, NULL, 0);
 }
 
 #ifndef DOSE_CMD_TEST

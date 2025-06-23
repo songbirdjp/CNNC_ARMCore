@@ -5,6 +5,7 @@
 #include "ulog.h"
 #include "plan_data.h"
 #include "rtm_app.h"
+#include "bgm_app.h"
 
 struct board_status
 {
@@ -51,7 +52,7 @@ struct calibration_para
             uint8_t valid : 1;  /* 0: invalid 1: valid */
             uint8_t reserved : 6;
         }bits;
-        
+
         uint8_t byte;
     }status;
 
@@ -70,7 +71,7 @@ struct treatment_para
             uint8_t check : 1;  /* 0: fail  1: pass */
             uint8_t reserved : 6;
         }bits;
-        
+
         uint8_t byte;
     }status;
 
@@ -455,6 +456,9 @@ static int8_t dose_state_control_parse(enum uart_id id, struct cmd_object *cmd)
             obj->fsm_state = cmd->data[2];
             osMutexRelease(obj->mutex);
             break;
+        case 0x02:  /* enable dose radiation */
+            cmd->data[2] == 0 ? LOG_I("[%d]: dose radiation disable\r\n", id) : LOG_I("[%d]: dose radiation enable\r\n", id);
+            break;
         default:
             ret = -1;
             break;
@@ -477,6 +481,9 @@ static int8_t dose_state_control_parse(enum uart_id id, struct cmd_object *cmd)
             break;
         case 0x04:
             LOG_I("[%d]: one pulse valid flag cleanup ok\r\n", id);
+            break;
+        case 0x05:
+            LOG_I("[%d]: dose fault cleanup ok\r\n", id);
             break;
         default:
             ret = -1;
@@ -535,7 +542,7 @@ static int8_t dose_command_frame_parse(enum uart_id id, struct cmd_object *cmd)
     case 0xC1:
     case 0xC2:
         ret = dose_state_control_parse(id, cmd);
-        break;    
+        break;
     default:
         LOG_E("[%d]: invalid cmd type: %x\r\n", id, cmd->data[0]);
         ret = -1;
@@ -665,7 +672,7 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                     memcpy(&buf[0], &cmd->data[11], 8); /* dose meter、dose cumulated */
                     memcpy(&buf[8], &cmd->data[31], 12);/* trigger interval、timestamp */
 
-                    // ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM | RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, buf, 20);
+                    ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM | RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, buf, 20);
                     if (ret != 0)
                     {
                         LOG_E("[%d]: cmd to rtm upload err: %d\r\n", id, ret);
@@ -680,9 +687,14 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                 obj->realtime.radiation_index = cmd->data[3] << 8 | cmd->data[2];
                 osMutexRelease(obj->mutex);
 
+                struct bgm_data_info *obj_bgm = bgm_data_info_get();
+                osMutexAcquire(obj->mutex, osWaitForever);
+                obj_bgm->radiation_index = cmd->data[3] << 8 | cmd->data[2];
+                osMutexRelease(obj->mutex);
+
                 // LOG_I("[%d]: recv dose radiation index: %d\r\n", id, obj->realtime.radiation_index);
 
-                ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_BROADCAST, UART_CMD_SEND_RADIATION_INDEX, &cmd->data[2], *cmd->len - 2);
+                ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_BROADCAST, UART_DATA_CMD_SEND_RADIATION_INDEX, &cmd->data[2], *cmd->len - 2);
                 if (ret != 0)
                 {
                     LOG_E("[%d]: cmd to rtm upload err: %d\r\n", id, ret);
@@ -691,13 +703,13 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
             break;
         case REAL_TIME_DATA_TYPE_QAM:
             /* 1. to fkp */
-            ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, &cmd->data[2], 8);
+            // ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, &cmd->data[2], 8);
             /* 2. to qam */
-            ret |= cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM, UART_DATA_CMD_SEND_QAM, &cmd->data[2], *cmd->len - 2);
-            if (ret != 0)
-            {
-                LOG_E("[%d]: cmd to rtm upload err: %d\r\n", id, ret);
-            }
+            // ret |= cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM, UART_DATA_CMD_SEND_QAM, &cmd->data[2], *cmd->len - 2);
+            // if (ret != 0)
+            // {
+            //     LOG_E("[%d]: cmd to rtm upload err: %d\r\n", id, ret);
+            // }
             break;
         default:
             LOG_E("[%d]: invalid realtime data sub cmd: %x\r\n", id, cmd->data[1]);
@@ -715,7 +727,7 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
     return ret;
 }
 
-// #define LOG_OUTPUT_TO_ARM_IO
+#define LOG_OUTPUT_TO_ARM_IO
 #ifdef LOG_OUTPUT_TO_ARM_IO
 enum log_output_type
 {
@@ -731,14 +743,14 @@ static int8_t dose_log_frame_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case LOG_OUTPUT_MSG:
-            LOG_E("[%d]: dose msg: %s\r\n", id, (char *)&cmd->data[2]);
+            LOG_E("[%d]: dose msg: %s", id, (char *)&cmd->data[2]);
             break;
         default:
             LOG_E("[%d]: invalid log data sub cmd: %x\r\n", id, cmd->data[1]);
             break;
         }
         break;
-    
+
     default:
         LOG_E("[%d]: invalid log data cmd: %x\r\n", id, cmd->data[0]);
         return -2;
@@ -1231,6 +1243,17 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x02;
         ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
+    case DOSE_INFO_RADIATION_ENABLE_SET:
+        buf[offset++] = 0xC0;
+        buf[offset++] = 0x02;
+        buf[offset++] = *(uint8_t *)data;
+        ret = dose_cmd_write(id, 0x02, buf, offset);
+        break;
+    case DOSE_INFO_FAULT_ALL_CLEAR:
+        buf[offset++] = 0xC1;
+        buf[offset++] = 0x05;
+        ret = dose_cmd_write(id, 0x02, buf, offset);
+        break;
     default:
         break;
     }
@@ -1252,9 +1275,12 @@ static int8_t dose_cmd_send(uint8_t argc, uint8_t **argv)
      * argv[3-n]: dose cmd args
     */
 
+    buf[offset++] = 0x01;
+    buf[offset++] = LOG_OUTPUT_MSG;
+
     enum uart_id id = atoi(argv[1]);
-    memcpy(buf, argv[2], strlen(argv[2]));
-    offset = strlen(argv[2]);
+    memcpy(buf + offset, argv[2], strlen(argv[2]));
+    offset += strlen(argv[2]);
 
     for (uint8_t i = 3; i < argc; i++)
     {
@@ -1262,6 +1288,8 @@ static int8_t dose_cmd_send(uint8_t argc, uint8_t **argv)
         memcpy(buf + offset, argv[i], strlen(argv[i]));
         offset += strlen(argv[i]);
     }
+
+    // LOG_I("uart id: %d, cmd: %s\r\n", id, &buf[2]);
 
     return dose_cmd_write(id, 0x05, buf, offset);
 }

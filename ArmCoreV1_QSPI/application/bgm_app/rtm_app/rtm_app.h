@@ -25,16 +25,17 @@ extern "C" {
 
 enum uart_subcmd_type
 {
-    UART_CMD_SEND_RADIATION_INDEX = 0x01,
+    UART_DATA_CMD_SEND_RADIATION_INDEX = 0x01,
     UART_DATA_CMD_SEND_FSM_STATE = 0x31,
     UART_DATA_CMD_SEND_BGM_INFO,
     UART_DATA_CMD_SEND_DOSE_INFO,
-    UART_DATA_CMD_SEND_QAM,
 
     UART_DATA_CMD_RECV_BEAM_ID = 0,
     UART_DATA_CMD_RECV_RADIATION_INDEX,
+    UART_DATA_CMD_RECV_FAULT_CLEAR,
     UART_DATA_CMD_RECV_FSM_STATE = 0x13,
     UART_DATA_CMD_RECV_GMM = 0x82,
+    UART_DATA_CMD_RECV_STATE_SYNC = 0x1D,
 };
 
 int8_t cmd_to_rtm_upload(uint32_t id, enum uart_subcmd_type type, uint8_t *buf, uint16_t len);

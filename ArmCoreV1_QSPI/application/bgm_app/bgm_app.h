@@ -46,6 +46,7 @@ struct bgm_data_info
     float dose_meter;   /* cali mode meter value */
     float dose_meter_dummy;
     uint8_t dose_fsm_state_flag;
+    uint32_t error_code;
     osMutexId_t mutex;
 };
 

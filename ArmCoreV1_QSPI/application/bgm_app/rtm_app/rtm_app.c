@@ -2,6 +2,9 @@
 #include "bgm_uart.h"
 #include "ulog.h"
 #include "init_call.h"
+#include "bgm_app.h"
+#include "plan_data.h"
+#include "bgm_def.h"
 
 struct uart_cmd_set_get
 {
@@ -82,12 +85,64 @@ static int8_t rtm_cmd_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[0])
         {
         case UART_DATA_CMD_RECV_BEAM_ID:
+        {
+            struct bgm_data_info *obj = bgm_data_info_get();
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->beam_id = cmd->data[1];
+            osMutexRelease(obj->mutex);
             break;
+        }
         case UART_DATA_CMD_RECV_RADIATION_INDEX:
+        {
+            static uint16_t last_radiation_index = 0;
+            struct bgm_data_info *obj = bgm_data_info_get();
+            osMutexAcquire(obj->mutex, osWaitForever);
+            if (obj->fsm_state != BGM_STATE_WORK && obj->fsm_state != BGM_STATE_COMPLETE)
+            {
+                obj->radiation_index = cmd->data[1] | cmd->data[2] << 8;
+            }
+            else
+            {
+                switch (obj->deliver_type)
+                {
+                case DELIVER_TYPE_VMAT:
+                case DELIVER_TYPE_HiMAT:
+                case DELIVER_TYPE_SURVIEW:
+                case DELIVER_TYPE_CT:
+                case DELIVER_TYPE_SSIMRT:
+                    obj->radiation_index = cmd->data[1] | cmd->data[2] << 8;
+                    if (last_radiation_index != obj->radiation_index)
+                    {
+                        last_radiation_index = obj->radiation_index;
+
+                        ret = dose_radiation_index_set(BGM_UART_DOSE1, last_radiation_index, 0);
+                        ret |= dose_radiation_index_set(BGM_UART_DOSE2, last_radiation_index, 0);
+                    }
+                    break;
+                case DELIVER_TYPE_SWIMRT:
+                case DELIVER_TYPE_CRT:
+                    /* radiation index is updated by dose board */
+                    obj->radiation_index = dose_radiation_index_get(BGM_UART_DOSE1);
+                    break;
+                default:
+                    LOG_E("invalid deliver type: %d\r\n", obj->deliver_type);
+                    break;
+                }
+            }
+            osMutexRelease(obj->mutex);
+            break;
+        }
+        case UART_DATA_CMD_RECV_FAULT_CLEAR:
+            ret = dose_fault_clear(BGM_UART_DOSE1);
+            ret |= dose_fault_clear(BGM_UART_DOSE2);
             break;
         case UART_DATA_CMD_RECV_FSM_STATE:
             break;
         case UART_DATA_CMD_RECV_GMM:
+            break;
+        case UART_DATA_CMD_RECV_STATE_SYNC:
+            ret = dose_radiation_enable_set(BGM_UART_DOSE1, &cmd->data[1]);
+            ret |= dose_radiation_enable_set(BGM_UART_DOSE2, &cmd->data[1]);
             break;
         default:
             ret = -2;

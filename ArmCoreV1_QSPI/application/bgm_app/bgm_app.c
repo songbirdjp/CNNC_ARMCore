@@ -190,7 +190,7 @@ static int8_t fsm_switch_check(enum bgm_fsm_state state_current, enum bgm_fsm_st
         }
         break;
     case BGM_STATE_COMPLETE:
-        if (state_request != BGM_STATE_IDLE && state_request != BGM_STATE_PREPARE)
+        if (state_request != BGM_STATE_IDLE && state_request != BGM_STATE_PREPARE && state_request != BGM_STATE_TERMINATE)
         {
             ret = -1;
         }
@@ -295,9 +295,23 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         ret |= beam_deliver_type_get(info.beam_id, &deliver_type);
         osMutexAcquire(obj->mutex, osWaitForever);
         obj->deliver_type = deliver_type;
+        obj->error_code &= ~(1 << 0);
         osMutexRelease(obj->mutex);
+        if (ret != 0)
+        {
+            if (checkPlanRecvStatus() != 0)
+            {
+                obj->error_code |= 1 << 0;
+                LOG_I("now plan data is invalid\r\n");
+            }
+        }
         break;
     case BGM_STATE_PREPARE:
+        if (obj->error_code & (1 << 0))
+        {
+            LOG_E("prepare request failed, plan data is invalid\r\n");
+            return -1;
+        }
         LOG_I("---remote set to prepare---\r\n");
 #if 0
         LOG_I("dose_mode: %d\r\n", info.dose_mode);
@@ -953,9 +967,8 @@ static int8_t bgm_info_get(uint8_t argc, char **argv)
     memcpy(&info, obj, sizeof(struct bgm_data_info));
     osMutexRelease(obj->mutex);
 
-    LOG_I("beam_id: %d\r\n", info.beam_id);
-    LOG_I("radiation_index: %d\r\n", info.radiation_index);
-    LOG_I("dose1 radiation_index: %d\r\n", dose_radiation_index_get(BGM_UART_DOSE1));
+    LOG_I("local error code: %#.8x\r\n", info.error_code);
+
     LOG_I("dose_mode: %d\r\n", info.dose_mode);
     LOG_I("pulse_mode: %d\r\n", info.pulse_mode);
     LOG_I("cali_mode: %d\r\n", info.cali_mode);
@@ -964,28 +977,34 @@ static int8_t bgm_info_get(uint8_t argc, char **argv)
     LOG_I("cali_dose1_adc: %d\r\n", info.cali_dose1_adc);
     LOG_I("cali_dose2_dac: %d\r\n", info.cali_dose2_dac);
     LOG_I("cali_dose2_adc: %d\r\n", info.cali_dose2_adc);
-    LOG_I("dose_meter: %f\r\n", info.dose_meter);
-    LOG_I("dose_meter_dummy: %f\r\n", info.dose_meter_dummy);
     LOG_I("dose_fsm_state_flag: %d\r\n", info.dose_fsm_state_flag);
 
     LOG_I("fsm_state: %d\r\n", info.fsm_state);
     LOG_I("fsm_state_request: %d\r\n", info.fsm_state_request);
     LOG_I("fsm_state_request_pre: %d\r\n", info.fsm_state_request_pre);
     LOG_I("fsm_state_request_already: %d\r\n", info.fsm_state_request_already);
-
 #ifdef BGM_FSM_STATE_SIMULATION
     LOG_I("state_dose1: %d\r\n", dose1_fsm_state);
     LOG_I("state_dose2: %d\r\n", dose2_fsm_state);
 #else
-    LOG_I("state_dose1: %d\r\n", dose_fsm_state_get(BGM_UART_DOSE1));
-    LOG_I("state_dose2: %d\r\n", dose_fsm_state_get(BGM_UART_DOSE2));
+    LOG_I("fsm_state_dose1: %d\r\n", dose_fsm_state_get(BGM_UART_DOSE1));
+    LOG_I("fsm_state_dose2: %d\r\n", dose_fsm_state_get(BGM_UART_DOSE2));
 #endif
 
     LOG_I("interlock_dose1: %d\r\n", dose_interlock_get(BGM_UART_DOSE1));
     LOG_I("interlock_dose2: %d\r\n", dose_interlock_get(BGM_UART_DOSE2));
 
+    LOG_I("beam_id: %d\r\n", info.beam_id);
+    LOG_I("radiation_index: %d\r\n", info.radiation_index);
+    LOG_I("dose1 radiation_index: %d\r\n", dose_radiation_index_get(BGM_UART_DOSE1));
+    LOG_I("dose_meter: %f\r\n", info.dose_meter);
+    LOG_I("dose_meter_dummy: %f\r\n", info.dose_meter_dummy);
     LOG_I("meter_dose1: %f\r\n", dose_meter_value_get(BGM_UART_DOSE1));
     LOG_I("meter_dose2: %f\r\n", dose_meter_value_get(BGM_UART_DOSE2));
+
+    LOG_I("actual prf: %d\r\n", dose_prf_value_get(BGM_UART_DOSE1));
+    LOG_I("dose1_rate: %f\r\n", dose_rate_value_get(BGM_UART_DOSE1));
+    LOG_I("dose2_rate: %f\r\n", dose_rate_value_get(BGM_UART_DOSE2));
 
     return 0;
 }

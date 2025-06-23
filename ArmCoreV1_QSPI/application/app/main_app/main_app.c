@@ -52,6 +52,50 @@ static int8_t bgm_fsm_state_set_pre(uint8_t argc, char *argv[])
 }
 MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_set_pre, bgm_fsm_state_set_pre, set bgm fsm state pre);
 
+static uint16_t index_start = 0;
+static uint16_t index_end = 0;
+static osTimerId_t timer_id = NULL;
+static int8_t bgm_radiation_index_update(void *argument)
+{
+    if (index_start <= index_end)
+    {
+        return dose_radiation_index_set(BGM_UART_DOSE1, index_start++, 0);
+    }
+    else
+    {
+        osTimerStop(timer_id);
+        LOG_I("bgm radiation index update end\r\n");
+    }
+
+    return 0;
+}
+static int8_t bgm_radiation_index_set(uint8_t argc, char *argv[])
+{
+    index_start = atoi(argv[1]);
+    index_end = atoi(argv[2]);
+    uint16_t time_interval = atoi(argv[3]);
+
+    if (timer_id == NULL)
+    {
+        timer_id = osTimerNew(bgm_radiation_index_update, osTimerPeriodic, NULL, NULL);
+        if (timer_id == NULL)
+        {
+            LOG_E("timer create failed\r\n");
+            return -1;
+        }
+    }
+
+    osStatus_t stat = osTimerStart(timer_id, time_interval);
+    if (stat != osOK)
+    {
+        LOG_E("timer start err: %d\r\n", stat);
+        return -2;
+    }
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(bgm_radiation_index_set, bgm_radiation_index_set, set bgm radiation index);
+
 static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
 {
     int8_t ret = 0;
@@ -71,40 +115,40 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
         obj->fsm_state_request_pre = last_fsm_state;
         last_fsm_state = obj->fsm_state_request;
     }
-    obj->beam_id = recv->OutU8_BeamId;
+    // obj->beam_id = recv->OutU8_BeamId;
 
-    if (obj->fsm_state != BGM_STATE_WORK && obj->fsm_state != BGM_STATE_COMPLETE)
-    {
-        obj->radiation_index = recv->OutU16_RadiationIndex;
-    }
-    else
-    {
-        switch (obj->deliver_type)
-        {
-        case DELIVER_TYPE_VMAT:
-        case DELIVER_TYPE_HiMAT:
-        case DELIVER_TYPE_SURVIEW:
-        case DELIVER_TYPE_CT:
-        case DELIVER_TYPE_SSIMRT:
-            obj->radiation_index = recv->OutU16_RadiationIndex;
-            if (last_radiation_index != recv->OutU16_RadiationIndex)
-            {
-                last_radiation_index = recv->OutU16_RadiationIndex;
+    // if (obj->fsm_state != BGM_STATE_WORK && obj->fsm_state != BGM_STATE_COMPLETE)
+    // {
+    //     obj->radiation_index = recv->OutU16_RadiationIndex;
+    // }
+    // else
+    // {
+    //     switch (obj->deliver_type)
+    //     {
+    //     case DELIVER_TYPE_VMAT:
+    //     case DELIVER_TYPE_HiMAT:
+    //     case DELIVER_TYPE_SURVIEW:
+    //     case DELIVER_TYPE_CT:
+    //     case DELIVER_TYPE_SSIMRT:
+    //         obj->radiation_index = recv->OutU16_RadiationIndex;
+    //         if (last_radiation_index != recv->OutU16_RadiationIndex)
+    //         {
+    //             last_radiation_index = recv->OutU16_RadiationIndex;
 
-                ret = dose_radiation_index_set(BGM_UART_DOSE1, last_radiation_index, 0);
-                ret |= dose_radiation_index_set(BGM_UART_DOSE2, last_radiation_index, 0);
-            }
-            break;
-        case DELIVER_TYPE_SWIMRT:
-        case DELIVER_TYPE_CRT:
-            /* radiation index is updated by dose board */
-            obj->radiation_index = dose_radiation_index_get(BGM_UART_DOSE1);
-            break;
-        default:
-            LOG_E("invalid deliver type: %d\r\n", obj->deliver_type);
-            break;
-        }
-    }
+    //             ret = dose_radiation_index_set(BGM_UART_DOSE1, last_radiation_index, 0);
+    //             ret |= dose_radiation_index_set(BGM_UART_DOSE2, last_radiation_index, 0);
+    //         }
+    //         break;
+    //     case DELIVER_TYPE_SWIMRT:
+    //     case DELIVER_TYPE_CRT:
+    //         /* radiation index is updated by dose board */
+    //         obj->radiation_index = dose_radiation_index_get(BGM_UART_DOSE1);
+    //         break;
+    //     default:
+    //         LOG_E("invalid deliver type: %d\r\n", obj->deliver_type);
+    //         break;
+    //     }
+    // }
 
     osMutexRelease(obj->mutex);
 
