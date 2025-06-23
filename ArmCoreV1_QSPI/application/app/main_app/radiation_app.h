@@ -7,6 +7,8 @@
 extern "C" {
 #endif
 
+#define DOSE_BOARD_NO_TRIGGER_OUT_SCALE (1.1f)
+
 enum pulse_state
 {
     ONE_PULSE_START = 0,

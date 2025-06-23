@@ -123,10 +123,17 @@ int8_t interlock_status_cleanup(void)
     struct interlock_status *stat = interlock_stat_get();
 
     osMutexAcquire(stat->mutex, osWaitForever);
+    uint8_t wdt_fault = stat->value.bits.wdt_fault;
     stat->value.bytes = 0;
     osMutexRelease(stat->mutex);
 
-    return 0;    
+    if (wdt_fault)
+    {
+        gpio_common_get()->write("GPIOD_1", 0);
+        gpio_common_get()->write("GPIOD_1", 1);
+    }
+
+    return 0;
 }
 
 static int8_t (*interlock_fault_callback)(void) = NULL;
@@ -198,7 +205,7 @@ static int8_t interlock_status_update(void)
 
     osMutexRelease(stat->mutex);
 
-    // LOG_I("interlock status: 0x%04x\r\n", interlock_status_get());
+    // LOG_I("interlock status: %#.4x\r\n", interlock_status_get());
 
     if (interlock_status_get() != 0 && fsm_state_get() != FSM_STATE_INIT)
     {
@@ -254,3 +261,24 @@ static int8_t interlock_app_init(void)
     return 0;
 }
 INIT_APP_EXPORT(interlock_app_init);
+
+#ifndef INTERLOCK_TEST
+#include "shell.h"
+static int8_t interlock_status_test(uint8_t argc, char **argv)
+{
+    switch (atoi(argv[1]))
+    {
+    case 0:
+        interlock_status_cleanup();
+        break;
+    case 1:
+        LOG_I("interlock status: %#.4x\r\n", interlock_status_get());
+        break;
+    default:
+        break;
+    }
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(interlock_status_test, interlock_status_test, test interlock status);
+#endif

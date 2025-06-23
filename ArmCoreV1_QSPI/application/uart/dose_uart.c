@@ -24,6 +24,7 @@ static struct control_para control_data =
                   .one_pulse = {.threshold_low = 10, .threshold_high = 10}, 
                   .threshold_symmetry = 10, 
                   .communication_timeout = 5000},
+    .radiation_ctrl = {.radiation_enable = 1},
 };
 static struct control_para *control_data_get(void)
 {
@@ -565,7 +566,7 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
         }
         break;
     case FSM_STATE_COMPLETE:
-        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE)
+        if (new_state != FSM_STATE_IDLE && new_state != FSM_STATE_PREPARE && new_state != FSM_STATE_TERMINATE)
         {
             ret = -1;
         }
@@ -627,6 +628,12 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             cmd->data[2] = fsm_state_get();
             *cmd->len = 3;
             break;
+        case 0x02:
+            struct control_para *obj = control_data_get();
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->radiation_ctrl.radiation_enable = cmd->data[2] & 0x01;
+            osMutexRelease(obj->mutex);
+            break;
         default:
             break;
         }
@@ -674,6 +681,26 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             if (ret != 0)
             {
                 LOG_E("dose value status set err: %d\r\n", ret);
+            }
+            break;
+        case 0x05:
+            {
+                struct control_para *obj = control_data_get();
+                osMutexAcquire(obj->mutex, osWaitForever);
+                obj->interlock.one_pulse.count_low = 0;
+                obj->interlock.one_pulse.count_high = 0;
+                obj->interlock.one_pulse.count_abnormal = 0;
+                osMutexRelease(obj->mutex);
+
+                ret = beam_data_cleanup(0);
+                ret |= dose_value_status_set(DOSE_ACCUMULATED, 0);
+                ret |= interlock_status_cleanup();
+                ret |= dose_value_status_set(ONE_PULSE_COMPLETE, 0);
+                if (ret != 0)
+                {
+                    LOG_E("dose fault clear err: %d\r\n", ret);
+                }
+                LOG_I("dose fault clear\r\n");
             }
             break;
         default:

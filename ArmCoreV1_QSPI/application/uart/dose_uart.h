@@ -106,6 +106,11 @@ struct interlock_para
     uint16_t communication_timeout; /* Unit: ms */
 };
 
+struct radiation_control_para
+{
+    uint8_t radiation_enable;   /* 0: disable  1: enable */
+};
+
 struct radiation_point_para
 {
     uint16_t cp_prev;                   /* previous CP */
@@ -123,6 +128,7 @@ struct control_para
     struct calibration_para calibration;
     struct treatment_para treatment;
     struct interlock_para interlock;
+    struct radiation_control_para radiation_ctrl;
     struct radiation_point_para radiation;
 
     osMutexId_t mutex;
