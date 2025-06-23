@@ -147,6 +147,7 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     if (((dido_structure.tca9535_0x01_u.tca9535_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
          (dido_structure.tca9535_0x02_u.tca9535_0x02_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1)))
     {
+        self->interlock_table.not_ready_event.door_open = 1;
         if ((state == STATE_MACHINE_READY) ||
             (state == STATE_MACHINE_WORK) ||
             (state == STATE_MACHINE_SURVIEW_READY) ||
@@ -155,24 +156,12 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
             (state == STATE_MACHINE_CT_WORK))
         {
             self->interlock_table.serious_interlock.door_open = 1;
-            self->interlock_table.not_ready_event.door_open = 1; // 门打开
-            retval = -1;
         }
         else
         {
             self->interlock_table.serious_interlock.door_open = 0;
-            if (state == STATE_MACHINE_PREPARE ||
-                state == STATE_MACHINE_INTERRUPT ||
-                state == STATE_MACHINE_KV_PREPARE)
-            {
-                self->interlock_table.not_ready_event.door_open = 1;
-                retval = -1;
-            }
-            else
-            {
-                self->interlock_table.not_ready_event.door_open = 0;
-            }
         }
+        retval = -1;
     }
     else
     {
