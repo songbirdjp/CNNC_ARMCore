@@ -6,7 +6,13 @@
 extern "C" {
 #endif
 
+enum afc_info_index
+{
+    AFC_INFO_VERSION = 0,
+    AFC_INFO_MAG_POSITION,
+};
 
+float afc_info_get(enum afc_info_index index, void *data);
 
 #ifdef __cplusplus
 }

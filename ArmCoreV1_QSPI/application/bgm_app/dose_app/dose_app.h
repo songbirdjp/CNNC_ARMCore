@@ -59,7 +59,7 @@ enum dose_info_index
 };
 
 float dose_data_info_get(enum uart_id id, enum dose_info_index index, void *data);  /* get dose data info from local sram */
-int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *data, uint16_t len);   /* set or get dose data info vai uart cmd */
+int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *data, uint16_t len);   /* set or get dose data info via uart cmd */
 
 #ifdef __cplusplus
 }

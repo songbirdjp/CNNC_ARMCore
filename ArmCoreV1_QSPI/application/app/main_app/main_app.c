@@ -187,7 +187,7 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
     send->InU32_DoseBInterlock = dose_interlock_get(BGM_UART_DOSE2);
 
     send->InU32_AfcState = 0;
-    send->InF_AfcPositionCurrent = 0;
+    send->InF_AfcPositionCurrent = afc_info_get(AFC_INFO_MAG_POSITION, NULL);
 
     return ret;
 }

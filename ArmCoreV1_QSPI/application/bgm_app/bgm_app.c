@@ -828,11 +828,11 @@ static int8_t dose_rate_calculate(void *argument)
         // }
 
         /* 0. get afc encoder value */
-        // ret = afc_encoder_value_get();
-        // if (ret != 0)
-        // {
-        //     LOG_E("afc encoder value get err: %d\r\n", ret);
-        // }
+        ret = afc_encoder_value_get();
+        if (ret != 0)
+        {
+            LOG_E("afc encoder value get err: %d\r\n", ret);
+        }
 
         /* TODO: */
         /* 1. 周期性核对dose1和dose2的剂量偏差，控制在10%以内？ */

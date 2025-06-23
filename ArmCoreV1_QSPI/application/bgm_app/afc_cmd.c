@@ -164,6 +164,12 @@ void AFC_SetAFTMotorDeadZone(uint16_t deadZone)
     BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,_afcCmd,4);
 }
 
+void AFC_SetAFCREBOOT(void)
+{
+    uint8_t _afcCmd = 0xEE;
+    BGM_SendCmd(BGM_UART_AFC,UARTCmdType_CommandDown,&_afcCmd,1);
+}
+
 #define AFC_SHELL_CMD
 #ifdef AFC_SHELL_CMD
 MSH_CMD_EXPORT_ALIAS(BGM2AFC_Handshake,B2AHS,"afc Board Handshake Set");
@@ -247,4 +253,10 @@ void Shell_AFC_SetAFTMotorDeadZone(int8_t argc, uint8_t **argv)
     AFC_SetAFTMotorDeadZone(deadZone);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_AFC_SetAFTMotorDeadZone,AFTMOTORDZ,"AFT Motor Dead Zone Set");//0x41,0x07
+
+void Shell_AFC_SetAFCREBOOT(int8_t argc, uint8_t **argv)
+{
+    AFC_SetAFCREBOOT();
+}
+MSH_CMD_EXPORT_ALIAS(Shell_AFC_SetAFCREBOOT,AFCREBOOT,"AFC Reboot");
 #endif

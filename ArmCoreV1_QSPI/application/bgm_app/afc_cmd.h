@@ -33,7 +33,6 @@ typedef struct
     uint16_t MotorMoveEn;
     uint16_t MotorDir;
     uint8_t EnableTriggernFault;
-    
 } MotorCtrlSignalDef_t;
 
 typedef struct{
@@ -95,6 +94,8 @@ void AFC_AFTMotorRunByStep(uint8_t dir,uint16_t _stepVal);
 void AFC_AFTMotorGetEncValue(void);
 void AFC_AFTMotorSetPresetPos(uint16_t pos);
 void AFC_SetAFTBrakeStatus(uint8_t status);
-void AFC_SetAFTMotorStatus(uint8_t status); 
+void AFC_SetAFTMotorStatus(uint8_t status);
 void AFC_AFTMotorSetDeadZone(uint16_t deadZone);
+
+void AFC_SetAFCREBOOT(void);
 #endif

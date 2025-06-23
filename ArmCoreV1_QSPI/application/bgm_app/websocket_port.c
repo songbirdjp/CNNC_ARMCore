@@ -1,7 +1,7 @@
 #include "websocket_port.h"
 #include "plan_data.h"
 #include "ulog.h"
-#include "bgm_def.h"
+#include "afc_cmd.h"
 #include "bgm_app.h"
 
 typedef struct
@@ -23,28 +23,28 @@ void nrtCommand_AFCParameterParse(CMD2UART_DATA* nrtCommand)
         case 0x00:
             AFC_SetAFCControlMode(nrtCommand->data[2]);
             break;
-        case 0x01:  
+        case 0x01:
            // AFC_SetADCSampleMode(nrtCommand->data[2]);
-            break;      
+            break;
         case 0x02:
             AFC_SetADCSampleDelay((nrtCommand->data[3]<<8)|nrtCommand->data[2]);
             break;
         case 0x03:
             AFC_DeleteADCData();
-            break;      
+            break;
         case 0x04:
             //AFC_GetADCValueByFrame();
             break;
         default:
             break;
     }
-}   
+}
 void nrtCommand_MagMotorParse(CMD2UART_DATA* nrtCommand)
 {
     switch(nrtCommand->data[1])
     {
         case 0x00:
-            AFC_IS_MagMotorFindZeroOK();    
+            AFC_IS_MagMotorFindZeroOK();
             break;
         case 0x01:
             AFC_MagMotorSetPos((nrtCommand->data[3]<<8)|nrtCommand->data[2]);
@@ -62,7 +62,7 @@ void nrtCommand_MagMotorParse(CMD2UART_DATA* nrtCommand)
             // AFC_MagMotorGetPresetPos();
             break;
         default:
-            break;  
+            break;
     }
 }
 void nrtCommand_AFTMotorParse(CMD2UART_DATA* nrtCommand)
@@ -94,7 +94,7 @@ void nrtCommand_AFTMotorParse(CMD2UART_DATA* nrtCommand)
             //AFC_AFTMotorSetDeadZone((nrtCommand->data[3]<<8)|nrtCommand->data[2]);
             break;
         default:
-            break;  
+            break;
     }
 }
 void nrtCommand_PowerStatusParse(CMD2UART_DATA* nrtCommand)
@@ -133,6 +133,9 @@ static int8_t afc_cmd_parse(APP_DATA_RECV *info)
             nrtCommand_AFTMotorParse(&nrtCommand);
             break;
         case 0x60:
+            break;
+        case 0xEE:
+            AFC_SetAFCREBOOT();
             break;
         default:
             ret = -1;
@@ -205,7 +208,6 @@ static int8_t arm_core_cmd_parse(APP_DATA_RECV *info)
             break;
         }
         break;
-    
     default:
         LOG_E("invalid arm core cmd: %x\r\n", cmd[0]);
         ret = -1;
