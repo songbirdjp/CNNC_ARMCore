@@ -90,7 +90,7 @@ static void app_rtm_main_thread(void *argument)
             {
                 switch (cmd)
                 {
-                case 0x1F: /*系统状态设置*/
+                case OUTPUT_RTM_ON_ARM_REQUIRE_STATE_CMD: /*系统状态设置*/
                 {
                     system_state_require = queue_frame.payload.data[1];
 
@@ -98,7 +98,7 @@ static void app_rtm_main_thread(void *argument)
                     self->unready_override = *(uint32_t *)&(queue_frame.payload.data[7]);
                     break;
                 }
-                case 0x02: /*故障清除*/
+                case OUTPUT_FAULT_CLEAR_CMD: /*故障清除*/
                 {
                     // 清除故障
                     if (queue_frame.payload.data[1] & 0x01)
@@ -132,7 +132,7 @@ static void app_rtm_main_thread(void *argument)
 
         if (memcmp(&rtm_status_old, &rtm_status, sizeof(rtm_status_t)) != 0)
         {
-            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, 0x01, 0x1E, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
+            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, RTM_ON_PLC_ID, INPUT_RTM_ON_ARM_CURRENT_STATE_CMD, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
             memcpy(&rtm_status_old, &rtm_status, sizeof(rtm_status_t));
             last_time = osKernelGetTickCount();
         }
@@ -140,7 +140,7 @@ static void app_rtm_main_thread(void *argument)
         current_time = osKernelGetTickCount();
         if (current_time - last_time > 1000)
         {
-            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, 0x01, 0x1E, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
+            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, RTM_ON_PLC_ID, INPUT_RTM_ON_ARM_CURRENT_STATE_CMD, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
             last_time = current_time;
         }
 
@@ -218,55 +218,55 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         case OUTPUT_DATA_BEAM_ID:
             flag = OUTPUT_DATA_RTM_ON_REQUIRE_STATE;
             len = (uint8_t *)&output_data.OutU8_state_sync - (uint8_t *)&output_data.OutU8_beam_id;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x0, &data->OutU8_beam_id, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x0, &data->OutU8_beam_id, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x0, &data->OutU8_beam_id, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x0, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
             break;
         case OUTPUT_DATA_RTM_ON_REQUIRE_STATE:
             flag = OUTPUT_DATA_ICM_REQUIRE_STATE;
             len = (uint8_t *)&output_data.OutU8_icm_require_state - (uint8_t *)&output_data.OutU8_rtm_on_require_state;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], 0x2, 0x1F, &data->OutU8_rtm_on_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], RTM_ON_ARM_ID, OUTPUT_RTM_ON_ARM_REQUIRE_STATE_CMD, &data->OutU8_rtm_on_require_state, len);
             break;
         case OUTPUT_DATA_ICM_REQUIRE_STATE:
             flag = OUTPUT_DATA_BGM_REQUIRE_STATE;
             len = (uint8_t *)&output_data.OutU8_bgm_require_state - (uint8_t *)&output_data.OutU8_icm_require_state;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x4, 0x12, &data->OutU8_icm_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], ICM_ID, OUTPUT_ICM_REQUIRE_STATE_CMD, &data->OutU8_icm_require_state, len);
             break;
         case OUTPUT_DATA_BGM_REQUIRE_STATE:
             flag = OUTPUT_DATA_QAM_REQUIRE_STATE;
             len = (uint8_t *)&output_data.OutU8_qam_require_state - (uint8_t *)&output_data.OutU8_bgm_require_state;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x8, 0x13, &data->OutU8_bgm_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BGM_ID, OUTPUT_BGM_REQUIRE_STATE_CMD, &data->OutU8_bgm_require_state, len);
             break;
         case OUTPUT_DATA_QAM_REQUIRE_STATE:
             flag = OUTPUT_DATA_RTM_OFF_REQUIRE_STATE;
             len = (uint8_t *)&output_data.OutU8_bsm_require_state - (uint8_t *)&output_data.OutU8_qam_require_state;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x10, 0x14, &data->OutU8_qam_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], QAM_ID, OUTPUT_QAM_REQUIRE_STATE_CMD, &data->OutU8_qam_require_state, len);
             break;
         case OUTPUT_DATA_RTM_OFF_REQUIRE_STATE:
             flag = OUTPUT_DATA_GMM_REQUIRE_STATE;
             len = (uint8_t *)&output_data.OutU8_gmm_require_state - (uint8_t *)&output_data.OutU8_rtm_off_require_state;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x40, 0x16, &data->OutU8_rtm_off_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], RTM_OFF_ARM_ID, OUTPUT_RTM_OFF_REQUIRE_STATE_CMD, &data->OutU8_rtm_off_require_state, len);
             break;
         case OUTPUT_DATA_GMM_REQUIRE_STATE:
             flag = OUTPUT_DATA_PSM_REQUIRE_STATE;
             len = (uint8_t *)&output_data.OutU8_psm_require_state - (uint8_t *)&output_data.OutU8_gmm_require_state;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x80, 0x19, &data->OutU8_gmm_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], GMM_ID, OUTPUT_GMM_REQUIRE_STATE_CMD, &data->OutU8_gmm_require_state, len);
             break;
         case OUTPUT_DATA_PSM_REQUIRE_STATE:
             flag = OUTPUT_DATA_BEAM_ID;
             len = (uint8_t *)&output_data.OutU8_fkp_led_blink - (uint8_t *)&output_data.OutU8_psm_require_state;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x1A, &data->OutU8_psm_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], PSM_ID, OUTPUT_PSM_REQUIRE_STATE_CMD, &data->OutU8_psm_require_state, len);
             break;
         case OUTPUT_DATA_FKP_LED_BLINK:
             flag = OUTPUT_DATA_CPG_LED_BLINK;
             len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_fkp_led_blink;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x17, &data->OutU8_fkp_led_blink, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_LED_BLINK_CMD, &data->OutU8_fkp_led_blink, len);
             break;
         case OUTPUT_DATA_CPG_LED_BLINK:
             flag = OUTPUT_DATA_BEAM_ID;
             len = sizeof(output_data.OutU8_cpg_led_blink);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x400, 0x18, &data->OutU8_cpg_led_blink, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], CPG_ID, OUTPUT_FKP_VIBRATION_CMD, &data->OutU8_cpg_led_blink, len);
             break;
         default:
             break;
@@ -274,29 +274,88 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
     }
     else
     {
+        // reboot
+        len = (uint8_t *)&output_data.OutU32_FirmWareVersion - (uint8_t *)&output_data.OutU8_Reserved0;
+        if (memcmp(&output_data.OutU8_Reserved0, &data->OutU8_Reserved0, len) != 0)
+        {
+            // RTM_ON_ARM
+            if (((output_data.OutU8_Reserved0 & RTM_ON_ARM_ID) == 0) && ((data->OutU8_Reserved0 & RTM_ON_ARM_ID) != 0))
+            {
+                HAL_NVIC_SystemReset(); // reset system
+            }
+            // ICM
+            if (((output_data.OutU8_Reserved0 & ICM_ID) == 0) && ((data->OutU8_Reserved0 & ICM_ID) != 0))
+            {
+                uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_ICM].uart_protocol), ICM_ID, 1000);
+            }
+            // BGM
+            if (((output_data.OutU8_Reserved0 & BGM_ID) == 0) && ((data->OutU8_Reserved0 & BGM_ID) != 0))
+            {
+                uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_BGM].uart_protocol), BGM_ID, 1000);
+            }
+            // QAM
+            if (((output_data.OutU8_Reserved0 & QAM_ID) == 0) && ((data->OutU8_Reserved0 & QAM_ID) != 0))
+            {
+                uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_QAM].uart_protocol), QAM_ID, 1000);
+            }
+            // // BSM
+            // if (((output_data.OutU8_Reserved0 & BSM_ID) == 0) && ((data->OutU8_Reserved0 & BSM_ID) != 0))
+            // {
+            //     uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_BSM].uart_protocol), BSM_ID, 1000);
+            // }
+            // RTM OFF ARM
+            if (((output_data.OutU8_Reserved0 & RTM_OFF_ARM_ID) == 0) && ((data->OutU8_Reserved0 & RTM_OFF_ARM_ID) != 0))
+            {
+                uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_RTM_OFF].uart_protocol), RTM_OFF_ARM_ID, 1000);
+            }
+            // GMM
+            if (((output_data.OutU8_Reserved0 & GMM_ID) == 0) && ((data->OutU8_Reserved0 & GMM_ID) != 0))
+            {
+                uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_RTM_OFF].uart_protocol), GMM_ID, 1000);
+            }
+        }
+        len = (uint8_t *)&output_data.OutU8_gmm_require_state - (uint8_t *)&output_data.OutU8_reserved2;
+        if (memcmp(&output_data.OutU8_reserved2, &data->OutU8_reserved2, len) != 0)
+        {
+            // PSM
+            if (((output_data.OutU8_reserved2 & (PSM_ID >> 8)) == 0) && ((data->OutU8_reserved2 & (PSM_ID >> 8)) != 0))
+            {
+                uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_RTM_OFF].uart_protocol), PSM_ID, 1000);
+            }
+            // FKP
+            if (((output_data.OutU8_reserved2 & (FKP_ID >> 8)) == 0) && ((data->OutU8_reserved2 & (FKP_ID >> 8)) != 0))
+            {
+                uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_RTM_OFF].uart_protocol), FKP_ID, 1000);
+            }
+            // // CPG
+            // if (((output_data.OutU8_reserved2 & (CPG_ID >> 8)) == 0) && ((data->OutU8_reserved2 & (CPG_ID >> 8)) != 0))
+            // {
+            //     uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_RTM_OFF].uart_protocol), CPG_ID, 1000);
+            // }
+        }
         len = (uint8_t *)&output_data.OutU8_state_sync - (uint8_t *)&output_data.OutU8_beam_id;
         if (memcmp(&output_data.OutU8_beam_id, &data->OutU8_beam_id, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x0, &data->OutU8_beam_id, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x0, &data->OutU8_beam_id, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x0, &data->OutU8_beam_id, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x0, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
         }
 
         len = (uint8_t *)&output_data.OutU16_radiation_index - (uint8_t *)&output_data.OutU8_state_sync;
         if (memcmp(&output_data.OutU8_state_sync, &data->OutU8_state_sync, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x08 | 0x80, 0x1E, &data->OutU8_state_sync, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x08 | 0x80, 0x1E, &data->OutU8_state_sync, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BGM_ID | GMM_ID, OUTPUT_STATE_SYNC_CMD, &data->OutU8_state_sync, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BGM_ID | GMM_ID, OUTPUT_STATE_SYNC_CMD, &data->OutU8_state_sync, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_fault_clear - (uint8_t *)&output_data.OutU16_radiation_index;
         if (memcmp(&output_data.OutU16_radiation_index, &data->OutU16_radiation_index, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x1, &data->OutU16_radiation_index, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x1, &data->OutU16_radiation_index, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x1, &data->OutU16_radiation_index, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x1, &data->OutU16_radiation_index, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], BROADCAST_ID, OUTPUT_RADIATION_INDEX_CMD, &data->OutU16_radiation_index, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BROADCAST_ID, OUTPUT_RADIATION_INDEX_CMD, &data->OutU16_radiation_index, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], BROADCAST_ID, OUTPUT_RADIATION_INDEX_CMD, &data->OutU16_radiation_index, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BROADCAST_ID, OUTPUT_RADIATION_INDEX_CMD, &data->OutU16_radiation_index, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_ethercat_Link_state - (uint8_t *)&output_data.OutU8_fault_clear;
@@ -304,83 +363,83 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         {
             if (data->OutU8_fault_clear & 0x01)
             {
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], 0x0, 0x2, &data->OutU8_fault_clear, len);
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x2, &data->OutU8_fault_clear, len);
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x2, &data->OutU8_fault_clear, len);
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x2, &data->OutU8_fault_clear, len);
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x2, &data->OutU8_fault_clear, len);
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
             }
         }
         len = (uint8_t *)&output_data.OutU8_icm_require_state - (uint8_t *)&output_data.OutU8_rtm_on_require_state;
         if (memcmp(&output_data.OutU8_rtm_on_require_state, &data->OutU8_rtm_on_require_state, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], 0x2, 0x1F, &data->OutU8_rtm_on_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], RTM_ON_ARM_ID, OUTPUT_RTM_ON_ARM_REQUIRE_STATE_CMD, &data->OutU8_rtm_on_require_state, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_bgm_require_state - (uint8_t *)&output_data.OutU8_icm_require_state;
         if (memcmp(&output_data.OutU8_icm_require_state, &data->OutU8_icm_require_state, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x4, 0x12, &data->OutU8_icm_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], ICM_ID, OUTPUT_ICM_REQUIRE_STATE_CMD, &data->OutU8_icm_require_state, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_qam_require_state - (uint8_t *)&output_data.OutU8_bgm_require_state;
         if (memcmp(&output_data.OutU8_bgm_require_state, &data->OutU8_bgm_require_state, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x8, 0x13, &data->OutU8_bgm_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BGM_ID, OUTPUT_BGM_REQUIRE_STATE_CMD, &data->OutU8_bgm_require_state, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_bsm_require_state - (uint8_t *)&output_data.OutU8_qam_require_state;
         if (memcmp(&output_data.OutU8_qam_require_state, &data->OutU8_qam_require_state, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x10, 0x14, &data->OutU8_qam_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], QAM_ID, OUTPUT_QAM_REQUIRE_STATE_CMD, &data->OutU8_qam_require_state, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_gmm_require_state - (uint8_t *)&output_data.OutU8_rtm_off_require_state;
         if (memcmp(&output_data.OutU8_rtm_off_require_state, &data->OutU8_rtm_off_require_state, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x40, 0x16, &data->OutU8_rtm_off_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], RTM_OFF_ARM_ID, OUTPUT_RTM_OFF_REQUIRE_STATE_CMD, &data->OutU8_rtm_off_require_state, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_psm_require_state - (uint8_t *)&output_data.OutU8_gmm_require_state;
         if (memcmp(&output_data.OutU8_gmm_require_state, &data->OutU8_gmm_require_state, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x80, 0x19, &data->OutU8_gmm_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], GMM_ID, OUTPUT_GMM_REQUIRE_STATE_CMD, &data->OutU8_gmm_require_state, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_fkp_led_blink - (uint8_t *)&output_data.OutU8_psm_require_state;
         if (memcmp(&output_data.OutU8_psm_require_state, &data->OutU8_psm_require_state, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x100, 0x1A, &data->OutU8_psm_require_state, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], PSM_ID, OUTPUT_PSM_REQUIRE_STATE_CMD, &data->OutU8_psm_require_state, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_fkp_vibration - (uint8_t *)&output_data.OutU8_fkp_led_blink;
         if (memcmp(&output_data.OutU8_fkp_led_blink, &data->OutU8_fkp_led_blink, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x17, &data->OutU8_fkp_led_blink, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_LED_BLINK_CMD, &data->OutU8_fkp_led_blink, len);
         }
 
         len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_fkp_vibration;
         if (memcmp(&output_data.OutU8_fkp_vibration, &data->OutU8_fkp_vibration, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1B, &data->OutU8_fkp_vibration, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_VIBRATION_CMD, &data->OutU8_fkp_vibration, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_fkp_systemCurrentState - (uint8_t *)&output_data.OutU16_fkp_year;
         if (memcmp(&output_data.OutU16_fkp_year, &data->OutU16_fkp_year, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1C, &data->OutU16_fkp_year, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_TIMESTAMP_CMD, &data->OutU16_fkp_year, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_cpg_led_blink - (uint8_t *)&output_data.OutU8_fkp_systemCurrentState;
         if (memcmp(&output_data.OutU8_fkp_systemCurrentState, &data->OutU8_fkp_systemCurrentState, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x200, 0x1D, &data->OutU8_fkp_systemCurrentState, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_SYSTEM_STATE_CMD, &data->OutU8_fkp_systemCurrentState, len);
         }
 
         len = sizeof(output_data.OutU8_cpg_led_blink);
         if (memcmp(&output_data.OutU8_cpg_led_blink, &data->OutU8_cpg_led_blink, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x400, 0x18, &data->OutU8_cpg_led_blink, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], CPG_ID, OUTPUT_CPG_LED_BLINK_CMD, &data->OutU8_cpg_led_blink, len);
         }
         memcpy(&output_data, data, sizeof(TOBJ7010));
     }
@@ -405,43 +464,43 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
     // TODO:做长度判断
     switch (cmd)
     {
-    case 0x01:
+    case INPUT_RADIATION_INDEX_CMD:
         memcpy(&input_data->InU16_radiation_index, queue_frame->payload.data + 1, len);
         break;
-    case 0x1E:
+    case INPUT_RTM_ON_ARM_CURRENT_STATE_CMD:
         memcpy(&input_data->InU8_rtm_on_arm_fsm_state_current, queue_frame->payload.data + 1, len);
         break;
-    case 0x21:
+    case INPUT_ICM_CURRENT_STATE_CMD:
         memcpy(&input_data->InU8_icm_fsm_state_current, queue_frame->payload.data + 1, len);
         break;
-    case 0x31:
+    case INPUT_BGM_CURRENT_STATE_CMD:
         memcpy(&input_data->InU8_bgm_fsm_state_current, queue_frame->payload.data + 1, len);
         break;
-    case 0x32:
+    case INPUT_BGM_INFO_CMD:
         memcpy(&input_data->InF_beam_on_time, queue_frame->payload.data + 1, len);
         break;
-    case 0x41:
+    case INPUT_QAM_CURRENT_STATE_CMD:
         memcpy(&input_data->InU8_qam_fsm_state_current, queue_frame->payload.data + 1, len);
         break;
-    case 0x61:
+    case INPUT_RTM_OFF_ARM_CURRENT_STATE_CMD:
         memcpy(&input_data->InU8_rtm_off_fsm_state_current, queue_frame->payload.data + 1, len);
         break;
-    case 0x81:
+    case INPUT_GMM_CURRENT_STATE_CMD:
         memcpy(&input_data->InU8_gmm_fsm_state_current, queue_frame->payload.data + 1, len);
         break;
-    case 0x82:
+    case INPUT_GMM_INFO_CMD:
         memcpy(&input_data->InU32_gmm_move_status, queue_frame->payload.data + 1, len);
         break;
-    case 0x71:
+    case INPUT_PSM_CURRENT_STATE_CMD:
         memcpy(&input_data->InU8_psm_fsm_state_current, queue_frame->payload.data + 1, len);
         break;
-    case 0x72:
+    case INPUT_PSM_INFO_CMD:
         memcpy(&input_data->InU32_psm_move_status, queue_frame->payload.data + 1, len);
         break;
-    case 0x91:
+    case INPUT_FKP_BUTTON_CMD:
         memcpy(&input_data->InU16_FkpButton, queue_frame->payload.data + 1, len);
         break;
-    case 0xA1:
+    case INPUT_CPG_BUTTON_CMD:
         memcpy(&input_data->InU32_CpgButton, queue_frame->payload.data + 1, len);
         break;
     default:
@@ -534,7 +593,45 @@ int32_t uart_protocol_pnt_rx_callback(struct uart_protocol *const self,
     timestamp_ns_set(timestamp_ns);
     return 0;
 }
+int32_t uart_protocol_reboot_rx_callback(struct uart_protocol *const self,
+                                         uint32_t ID,
+                                         const uint8_t *data,
+                                         uint16_t *len,
+                                         void *arg)
+{
+    HAL_NVIC_SystemReset(); // reset system
+    return 0;
+}
+int32_t uart_protocol_heartbeat_rx_callback(struct uart_protocol *const self,
+                                            uint32_t ID,
+                                            const uint8_t *data,
+                                            uint16_t *len,
+                                            void *arg)
+{
+    rtm_module_info_t *rtm_module_info = (rtm_module_info_t *)arg;
+    heartbeat_t *heartbeat = (heartbeat_t *)data;
 
+    if (*len > sizeof(heartbeat_t))
+    {
+        LOG_E("%s heartbeat rx len err!\r\n", rtm_module_info->module_name);
+    }
+
+    if (memcmp(&(rtm_module_info->heartbeat_info_rx), heartbeat, sizeof(heartbeat_t)) != 0)
+    {
+        LOG_E("%s heartbeat rx err!\r\n", rtm_module_info->module_name);
+    }
+    return 0;
+}
+int32_t uart_protocol_heartbeat_rx_timeout_callback(struct uart_protocol *const self,
+                                                    uint32_t ID,
+                                                    const uint8_t *data,
+                                                    uint16_t *len,
+                                                    void *arg)
+{
+    rtm_module_info_t *rtm_module_info = (rtm_module_info_t *)arg;
+    LOG_E("%s heartbeat rx timeout err!\r\n", rtm_module_info->module_name);
+    return 0;
+}
 static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                                        uint8_t *data,
                                        uint16_t len)
@@ -619,8 +716,34 @@ static void app_module_rx_thread(void *argument)
             LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
             goto exit;
         }
+        ret = uart_protocol_rx_RegisterCallback(&self->uart_protocol,
+                                                UART_PROTOCOL_REBOOT_RX_CB_ID,
+                                                uart_protocol_reboot_rx_callback,
+                                                NULL);
+        if (ret != 0)
+        {
+            LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
+            goto exit;
+        }
     }
-
+    ret = uart_protocol_rx_RegisterCallback(&self->uart_protocol,
+                                            UART_PROTOCOL_HEARTBEAT_RX_CB_ID,
+                                            uart_protocol_heartbeat_rx_callback,
+                                            self);
+    if (ret != 0)
+    {
+        LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
+        goto exit;
+    }
+    ret = uart_protocol_rx_RegisterCallback(&self->uart_protocol,
+                                            UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID,
+                                            uart_protocol_heartbeat_rx_timeout_callback,
+                                            self);
+    if (ret != 0)
+    {
+        LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
+        goto exit;
+    }
     ret = uart_protocol_open(&self->uart_protocol);
     if (ret != 0)
     {
@@ -657,6 +780,18 @@ int32_t uart_protocol_pnt_tx_callback(struct uart_protocol *const self,
     *len = sizeof(uint64_t);
     return 0;
 }
+
+int32_t uart_protocol_heartbeat_tx_callback(struct uart_protocol *const self,
+                                            uint8_t *data,
+                                            uint16_t *len,
+                                            void *arg)
+{
+    rtm_module_info_t *rtm_module_info = (rtm_module_info_t *)arg;
+    memcpy(data, &(rtm_module_info->heartbeat_info_tx), sizeof(uint64_t));
+    *len = sizeof(rtm_module_info->heartbeat_info_tx);
+    return 0;
+}
+
 static void app_module_tx_thread(void *argument)
 {
     int32_t ret = 0;
@@ -675,6 +810,16 @@ static void app_module_tx_thread(void *argument)
             LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
             goto exit;
         }
+    }
+
+    ret = uart_protocol_tx_RegisterCallback(&self->uart_protocol,
+                                            UART_PROTOCOL_HEARTBEAT_TX_CB_ID,
+                                            uart_protocol_heartbeat_tx_callback,
+                                            self);
+    if (ret != 0)
+    {
+        LOG_E("%s register callback error, ret = %d\r\n", self->module_name, ret);
+        goto exit;
     }
 
     ret = uart_protocol_open(&self->uart_protocol);
@@ -729,13 +874,13 @@ int app_rtm_data_handle_create(void)
     // self->rtm_module_info[RTM_MODULE_BSM].module_type = "MASTER";
     self->rtm_module_info[RTM_MODULE_RTM_OFF].module_type = "MASTER";
 
-    self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].ID = 0x01;
-    self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].ID = 0x02;
-    self->rtm_module_info[RTM_MODULE_ICM].ID = 0x04;
-    self->rtm_module_info[RTM_MODULE_BGM].ID = 0x08;
-    self->rtm_module_info[RTM_MODULE_QAM].ID = 0x10;
-    // self->rtm_module_info[RTM_MODULE_BSM].ID = 0x20;
-    self->rtm_module_info[RTM_MODULE_RTM_OFF].ID = 0x40 | 0x80 | 0x100 | 0x200 | 0x400;
+    self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].ID = RTM_ON_PLC_ID;
+    self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].ID = RTM_ON_ARM_ID;
+    self->rtm_module_info[RTM_MODULE_ICM].ID = ICM_ID;
+    self->rtm_module_info[RTM_MODULE_BGM].ID = BGM_ID;
+    self->rtm_module_info[RTM_MODULE_QAM].ID = QAM_ID;
+    // self->rtm_module_info[RTM_MODULE_BSM].ID = BSM_ID;
+    self->rtm_module_info[RTM_MODULE_RTM_OFF].ID = RTM_OFF_ARM_ID | GMM_ID | PSM_ID | FKP_ID | CPG_ID;
     for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
     {
         for (uint8_t j = 0; j < RTM_MODULE_MAX; j++)
@@ -969,3 +1114,19 @@ int app_rtm_data_handle_create(void)
     return 0;
 }
 INIT_APP_EXPORT(app_rtm_data_handle_create)
+#define REBOOT_TEST
+#ifdef REBOOT_TEST
+#include "shell.h"
+
+static int reboot_test(int argc, char **argv)
+{
+    int32_t ret = 0;
+    ret = uart_protocol_reboot(&(app_rtm.rtm_module_info[RTM_MODULE_RTM_OFF].uart_protocol), RTM_OFF_ARM_ID, 1000);
+    if (ret != 0)
+    {
+        LOG_E("uart_protocol_reboot error, ret = %d", ret);
+    }
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(reboot_test, reboot_test, reboot test);
+#endif
