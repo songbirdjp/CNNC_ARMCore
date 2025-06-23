@@ -50,7 +50,7 @@ static int8_t AFC_ParaSet_parse(struct afc_object *cmd)
         case 0x03://delete sample data
             break;
         case 0x04:
-            cmd->len = 0x02;
+            *cmd->len = 0x02;
             cmd->data[0] = 0x01;
             cmd->data[1] = 0x04;
 
@@ -72,18 +72,19 @@ static int8_t AFC_MagMotorCmd_parse(struct afc_object *cmd)
     switch (cmd->data[1])
     {
         case 0x00:// Mag Motor find zero ok ACK
-            cmd->len = 0x03;
+            *cmd->len = 0x03;
             cmd->data[0] = 0x40;
             cmd->data[1] = 0x00;
             cmd->data[2] = obj->motorFindZeroOK;
             break;
         case 0x01://Mag Motor set position 2 bytes no ACK
             obj->encoderValTarget = (cmd->data[3] << 8) | cmd->data[2];
-            cmd->len = 0x04;
+            *cmd->len = 0x04;
             cmd->data[0] = 0x40;
             cmd->data[1] = 0x01;
-            cmd->data[2] = obj->encoderValCurrent & 0xFF;
-            cmd->data[3] = (obj->encoderValCurrent >> 8) & 0xFF;
+            cmd->data[2] = obj->encoderValTarget & 0xFF;
+            cmd->data[3] = (obj->encoderValTarget >> 8) & 0xFF;
+            // printf("obj->encoderValCurrent = %d\r\n",obj->encoderValTarget);
             break;
         case 0x02://Mag Motor run by step no ACK
             if (cmd->data[2] != 0x01 && cmd->data[2] != 0x02)
@@ -108,21 +109,23 @@ static int8_t AFC_MagMotorCmd_parse(struct afc_object *cmd)
                     obj->encoderValTarget = 10000;
                 }
             }
-            cmd->len = 0x04;
+            *cmd->len = 0x04;
             cmd->data[0] = 0x40;
             cmd->data[1] = 0x02;
             cmd->data[2] = obj->encoderValCurrent & 0xFF;
             cmd->data[3] = (obj->encoderValCurrent >> 8) & 0xFF;
             break;
         case 0x03:
-            cmd->len = 0x04;
+            *cmd->len = 0x04;
             cmd->data[0] = 0x40;
             cmd->data[1] = 0x03;
             cmd->data[2] = obj->encoderValCurrent & 0xFF;
             cmd->data[3] = (obj->encoderValCurrent >> 8) & 0xFF;
+            // printf("obj->encoderValCurrent\r\n");
             break;
         case 0x04:
-            obj->presetPos = (cmd->data[0] << 8) | cmd->data[1];
+            obj->presetPos = (cmd->data[3] << 8) | cmd->data[2];
+            // printf("obj->presetPos = %d\r\n",obj->presetPos);
             break;
         default:
             ret = -1;
@@ -146,7 +149,7 @@ static int8_t AFC_AFTMotorCmd_parse(struct afc_object *cmd)
             obj->motorInitEnable = cmd->data[0];
             break;
         case 0x0F://enable AFT Motor to find zero
-            cmd->len = 0x01;
+            *cmd->len = 0x01;
             cmd->data[0] = obj->motorFindZeroOK;
             break;
         case 0x03://Mag Motor set position 2 bytes no ACK
@@ -159,7 +162,7 @@ static int8_t AFC_AFTMotorCmd_parse(struct afc_object *cmd)
                 break;
             }
             uint16_t step_value = (cmd->data[4] << 8) | cmd->data[3];
-            printf("step_value = %d\r\n",step_value);
+            // printf("step_value = %d\r\n",step_value);
             if (cmd->data[2] == 0x01)
             {
                 // obj->encoderValTarget += step_value;
@@ -170,7 +173,7 @@ static int8_t AFC_AFTMotorCmd_parse(struct afc_object *cmd)
                 motorCtrlByPWM(MOTOR_AFT, 60);
                 osDelay(200);
                 motorCtrlByPWM(MOTOR_AFT, 0);
-                printf("A1111111111111\r\n");
+                // printf("A1111111111111\r\n");
             }
             else if (cmd->data[2] == 0x02)
             {
@@ -185,14 +188,14 @@ static int8_t AFC_AFTMotorCmd_parse(struct afc_object *cmd)
                 printf("A2222222222222\r\n");
             }
             printf("obj->encoderValTarget = %d\r\n",obj->encoderValTarget);
-            cmd->len = 0x04;
+            *cmd->len = 0x04;
             cmd->data[0] = 0x41;
             cmd->data[1] = 0x02;
             cmd->data[2] = obj->encoderValCurrent & 0xFF;
             cmd->data[3] = (obj->encoderValCurrent >> 8) & 0xFF;
             break;
         case 0x05:
-            cmd->len = 0x02;
+            *cmd->len = 0x02;
             cmd->data[0] = obj->encoderValCurrent & 0xFF;
             cmd->data[1] = (obj->encoderValCurrent >> 8) & 0xFF;
             break;
@@ -215,7 +218,7 @@ static int8_t AFC_ADCSampleSet_parse(struct afc_object *cmd)//0x60
     case 0x01:
         break;
     case 0x05:
-        cmd->len = 0x12;
+        *cmd->len = 0x12;
         cmd->type = 0x02;
         cmd->data[0] = 0x60;
         cmd->data[1] = 0x05;
@@ -595,7 +598,7 @@ static int8_t afc_uart_thread_init(void)
 
     osThreadAttr_t attr = {
     .name = "afc_uart_recv_thread",
-    .stack_size = 1024 * 4,
+    .stack_size = 4096 * 4,
     .priority = osPriorityAboveNormal,
     };
 
