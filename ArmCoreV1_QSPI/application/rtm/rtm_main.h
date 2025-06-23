@@ -22,6 +22,59 @@ extern "C"
     void app_rtm_event_output_set(void);
     // void app_rtm_ethercat_state_op_set(void);
     // void app_rtm_ethercat_state_op_clean(void);
+    enum
+    {
+        BROADCAST_ID = 0x00,
+        RTM_ON_PLC_ID = 0x01,
+        RTM_ON_ARM_ID = 0x02,
+        ICM_ID = 0x04,
+        BGM_ID = 0x08,
+        QAM_ID = 0x10,
+        BSM_ID = 0x20,    // not used in this version
+        RTM_OFF_ARM_ID = 0x40,
+        GMM_ID = 0x80,
+        PSM_ID = 0x100,
+        FKP_ID = 0x200,
+        CPG_ID = 0x400
+    };
+
+    enum
+    {
+        SEND_GMM_RADIATION_INDEX_CMD = 0x01,
+        SEND_RTM_OFF_ARM_CURRENT_STATE_CMD = 0x61,
+        SEND_FKP_POWER_OFF_CMD = 0x62,
+        SEND_PSM_CURRENT_STATE_CMD = 0x71,
+        SEND_PSM_INFO_CMD = 0x72,
+        SEND_GMM_CURRENT_STATE_CMD = 0x81,
+        SEND_GMM_INFO_CMD = 0x82,
+        SEND_FKP_BUTTON_CMD = 0x91,
+        SEND_CPG_BUTTON_CMD = 0xA1,
+        SEND_MAX_CMD,
+        SEND_RTM_OFF_ARM_REQUIRE_STATE_CMD = SEND_MAX_CMD,
+    };
+
+    enum
+    {
+        RECEIVE_BEAM_ID_CMD = 0x00,
+        RECEIVE_RADIATION_INDEX_CMD = 0x01,
+        RECEIVE_FAULT_CLEAR_CMD = 0x02,
+        RECEIVE_RTM_OFF_ARM_REQUIRE_STATE_CMD = 0x16,
+        RECEIVE_FKP_LED_BLINK_CMD = 0x17,
+        RECEIVE_CPG_LED_BLINK_CMD = 0x18,
+        RECEIVE_FKP_VIBRATION_CMD = 0x1B,
+        RECEIVE_FKP_TIMESTAMP_CMD = 0x1C,
+        RECEIVE_FKP_SYSTEM_STATE_CMD = 0x1D,
+        RECEIVE_GMM_REQUIRE_STATE_CMD = 0x19,
+        RECEIVE_PSM_REQUIRE_STATE_CMD = 0x1A,
+        RECEIVE_STATE_SYNC_CMD = 0x1E,
+        RECEIVE_PSM_CTRL_CMD = 0x22,
+        RECEIVE_GMM_CTRL_CMD = 0x23,
+        RECEIVE_FKP_DOSE_CMD = 0x33,
+        RECEIVE_FKP_BUTTON_CMD = SEND_FKP_BUTTON_CMD,
+        RECEIVE_CPG_BUTTON_CMD = SEND_CPG_BUTTON_CMD,
+        RECEIVE_MAX_CMD,
+        RECEIVE_RTM_ON_ARM_CURRENT_STATE_CMD = RECEIVE_MAX_CMD,
+    };
 
     typedef enum
     {

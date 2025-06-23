@@ -611,7 +611,7 @@ static State_t module_powerSaver(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
         uint8_t fkp_power_state = 0x01;
-        rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], 0x200, 0x62, &fkp_power_state, sizeof(fkp_power_state));
+        rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], FKP_ID, 0x62, &fkp_power_state, sizeof(fkp_power_state));
         // LOG_I("module_powerSaver enter\r\n");
         status = HANDLED();
         break;
@@ -620,7 +620,7 @@ static State_t module_powerSaver(void *self, Event_t const *const e)
     {
         // LOG_I("module_powerSaver exit\r\n");
         uint8_t fkp_power_state = 0x00;
-        rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], 0x200, 0x62, &fkp_power_state, sizeof(fkp_power_state));
+        rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], FKP_ID, 0x62, &fkp_power_state, sizeof(fkp_power_state));
         status = HANDLED();
         break;
     }
