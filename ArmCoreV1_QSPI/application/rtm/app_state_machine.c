@@ -117,54 +117,54 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     app_di_get(&(app_rtm->app_dido), &dido_structure);
 
     // HvEn check
-    if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_HVEN)
-    {
-        if (state == STATE_MACHINE_INIT ||
-            state == STATE_MACHINE_IDLE ||
-            state == STATE_MACHINE_TERMINATE)
-        {
-            self->interlock_table.serious_interlock.HvEN = 1;
-            retval = -1;
-        }
-        else
-        {
-            self->interlock_table.serious_interlock.HvEN = 0;
-        }
-    }
-    else
-    {
-        if (state != STATE_MACHINE_INIT &&
-            state != STATE_MACHINE_IDLE &&
-            state != STATE_MACHINE_TERMINATE)
-        {
-            self->interlock_table.serious_interlock.HvEN = 1;
-            retval = -1;
-        }
-        else
-        {
-            self->interlock_table.serious_interlock.HvEN = 0;
-        }
-    }
-    // kv_treatment_en check
-    if (dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_KV_TreatmentEN)
-    {
-        self->interlock_table.serious_interlock.KVTreatmentEn = 1;
-        retval = -1;
-    }
-    else
-    {
-        self->interlock_table.serious_interlock.KVTreatmentEn = 0;
-    }
-    // mv_treatment_en check
-    if (dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_MV_TreatmentEN)
-    {
-        self->interlock_table.serious_interlock.MVTreatmentEn = 1;
-        retval = -1;
-    }
-    else
-    {
-        self->interlock_table.serious_interlock.MVTreatmentEn = 0;
-    }
+    // if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_HVEN)
+    // {
+    //     if (state == STATE_MACHINE_INIT ||
+    //         state == STATE_MACHINE_IDLE ||
+    //         state == STATE_MACHINE_TERMINATE)
+    //     {
+    //         self->interlock_table.serious_interlock.HvEN = 1;
+    //         retval = -1;
+    //     }
+    //     else
+    //     {
+    //         self->interlock_table.serious_interlock.HvEN = 0;
+    //     }
+    // }
+    // else
+    // {
+    //     if (state != STATE_MACHINE_INIT &&
+    //         state != STATE_MACHINE_IDLE &&
+    //         state != STATE_MACHINE_TERMINATE)
+    //     {
+    //         self->interlock_table.serious_interlock.HvEN = 1;
+    //         retval = -1;
+    //     }
+    //     else
+    //     {
+    //         self->interlock_table.serious_interlock.HvEN = 0;
+    //     }
+    // }
+    // // kv_treatment_en check
+    // if (dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_KV_TreatmentEN)
+    // {
+    //     self->interlock_table.serious_interlock.KVTreatmentEn = 1;
+    //     retval = -1;
+    // }
+    // else
+    // {
+    //     self->interlock_table.serious_interlock.KVTreatmentEn = 0;
+    // }
+    // // mv_treatment_en check
+    // if (dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_MV_TreatmentEN)
+    // {
+    //     self->interlock_table.serious_interlock.MVTreatmentEn = 1;
+    //     retval = -1;
+    // }
+    // else
+    // {
+    //     self->interlock_table.serious_interlock.MVTreatmentEn = 0;
+    // }
 
     if ((self->cur_time - self->last_time > RTM_ERROR_WAIT_TIME) || (retval == 0))
     {

@@ -302,11 +302,14 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         len = (uint8_t *)&output_data.OutU8_ethercat_Link_state - (uint8_t *)&output_data.OutU8_fault_clear;
         if (memcmp(&output_data.OutU8_fault_clear, &data->OutU8_fault_clear, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], 0x0, 0x2, &data->OutU8_fault_clear, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x2, &data->OutU8_fault_clear, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x2, &data->OutU8_fault_clear, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x2, &data->OutU8_fault_clear, len);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x2, &data->OutU8_fault_clear, len);
+            if (data->OutU8_fault_clear & 0x01)
+            {
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], 0x0, 0x2, &data->OutU8_fault_clear, len);
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], 0x0, 0x2, &data->OutU8_fault_clear, len);
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], 0x0, 0x2, &data->OutU8_fault_clear, len);
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], 0x0, 0x2, &data->OutU8_fault_clear, len);
+                rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], 0x0, 0x2, &data->OutU8_fault_clear, len);
+            }
         }
         len = (uint8_t *)&output_data.OutU8_icm_require_state - (uint8_t *)&output_data.OutU8_rtm_on_require_state;
         if (memcmp(&output_data.OutU8_rtm_on_require_state, &data->OutU8_rtm_on_require_state, len) != 0)
