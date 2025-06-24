@@ -112,7 +112,7 @@ static int8_t timestamp_thread_init(void)
     .stack_size = 1024 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
-    
+
     osThreadId_t tid = osThreadNew(timestamp_entry, obj, &thread_attributes);
     if (tid == NULL)
     {

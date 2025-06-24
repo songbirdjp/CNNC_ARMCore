@@ -668,6 +668,54 @@ static uint16_t pulse_end_detect = 0;
 static uint16_t one_pulse_count[1024] = {0};
 #endif
 
+#define USING_TIM23_FOR_TRIGGER_TIME_COMPENSATION
+#ifdef USING_TIM23_FOR_TRIGGER_TIME_COMPENSATION
+#include "tim.h"
+/**
+  * @brief This function handles TIM23 global interrupt.
+  */
+void TIM23_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM23_IRQn 0 */
+
+  /* USER CODE END TIM23_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim23);
+  /* USER CODE BEGIN TIM23_IRQn 1 */
+
+  /* USER CODE END TIM23_IRQn 1 */
+}
+static uint64_t tim23_timestamp = 0;
+static void tim23_period_elapsed_callback(TIM_HandleTypeDef *htim)
+{
+    __disable_irq();
+    tim23_timestamp += __HAL_TIM_GET_AUTORELOAD(&htim23) + 1;
+    __enable_irq();
+}
+static int8_t trigger_time_compensation_init(void)
+{
+    MX_TIM23_Init();
+
+    HAL_StatusTypeDef status = HAL_TIM_RegisterCallback(&htim23, HAL_TIM_PERIOD_ELAPSED_CB_ID, tim23_period_elapsed_callback);
+    if (status != HAL_OK)
+    {
+        printf("tim23 register callback err: %d\r\n", status);
+        return -1;
+    }
+
+    status = HAL_TIM_Base_Start_IT(&htim23);
+    if (status != HAL_OK)
+    {
+        printf("tim23 start err: %d\r\n", status);
+        return -2;
+    }
+
+    return 0;
+}
+static uint64_t trigger_timestamp_us_get(void)
+{
+    return (tim23_timestamp + __HAL_TIM_GET_COUNTER(&htim23));
+}
+#endif
 
 #define USING_TIM5_FOR_RADIATION_TIMEOUT
 #ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
@@ -693,12 +741,12 @@ static void PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     if ((timer_delay_flag & ~TIM_DELAY_RUNNING_FLAG_BIT_7) == TIM_DELAY_PULSE_INTERVAL)
     {
         dose_trigger_out_set(0);
-        timestamp_start = timestamp_ns_get();
+        timestamp_start = trigger_timestamp_us_get();
     }
     else if ((timer_delay_flag & ~TIM_DELAY_RUNNING_FLAG_BIT_7) == TIM_DELAY_PULSE_LEVEL_RESET)
     {
         dose_trigger_out_set(1);
-        timestamp_mid = timestamp_ns_get();
+        timestamp_mid = trigger_timestamp_us_get();
     }
 
     osEventFlagsSet(timer_delay_event, timer_delay_flag & ~TIM_DELAY_RUNNING_FLAG_BIT_7);
@@ -804,7 +852,7 @@ static int8_t time_delay_entry(void *argument)
 #endif
                 }
 
-                time_diff = (timestamp_ns_get() - timestamp_start) / 1000;
+                time_diff = trigger_timestamp_us_get() - timestamp_start;
                 /* reset trigger out level */
                 ret = timer_delay_start(TIM_DELAY_PULSE_LEVEL_RESET, NORMAL_PULSE_RESET_DELAY_TIME_US - time_diff);
                 if (ret != 0)
@@ -844,7 +892,7 @@ static int8_t time_delay_entry(void *argument)
                     // }
                 }
 
-                time_diff = (timestamp_ns_get() - timestamp_mid) / 1000;
+                time_diff = trigger_timestamp_us_get() - timestamp_mid;
 
                 if (radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
                 {
@@ -875,7 +923,7 @@ static int8_t time_delay_entry(void *argument)
                 //     LOG_E("trigger out info set err: %d\r\n", ret);
                 // }
 
-                // time_diff = (timestamp_ns_get() - timestamp_mid) / 1000;
+                // time_diff = trigger_timestamp_us_get() - timestamp_mid;
                 ret = timer_delay_start(type, interval_us - NORMAL_PULSE_RESET_DELAY_TIME_US - time_diff);
                 if (ret != 0)
                 {
@@ -2449,7 +2497,7 @@ static int8_t radiation_thread_init(void)
     if (radiation_data_get()->mutex == NULL)
     {
         LOG_E("radiation data mutex create failed\r\n");
-        return -1;
+        return -2;
     }
 
     osMutexAttr_t trigger_out_mutex_attributes = {
@@ -2461,7 +2509,7 @@ static int8_t radiation_thread_init(void)
     if (trigger_out_obj_get()->mutex == NULL)
     {
         LOG_E("trigger out mutex create failed\r\n");
-        return -1;
+        return -3;
     }
 
     osThreadAttr_t time_delay_thread_attributes = {
@@ -2475,14 +2523,14 @@ static int8_t radiation_thread_init(void)
     if (timer_delay_event == NULL)
     {
         LOG_E("timer delay event create failed\r\n");
-        return -2;
+        return -4;
     }
 
     osThreadId_t time_delay_threadHandle = osThreadNew(time_delay_entry, NULL, &time_delay_thread_attributes);
     if (time_delay_threadHandle == NULL)
     {
         LOG_E("thread time delay create failed\r\n");
-        return -3;
+        return -5;
     }
 #endif
 
@@ -2491,7 +2539,7 @@ static int8_t radiation_thread_init(void)
     if (lptim3_delay_event == NULL)
     {
         LOG_E("lptim3 delay event create failed\r\n");
-        return -4;
+        return -6;
     }
 
     osThreadAttr_t lptim3_delay_thread_attributes = {
@@ -2504,7 +2552,16 @@ static int8_t radiation_thread_init(void)
     if (lptim3_delay_threadHandle == NULL)
     {
         LOG_E("thread lptim3 delay create failed\r\n");
-        return -5;
+        return -7;
+    }
+#endif
+
+#ifdef USING_TIM23_FOR_TRIGGER_TIME_COMPENSATION
+    int8_t ret = trigger_time_compensation_init();
+    if (ret != 0)
+    {
+        LOG_E("trigger time compensation init err: %d\r\n", ret);
+        return -8;
     }
 #endif
 
@@ -2518,35 +2575,35 @@ static int8_t radiation_thread_init(void)
     if (dose_rate_calculateHandle == NULL)
     {
         printf("thread dose rate calculate create failed\r\n");
-        return -6;
+        return -9;
     }
 
-    int8_t ret = radiation_data_init();
+    ret = radiation_data_init();
     if (ret != 0)
     {
         LOG_E("radiation data init err: %d\r\n", ret);
-        return -7;
+        return -10;
     }
 
     ret = dose_interpolation_init();
     if (ret != 0)
     {
         LOG_E("dose interpolation init err: %d\r\n", ret);
-        return -8;
+        return -11;
     }
 
     ret = interlock_fault_process_init();
     if (ret != 0)
     {
         LOG_E("interlock fault process init err: %d\r\n", ret);
-        return -9;
+        return -12;
     }
 
     ret = adcs7476_object_data_callback_register(adcs7476_value_process);
     if (ret != 0)
     {
         LOG_E("adcs7476 callback register err: %d\r\n", ret);
-        return -10;
+        return -13;
     }
 
     return 0;

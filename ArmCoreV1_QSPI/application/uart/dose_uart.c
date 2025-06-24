@@ -733,6 +733,11 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
 
             HAL_NVIC_SystemReset();
             break;
+        case 0x02:
+            uint64_t timestamp = (uint64_t)cmd->data[2] | (uint64_t)cmd->data[3] << 8 | (uint64_t)cmd->data[4] << 16 | (uint64_t)cmd->data[5] << 24 | 
+                                (uint64_t)cmd->data[6] << 32 | (uint64_t)cmd->data[7] << 40 | (uint64_t)cmd->data[8] << 48 | (uint64_t)cmd->data[9] << 56;
+            ret = timestamp_ns_set(timestamp);
+            break;
         default:
             ret = -1;
             break;
