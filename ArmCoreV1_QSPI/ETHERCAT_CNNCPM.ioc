@@ -530,6 +530,7 @@ Mdma.RequestSetsNb=3
 MxCube.Version=6.14.1
 MxDb.Version=DB.6.0.141
 NVIC.BDMA_Channel0_IRQn=true\:5\:0\:true\:false\:true\:false\:true\:true\:true
+NVIC.BDMA_Channel1_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true\:true
 NVIC.BusFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false\:false
 NVIC.DMA1_Stream0_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true\:true
 NVIC.DMA1_Stream1_IRQn=true\:5\:0\:false\:false\:true\:true\:true\:true\:true

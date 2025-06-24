@@ -75,6 +75,7 @@ void DMAMUX1_OVR_IRQHandler(void);
 void MDMA_IRQHandler(void);
 void HSEM1_IRQHandler(void);
 void BDMA_Channel0_IRQHandler(void);
+void BDMA_Channel1_IRQHandler(void);
 void UART9_IRQHandler(void);
 void TIM24_IRQHandler(void);
 /* USER CODE BEGIN EFP */
