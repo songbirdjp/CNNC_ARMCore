@@ -122,34 +122,26 @@ static int32_t do_device_init(app_dido_t *self)
 static int32_t di_device_init(app_dido_t *self)
 {
     device_err_t device_err = DEV_EIO;
-    uint16_t pca9557_cfg;
 
-    self->di_tca9535_0x00 = device_find(DEVICE_NAME_TCA9535_0);
-    if (self->di_tca9535_0x00 == NULL)
+    self->di_mcp23017_0x00 = device_find(DEVICE_NAME_MCP23017_0);
+    if (self->di_mcp23017_0x00 == NULL)
     {
         return -1;
     }
-    device_err = device_open(self->di_tca9535_0x00);
+    device_err = device_open(self->di_mcp23017_0x00);
     if (device_err != DEV_EOK)
     {
         return -2;
     }
-    pca9557_cfg = 0xffff;
-    device_err = device_ioctl(self->di_tca9535_0x00,
-                              DRIVER_TCA9535_CMD_CONFIGURATION_PORT,
-                              &pca9557_cfg);
+    uint8_t mcp23017_iocon = 0x44;
+    device_err = device_ioctl(self->di_mcp23017_0x00,
+                              DRIVER_MCP23017_REG_IOCON,
+                              &mcp23017_iocon);
     if (device_err != DEV_EOK)
     {
         return -3;
     }
-    pca9557_cfg = 0x0fff;
-    device_err = device_ioctl(self->di_tca9535_0x00,
-                              DRIVER_TCA9535_CMD_POLARITY_INVERSION_PORT,
-                              &pca9557_cfg);
-    if (device_err != DEV_EOK)
-    {
-        return -8;
-    }
+    uint8_t mcp23017_iocon = 0x44;
 
     self->di_gpio_gating = device_find(DEVICE_NAME_PIN_DI_GATING);
     if (self->di_gpio_gating == NULL)
