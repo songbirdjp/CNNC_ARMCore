@@ -18,9 +18,8 @@ extern "C"
 {
 #endif
 
-#define DIDO_DI_INIT_BIT (0)
-#define DIDO_DO_INIT_BIT (1)
-#define DIDO_STATE_BIT (2)
+#define DIDO_DIDO_INIT_BIT (0)
+#define DIDO_STATE_BIT (1)
 
 #define __IN     /*!< Defines 'read only' permissions               */
 #define __OUT    /*!< Defines 'write only' permissions              */

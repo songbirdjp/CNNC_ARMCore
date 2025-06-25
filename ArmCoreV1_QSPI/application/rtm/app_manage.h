@@ -24,9 +24,6 @@ typedef struct manage_info
 #define bit_clean(value, bit) ((value) &= ~(1 << (bit)))
 #define bit_get(value, bit) ((value) & (1 << (bit)))
 
-#define ETHERCAT_SLAVE_INIT_BIT (0)
-#define ETHERCAT_STATE_BIT (1)
-
 /************************************thread flag***************************/
 extern osThreadId_t app_rtm_main_threadId;
 #define APP_RTM_THREAD_FLAG_ETHERCAT (1 << 0)

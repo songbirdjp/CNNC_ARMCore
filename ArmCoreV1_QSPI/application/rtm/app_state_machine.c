@@ -117,54 +117,116 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     app_di_get(&(app_rtm->app_dido), &dido_structure);
 
     // HvEn check
-    // if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_HVEN)
-    // {
-    //     if (state == STATE_MACHINE_INIT ||
-    //         state == STATE_MACHINE_IDLE ||
-    //         state == STATE_MACHINE_TERMINATE)
-    //     {
-    //         self->interlock_table.serious_interlock.HvEN = 1;
-    //         retval = -1;
-    //     }
-    //     else
-    //     {
-    //         self->interlock_table.serious_interlock.HvEN = 0;
-    //     }
-    // }
-    // else
-    // {
-    //     if (state != STATE_MACHINE_INIT &&
-    //         state != STATE_MACHINE_IDLE &&
-    //         state != STATE_MACHINE_TERMINATE)
-    //     {
-    //         self->interlock_table.serious_interlock.HvEN = 1;
-    //         retval = -1;
-    //     }
-    //     else
-    //     {
-    //         self->interlock_table.serious_interlock.HvEN = 0;
-    //     }
-    // }
-    // // kv_treatment_en check
-    // if (dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_KV_TreatmentEN)
-    // {
-    //     self->interlock_table.serious_interlock.KVTreatmentEn = 1;
-    //     retval = -1;
-    // }
-    // else
-    // {
-    //     self->interlock_table.serious_interlock.KVTreatmentEn = 0;
-    // }
-    // // mv_treatment_en check
-    // if (dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN ^ dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_MV_TreatmentEN)
-    // {
-    //     self->interlock_table.serious_interlock.MVTreatmentEn = 1;
-    //     retval = -1;
-    // }
-    // else
-    // {
-    //     self->interlock_table.serious_interlock.MVTreatmentEn = 0;
-    // }
+    if ((state == STATE_MACHINE_READY) ||
+        (state == STATE_MACHINE_WORK) ||
+        (state == STATE_MACHINE_SURVIEW_READY) ||
+        (state == STATE_MACHINE_SURVIEW_WORK) ||
+        (state == STATE_MACHINE_CT_READY) ||
+        (state == STATE_MACHINE_CT_WORK))
+    {
+        if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_HVEN != 1)
+        {
+            self->interlock_table.serious_interlock.HvEN = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.serious_interlock.HvEN = 0;
+        }
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.HvEN = 0;
+    }
+    // kv_treatment_en check
+    if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_KV_TreatmentEN != 1)
+    {
+        if ((state == STATE_MACHINE_SURVIEW_WORK) ||
+            (state == STATE_MACHINE_CT_WORK))
+        {
+            self->interlock_table.serious_interlock.KVTreatmentEn = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.serious_interlock.KVTreatmentEn = 0;
+        }
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.KVTreatmentEn = 0;
+    }
+    // mv_treatment_en check
+    if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_MV_TreatmentEN != 1)
+    {
+        if (state == STATE_MACHINE_WORK)
+        {
+            self->interlock_table.serious_interlock.MVTreatmentEn = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.serious_interlock.MVTreatmentEn = 0;
+        }
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.MVTreatmentEn = 0;
+    }
+
+    // ethercat
+    if (bit_get(app_rtm->rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.ethercat_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.ethercat_link = 0;
+    }
+
+    // ICM
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_ICM].manage_info.status_word, MODULE_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_ICM].manage_info.status_word, MODULE_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.icm_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.icm_link = 0;
+    }
+
+    // BGM
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_BGM].manage_info.status_word, MODULE_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_BGM].manage_info.status_word, MODULE_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.bgm_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.bgm_link = 0;
+    }
+
+    // QAM
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_QAM].manage_info.status_word, MODULE_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_QAM].manage_info.status_word, MODULE_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.qam_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.qam_link = 0;
+    }
+    // RTM OFF ARM
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word, MODULE_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word, MODULE_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.rtm_off_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.rtm_off_link = 0;
+    }
 
     if ((self->cur_time - self->last_time > RTM_ERROR_WAIT_TIME) || (retval == 0))
     {

@@ -119,7 +119,13 @@ typedef struct app_serious_interlock_table
     uint32_t HvEN : 1;
     uint32_t KVTreatmentEn : 1;
     uint32_t MVTreatmentEn : 1;
-    uint32_t reserved : 29;
+    uint32_t ethercat_link : 1;
+    uint32_t icm_link : 1;
+    uint32_t bgm_link : 1;
+    uint32_t qam_link : 1;
+    uint32_t bsm_link : 1;
+    uint32_t rtm_off_link : 1;
+    uint32_t reserved : 23;
 } app_serious_interlock_table_t;
 
 
