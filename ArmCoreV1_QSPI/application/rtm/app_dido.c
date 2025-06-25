@@ -347,8 +347,6 @@ static void app_di_poll_entry(void *argument)
         LOG_I("di device init fail, errorCode:%d.\r\n", retVal);
         goto exit;
     }
-
-    bit_clean(self->manage_info.status_word, DIDO_DI_INIT_BIT);
     app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DI);
     for (;;)
     {
@@ -465,7 +463,6 @@ static void app_di_poll_entry(void *argument)
         osDelay(10);
     }
 exit:
-    bit_set(self->manage_info.status_word, DIDO_DI_INIT_BIT);
     osThreadExit();
 }
 /**
@@ -491,8 +488,6 @@ static void app_do_entry(void *argument)
         LOG_I("do device init fail, errorCode:%d.\r\n", retVal);
         goto exit;
     }
-
-    bit_clean(self->manage_info.status_word, DIDO_DO_INIT_BIT);
     app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DO);
     for (;;)
     {
@@ -694,7 +689,6 @@ static void app_do_entry(void *argument)
         }
     }
 exit:
-    bit_set(self->manage_info.status_word, DIDO_DO_INIT_BIT);
     osThreadExit();
 }
 /**

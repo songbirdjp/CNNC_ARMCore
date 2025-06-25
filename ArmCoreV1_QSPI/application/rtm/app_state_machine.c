@@ -161,12 +161,25 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         {
             self->interlock_table.serious_interlock.door_open = 0;
         }
+        if ((dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn == 1) && (dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn == 0))
+        {
+            self->interlock_table.serious_interlock.HvEN = 1;
+        }
         retval = -1;
     }
     else
     {
         self->interlock_table.serious_interlock.door_open = 0;
         self->interlock_table.not_ready_event.door_open = 0;
+        if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn ^ dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn)
+        {
+            self->interlock_table.serious_interlock.HvEN = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.serious_interlock.HvEN = 0;
+        }
     }
     if (dido_structure.tca9535_0x01_u.tca9535_0x01_bit.DI_TREATMENT_ROOM_DOOR_READY != 1)
     {
@@ -177,36 +190,63 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.not_ready_event.search_state = 0;
     }
-    // HvEn check
-    // if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn ^ dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_HvEn)
-    // {
-    //     self->interlock_table.serious_interlock.HvEN = 1;
-    //     retval = -1;
-    // }
-    // else
-    // {
-    //     self->interlock_table.serious_interlock.HvEN = 0;
-    // }
-    // // kv_treatment_en check
-    // if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn ^ dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_KV_TreatmentEN)
-    // {
-    //     self->interlock_table.serious_interlock.KVTreatmentEn = 1;
-    //     retval = -1;
-    // }
-    // else
-    // {
-    //     self->interlock_table.serious_interlock.KVTreatmentEn = 0;
-    // }
-    // // mv_treatment_en check
-    // if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn ^ dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_MV_TreatmentEN)
-    // {
-    //     self->interlock_table.serious_interlock.MVTreatmentEn = 1;
-    //     retval = -1;
-    // }
-    // else
-    // {
-    //     self->interlock_table.serious_interlock.MVTreatmentEn = 0;
-    // }
+    // kv_treatment_en check
+    if (dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_KV_TreatmentEN != 1)
+    {
+        if ((state == STATE_MACHINE_SURVIEW_WORK) ||
+            (state == STATE_MACHINE_CT_WORK))
+        {
+            self->interlock_table.serious_interlock.KVTreatmentEn = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.serious_interlock.KVTreatmentEn = 0;
+        }
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.KVTreatmentEn = 0;
+    }
+    // mv_treatment_en check
+    if (dido_structure.tca9535_0x03_u.tca9535_0x03_bit.DI_MV_TreatmentEN != 1)
+    {
+        if (state == STATE_MACHINE_WORK)
+        {
+            self->interlock_table.serious_interlock.MVTreatmentEn = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.serious_interlock.MVTreatmentEn = 0;
+        }
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.MVTreatmentEn = 0;
+    }
+
+    // ethercat
+    if (bit_get(app_rtm->rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.ethercat_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.ethercat_link = 0;
+    }
+
+    // RTM ON
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_RTM_ON].manage_info.status_word, MODULE_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_RTM_ON].manage_info.status_word, MODULE_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.rtm_on_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.rtm_on_link = 0;
+    }
 
     if ((self->cur_time - self->last_time > RTM_ERROR_WAIT_TIME) || (retval == 0))
     {

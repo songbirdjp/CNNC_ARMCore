@@ -61,6 +61,30 @@ int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_
 static app_rtm_main_t app_rtm;
 
 osThreadId_t app_rtm_main_threadId;
+
+#if 1
+#include "shell.h"
+static uint8_t state_require = 0;
+static uint8_t state_current = 0;
+static uint32_t not_ready = 0;
+static uint32_t warning_interlock = 0;
+static uint32_t minor_interlock = 0;
+static uint32_t serious_interlock = 0;
+static uint32_t run_cnt = 0;
+static int8_t rtm_state_get(int argc, char *argv[])
+{
+    LOG_I("RTM state require: %d\r\n", state_require);
+    LOG_I("RTM state current: %d\r\n", state_current);
+    LOG_I("RTM not_ready: 0x%x\r\n", not_ready);
+    LOG_I("RTM warning_interlock: 0x%x\r\n", warning_interlock);
+    LOG_I("RTM minor_interlock: 0x%x\r\n", minor_interlock);
+    LOG_I("RTM serious_interlock: 0x%x\r\n", serious_interlock);
+    LOG_I("RTM run_cnt: %d\r\n", run_cnt);
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(rtm_state_get, rtm_state_get, rtm state get);
+#endif
+
 #define RTM_MAIN_THREAD_CYCLE_MS (1)
 static void app_rtm_main_thread(void *argument)
 {
@@ -187,7 +211,16 @@ static void app_rtm_main_thread(void *argument)
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON].module_queue, RTM_ON_PLC_ID, SEND_RTM_OFF_ARM_CURRENT_STATE_CMD, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
             last_time = current_time;
         }
+#if 1
+        state_require = system_state_require;
+        state_current = rtm_status.fsm_state_current;
 
+        not_ready = rtm_status.not_ready_event;
+        warning_interlock = rtm_status.warning_interlock;
+        minor_interlock = rtm_status.minor_interlock;
+        serious_interlock = rtm_status.serious_interlock;
+        run_cnt++;
+#endif
         osDelay(RTM_MAIN_THREAD_CYCLE_MS);
     }
 exit:
@@ -390,9 +423,11 @@ static void app_ethercat_rx_thread(void *argument)
             // TODO: 处理输出数据
             ethercat_output_data_distribute(self, &output_data);
         }
+        current_time = osKernelGetTickCount();
         if (current_time - last_time > 1000)
         {
-            LOG_I("%s unlink\r\n", self->module_name);
+            // LOG_I("%s unlink\r\n", self->module_name);
+            // bit_set(app_rtm.rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
         }
     }
 exit:
@@ -495,7 +530,7 @@ int32_t uart_protocol_heartbeat_rx_timeout_callback(struct uart_protocol *const 
                                                     void *arg)
 {
     rtm_module_info_t *rtm_module_info = (rtm_module_info_t *)arg;
-    LOG_E("%s heartbeat rx timeout err!\r\n", rtm_module_info->module_name);
+    bit_set(rtm_module_info->manage_info.status_word, MODULE_LINK_STATE_BIT);
     return 0;
 }
 static int32_t module_data_recv_handle(rtm_module_info_t *const self,
@@ -762,7 +797,8 @@ static void app_fkp_rx_thread(void *argument)
             }
             ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_FKP].queue_group[RTM_MODULE_RTM_ON],
                                           GMM_ID | PSM_ID | RTM_ON_PLC_ID | RTM_OFF_ARM_ID,
-                                          0x91, RECEIVE_FKP_BUTTON_CMD & recv_data.fkp_recv_structure.FkpButton,
+                                          RECEIVE_FKP_BUTTON_CMD,
+                                          &recv_data.fkp_recv_structure.FkpButton,
                                           2);
             if (ret != 0)
             {
@@ -1077,6 +1113,7 @@ int app_rtm_data_handle_create(void)
     ret = ethercat_thread_init();
     if (ret != 0)
     {
+        bit_set(self->rtm_ethercat_info.manage_info.status_word, ETHERCAT_SLAVE_INIT_BIT);
         return -1;
     }
     osEventFlagsAttr_t event_attributes = {
@@ -1262,7 +1299,7 @@ int app_rtm_data_handle_create(void)
 }
 INIT_APP_EXPORT(app_rtm_data_handle_create)
 
-// #define FKP_TEST
+#define FKP_TEST
 #ifdef FKP_TEST
 #include "shell.h"
 static struct

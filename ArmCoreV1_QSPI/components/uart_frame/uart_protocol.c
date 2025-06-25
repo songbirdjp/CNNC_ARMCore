@@ -166,7 +166,7 @@ int32_t uart_protocol_init(uart_protocol_t *const self,
     }
 
     self->uart_protocol_heartbeat_timeout_timer = osTimerNew(uart_protocol_heartbeat_rx_timeout_timer_callback,
-                                                             osTimerOnce,
+                                                             osTimerPeriodic,
                                                              self,
                                                              NULL);
     if (self->uart_protocol_heartbeat_timeout_timer == NULL)

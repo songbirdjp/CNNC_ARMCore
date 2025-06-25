@@ -92,6 +92,8 @@ extern "C"
 
     typedef struct rtm_module_info
     {
+#define MODULE_INIT_BIT (0)
+#define MODULE_LINK_STATE_BIT (1)
         manage_info_t manage_info;
         const char *module_name;
         const char *module_type;
@@ -107,9 +109,16 @@ extern "C"
         osMessageQueueId_t queue_group[RTM_MODULE_MAX];
     } rtm_module_info_t;
 
+    typedef struct rtm_ethercat_info
+    {
+#define ETHERCAT_SLAVE_INIT_BIT (0)
+#define ETHERCAT_LINK_STATE_BIT (1)
+        manage_info_t manage_info;
+    } rtm_ethercat_info_t;
 
     typedef struct app_rtm_main
     {
+#define RTM_MAIN_INIT_BIT (0)
         manage_info_t manage_info;
 
         rtm_fault_check_t fault_check;
@@ -119,12 +128,13 @@ extern "C"
         uint32_t unready_override;
         uint16_t led_belt;
 
-        // rtm_state_machine_t state_machine;
         rtm_StateMachine_t state_machine;
 
         rtm_module_info_t rtm_module_info[RTM_MODULE_MAX];
 
         osEventFlagsId_t ethercat_Event;
+        rtm_ethercat_info_t rtm_ethercat_info;
+        
         app_dido_t app_dido;
         uart_dev_t *uart_fkp;
     } app_rtm_main_t;
