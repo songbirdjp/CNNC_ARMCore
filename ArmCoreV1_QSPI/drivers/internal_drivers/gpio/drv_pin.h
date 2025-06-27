@@ -16,6 +16,8 @@
 extern "C" {
 #endif
 
+#define DEVICE_NAME_PIN_DO_POWER_CUT "doPowerCut"
+#define DEVICE_NAME_PIN_DO_HVEN "doHvEn"
 #define DEVICE_NAME_PIN_DO_PULSE_INHIBIT "doPulseInhibit"
 #define DEVICE_NAME_PIN_DO_EMERGENCY "doEmergency"
 #define DEVICE_NAME_PIN_DO_KV_TREATMENT_EN "doKvTreatment"
@@ -23,6 +25,9 @@ extern "C" {
 
 #define DEVICE_NAME_PIN_DI_INT "diInt"
 #define DEVICE_NAME_PIN_DI_GATING "diGating"
+#define DEVICE_NAME_PIN_DI_SLIPRING_HVEN "diSlipringHvEn"
+#define DEVICE_NAME_PIN_DI_SLIPRING_KV_TREATMENT_EN "diSlipringKvTreatmentEn"
+#define DEVICE_NAME_PIN_DI_SLIPRING_MV_TREATMENT_EN "diSlipringMvTreatmentEn"
 
 #define DEVICE_NAME_PIN_RUN_LED_1 "RUN_LED1"
 #define DEVICE_NAME_PIN_RUN_LED_2 "RUN_LED2"

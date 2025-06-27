@@ -133,37 +133,46 @@ static int32_t di_device_init(app_dido_t *self)
     {
         return -2;
     }
-    uint8_t mcp23017_iocon = 0x44;
+    mcp23017_cmd_config_t mcp23017_cmd_config = {
+        .io_dir = 0xFFFF,
+        .input_polarity = 0x0000,
+        .int_enable = 0x0000,
+        .default_value = 0x0000,
+        .interrupt_control = 0x0000,
+        .io_config = 0x44,
+        .pull_up_resistors = 0x0000,
+    };
     device_err = device_ioctl(self->di_mcp23017_0x00,
-                              DRIVER_MCP23017_REG_IOCON,
-                              &mcp23017_iocon);
+                              DRIVER_MCP23017_CMD_CONFIG,
+                              &mcp23017_cmd_config);
     if (device_err != DEV_EOK)
     {
         return -3;
     }
-    uint8_t mcp23017_iocon = 0x44;
 
-    self->di_gpio_gating = device_find(DEVICE_NAME_PIN_DI_GATING);
-    if (self->di_gpio_gating == NULL)
+    self->di_mcp23017_INT0 = device_find(DEVICE_NAME_PIN_DI_INT);
+    if (self->di_mcp23017_INT0 == NULL)
     {
         return -4;
     }
-    device_err = device_open(self->di_gpio_gating);
+    device_err = device_open(self->di_mcp23017_INT0);
     if (device_err != DEV_EOK)
     {
         return -5;
     }
 
-    self->di_tca9535_INT0 = device_find(DEVICE_NAME_PIN_DI_INT);
-    if (self->di_tca9535_INT0 == NULL)
+    self->di_gpio_gating = device_find(DEVICE_NAME_PIN_DI_GATING);
+    if (self->di_gpio_gating == NULL)
     {
         return -6;
     }
-    device_err = device_open(self->di_tca9535_INT0);
+    device_err = device_open(self->di_gpio_gating);
     if (device_err != DEV_EOK)
     {
         return -7;
     }
+
+    return 0;
 }
 /**
  * @brief

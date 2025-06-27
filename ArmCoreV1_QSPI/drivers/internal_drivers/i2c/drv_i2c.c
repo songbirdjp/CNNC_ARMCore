@@ -32,7 +32,7 @@ typedef struct driver_i2c
     i2c_software_io_t i2c_software_io;
 } driver_i2c_t;
 
-static driver_i2c_t driver_i2c1 = {0};
+static driver_i2c_t driver_i2c4 = {0};
 // static driver_i2c_t driver_i2c2 = {0};
 // static driver_i2c_t driver_i2c3 = {0};
 /*software IO*/
@@ -65,70 +65,38 @@ void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
 {
     HAL_I2C_DeInit(hi2c);
     I2C_Unlock();
-    MX_I2C1_Init();
+    MX_I2C4_Init();
 }
 void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-    if (hi2c->Instance == I2C1)
+    if (hi2c->Instance == I2C4)
     {
-        device_i2c_xfer_end((device_i2c_t *)&driver_i2c1);
+        device_i2c_xfer_end((device_i2c_t *)&driver_i2c4);
     }
-    // else if (hi2c->Instance == I2C2)
-    // {
-    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c2);
-    // }
-    // else if (hi2c->Instance == I2C3)
-    // {
-    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c3);
-    // }
 }
 
 void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-    if (hi2c->Instance == I2C1)
+    if (hi2c->Instance == I2C4)
     {
-        device_i2c_xfer_end((device_i2c_t *)&driver_i2c1);
+        device_i2c_xfer_end((device_i2c_t *)&driver_i2c4);
     }
-    // else if (hi2c->Instance == I2C2)
-    // {
-    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c2);
-    // }
-    // else if (hi2c->Instance == I2C3)
-    // {
-    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c3);
-    // }
 }
 
 void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-    if (hi2c->Instance == I2C1)
+    if (hi2c->Instance == I2C4)
     {
-        device_i2c_xfer_end((device_i2c_t *)&driver_i2c1);
+        device_i2c_xfer_end((device_i2c_t *)&driver_i2c4);
     }
-    // else if (hi2c->Instance == I2C2)
-    // {
-    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c2);
-    // }
-    // else if (hi2c->Instance == I2C3)
-    // {
-    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c3);
-    // }
 }
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-    if (hi2c->Instance == I2C1)
+    if (hi2c->Instance == I2C4)
     {
-        device_i2c_xfer_end((device_i2c_t *)&driver_i2c1);
+        device_i2c_xfer_end((device_i2c_t *)&driver_i2c4);
     }
-    // else if (hi2c->Instance == I2C2)
-    // {
-    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c2);
-    // }
-    // else if (hi2c->Instance == I2C3)
-    // {
-    //     device_i2c_xfer_end((device_i2c_t *)&driver_i2c3);
-    // }
 }
 
 static device_err_t driver_i2c_open(device_i2c_t *const self)
@@ -141,8 +109,6 @@ static device_err_t driver_i2c_open(device_i2c_t *const self)
 
     if (0 == strcmp(name, DEVICE_NAME_I2C1))
     {
-        I2C_Unlock();
-        MX_I2C1_Init();
     }
     else if (0 == strcmp(name, DEVICE_NAME_I2C2))
     {
@@ -151,6 +117,11 @@ static device_err_t driver_i2c_open(device_i2c_t *const self)
     else if (0 == strcmp(name, DEVICE_NAME_I2C3))
     {
         // MX_I2C3_Init();
+    }
+    else if (0 == strcmp(name, DEVICE_NAME_I2C4))
+    {
+        I2C_Unlock();
+        MX_I2C4_Init();
     }
     else
     {
@@ -170,7 +141,8 @@ static device_err_t driver_i2c_close(device_i2c_t *const self)
 
     if ((0 == strcmp(name, DEVICE_NAME_I2C1)) ||
         (0 == strcmp(name, DEVICE_NAME_I2C2)) ||
-        (0 == strcmp(name, DEVICE_NAME_I2C3)))
+        (0 == strcmp(name, DEVICE_NAME_I2C3)) ||
+        (0 == strcmp(name, DEVICE_NAME_I2C4)))
     {
         HAL_I2C_DeInit(driver->hi2cx);
     }
@@ -634,10 +606,10 @@ static device_err_t driver_i2c_ioctl(device_i2c_t *const self, i2c_cmd_t cmd, vo
         break;
     case I2C_CMD_INIT:
         HAL_I2C_DeInit(driver->hi2cx);
-        if (driver->hi2cx == &hi2c1)
+        if (driver->hi2cx == &hi2c4)
         {
             I2C_Unlock();
-            MX_I2C1_Init();
+            MX_I2C4_Init();
         }
         break;
     default:
@@ -676,76 +648,74 @@ static void driver_i2c_register(driver_i2c_t *const self, I2C_HandleTypeDef *con
 }
 void driver_i2c_init(void)
 {
-    driver_i2c_register(&driver_i2c1, &hi2c1, DEVICE_NAME_I2C1);
-    //    driver_i2c_register(&driver_i2c2, &hi2c2, DEVICE_NAME_I2C2);
-    // driver_i2c_register(&driver_i2c3, &hi2c3, DEVICE_NAME_I2C3);
+    driver_i2c_register(&driver_i2c4, &hi2c4, DEVICE_NAME_I2C4);
 }
 INIT_BOARD_EXPORT(driver_i2c_init);
-int8_t i2c_test(void)
-{
-    int8_t ret = 0;
-    device_t *device_i2c1 = NULL;
-    uint8_t data_w[8] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
-    uint8_t data_r[8] = {0x00};
-    uint8_t deviceID = 0xA0;
-    i2c_ack_polling_arg_t i2c_ack_polling_arg = {
-        .device_addr = deviceID,
-        .i2c_ack_polling_state = I2C_ACK_POLLING_BUSY};
-    i2c_msg_t i2c_w_msg = {
-        .dev_addr = deviceID,
-        .reg_addr = 0x00,
-        .data = data_w,
-        .dataLen = 8};
+// int8_t i2c_test(void)
+// {
+//     int8_t ret = 0;
+//     device_t *device_i2c1 = NULL;
+//     uint8_t data_w[8] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+//     uint8_t data_r[8] = {0x00};
+//     uint8_t deviceID = 0xA0;
+//     i2c_ack_polling_arg_t i2c_ack_polling_arg = {
+//         .device_addr = deviceID,
+//         .i2c_ack_polling_state = I2C_ACK_POLLING_BUSY};
+//     i2c_msg_t i2c_w_msg = {
+//         .dev_addr = deviceID,
+//         .reg_addr = 0x00,
+//         .data = data_w,
+//         .dataLen = 8};
 
-    i2c_msg_t i2c_r_msg = {
-        .dev_addr = deviceID,
-        .reg_addr = 0x00,
-        .data = data_r,
-        .dataLen = 8};
+//     i2c_msg_t i2c_r_msg = {
+//         .dev_addr = deviceID,
+//         .reg_addr = 0x00,
+//         .data = data_r,
+//         .dataLen = 8};
 
-    i2c_addr_len_t i2c_addr_len = I2C_ADDR_7BIT;
-    printf("i2c test\r\n");
-    driver_i2c_init();
+//     i2c_addr_len_t i2c_addr_len = I2C_ADDR_7BIT;
+//     printf("i2c test\r\n");
+//     driver_i2c_init();
 
-    device_i2c1 = device_find(DEVICE_NAME_I2C1);
+//     device_i2c1 = device_find(DEVICE_NAME_I2C1);
 
-    if (device_i2c1 == NULL)
-    {
-        return -1;
-    }
-    ret = device_open(device_i2c1);
-    if (ret != 0)
-    {
-        return -2;
-    }
-    ret = device_ioctl(device_i2c1, I2C_CMD_SET_ADDR_LEN, &i2c_addr_len);
-    if (ret != 0)
-    {
-        return -3;
-    }
-    ret = device_write(device_i2c1, &i2c_w_msg, 0, 1000);
-    if (ret != 0)
-    {
-        return -4;
-    }
-    do
-    {
-        ret = device_ioctl(device_i2c1, I2C_CMD_GET_ACK_POLLING, &i2c_ack_polling_arg);
-        if (ret != 0)
-        {
-            return -5;
-        }
-    } while (i2c_ack_polling_arg.i2c_ack_polling_state != I2C_ACK_POLLING_READY);
-    ret = device_read(device_i2c1, &i2c_r_msg, 0, 1000);
-    if (ret != 0)
-    {
-        return -6;
-    }
-    ret = device_close(device_i2c1);
-    if (ret != 0)
-    {
-        return -7;
-    }
-    printf("i2c test succeed!\r\n");
-    return 0;
-}
+//     if (device_i2c1 == NULL)
+//     {
+//         return -1;
+//     }
+//     ret = device_open(device_i2c1);
+//     if (ret != 0)
+//     {
+//         return -2;
+//     }
+//     ret = device_ioctl(device_i2c1, I2C_CMD_SET_ADDR_LEN, &i2c_addr_len);
+//     if (ret != 0)
+//     {
+//         return -3;
+//     }
+//     ret = device_write(device_i2c1, &i2c_w_msg, 0, 1000);
+//     if (ret != 0)
+//     {
+//         return -4;
+//     }
+//     do
+//     {
+//         ret = device_ioctl(device_i2c1, I2C_CMD_GET_ACK_POLLING, &i2c_ack_polling_arg);
+//         if (ret != 0)
+//         {
+//             return -5;
+//         }
+//     } while (i2c_ack_polling_arg.i2c_ack_polling_state != I2C_ACK_POLLING_READY);
+//     ret = device_read(device_i2c1, &i2c_r_msg, 0, 1000);
+//     if (ret != 0)
+//     {
+//         return -6;
+//     }
+//     ret = device_close(device_i2c1);
+//     if (ret != 0)
+//     {
+//         return -7;
+//     }
+//     printf("i2c test succeed!\r\n");
+//     return 0;
+// }

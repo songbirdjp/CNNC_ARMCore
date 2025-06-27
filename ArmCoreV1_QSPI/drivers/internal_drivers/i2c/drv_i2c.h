@@ -19,6 +19,7 @@ extern "C" {
 #define DEVICE_NAME_I2C1 "i2c1"
 #define DEVICE_NAME_I2C2 "i2c2"
 #define DEVICE_NAME_I2C3 "i2c3"
+#define DEVICE_NAME_I2C4 "i2c4"
 
 void driver_i2c_init(void);
 

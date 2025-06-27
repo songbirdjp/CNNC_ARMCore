@@ -15,6 +15,31 @@
 
 TAG("drv_mcp23017.c");
 
+typedef enum driver_mcp23017_reg
+{
+    DRIVER_MCP23017_REG_IODIR_A = 0x00, /**< IO direction A register */
+    DRIVER_MCP23017_REG_IODIR_B,        /**< IO direction B register */
+    DRIVER_MCP23017_REG_IPOL_A,         /**< Input polarity A register */
+    DRIVER_MCP23017_REG_IPOL_B,         /**< Input polarity B register */
+    DRIVER_MCP23017_REG_GPINTEN_A,      /**< Interrupt-on-change A register */
+    DRIVER_MCP23017_REG_GPINTEN_B,      /**< Interrupt-on-change B register */
+    DRIVER_MCP23017_REG_DEFVAL_A,       /**< Default value A register */
+    DRIVER_MCP23017_REG_DEFVAL_B,       /**< Default value B register */
+    DRIVER_MCP23017_REG_INTCON_A,       /**< Interrupt control A register */
+    DRIVER_MCP23017_REG_INTCON_B,       /**< Interrupt control B register */
+    DRIVER_MCP23017_REG_IOCON,          /**< Configuration register */
+    DRIVER_MCP23017_REG_GPPU_A = 0x0C,  /**< Pull-up resistors A register */
+    DRIVER_MCP23017_REG_GPPU_B,         /**< Pull-up resistors B register */
+    DRIVER_MCP23017_REG_INTF_A,         /**< Interrupt flag A register */
+    DRIVER_MCP23017_REG_INTF_B,         /**< Interrupt flag B register */
+    DRIVER_MCP23017_REG_INTCAP_A,       /**< Interrupt capture A register */
+    DRIVER_MCP23017_REG_INTCAP_B,       /**< Interrupt capture B register */
+    DRIVER_MCP23017_REG_GPIO_A,         /**< Port A register */
+    DRIVER_MCP23017_REG_GPIO_B,         /**< Port B register */
+    DRIVER_MCP23017_REG_OLAT_A,         /**< Output latch A register */
+    DRIVER_MCP23017_REG_OLAT_B,         /**< Output latch B register */
+} driver_mcp23017_reg_t;
+
 typedef struct driver_mcp23017
 {
     device_t super;
@@ -67,12 +92,11 @@ static device_err_t driver_mcp23017_read(device_t *const self,
 
     device_err_t device_err;
 
-    mcp23017_msg_t *mcp23017_msg = (mcp23017_msg_t *)buffer;
     i2c_msg_t i2c_msg = {
         .dev_addr = device->device_addr,
-        .reg_addr = mcp23017_msg->driver_mcp23017_reg,
-        .data = mcp23017_msg->data,
-        .dataLen = mcp23017_msg->dataLen};
+        .reg_addr = DRIVER_MCP23017_REG_GPIO_A,
+        .data = buffer,
+        .dataLen = 2};
 
     if (device->mcp23017_i2c_addr_len != device->device_i2c->i2c_addr_len)
     {
@@ -120,12 +144,11 @@ static device_err_t driver_mcp23017_write(device_t *const self,
 
     device_err_t device_err;
 
-    mcp23017_msg_t *mcp23017_msg = (mcp23017_msg_t *)buffer;
     i2c_msg_t i2c_msg = {
         .dev_addr = device->device_addr,
-        .reg_addr = mcp23017_msg->driver_mcp23017_reg,
-        .data = mcp23017_msg->data,
-        .dataLen = mcp23017_msg->dataLen};
+        .reg_addr = DRIVER_MCP23017_REG_OLAT_A,
+        .data = buffer,
+        .dataLen = 2};
 
     if (device->mcp23017_i2c_addr_len != device->device_i2c->i2c_addr_len)
     {
@@ -178,6 +201,72 @@ static device_err_t driver_mcp23017_ioctl(device_t *const self, uint8_t cmd, voi
             if (ret != 0)
             {
                 device_err = DEV_EIO;
+            }
+            break;
+        }
+        case DRIVER_MCP23017_CMD_CONFIG:
+        {
+            mcp23017_cmd_config_t *config = (mcp23017_cmd_config_t *)arg;
+            i2c_msg_t i2c_msg = {
+                .dev_addr = device->device_addr,
+                .dataLen = 2};
+
+            i2c_msg.reg_addr = DRIVER_MCP23017_REG_IODIR_A;
+            i2c_msg.data = &config->io_dir;
+            device_err = device_write((device_t *)(device->device_i2c), (void *)&i2c_msg, NULL, 100);
+            if (device_err != DEV_EOK)
+            {
+                return DEV_EIO;
+            }
+
+            i2c_msg.reg_addr = DRIVER_MCP23017_REG_IPOL_A;
+            i2c_msg.data = &config->input_polarity;
+            device_err = device_write((device_t *)(device->device_i2c), (void *)&i2c_msg, NULL, 100);
+            if (device_err != DEV_EOK)
+            {
+                return DEV_EIO;
+            }
+
+            i2c_msg.reg_addr = DRIVER_MCP23017_REG_GPINTEN_A;
+            i2c_msg.data = &config->int_enable;
+            device_err = device_write((device_t *)(device->device_i2c), (void *)&i2c_msg, NULL, 100);
+            if (device_err != DEV_EOK)
+            {
+                return DEV_EIO;
+            }
+
+            i2c_msg.reg_addr = DRIVER_MCP23017_REG_DEFVAL_A;
+            i2c_msg.data = &config->default_value;
+            device_err = device_write((device_t *)(device->device_i2c), (void *)&i2c_msg, NULL, 100);
+            if (device_err != DEV_EOK)
+            {
+                return DEV_EIO;
+            }
+
+            i2c_msg.reg_addr = DRIVER_MCP23017_REG_INTCON_A;
+            i2c_msg.data = &config->interrupt_control;
+            device_err = device_write((device_t *)(device->device_i2c), (void *)&i2c_msg, NULL, 100);
+            if (device_err != DEV_EOK)
+            {
+                return DEV_EIO;
+            }
+
+            i2c_msg.reg_addr = DRIVER_MCP23017_REG_IOCON;
+            i2c_msg.data = &config->io_config;
+            i2c_msg.dataLen = 1;
+            device_err = device_write((device_t *)(device->device_i2c), (void *)&i2c_msg, NULL, 100);
+            if (device_err != DEV_EOK)
+            {
+                return DEV_EIO;
+            }
+
+            i2c_msg.reg_addr = DRIVER_MCP23017_REG_GPPU_A;
+            i2c_msg.data = &config->pull_up_resistors;
+            i2c_msg.dataLen = 2;
+            device_err = device_write((device_t *)(device->device_i2c), (void *)&i2c_msg, NULL, 100);
+            if (device_err != DEV_EOK)
+            {
+                return DEV_EIO;
             }
             break;
         }
@@ -234,7 +323,7 @@ void driver_mcp23017_init(void)
 #define MCP23017_BOARD_ID_ADDR (0b00100000)
     driver_mcp23017_register(&driver_mcp23017_0,
                              DEVICE_NAME_MCP23017_0,
-                             DEVICE_NAME_I2C1,
+                             DEVICE_NAME_I2C4,
                              MCP23017_BOARD_ID_ADDR);
 }
 INIT_DEVICE_EXPORT(driver_mcp23017_init);
@@ -289,7 +378,7 @@ static int8_t mcp23017_test(uint8_t argc, uint8_t *argv[])
     osThreadAttr_t thread_attributes = {
         .name = "mcp23017_test",
         .priority = osPriorityNormal,
-        .stack_size = 1024*4,
+        .stack_size = 1024 * 4,
         .cb_size = 0};
 
     driver_mcp23017_t *mcp23017 = (driver_mcp23017_t *)device_find(DEVICE_NAME_MCP23017_0);

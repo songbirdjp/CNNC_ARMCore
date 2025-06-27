@@ -1,7 +1,7 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#define GIT_BRANCH  "rtm_on_arm_io_develop_new"
-#define GIT_HASH    "6fdfd3fe7634e541b06d1e1b93374894ac83d367"
+#define GIT_BRANCH  "rtm_on_arm_io_develop_v2"
+#define GIT_HASH    "f98af569c99bd080d170349590d402f91a41d733"
 
 #endif
