@@ -93,6 +93,8 @@ static void app_rtm_main_thread(void *argument)
     queue_frame_t queue_frame;
     rtm_status_t rtm_status = {0};
     rtm_status_t rtm_status_old = {0};
+    dido_structure_t dido_structure = {0};
+    dido_structure_t dido_structure_old = {0};
 
     uint32_t current_time = 0;
     uint32_t last_time = 0;
@@ -211,6 +213,15 @@ static void app_rtm_main_thread(void *argument)
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON].module_queue, RTM_ON_PLC_ID, SEND_RTM_OFF_ARM_CURRENT_STATE_CMD, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
             last_time = current_time;
         }
+        // DIDO上报
+        app_do_get(&(self->app_dido), &dido_structure);
+        app_di_get(&(self->app_dido), &dido_structure);
+        if (memcmp(&dido_structure_old, &dido_structure, sizeof(dido_structure_t)) != 0)
+        {
+            memcpy(&dido_structure_old, &dido_structure, sizeof(dido_structure_t));
+            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON].module_queue, RTM_ON_PLC_ID, SEND_RTM_OFF_ARM_DIDO_CMD, (uint8_t *)&dido_structure, sizeof(dido_structure_t));
+        }
+
 #if 1
         state_require = system_state_require;
         state_current = rtm_status.fsm_state_current;
@@ -394,7 +405,7 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
         memcpy(&input_data->InU32_CpgButton, queue_frame->payload.data + 1, len);
         break;
     default:
-        LOG_E("unknown cmd %x\r\n", cmd);
+        // LOG_E("unknown cmd %x\r\n", cmd);
         break;
     }
 }
@@ -874,7 +885,7 @@ static void app_fkp_tx_thread(void *argument)
             case RECEIVE_FKP_TIMESTAMP_CMD:
                 memcpy(&send_data.fkp_send_structure.year, queue_frame.payload.data + 1, len);
                 break;
-            case RECEIVE_FKP_SYSTEM_STATE_CMD:
+            case RECEIVE_SYSTEM_STATE_CMD:
                 memcpy(&send_data.fkp_send_structure.SystemCurrentState, queue_frame.payload.data + 1, len);
                 break;
             case SEND_FKP_POWER_OFF_CMD:
