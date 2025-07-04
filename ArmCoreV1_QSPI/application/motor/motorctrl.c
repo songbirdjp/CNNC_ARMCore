@@ -383,6 +383,8 @@ void MagMotorInitFSM(void)
     uint16_t MagForwardEncCounterPrev;
     uint16_t MagBackwardEncCounter;
     uint16_t MagBackwardEncCounterPrev;
+    uint16_t MagFindZeroCheckCounter;
+    uint16_t MagFindZeroCheckCounterPrev;
     MotorCtrlParam_TypeDef *obj = MAG_motorParam_get();
     static float AutoControl_pid_output;
     //MagMotorParameter.encoderValTarget = 20000;
@@ -397,36 +399,50 @@ void MagMotorInitFSM(void)
                 motorCtrlByPWM(MOTOR_MAG, 0);
             }
             MagMotorInitDone =1;
-            motorCtrlByPWM(MOTOR_MAG, -40);
+            motorCtrlByPWM(MOTOR_MAG, -50);
             osDelay(1000);
             MagMotorState = MotorFSM_Backward2FindZero;
             break;
         case MotorFSM_Backward2FindZero:
-            motorCtrlByPWM(MOTOR_MAG, 40);
+            motorCtrlByPWM(MOTOR_MAG, 50);
             MagForwardEncCounterPrev = __HAL_TIM_GET_COUNTER(&htim2);
             osDelay(500);
             MagForwardEncCounter = __HAL_TIM_GET_COUNTER(&htim2);
            // printf("MagForwardEncCounterPrev = %d MagForwardEncCounter = %d\r\n", MagForwardEncCounterPrev, MagForwardEncCounter);
             if(MagForwardEncCounterPrev == MagForwardEncCounter)
             {
-                __HAL_TIM_SET_COUNTER(&htim2,35195);
+                __HAL_TIM_SET_COUNTER(&htim2,41045);
                 printf("231MagForwardEncCounter = %d\r\n",  getEncodeValue(MOTOR_MAG));
                 motorCtrlByPWM(MOTOR_MAG, 0);
                 MagMotorParameter.motorFindZeroOK = 0x01;
                 printf("111Go to  presetPos= %d\r\n",MagMotorParameter.presetPos);
-                MagMotorState = MotorFSM_ManualControl;
+                // MagMotorState = MotorFSM_ManualControl;
+                MagMotorState = MotorFSM_FindZeroCheck;
             }
             break;  
-        // case MotorFSM_ZERO_CONFIRMED:
-        //     MagForwardEncCounter = getEncodeValue(MOTOR_MAG);
-        //     if(MagMotorAutoControltimes % 500 == 0)
-        //     {
-        //         LOG_I("EncCounter = %d\r\n",MagForwardEncCounter);
-        //     }
-        //     motorCtrlByPWM(MOTOR_MAG, PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorParameter.encoderValTarget, &MAGmotor_pid_para));
-        //     MagMotorAutoControltimes++;
-        //     osDelay(1);
-            // break;
+        case MotorFSM_FindZeroCheck:
+            motorCtrlByPWM(MOTOR_MAG, -50);
+            osDelay(8000);
+            motorCtrlByPWM(MOTOR_MAG, 0);
+            osDelay(1000);
+            MagFindZeroCheckCounterPrev = getEncodeValue(MOTOR_MAG);
+            motorCtrlByPWM(MOTOR_MAG, 50);
+            osDelay(8000);
+            motorCtrlByPWM(MOTOR_MAG, 0);
+            osDelay(1000);
+            MagFindZeroCheckCounter = getEncodeValue(MOTOR_MAG);
+            LOG_I("left = %d right = %d\r\n", MagFindZeroCheckCounterPrev, MagFindZeroCheckCounter);
+            if((MagFindZeroCheckCounter-MagFindZeroCheckCounterPrev) > 31023)
+            {
+                MagMotorState = MotorFSM_StayAtPresetPos;
+                LOG_I("FindZeroCheck OK\r\n");
+            }
+            else
+            {
+                MagMotorState = MotorFSM_Backward2FindZero;
+                LOG_I("FindZeroCheck Failed %d\r\n", MagFindZeroCheckCounter-MagFindZeroCheckCounterPrev);
+            }
+            break;
         case MotorFSM_StayAtPresetPos:
             motorCtrlByPWM(MOTOR_MAG, PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorParameter.presetPos, &MAGmotor_pid_para));
             osDelay(1);
@@ -458,14 +474,6 @@ void MagMotorInitFSM(void)
             MagMotorADCValue[1] = 0;
         }
             MagMotorAutoControltimes++;
-            // if(MagMotorAutoTarget > 21100)
-            // {
-            //     MagMotorAutoTarget = 21050;
-            // }
-            // else if(MagMotorAutoTarget < 19000)
-            // {
-            //     MagMotorAutoTarget = 19050;
-            // }
             AutoControl_pid_output = PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorAutoTarget, &MAGmotor_pid_para);
             // LOG_I("pid_output = %f\r\n",AutoControl_pid_output);
             motorCtrlByPWM(MOTOR_MAG, AutoControl_pid_output);
@@ -617,7 +625,7 @@ static void MotorInitial_thread_entry(void *argument)
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
     gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
-    MagMotorParameter.presetPos = 21550;// 25118;
+    MagMotorParameter.presetPos = 27416;// 25118;
     MagMotorParameter.encoderValTarget = MagMotorParameter.presetPos;
     AFCApplicationParam.positionCalculated = MagMotorParameter.presetPos;
     for (;;)

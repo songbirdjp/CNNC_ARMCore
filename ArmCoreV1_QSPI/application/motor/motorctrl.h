@@ -42,6 +42,7 @@ typedef enum {
     MotorFSM_POSITION_ADJUST,
     MotorFSM_ZERO_CONFIRMED,
     MotorFSM_StayAtPresetPos,
+    MotorFSM_FindZeroCheck,
     MotorFSM_ManualControl,
     MotorFSM_AutoControl,
     MotorFSM_ERROR_STATE
