@@ -331,8 +331,8 @@ static State_t module_init(void *self, Event_t const *const e)
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_STAND_RESERVE = 1;
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_softwareTouchGuard = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
@@ -763,8 +763,8 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
@@ -808,6 +808,24 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
         {
             status = HANDLED();
         }
+        break;
+    }
+    case MANUAL_ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        status = HANDLED();
+        break;
+    }
+    case MANUAL_EXIT_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        status = HANDLED();
         break;
     }
     case ERROR_SIG:
@@ -864,8 +882,8 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
@@ -907,6 +925,24 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
                                    &rtm->interlock_table,
                                    STATE_MACHINE_PREPARE,
                                    rtm);
+        status = HANDLED();
+        break;
+    }
+    case MANUAL_ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        status = HANDLED();
+        break;
+    }
+    case MANUAL_EXIT_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
         status = HANDLED();
         break;
     }
@@ -958,10 +994,15 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
     rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     static int32_t check_finish = -1;
+    dido_structure_t dido_structure = {0};
     switch (e->sig)
     {
     case ENTER_SIG:
     {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        app_do_set(&(rtm->app_dido), &dido_structure);
         // LOG_I("module_mv_ready enter\r\n");
         fault_check_init(&(rtm->fault_check));
         status = HANDLED();
@@ -1587,8 +1628,8 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
@@ -1623,6 +1664,24 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
                 status = HANDLED();
             }
         }
+        break;
+    }
+    case MANUAL_ENTER_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        status = HANDLED();
+        break;
+    }
+    case MANUAL_EXIT_SIG:
+    {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
+        status = HANDLED();
         break;
     }
     case TIME_SIG:
@@ -1829,10 +1888,15 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
     rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     static int32_t check_finish = -1;
+    dido_structure_t dido_structure = {0};
     switch (e->sig)
     {
     case ENTER_SIG:
     {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        app_do_set(&(rtm->app_dido), &dido_structure);
         // LOG_I("module_surview_ready enter\r\n");
         fault_check_init(&(rtm->fault_check));
         status = HANDLED();
@@ -2049,10 +2113,15 @@ static State_t module_ct_ready(void *self, Event_t const *const e)
     rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     static int32_t check_finish = -1;
+    dido_structure_t dido_structure = {0};
     switch (e->sig)
     {
     case ENTER_SIG:
     {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        app_do_set(&(rtm->app_dido), &dido_structure);
         // LOG_I("module_ct_ready enter\r\n");
         fault_check_init(&(rtm->fault_check));
         status = HANDLED();

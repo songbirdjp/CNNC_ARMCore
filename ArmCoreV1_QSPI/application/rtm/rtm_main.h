@@ -82,7 +82,7 @@ extern "C"
 
         RTM_MODULE_RTM_ON = 0,
         // RTM_MODULE_GMM,
-        // RTM_MODULE_PSM,
+        RTM_MODULE_PSM,
         RTM_MODULE_FKP,
         RTM_MODULE_CPG,
         RTM_MODULE_RTM_OFF_ARM,
