@@ -329,6 +329,7 @@ static State_t module_init(void *self, Event_t const *const e)
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_STAND_RESERVE = 1;
+        dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_softwareTouchGuard = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
@@ -448,6 +449,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     dido_structure_t dido_structure = {0};
     static int32_t check_finish = -1;
+    static uint16_t PLC_info = 0;
     switch (e->sig)
     {
     case ENTER_SIG:
@@ -525,6 +527,22 @@ static State_t module_idle(void *self, Event_t const *const e)
                                    &rtm->interlock_table,
                                    STATE_MACHINE_IDLE,
                                    rtm);
+        if ((rtm->PLC_info & 0x02) != (PLC_info & 0x02))
+        {
+            app_do_get(&(rtm->app_dido), &dido_structure);
+            PLC_info = rtm->PLC_info;
+            if (PLC_info & 0x02)
+            {
+                dido_structure.gpio_do_u.gpio_do_bit.DO_AsuMotionEnable = 1;
+                // TODO:通知FKP当前是自动开机状态
+            }
+            else
+            {
+                dido_structure.gpio_do_u.gpio_do_bit.DO_AsuMotionEnable = 0;
+                // TODO:通知FKP当前是手动开机状态
+            }
+            app_do_set(&(rtm->app_dido), &dido_structure);
+        }
         status = HANDLED();
         break;
     }
@@ -576,6 +594,7 @@ static State_t module_shutdown(void *self, Event_t const *const e)
     rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     dido_structure_t dido_structure = {0};
+    static uint16_t PLC_info = 0;
     switch (e->sig)
     {
     case ENTER_SIG:
@@ -593,7 +612,34 @@ static State_t module_shutdown(void *self, Event_t const *const e)
     }
     case EXIT_SIG:
     {
+        uint8_t fkp_power_state = 0x00;
+        rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], FKP_ID, SEND_FKP_POWER_OFF_CMD, &fkp_power_state, sizeof(fkp_power_state));
+
+        PLC_info = 0;
         // LOG_I("module_shutdown exit\r\n");
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_initialization);
+        break;
+    }
+    case TIME_SIG:
+    {
+        if ((rtm->PLC_info & 0x01) && (PLC_info == 0))
+        {
+            PLC_info = 1;
+            app_do_get(&(rtm->app_dido), &dido_structure);
+            dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_softwareTouchGuard = 1;
+            dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 0;
+            dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+            dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+            app_do_set(&(rtm->app_dido), &dido_structure);
+
+            uint8_t fkp_power_state = 0x01;
+            rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], FKP_ID, SEND_FKP_POWER_OFF_CMD, &fkp_power_state, sizeof(fkp_power_state));
+        }
         status = HANDLED();
         break;
     }
@@ -643,15 +689,13 @@ static State_t module_powerSaver(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        uint8_t fkp_power_state = 0x01;
-        rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], FKP_ID, SEND_FKP_POWER_OFF_CMD, &fkp_power_state, sizeof(fkp_power_state));
+
         // LOG_I("module_powerSaver enter\r\n");
         status = HANDLED();
         break;
@@ -659,8 +703,6 @@ static State_t module_powerSaver(void *self, Event_t const *const e)
     case EXIT_SIG:
     {
         // LOG_I("module_powerSaver exit\r\n");
-        uint8_t fkp_power_state = 0x00;
-        rtm_set_data_distribute(rtm->rtm_module_info->queue_group[RTM_MODULE_FKP], FKP_ID, SEND_FKP_POWER_OFF_CMD, &fkp_power_state, sizeof(fkp_power_state));
         status = HANDLED();
         break;
     }

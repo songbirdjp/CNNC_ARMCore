@@ -135,7 +135,7 @@ extern "C"
                 uint16_t DO_RadiationIndicator : 1;
                 uint16_t DO_ReadyIndicator : 1;
                 uint16_t DO_SearchTreatmentRoomRelay : 1;
-                uint16_t DO_softwareTouchGuard : 1;
+                uint16_t DO_softwareTouchGuard : 1; //shutdown touch guard
 
                 uint16_t reserve : 9;
             } tca9535_0x04_bit;
@@ -156,7 +156,7 @@ extern "C"
                 uint16_t DO_SoftwareHvEn : 1;
                 uint16_t DO_TreatmentMotionEnable : 1;
                 uint16_t DO_ThreePhasePowerOn : 1;
-                uint16_t DO_AsuMotionEnable : 1;
+                uint16_t DO_AsuMotionEnable : 1; //
                 uint16_t reserve0 : 1;
                 /****************************U84:B0-B7[0:7]********************/
                 uint16_t RUN_LED1 : 1;

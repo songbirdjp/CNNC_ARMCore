@@ -125,6 +125,7 @@ extern "C"
         rtm_fault_check_t fault_check;
         interlock_table_t interlock_table;
 
+        uint16_t PLC_info;
         uint32_t interlock_override;
         uint32_t unready_override;
         uint16_t led_belt;

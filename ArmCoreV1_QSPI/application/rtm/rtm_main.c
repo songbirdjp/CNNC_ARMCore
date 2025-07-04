@@ -125,9 +125,10 @@ static void app_rtm_main_thread(void *argument)
                 {
                     system_state_require = queue_frame.payload.data[1];
 
-                    self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[3]);
-                    self->unready_override = *(uint32_t *)&(queue_frame.payload.data[7]);
-                    self->led_belt = *(uint16_t *)&(queue_frame.payload.data[11]);
+                    self->PLC_info = *(uint16_t *)&(queue_frame.payload.data[3]);
+                    self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[5]);
+                    self->unready_override = *(uint32_t *)&(queue_frame.payload.data[9]);
+                    self->led_belt = *(uint16_t *)&(queue_frame.payload.data[13]);
                 }
                 break;
                 case RECEIVE_FAULT_CLEAR_CMD: /*故障清除*/
@@ -935,15 +936,15 @@ static void app_cpg_rx_thread(void *argument)
             LOG_E("fdcan1_data_read error, ret = %d\r\n", ret);
             continue;
         }
-        if ((msg.header.Identifier != 0x01) && (msg.header.Identifier != 0x02))
+        if ((msg.header.Identifier != 0x11) && (msg.header.Identifier != 0x12))
         {
             continue;
         }
-        if (msg.header.Identifier == 0x01)
+        if (msg.header.Identifier == 0x11)
         {
             CpgButton_1 = (*(cpg_recv_structure_t *)&msg.buf).CpgButton;
         }
-        else if (msg.header.Identifier == 0x02)
+        else if (msg.header.Identifier == 0x12)
         {
             CpgButton_2 = (*(cpg_recv_structure_t *)&msg.buf).CpgButton;
         }
@@ -1007,7 +1008,7 @@ static void app_cpg_tx_thread(void *argument)
     send_data.OffGantryUnitInfo = 0xFFFF;
     send_data.BoardID = 0x01;
     send_data.HardwareVersion = 0x01;
-    send_data.FirmWareVersion = 0x01;
+    send_data.FirmWareVersion = 0x00000001;
     for (;;)
     {
         status = osMessageQueueGet(self->rtm_module_info[RTM_MODULE_CPG].module_queue, &queue_frame, NULL, 0xFFFFFFFF);
@@ -1017,10 +1018,25 @@ static void app_cpg_tx_thread(void *argument)
             continue;
         }
 
-        if (queue_frame.payload.type == 0x05 && queue_frame.payload.data[0] == RECEIVE_CPG_LED_BLINK_CMD)
+        uint8_t type = queue_frame.payload.type;
+        uint8_t cmd = queue_frame.payload.data[0];
+        uint16_t len = queue_frame.payload.length - 1;
+        if (type == 0x05)
         {
-            memcpy(&(send_data.CpgLedBlink), queue_frame.payload.data + 1, 2);
+            switch (cmd)
+            {
+            case RECEIVE_CPG_LED_BLINK_CMD:
+                memcpy(&(send_data.CpgLedBlink), queue_frame.payload.data + 1, queue_frame.payload.length);
+                break;
+            case RECEIVE_SYSTEM_STATE_CMD:
+                memcpy(&(send_data.SystemCurrentState), queue_frame.payload.data + 1, queue_frame.payload.length);
+                break;
+            default:
+                continue;
+                break;
+            }
         }
+
         if (memcmp(&send_data, &send_data_bak, sizeof(send_data)) != 0)
         {
             memcpy(&send_data_bak, &send_data, sizeof(send_data));
