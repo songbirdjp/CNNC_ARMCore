@@ -298,7 +298,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
     return 1;
 }
 
-void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType JawPos)
+uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType JawPos)
 {
     __IO uint8_t *pBeamData;
     uint8_t send_buf[184] = {0};
@@ -311,9 +311,8 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
   //  rtBeamData.totalRIInBeam[1] = 0x704;
     if((beamIndex <= 0) || (RIIndex <= 0)/* || (RIIndex > rtBeamData.totalRIInBeam[beamIndex])*/)
     {
-        printf("Error: Invalid beam/RI index %d,%d,%d\r\n",
-               rtBeamData.totalBeam,beamIndex,RIIndex);
-        return;
+        printf("Error: Invalid beam/RI index %d,%d,%d\r\n",rtBeamData.totalBeam,beamIndex,RIIndex);
+        return 0;
     }
    // printf("BEAM%d.RI%d\r\n", beamIndex, RIIndex);
 #if 0
@@ -334,7 +333,7 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
             pBeamData += rtBeamData.oneBeamSize[skipBeamCnt];
             if(++skipBeamCnt >=  rtBeamData.totalBeam){
                 printf("Can't find beam%d\r\n", beamIndex);
-                return;
+                return 0;
             }
         } 
         else    break;
@@ -386,6 +385,8 @@ void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType Jaw
    // for(uint8_t j = 0; j < 184; j++)    printf("%x ",send_buf[j]);
    // printf("\r\n");
 #endif
+
+    return 1;
 }
 
 void nrtRecvDataProcess(APP_DATA_RECV* info)
@@ -437,7 +438,7 @@ void planDataInit(void)
  #endif
     interlockFeedback.versionARM = 2;
     secondPosFeedback.bankNo = BANK_NO;
-	 memset(rtBeamData.totalRIInBeam, 0, sizeof(rtBeamData.totalRIInBeam));
+	memset(rtBeamData.totalRIInBeam, 0, sizeof(rtBeamData.totalRIInBeam));
     memset(rtBeamData.oneBeamSize, 0, sizeof(rtBeamData.oneBeamSize));																	  
 
     osMutexAttr_t tcp_send_mutex_attributes = {

@@ -134,11 +134,11 @@ static void W5500_interrupt_init(uint8_t max_interrupt)
     setSn_IMR(sn, Sn_IR_TIMEOUT | Sn_IR_RECV | Sn_IR_DISCON | Sn_IR_CON); // enable socket 0 all interrupt source
 #endif
 
-    uint16_t intlevel = 2000;
+    uint16_t intlevel = 2000;//2000*4/25 = 320us
     ctlwizchip(CW_SET_INTRTIME, (void *)&intlevel);
 
     /*set tcp timeout value*/
-    wiz_NetTimeout net_timeout = {1, 16384};
+    wiz_NetTimeout net_timeout = {1, 16384};//(16384+32168)*0.1ms = 4.9s
     wizchip_settimeout(&net_timeout);
 
     for (sn = 0; sn < max_interrupt; sn++)

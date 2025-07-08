@@ -38,6 +38,7 @@ typedef struct {
     uint32_t oneBeamSize[MAX_BEAM_NUM];
     uint16_t beamIndex;
     uint16_t radiationIndex;
+    uint16_t errReset;
 }BEAM_DATA;
 
 typedef struct {
@@ -79,7 +80,7 @@ extern SECOND_POS_FEEDBACK secondPosFeedback;
 void planDataInit(void);
 void clearPlan(void);
 void setTCPSendControlSignal(uint8_t itemIndex, int32_t setVal);
-void sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType JawPos);
+uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType JawPos);
 void updateNRTFeedback(void);
 
 #ifdef __cplusplus

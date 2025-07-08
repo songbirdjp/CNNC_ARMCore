@@ -11,6 +11,8 @@ extern "C" {
 typedef enum {
     INIT_MOVE_FORWARD = 100,
     INIT_MOVE_BACKWARD,
+    LIMSWITCH_FALLING,
+    LIMSWITCH_RISING,
     INIT_END,
     IDLE,
     PARK_START,
@@ -19,11 +21,7 @@ typedef enum {
     PREPARE_END,
     SERVO,
     POWER_SAVE,
-    SHUTDOWN,
-    LIMSWITCH_FALLING,
-    LIMSWITCH_RISING,
-    UART_DEBUG,
-    ERROR_STATE
+    SHUTDOWN
 } JawCtlFsm;
 
 typedef enum {
@@ -40,7 +38,9 @@ typedef enum {
     CMD_DISPLAY_MODE,  
     CMD_ENCODE_MODE,
     CMD_FSM_STATUS,
-    CMD_SECOND_POS
+    CMD_SECOND_POS,
+    CMD_SWITCH_LEVEL,
+    CMD_SET_PARAM
 } UARTCmd;
 
 typedef enum {
@@ -49,17 +49,27 @@ typedef enum {
     ENC_Z  //encoder Z signal
 } JawSignalType;
 
+typedef enum {
+    SWITCH_PRESSED,    
+    SWITCH_RELEASED  
+} LimitSwitchStatus;
+
 typedef struct
 {
     JawCtlFsm MotorState;
     bool startMovingFlag;
-    uint16_t encoderLast;
+    uint16_t encoderLast16;
+    uint32_t encoderLast32;
+    int16_t encoderDelta32;
+    uint32_t encoderTotalCnt;
     uint16_t homeEncodeValue;
-    uint16_t oldPlanCmd;
     uint16_t posInPlan;
+    //uint16_t realPlanCmd;
     SVG_Type fSVG;
     PIDAdjType uartPIDCmd;
     uint32_t location_timer;
+    uint16_t limitPos;
+    uint16_t limitNeg;
    // uint16_t LastEncoderFindZero;
 }JawControlInfo;
 

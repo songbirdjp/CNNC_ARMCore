@@ -205,7 +205,7 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-    osDelay(1000);//delay 1s
+   // osDelay(1000);//delay 1s
     HAL_GPIO_WritePin(GPIOG, GPIO_PIN_9, GPIO_PIN_SET);//watchdog signal 2
     /* Infinite loop */
     //  motorEnable(1);

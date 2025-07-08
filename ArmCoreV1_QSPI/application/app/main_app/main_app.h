@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#define BANKA
+//#define BANKA
 //#define TEST
 #ifdef BANKA
 #define BANK_NO 1 //A=1 B=2
@@ -44,7 +44,10 @@ enum serverFsmStates {
     FSM_SHUTDOWN,
     FSM_POWERSAVE,
     FSM_TERMINATE,
-    FSM_INTERRUPT
+    FSM_INTERRUPT,
+    ERROR_STATE,
+    UART_DEBUG,
+    TOTAL_FSM
 };
 #ifdef __cplusplus
 }

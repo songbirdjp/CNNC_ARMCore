@@ -36,10 +36,11 @@ float PID_Compute(PID_TypeDef *pid, float current, float setpoint)
     {
         output = -pid->OutputLimit;
     }
+
     return output;
 }
 
-float PositionPIDCtrl(uint16_t current_position, uint16_t _setPosition, PID_TypeDef *PID_parameters)
+float PositionPIDCtrl(uint32_t current_position, uint32_t _setPosition, PID_TypeDef *PID_parameters)
 {
     float _pidPositionOutput;
     //float current_position = __HAL_TIM_GET_COUNTER(&htim5);
@@ -58,26 +59,32 @@ void initSVG(struct SVG_Type* inst, uint8_t axes)
 {
     memset(inst, 0, sizeof(struct SVG_Type));
 
-    inst->DynamicValues.AccelerationNeg = 100;//mm/s^2
-    inst->DynamicValues.AccelerationPos = 100;
-    inst->DynamicValues.VelocityNeg = 10;//17.5;//mm/s
-    inst->DynamicValues.VelocityPos = 10;//17.5;
-    inst->DynamicValues.JerkNeg = 500;//mm/s^3
-    inst->DynamicValues.JerkPos = 500;
+    inst->DynamicValues.AccelerationNeg = 80;//mm/s^2
+    inst->DynamicValues.AccelerationPos = 80;
+    if(axes){
+        inst->DynamicValues.VelocityNeg = 12.88;//mm/s
+        inst->DynamicValues.VelocityPos = 12.88;
+    }
+    else{
+        inst->DynamicValues.VelocityNeg = 8.52;
+        inst->DynamicValues.VelocityPos = 8.52;
+    }
+    inst->DynamicValues.JerkNeg = 350;//mm/s^3
+    inst->DynamicValues.JerkPos = 350;
     inst->DynamicLimits.AccelerationNeg = 175;
     inst->DynamicLimits.AccelerationPos = 175;
     inst->DynamicLimits.JerkNeg = 1000;
     inst->DynamicLimits.JerkPos = 1000;
     if(axes){   //Y Jaw 
         inst->DynamicLimits.PositionNeg = 0.0;
-        inst->DynamicLimits.PositionPos = 117.2;// = 120mm @ISO enc:24002
+        inst->DynamicLimits.PositionPos = 1000;// = 120mm @ISO enc:24002
     }    
     else{   //X Jaw 
         inst->DynamicLimits.PositionNeg = 0.0;
-        inst->DynamicLimits.PositionPos = 90.5;// = 50mm @ISO 18534
+        inst->DynamicLimits.PositionPos = 1000;// = 50mm @ISO 18534
     }
-    inst->DynamicLimits.VelocityNeg = 26.25;
-    inst->DynamicLimits.VelocityPos = 26.25;
+    inst->DynamicLimits.VelocityNeg = 17.5;
+    inst->DynamicLimits.VelocityPos = 17.5;
     inst->StartPosition = 0;//ENC: 2000
     inst->TargetPosition = 0;
     inst->Cycletime = 0.004;//s

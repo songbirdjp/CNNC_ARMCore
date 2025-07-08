@@ -51,14 +51,14 @@ uint8_t tcp_link_status_get(void)
     return tcp_link_state;
 }
 
-uint8_t socket_status_reg_get(uint8_t sn)//return 1：connect  0：disconnect
-{
-    uint8_t reg_sn_ir = getSn_IR(sn), ret = 1;
+// uint8_t socket_status_reg_get(uint8_t sn)//return 1：connect  0：disconnect
+// {
+//     uint8_t reg_sn_ir = getSn_IR(sn), ret = 1;
 
-    if((reg_sn_ir & Sn_IR_DISCON) || (reg_sn_ir & Sn_IR_TIMEOUT))   ret = 0;
+//     if((reg_sn_ir & Sn_IR_DISCON) || (reg_sn_ir & Sn_IR_TIMEOUT))   ret = 0;
 
-    return ret;
-}
+//     return ret;
+// }
 
 static void (*fun_ptr)(uint8_t sn);
 
@@ -256,18 +256,18 @@ static void tcp_recv_entry(void *argument)
             osDelay(100);
         }
 
-        // ret = tcp_data_recv_with_block();
-        // if (ret < 0)
-        // {
-        //     printf("tcp recv data err:%d\r\n", ret);
-        // }
-
-        osDelay(1);
-
-        if (gpio_common_get()->read("GPIOD_4") == 1)
+        ret = tcp_data_recv_with_block();
+        if (ret < 0)
         {
-            continue;
+            printf("tcp recv data err:%d\r\n", ret);
         }
+
+        // osDelay(1);
+
+        // if (gpio_common_get()->read("GPIOD_4") == 1)
+        // {
+        //     continue;
+        // }
 
         osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
 

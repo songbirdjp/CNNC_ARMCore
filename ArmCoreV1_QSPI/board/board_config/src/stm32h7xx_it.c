@@ -388,6 +388,7 @@ void EXTI15_10_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(YJAWLMT_Pin);										
   HAL_GPIO_EXTI_IRQHandler(LAN9252_SYNC0_Pin);
 	HAL_GPIO_EXTI_IRQHandler(XJAWLMT_Pin);									
+	HAL_GPIO_EXTI_IRQHandler(nFaultX_Pin);									
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
 
   /* USER CODE END EXTI15_10_IRQn 1 */

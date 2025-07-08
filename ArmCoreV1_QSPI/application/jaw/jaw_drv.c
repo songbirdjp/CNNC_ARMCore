@@ -114,12 +114,12 @@ void BrakeCtrl(uint8_t _brakeCtrl, uint8_t axesType)
 {
     if (1 == _brakeCtrl)
     {
-        if(axesType == X)   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
+        if(axesType == X)   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_SET);
        else if(axesType == Y) HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_SET);
     }
     else
     {
-        if(axesType == X)   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
+        if(axesType == X)   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, GPIO_PIN_RESET);
        else if(axesType == Y) HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, GPIO_PIN_RESET);
     }
 }
@@ -127,12 +127,12 @@ void BrakeCtrl(uint8_t _brakeCtrl, uint8_t axesType)
 uint16_t getEncodeValue(uint8_t axesType)
 {
     if(axesType == X){
+       // printf("get encX: %u\r\n", __HAL_TIM_GET_COUNTER(&htim8));
         return __HAL_TIM_GET_COUNTER(&htim8);
-      //  printf("get encX: %lf\r\n", current_position);
     }
     else if(axesType == Y) {
+       // printf("get encY: %u\r\n", __HAL_TIM_GET_COUNTER(&htim5));
         return __HAL_TIM_GET_COUNTER(&htim5);
-       // printf("get encY: %lf\r\n", current_position);
     }
 }
 
@@ -257,7 +257,7 @@ void yjaw_nfault_callback(void)
             SetMotorYIO(0, 0);
         }
       else{
-        // printf("0\r\n");
+       //  printf("0\r\n");
            SetMotorYIO(jawCtrlByAxes[Y].MotorDir, jawCtrlByAxes[Y].MotorMoveEn);
        }
     }
@@ -266,9 +266,11 @@ void yjaw_nfault_callback(void)
 void xjaw_nfault_callback(void)
 {
     if(1 == jawCtrlByAxes[X].EnableTriggernFault){
-        if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) == GPIO_PIN_RESET){
+        if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15) == GPIO_PIN_RESET){
+         //   printf("3\r\n");
             SetMotorXIO(0, 0);
         } else {
+          //  printf("4\r\n");
             SetMotorXIO(jawCtrlByAxes[X].MotorDir, jawCtrlByAxes[X].MotorMoveEn);
         }
     }

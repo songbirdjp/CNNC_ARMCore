@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#define ENCODER_PULSES_PER_REVOLUTION 1024
+#define ENCODER_PULSES_PER_TURN 1024
 #define ENCODER_CNT_PER_MM  204.8
 
 #define sign(a) ( (a<0)?-1:1 )
@@ -103,7 +103,7 @@ typedef struct SVG_Type
 
 void initSVG(struct SVG_Type* inst, uint8_t axes);
 int8_t SVG(struct SVG_Type* inst);
-float PositionPIDCtrl(uint16_t current_position, uint16_t _setPosition, PID_TypeDef *PID_parameters);
+float PositionPIDCtrl(uint32_t current_position, uint32_t _setPosition, PID_TypeDef *PID_parameters);
 float SpeedPIDCtrl(float actualSpeed, float _setSpeed, PID_TypeDef *PID_parameters);
 
 #ifdef __cplusplus

@@ -751,7 +751,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
         }
         else if (recvBuf[4] == PACKF1_CMD) 
         {
-         //   printf("F1\r\n");
+           // printf("F1\r\n");
             // for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
             // {   //RT 0 - 165 ：82 leaf and carrier pos
             //     rtFeedback.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
@@ -785,7 +785,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
 #include "jaw_control.h"
 static int8_t realtime_ethercat_data_process(void)
 {
-    static uint16_t oldState = 0, oldPlanCmd = 0, oldRadiationIndex = 0, oldBeamIndex = 0;
+    static uint16_t oldState, oldPlanCmd, oldRadiationIndex, oldBeamIndex, oldErrState;
     struct JawFlagType JawState;
 
     TOBJ7010 recv_data = {0};
@@ -805,7 +805,10 @@ static int8_t realtime_ethercat_data_process(void)
     memcpy(send, recv, sizeof(UINT16) * 8);
 #else
     send->InU16_CrtFsmState = rtFeedback.MlcCurFsm;
-    memcpy(&send->InU16_BeamIndexFB, &recv->OutU16_BeamIndex, sizeof(uint16_t) * 7);         //rt upload， echo
+    send->InU16_BeamIndexFB = oldBeamIndex;
+    send->InU16_RidiationIndexFB = oldRadiationIndex;
+    send->InU16_BankIndexFB = BANK_NO;
+    memcpy(&send->InU16_LeafCrtControlMode, &recv->OutU16_LeafControlModeSetting, sizeof(uint16_t) * 4);//control mode feedback
 #endif
     send->InU16_PlanCmdFB = recv->OutU16_PlanCmd;
     send->InU16_FaultInfo1 = rtFeedback.faultInfo1;
@@ -816,20 +819,22 @@ static int8_t realtime_ethercat_data_process(void)
         send->InU16_FaultInfo1 |= 0x0001;
     //   //  printf("tcp feedback\r\n");
     }
-    send->InU16_FaultInfo2 = rtFeedback.faultInfo2&0x00ff;
-
+   // send->InU16_FaultInfo2 = rtFeedback.faultInfo2&0x00ff;
+    send->InU16_FaultInfo2 = ((rtFeedback.jawInfo[Y]&0x00f0)<< 4) + ((rtFeedback.jawInfo[X]&0x00f0)<< 8) + (rtFeedback.faultInfo2&0x00ff);
     memcpy(send->InAU16_LeafCrtPos, rtFeedback.rtPosUpload, sizeof(uint16_t) * (8 * 10 + 3));
     send->InAU16_JawCrtPos[X] = rtFeedback.jawRTPos[X];
     send->InAU16_JawCrtPos[Y] = rtFeedback.jawRTPos[Y];
    // printf("self %d %d\r\n",rtFeedback.jawRTPos[X],rtFeedback.jawRTPos[Y]);
-    send->InU16_JawInfo = (rtFeedback.jawInfo[Y] << 4) + rtFeedback.jawInfo[X];
+    send->InU16_JawInfo = ((rtFeedback.jawInfo[Y]&0x0f)<< 4) + (rtFeedback.jawInfo[X]&0x0f);
 
     rtBeamData.fsmState = recv->OutU16_FsmStateSetting;   //save rt cmd
     rtBeamData.beamIndex = recv->OutU16_BeamIndex;
     rtBeamData.radiationIndex = recv->OutU16_RidiationIndex;
     rtBeamData.planCmd = recv->OutU16_PlanCmd;
+    rtBeamData.errReset = recv->OutU16_Reserve;
 
-    if(oldState != rtBeamData.fsmState){
+    if(oldState != rtBeamData.fsmState)
+    {
         printf("fsm state: %d -> %d\r\n",oldState,rtBeamData.fsmState);
         uint8_t newState = rtBeamData.fsmState;
         make_cmd_to_fpga(CMD_STA_REQ, &newState);
@@ -839,7 +844,8 @@ static int8_t realtime_ethercat_data_process(void)
         state[0] = state[1] = rtBeamData.fsmState;
         messageToJawTask(JawState, COMMAND, XY, state);
     }
-    if(oldPlanCmd != rtBeamData.planCmd){
+    if(oldPlanCmd != rtBeamData.planCmd)
+    {
         printf("plan cmd: %d -> %d\r\n",oldPlanCmd,rtBeamData.planCmd);  
         switch(rtBeamData.planCmd)
         {
@@ -863,23 +869,25 @@ static int8_t realtime_ethercat_data_process(void)
         }
         oldPlanCmd = rtBeamData.planCmd;
     }
+    if(oldErrState != rtBeamData.errReset)
+    {
+        if(rtBeamData.errReset == 1){
+            uint16_t state[2];
+            state[0] = state[1] = FSM_IDLE;
+            messageToJawTask(JawState, COMMAND, XY, state);
+        }
+    }
     if(((rtBeamData.fsmState == FSM_IDLE)||(rtBeamData.fsmState == FSM_SERVO))&&(rtBeamData.beamIndex > 0))
     {
         if((oldBeamIndex != rtBeamData.beamIndex) || (oldRadiationIndex != rtBeamData.radiationIndex))
         {
           //  printf("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
-            sendCPtoDevice(rtBeamData.beamIndex, rtBeamData.radiationIndex, JawState);
-            oldRadiationIndex = rtBeamData.radiationIndex;
-            oldBeamIndex = rtBeamData.beamIndex;
+            if(sendCPtoDevice(rtBeamData.beamIndex, rtBeamData.radiationIndex, JawState))
+            {
+                oldRadiationIndex = rtBeamData.radiationIndex;
+                oldBeamIndex = rtBeamData.beamIndex;
+            }
         }
-        #if 0
-        else if(oldRadiationIndex != rtBeamData.radiationIndex){
-          //  printf("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
-            sendCPtoDevice(rtBeamData.beamIndex, rtBeamData.radiationIndex, JawState);
-            oldRadiationIndex = rtBeamData.radiationIndex;
-            oldBeamIndex = rtBeamData.beamIndex;
-        }
-        #endif
     }
 
     return ethercat_send_data_update(send, sizeof(send_data));

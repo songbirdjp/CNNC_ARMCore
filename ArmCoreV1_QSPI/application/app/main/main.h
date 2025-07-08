@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2025 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -101,8 +101,9 @@ void Error_Handler(void);
 #define EncXZ_Pin GPIO_PIN_8
 #define EncXZ_GPIO_Port GPIOA
 #define EncXZ_EXTI_IRQn EXTI9_5_IRQn
-#define Xbrake_Pin GPIO_PIN_15
-#define Xbrake_GPIO_Port GPIOA
+#define nFaultX_Pin GPIO_PIN_15
+#define nFaultX_GPIO_Port GPIOA
+#define nFaultX_EXTI_IRQn EXTI15_10_IRQn
 #define W5500_RSTn_Pin GPIO_PIN_3
 #define W5500_RSTn_GPIO_Port GPIOD
 #define W5500_INTn_Pin GPIO_PIN_4
@@ -121,8 +122,8 @@ void Error_Handler(void);
 #define XJAWLMT_Pin GPIO_PIN_14
 #define XJAWLMT_GPIO_Port GPIOG
 #define XJAWLMT_EXTI_IRQn EXTI15_10_IRQn
-#define nFaultX_Pin GPIO_PIN_4
-#define nFaultX_GPIO_Port GPIOB
+#define Xbrake_Pin GPIO_PIN_4
+#define Xbrake_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
