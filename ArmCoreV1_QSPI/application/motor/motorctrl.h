@@ -60,10 +60,12 @@ typedef struct{
     uint16_t encoderValCurrent;
     uint16_t encoderValTarget;
     uint16_t presetPos;
+    uint16_t presetPosSaved;// new add
     PID_TypeDef *pid;
     uint8_t motorInitEnable;
     uint8_t motorFindZeroOK;
     AFTBrakeTypeDef motorBrakeStatus;
+    uint16_t findZeroCheckInterlock;//new add
 } MotorCtrlParam_TypeDef;
 
 extern MotorFindingZeroFSM_t MagMotorState;
