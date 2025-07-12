@@ -28,6 +28,7 @@ enum fsm_state
 
 enum fsm_state fsm_state_get(void);
 int8_t fsm_state_switch(enum fsm_state new_state);
+int8_t fsm_state_change_event_callback_register(void (*callback)(void));
 
 #ifdef __cplusplus
 }

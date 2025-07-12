@@ -1,11 +1,12 @@
 #include "plan_data.h"
+#include "init_call.h"
 #include "ulog.h"
 
-static struct beam_data beam_data_array[BEAMS_MAX] = {0};
+static struct beam_data beam_data_array[BEAMS_MAX] __attribute__((section(".ram_dtcm"))) = {0};
 
 static struct beam_data *beam_data_get(uint8_t beam_id)
 {
-    if (beam_id >= BEAMS_MAX) 
+    if (beam_id >= BEAMS_MAX)
     {
         return NULL;
     }
@@ -13,11 +14,38 @@ static struct beam_data *beam_data_get(uint8_t beam_id)
     return &beam_data_array[beam_id];
 }
 
+static int8_t beam_data_init(void)
+{
+    struct beam_data *beam_data = beam_data_get(0);
+
+    if (beam_data == NULL)
+    {
+        return -1;
+    }
+
+    beam_data->mutex = osMutexNew(NULL);
+
+    if (beam_data->mutex == NULL)
+    {
+        LOG_E("mutex beam data create failed\n");
+    }
+
+    int8_t ret = beam_data_cleanup(0);
+    if (ret != 0)
+    {
+        LOG_E("beam data cleanup err: %d\n", ret);
+        return -2;
+    }
+
+    return 0;
+}
+INIT_APP_EXPORT(beam_data_init);
+
 float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t ri_idx)
 {
     struct beam_data *beam_data = beam_data_get(beam_id);
 
-    if (beam_data == NULL) 
+    if (beam_data == NULL)
     {
         LOG_E("invalid beam_id: %d\n", beam_id);
         return 0;
@@ -27,8 +55,11 @@ float beam_data_value_get(uint8_t beam_id, enum beam_data_state state, uint16_t 
 
     osMutexAcquire(beam_data->mutex, osWaitForever);
 
-    switch (state) 
+    switch (state)
     {
+    case BEAM_VALID:
+        value = beam_data->beam_valid;
+        break;
     case BEAM_TYPE:
         value = beam_data->beam_type;
         break;
@@ -138,6 +169,9 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
 
     switch (state)
     {
+    case BEAM_VALID:
+        beam_data->beam_valid = value;
+        break;
     case BEAM_TYPE:
         beam_data->beam_type = value;
         break;
@@ -220,7 +254,7 @@ int8_t beam_data_value_set(uint8_t beam_id, enum beam_data_state state, uint16_t
 
 int8_t beam_data_pointer_get(uint8_t beam_id, void **ptr)
 {
-    if (ptr == NULL) 
+    if (ptr == NULL)
     {
         return -1;
     }
@@ -234,7 +268,7 @@ int8_t beam_data_cleanup(uint8_t beam_id)
 {
     struct beam_data *beam_data = beam_data_get(beam_id);
 
-    if (beam_data == NULL) 
+    if (beam_data == NULL)
     {
         LOG_E("invalid beam_id: %d\n", beam_id);
         return -1;
@@ -246,3 +280,50 @@ int8_t beam_data_cleanup(uint8_t beam_id)
 
     return 0;
 }
+
+#ifndef RAM_DATA_TEST
+#include "shell.h"
+static int8_t beam_data_output(uint8_t argc, uint8_t *argv[])
+{
+    struct beam_data *beam_data = beam_data_get(0);
+
+    if (beam_data == NULL)
+    {
+        LOG_E("invalid beam_id: %d\r\n", 0);
+        return -1;
+    }
+
+    osMutexAcquire(beam_data->mutex, osWaitForever);
+
+    LOG_I("beam_valid: %d\r\n", beam_data->beam_valid);
+    LOG_I("beam_type: %d\r\n", beam_data->beam_type);
+    LOG_I("radiation_type: %d\r\n", beam_data->radiation_type);
+    LOG_I("deliver_type: %d\r\n", beam_data->deliver_type);
+    LOG_I("dose_meter: %f\r\n", beam_data->dose_meter);
+    LOG_I("dose_rate: %f\r\n", beam_data->dose_rate);
+    LOG_I("total_cp: %d\r\n", beam_data->total_cp);
+    LOG_I("total_ri: %d\r\n", beam_data->total_ri);
+    for (uint16_t i = 1; i <= beam_data->total_ri; i++)
+    {
+        LOG_I("[%d].dose_rate: %f\r\n", i, beam_data->radiation_data[i].dose_rate);
+        LOG_I("[%d].dose_cumulative: %f\r\n", i, beam_data->radiation_data[i].dose_cumulative);
+        LOG_I("[%d].time_expected: %d\r\n", i, beam_data->radiation_data[i].time_expected);
+        osDelay(10);
+    }
+    for (uint16_t i = 1; i <= beam_data->total_cp; i++)
+    {
+        LOG_I("cp_ri_map[%d]: %d\r\n", i, beam_data->cp_ri_map[i]);
+        osDelay(10);
+    }
+
+    osMutexRelease(beam_data->mutex);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(beam_data_output, beam_data_output, output beam data);
+static int8_t beam_data_clear(uint8_t argc, uint8_t *argv[])
+{
+    return beam_data_cleanup(0);
+}
+MSH_CMD_EXPORT_ALIAS(beam_data_clear, beam_data_clear, clear beam data);
+#endif

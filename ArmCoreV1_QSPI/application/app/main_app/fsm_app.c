@@ -5,25 +5,37 @@
 
 static osMutexId_t fsm_mutex = NULL;
 static enum fsm_state fsm_state_current = FSM_STATE_INIT;
+static void (*fsm_state_change_callback)(void) = NULL;
 static int8_t fsm_state_set(enum fsm_state state)
 {
-    if (state >= FSM_STATE_MAX) 
+    if (state >= FSM_STATE_MAX)
     {
         return -1;
     }
 
+    enum fsm_state fsm_state_old = FSM_STATE_MAX;
+
     osMutexAcquire(fsm_mutex, osWaitForever);
 
+    fsm_state_old = fsm_state_current;
     fsm_state_current = state;
 
     osMutexRelease(fsm_mutex);
+
+    if (fsm_state_old != state)
+    {
+        if (fsm_state_change_callback != NULL)
+        {
+            fsm_state_change_callback();
+        }
+    }
 
     return 0;
 }
 
 enum fsm_state fsm_state_get(void)
 {
-    enum fsm_state state;
+    enum fsm_state state = FSM_STATE_MAX;
 
     osMutexAcquire(fsm_mutex, osWaitForever);
 
@@ -92,6 +104,14 @@ int8_t fsm_state_switch(enum fsm_state new_state)
 
     return ret;
 }
+
+int8_t fsm_state_change_event_callback_register(void (*callback)(void))
+{
+    fsm_state_change_callback = callback;
+
+    return 0;
+}
+
 
 static int8_t fsm_thread_init(void)
 {

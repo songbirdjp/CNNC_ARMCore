@@ -1,39 +1,69 @@
 #include "interlock_app.h"
 #include "cmsis_os2.h"
-#include "adcs7476.h"
 #include "init_call.h"
 #include "fsm_app.h"
 #include "ulog.h"
 #include "gpio_port.h"
+#include "os_tool.h"
+#include "dose_uart.h"
+
+struct fault_info
+{
+    uint16_t com_timeout_cnt;
+    uint16_t adcs7476_1_offset_limit_low_cnt;
+    uint16_t adcs7476_1_offset_limit_high_cnt;
+    uint16_t adcs7476_2_offset_limit_low_cnt;
+    uint16_t adcs7476_2_offset_limit_high_cnt;
+    uint16_t dose_rate_low_cnt;
+    uint16_t dose_rate_high_cnt;
+    uint16_t dose_cp_low_cnt;
+    uint16_t dose_cp_high_cnt;
+    uint16_t dose_symmetry_fault_cnt;
+    uint32_t dose_dummy_end_time;
+
+#define COM_TIMEOUT_THRESHOLD_CNT   10
+#define ADCS7476_1_OFFSET_LIMIT_THRESHOLD_CNT   1000
+#define ADCS7476_2_OFFSET_LIMIT_THRESHOLD_CNT   1000
+#define DOSE_RATE_THRESHOLD_CNT 1000
+#define DOSE_CP_THRESHOLD_CNT   1
+#define DOSE_SYMMETRY_FAULT_THRESHOLD_CNT   1000
+#define DOSE_DUMMY_TIMEOUT_THRESHOLD_MS 1000
+};
 
 struct interlock_status
 {
     union
     {
-        uint16_t bytes;
+        uint32_t bytes;
         struct
         {
-            uint16_t board_power_fault : 1;
-            uint16_t hv_limit : 1;
-            uint16_t comm_timeout : 1;
-            uint16_t wdt_fault : 1;
-            uint16_t adcs7476_1_limit_high : 1;
-            uint16_t adcs7476_1_limit_low : 1;
-            uint16_t adcs7476_2_limit_high :1;
-            uint16_t adcs7476_2_limit_low : 1;
-            uint16_t illegal_write : 1;
-            uint16_t dose_rate_low : 1;
-            uint16_t dose_rate_high : 1;
-            uint16_t dose_total_low : 1;
-            uint16_t dose_total_high : 1;
-            uint16_t dose_symmetry_fault : 1;
-            uint16_t dose_dummy_timeout : 1;
-            uint16_t reserved : 1;
+            uint32_t board_power_fault : 1;
+            uint32_t hv_limit : 1;
+            uint32_t comm_timeout : 1;
+            uint32_t wdt_fault : 1;
+            uint32_t adcs7476_1_offset_limit_high : 1;
+            uint32_t adcs7476_1_offset_limit_low : 1;
+            uint32_t adcs7476_2_offset_limit_high :1;
+            uint32_t adcs7476_2_offset_limit_low : 1;
+            uint32_t illegal_write : 1;
+            uint32_t dose_rate_low : 1;
+            uint32_t dose_rate_high : 1;
+            uint32_t dose_cp_low : 1;
+            uint32_t dose_cp_high : 1;
+            uint32_t dose_symmetry_fault : 1;
+            uint32_t dose_dummy_timeout : 1;
+            uint32_t reserved : 17;
         } bits;
     }value;
 
+    struct fault_info fault_info;
+
+    uint32_t value_locked;  /* record interlock status when fsm entry terminate */
+
     osMutexId_t mutex;
 };
+
+static struct control_para *control_data = NULL;
 
 static struct interlock_status interlock_stat = {0};
 
@@ -42,90 +72,60 @@ static struct interlock_status *interlock_stat_get(void)
     return &interlock_stat;
 }
 
-uint16_t interlock_status_get(void)
+int8_t interlock_status_value_locked_set(uint32_t value)
 {
-    struct interlock_status *stat = interlock_stat_get();
+    osStatus_t stat = osOK;
+    struct interlock_status *obj = interlock_stat_get();
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
 
-    osMutexAcquire(stat->mutex, osWaitForever);
-    uint16_t value = stat->value.bytes;
-    osMutexRelease(stat->mutex);
+    obj->value_locked = value;
+
+    osMutexRelease(obj->mutex);
+
+    return 0;
+}
+
+uint32_t interlock_status_get(void)
+{
+    osStatus_t stat = osOK;
+    struct interlock_status *obj = interlock_stat_get();
+
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
+    uint32_t value = obj->value_locked == 0 ? obj->value.bytes : obj->value_locked;
+    osMutexRelease(obj->mutex);
 
     return value;
 }
 
-int8_t interlock_status_set(enum interlock_status_bits bit, uint8_t value)
-{
-    int8_t ret = 0;
-    struct interlock_status *stat = interlock_stat_get();
-
-    osMutexAcquire(stat->mutex, osWaitForever);
-
-    switch (bit)
-    {
-    case INTERLOCK_BOARD_POWER_FAULT:
-        stat->value.bits.board_power_fault = value;
-        break;
-    case INTERLOCK_HV_LIMIT:
-        stat->value.bits.hv_limit = value;
-        break;
-    case INTERLOCK_COMM_TIMEOUT:
-        stat->value.bits.comm_timeout = value;
-        break;
-    case INTERLOCK_WDT_FAULT:
-        stat->value.bits.wdt_fault = value;
-        break;
-    case INTERLOCK_ADCS7476_1_LIMIT_HIGH:
-        stat->value.bits.adcs7476_1_limit_high = value;
-        break;
-    case INTERLOCK_ADCS7476_1_LIMIT_LOW:
-        stat->value.bits.adcs7476_1_limit_low = value;
-        break;
-    case INTERLOCK_ADCS7476_2_LIMIT_HIGH:
-        stat->value.bits.adcs7476_2_limit_high = value;
-        break;
-    case INTERLOCK_ADCS7476_2_LIMIT_LOW:
-        stat->value.bits.adcs7476_2_limit_low = value;
-        break;
-    case INTERLOCK_ILLEGAL_WRITE:
-        stat->value.bits.illegal_write = value;
-        break;
-    case INTERLOCK_DOSE_RATE_LOW:
-        stat->value.bits.dose_rate_low = value;
-        break;
-    case INTERLOCK_DOSE_RATE_HIGH:
-        stat->value.bits.dose_rate_high = value;
-        break;
-    case INTERLOCK_DOSE_TOTAL_LOW:
-        stat->value.bits.dose_total_low = value;
-        break;
-    case INTERLOCK_DOSE_TOTAL_HIGH:
-        stat->value.bits.dose_total_high = value;
-        break;
-    case INTERLOCK_DOSE_SYMMETRY_FAULT:
-        stat->value.bits.dose_symmetry_fault = value;
-        break;
-    case INTERLOCK_DOSE_DUMMY_TIMEOUT:
-        stat->value.bits.dose_dummy_timeout = value;
-        break;
-    default:
-        LOG_E("invalid interlock bit: %d\r\n", bit);
-        ret = -1;
-        break;
-    }
-
-    osMutexRelease(stat->mutex);
-
-    return ret;
-}
-
 int8_t interlock_status_cleanup(void)
 {
-    struct interlock_status *stat = interlock_stat_get();
+    int8_t ret = interlock_fault_info_clear();
+    if (ret != 0)
+    {
+        LOG_E("interlock fault info clear err: %d\r\n", ret);
+        return ret;
+    }
 
-    osMutexAcquire(stat->mutex, osWaitForever);
-    uint8_t wdt_fault = stat->value.bits.wdt_fault;
-    stat->value.bytes = 0;
-    osMutexRelease(stat->mutex);
+    osStatus_t stat = osOK;
+    struct interlock_status *obj = interlock_stat_get();
+
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
+    uint8_t wdt_fault = obj->value.bits.wdt_fault;
+    obj->value.bytes = 0;
+    obj->value_locked = 0;
+    osMutexRelease(obj->mutex);
 
     if (wdt_fault)
     {
@@ -136,86 +136,182 @@ int8_t interlock_status_cleanup(void)
     return 0;
 }
 
-static int8_t (*interlock_fault_callback)(void) = NULL;
+int8_t interlock_fault_info_set(enum interlock_fault_info type, uint32_t value)
+{
+    int8_t ret = 0;
+    osStatus_t stat = osOK;
+    struct interlock_status *obj = interlock_stat_get();
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
 
-int8_t interlock_fault_register_callback(int8_t (*cb)(void))
+    struct fault_info *info = &obj->fault_info;
+
+    switch (type)
+    {
+    case INTERLOCK_FAULT_COM_TIMEOUT:
+        info->com_timeout_cnt += value;
+        break;
+    case INTERLOCK_FAULT_ADCS7476_1_OFFSET_LIMIT_LOW:
+        info->adcs7476_1_offset_limit_low_cnt += value;
+        break;
+    case INTERLOCK_FAULT_ADCS7476_1_OFFSET_LIMIT_HIGH:
+        info->adcs7476_1_offset_limit_high_cnt += value;
+        break;
+    case INTERLOCK_FAULT_ADCS7476_2_OFFSET_LIMIT_LOW:
+        info->adcs7476_2_offset_limit_low_cnt += value;
+        break;
+    case INTERLOCK_FAULT_ADCS7476_2_OFFSET_LIMIT_HIGH:
+        info->adcs7476_2_offset_limit_high_cnt += value;
+        break;
+    case INTERLOCK_FAULT_DOSE_RATE_LOW:
+        info->dose_rate_low_cnt += value;
+        break;
+    case INTERLOCK_FAULT_DOSE_RATE_HIGH:
+        info->dose_rate_high_cnt += value;
+        break;
+    case INTERLOCK_FAULT_DOSE_CP_LOW:
+        info->dose_cp_low_cnt += value;
+        break;
+    case INTERLOCK_FAULT_DOSE_CP_HIGH:
+        info->dose_cp_high_cnt += value;
+        break;
+    case INTERLOCK_FAULT_DOSE_SYMMETRY_FAULT:
+        info->dose_symmetry_fault_cnt += value;
+        break;
+    case INTERLOCK_FAULT_DOSE_DUMMY_END_TIME:
+         info->dose_dummy_end_time = value;
+        break;
+    default:
+        ret = -1;
+        LOG_E("invalid interlock fault type: %d\r\n", type);
+        break;
+    }
+
+    osMutexRelease(obj->mutex);
+
+    return ret;
+}
+
+int8_t interlock_fault_info_clear(void)
+{
+    osStatus_t stat = osOK;
+    struct interlock_status *obj = interlock_stat_get();
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
+    memset(&obj->fault_info, 0, sizeof(struct fault_info));
+    osMutexRelease(obj->mutex);
+
+    return 0;
+}
+
+static int8_t (*interlock_fault_callback)(uint32_t interlock) = NULL;
+
+int8_t interlock_fault_register_callback(int8_t (*cb)(uint32_t interlock))
 {
     interlock_fault_callback = cb;
 
     return 0;
 }
 
+static uint32_t interlock_override_get(void)
+{
+    osStatus_t stat = osOK;
+
+    stat = osMutexAcquire(control_data->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(control_data->mutex);
+    }
+    uint32_t override = control_data->interlock.interlock_override;
+    osMutexRelease(control_data->mutex);
+
+    return override;
+}
+
 static int8_t interlock_status_update(void)
 {
-    struct interlock_status *stat = interlock_stat_get();
+    osStatus_t stat = osOK;
+    struct interlock_status *obj = interlock_stat_get();
 
-    osMutexAcquire(stat->mutex, osWaitForever);
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
 
     /* 1. check board power and hv status */
     int8_t ret = board_power_limit_fault_get();
     if (ret > 0)
     {
-        stat->value.bits.board_power_fault = (ret & ~(1 << 1)) ? 1 : 0;
-        stat->value.bits.hv_limit = (ret & (1 << 1)) ? 1 : 0;
+        obj->value.bits.board_power_fault = (ret & ~(1 << 1)) ? 1 : 0;
+        obj->value.bits.hv_limit = (ret & (1 << 1)) ? 1 : 0;
     }
     else if (ret == 0)
     {
-        stat->value.bits.board_power_fault = 0;
-        stat->value.bits.hv_limit = 0;
+        obj->value.bits.board_power_fault = 0;
+        obj->value.bits.hv_limit = 0;
     }
 
     /* 2. check communication status */
-    // stat->value.bits.comm_timeout = 0;
+    obj->value.bits.comm_timeout = obj->fault_info.com_timeout_cnt < COM_TIMEOUT_THRESHOLD_CNT ? 0 : 1;
 
     /* 3. check wdt status */
-    stat->value.bits.wdt_fault = gpio_common_get()->read("GPIOD_5") == GPIO_PIN_SET ? 0 : 1;
-    gpio_common_get()->write("GPIOE_5", stat->value.bits.wdt_fault);
+    obj->value.bits.wdt_fault = gpio_common_get()->read("GPIOD_5") == GPIO_PIN_SET ? 0 : 1;
+    gpio_common_get()->write("GPIOE_5", obj->value.bits.wdt_fault);
 
     /* 4. check adcs7476 status */
-    ret = adcs7476_object_data_limit_fault_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
-    if (ret > 0)
-    {
-        stat->value.bits.adcs7476_1_limit_high = (ret & (1 << 1)) ? 1 : 0;
-        stat->value.bits.adcs7476_1_limit_low = (ret & (1 << 0)) ? 1 : 0;
-    }
-
-    ret = adcs7476_object_data_limit_fault_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
-    if (ret > 0)
-    {
-        stat->value.bits.adcs7476_2_limit_high = (ret & (1 << 1)) ? 1 : 0;
-        stat->value.bits.adcs7476_2_limit_low = (ret & (1 << 0)) ? 1 : 0;
-    }
+    obj->value.bits.adcs7476_1_offset_limit_low = obj->fault_info.adcs7476_1_offset_limit_low_cnt < ADCS7476_1_OFFSET_LIMIT_THRESHOLD_CNT ? 0 : 1;
+    obj->value.bits.adcs7476_1_offset_limit_high = obj->fault_info.adcs7476_1_offset_limit_high_cnt < ADCS7476_1_OFFSET_LIMIT_THRESHOLD_CNT ? 0 : 1;
+    obj->value.bits.adcs7476_2_offset_limit_low = obj->fault_info.adcs7476_2_offset_limit_low_cnt < ADCS7476_2_OFFSET_LIMIT_THRESHOLD_CNT ? 0 : 1;
+    obj->value.bits.adcs7476_2_offset_limit_high = obj->fault_info.adcs7476_2_offset_limit_high_cnt < ADCS7476_2_OFFSET_LIMIT_THRESHOLD_CNT ? 0 : 1;
 
     /* 5. check illegal write status */
-    // stat->value.bits.illegal_write = 0;
+    // obj->value.bits.illegal_write = 0;
 
     /* 6. check dose rate status */
-    // stat->value.bits.dose_rate_low = 0;
-    // stat->value.bits.dose_rate_high = 0;
+    obj->value.bits.dose_rate_low = obj->fault_info.dose_rate_low_cnt < DOSE_RATE_THRESHOLD_CNT ? 0 : 1;
+    obj->value.bits.dose_rate_high = obj->fault_info.dose_rate_high_cnt < DOSE_RATE_THRESHOLD_CNT ? 0 : 1;
 
-    /* 7. check dose total status */
-    // stat->value.bits.dose_total_low = 0;
-    // stat->value.bits.dose_total_high = 0;
+    /* 7. check dose control point status */
+    obj->value.bits.dose_cp_low = obj->fault_info.dose_cp_low_cnt < DOSE_CP_THRESHOLD_CNT ? 0 : 1;
+    obj->value.bits.dose_cp_high = obj->fault_info.dose_cp_high_cnt < DOSE_CP_THRESHOLD_CNT ? 0 : 1;
 
     /* 8. check dose symmetry status */
-    // stat->value.bits.dose_symmetry_fault = 0;
+    obj->value.bits.dose_symmetry_fault = obj->fault_info.dose_symmetry_fault_cnt < DOSE_SYMMETRY_FAULT_THRESHOLD_CNT ? 0 : 1;
 
-    /* 9. check dose dummy status */
-    // stat->value.bits.dose_dummy_timeout = 0;
-
-    osMutexRelease(stat->mutex);
-
-    // LOG_I("interlock status: %#.4x\r\n", interlock_status_get());
-
-    if (interlock_status_get() != 0 && fsm_state_get() != FSM_STATE_INIT)
+    /* 9. check dose dummy timeout status */
+    if (fsm_state_get() == FSM_STATE_PRELIMINARY_BEGIN)
     {
-        if (interlock_fault_callback != NULL)
+        uint32_t time_now = osKernelGetTickCount() * 1000 / osKernelGetTickFreq();
+        uint32_t timestamp_dummy_end = interlock_stat_get()->fault_info.dose_dummy_end_time;
+
+        obj->value.bits.dose_dummy_timeout = time_now > timestamp_dummy_end + DOSE_DUMMY_TIMEOUT_THRESHOLD_MS ? 1 : 0;
+
+        if (obj->value.bits.dose_dummy_timeout)
         {
-            ret = interlock_fault_callback();
-            if (ret != 0)
-            {
-                LOG_E("interlock fault callback err: %d\r\n", ret);
-            }
+            LOG_E("dummy timeout\r\n");
+        }
+    }
+
+    osMutexRelease(obj->mutex);
+
+    // LOG_I("interlock status: %#.8x\r\n", interlock_status_get());
+
+    /* deal with interlock override */
+    uint32_t interlock_with_override = interlock_status_get() & ~interlock_override_get();
+
+    if (interlock_with_override != 0 && interlock_fault_callback != NULL)
+    {
+        ret = interlock_fault_callback(interlock_with_override);
+        if (ret != 0)
+        {
+            LOG_E("interlock fault callback err: %d\r\n", ret);
         }
     }
 
@@ -235,6 +331,13 @@ static int8_t interlock_detect_entry(void *argument)
 
 static int8_t interlock_app_init(void)
 {
+    int8_t ret = control_data_pointer_get((void **)&control_data);
+    if (ret != 0 || control_data == NULL)
+    {
+        LOG_E("control data pointer get err: %d\r\n", ret);
+        return -1;
+    }
+
     osMutexAttr_t mutex_attr = {
     .name = "interlock_mutex",
     .attr_bits = osMutexRecursive | osMutexPrioInherit
@@ -243,7 +346,7 @@ static int8_t interlock_app_init(void)
     if (interlock_stat_get()->mutex == NULL)
     {
         LOG_E("mutex create failed\r\n");
-        return -1;
+        return -2;
     }
 
     osThreadAttr_t thread_attr = {
@@ -255,7 +358,7 @@ static int8_t interlock_app_init(void)
     if (thread_id == NULL)
     {
         LOG_E("thread create failed\r\n");
-        return -2;
+        return -3;
     }
 
     return 0;
@@ -272,7 +375,26 @@ static int8_t interlock_status_test(uint8_t argc, char **argv)
         interlock_status_cleanup();
         break;
     case 1:
-        LOG_I("interlock status: %#.4x\r\n", interlock_status_get());
+        LOG_I("interlock status: %#.8x\r\n", interlock_status_get());
+        break;
+    case 2:
+        {
+            struct interlock_status *stat = interlock_stat_get();
+            struct fault_info *info = &stat->fault_info;
+            osMutexAcquire(stat->mutex, MUTEX_TIMEOUT_MS);
+            LOG_I("com_timeout_cnt: %d\r\n", info->com_timeout_cnt);
+            LOG_I("adcs7476_1_offset_limit_low_cnt: %d\r\n", info->adcs7476_1_offset_limit_low_cnt);
+            LOG_I("adcs7476_1_offset_limit_high_cnt: %d\r\n", info->adcs7476_1_offset_limit_high_cnt);
+            LOG_I("adcs7476_2_offset_limit_low_cnt: %d\r\n", info->adcs7476_2_offset_limit_low_cnt);
+            LOG_I("adcs7476_2_offset_limit_high_cnt: %d\r\n", info->adcs7476_2_offset_limit_high_cnt);
+            LOG_I("dose_rate_low_cnt: %d\r\n", info->dose_rate_low_cnt);
+            LOG_I("dose_rate_high_cnt: %d\r\n", info->dose_rate_high_cnt);
+            LOG_I("dose_cp_low_cnt: %d\r\n", info->dose_cp_low_cnt);
+            LOG_I("dose_cp_high_cnt: %d\r\n", info->dose_cp_high_cnt);
+            LOG_I("dose_symmetry_fault_cnt: %d\r\n", info->dose_symmetry_fault_cnt);
+            LOG_I("dose_dummy_end_time: %d\r\n", info->dose_dummy_end_time);
+            osMutexRelease(stat->mutex);
+        }
         break;
     default:
         break;

@@ -289,12 +289,20 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             cmd->data[2] = obj->treatment.status.bits.check ^ obj->treatment.status.bits.lock;
             *cmd->len = 3;
             break;
+        case 0x02:
+            ret = beam_data_value_set(0, BEAM_VALID, 0, cmd->data[2]);
+            if (ret != 0)
+            {
+                LOG_E("beam data valid set err: %d\r\n", ret);
+            }
+            break;
         default:
             ret = -1;
             break;
         }
         break;
     default:
+        ret = -1;
         break;
     }
 
@@ -306,7 +314,7 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
 static int8_t dose_interlock_parse(struct dose_object *cmd)
 {
     int8_t ret = 0;
-    uint16_t value = 0;
+    uint32_t value = 0;
     struct control_para *obj = control_data_get();
 
     osMutexAcquire(obj->mutex, osWaitForever);
@@ -407,10 +415,26 @@ static int8_t dose_interlock_parse(struct dose_object *cmd)
         }
         break;
     case 0xB0:
-        value = interlock_status_get();
-        cmd->data[2] = value;
-        cmd->data[3] = value >> 8;
-        *cmd->len = 4;
+        switch (cmd->data[1])
+        {
+        case 0x00:
+            obj->interlock.interlock_override = cmd->data[2] | cmd->data[3] << 8 | cmd->data[4] << 16 | cmd->data[5] << 24;
+            break;
+        case 0x01:
+            obj->interlock.unready_override = cmd->data[2] | cmd->data[3] << 8 | cmd->data[4] << 16 | cmd->data[5] << 24;
+            break;
+        case 0x02:
+            value = interlock_status_get();
+            cmd->data[2] = value;
+            cmd->data[3] = value >> 8;
+            cmd->data[4] = value >> 16;
+            cmd->data[5] = value >> 24;
+            *cmd->len = 6;
+            break;
+        default:
+            ret = -1;
+            break;
+        }
         break;
     case 0xB1:
         switch (cmd->data[1])
@@ -491,7 +515,16 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
         }
         break;
     case FSM_STATE_PRELIMINARY:
-        if (new_state != FSM_STATE_PREPARE && new_state != FSM_STATE_TERMINATE)
+        if (new_state == FSM_STATE_PREPARE)
+        {
+            uint8_t beam_valid = beam_data_value_get(0, BEAM_VALID, 0);
+            if (beam_valid != 1)
+            {
+                LOG_E("beam valid: %d\r\n", beam_valid);
+                ret = -1;
+            }
+        }
+        else if (new_state != FSM_STATE_TERMINATE)
         {
             ret = -1;
         }
@@ -635,6 +668,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             osMutexRelease(obj->mutex);
             break;
         default:
+            ret = -1;
             break;
         }
         break;
@@ -657,6 +691,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             {
                 LOG_E("beam data clean err: %d\r\n", ret);
             }
+            LOG_I("beam data cleanup\r\n");
             break;
         case 0x02:
             ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
@@ -685,17 +720,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             break;
         case 0x05:
             {
-                struct control_para *obj = control_data_get();
-                osMutexAcquire(obj->mutex, osWaitForever);
-                obj->interlock.one_pulse.count_low = 0;
-                obj->interlock.one_pulse.count_high = 0;
-                obj->interlock.one_pulse.count_abnormal = 0;
-                osMutexRelease(obj->mutex);
-
-                ret = beam_data_cleanup(0);
-                ret |= dose_value_status_set(DOSE_ACCUMULATED, 0);
-                ret |= interlock_status_cleanup();
-                ret |= dose_value_status_set(ONE_PULSE_COMPLETE, 0);
+                ret = interlock_status_cleanup();
                 if (ret != 0)
                 {
                     LOG_E("dose fault clear err: %d\r\n", ret);
@@ -782,6 +807,7 @@ static int8_t dose_command_frame_parse(struct dose_object *cmd)
         ret = dose_state_control_parse(cmd);
         break;
     default:
+        ret = -1;
         break;
     }
 
@@ -809,7 +835,7 @@ int8_t radiation_status_get(uint8_t *buf, uint16_t *len, uint32_t trigger_interv
         uint8_t normal : 1;
     }stat;
 
-    uint16_t interlock = interlock_status_get();
+    uint32_t interlock = interlock_status_get();
     struct control_para *data = control_data_get();
 
     osMutexAcquire(data->mutex, osWaitForever);
@@ -824,32 +850,32 @@ int8_t radiation_status_get(uint8_t *buf, uint16_t *len, uint32_t trigger_interv
 
     buf[0] = *(uint8_t *)&stat;     /* status */
     buf[1] = fsm_state_get();       /* fsm state */
-    memcpy(&buf[2], &interlock, sizeof(uint16_t));    /* interlock */
-    memcpy(&buf[4], &data->radiation.cp, sizeof(uint16_t));   /* cp */
-    memcpy(&buf[6], &data->radiation.index, sizeof(uint16_t));    /* radiation index */
+    memcpy(&buf[2], &interlock, sizeof(uint32_t));    /* interlock */
+    memcpy(&buf[6], &data->radiation.cp, sizeof(uint16_t));   /* cp */
+    memcpy(&buf[8], &data->radiation.index, sizeof(uint16_t));    /* radiation index */
     float dose_meter = beam_data_value_get(0, BEAM_DOSE_METER, 0);
-    memcpy(&buf[8], (float *)&dose_meter, sizeof(float));  /* dose meter */
+    memcpy(&buf[10], (float *)&dose_meter, sizeof(float));  /* dose meter */
     double dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
     float dose = (float)(dose_cumulated / control_data_get()->calibration.adc_factor[0]);
-    memcpy(&buf[12], (float *)&dose, sizeof(float));   /* dose cumulated */
+    memcpy(&buf[14], (float *)&dose, sizeof(float));   /* dose cumulated */
     double dose_rate = dose_value_status_get(DOSE_RATE_CURRENT);
     float dose_rate_f = (float)(dose_rate / control_data_get()->calibration.adc_factor[0]);
-    memcpy(&buf[16], (float *)&dose_rate_f, sizeof(float)); /* dose rate */
+    memcpy(&buf[18], (float *)&dose_rate_f, sizeof(float)); /* dose rate */
 
-    buf[20] = dose_value_status_get(PRF_CURRENT);//data->treatment.prf_hz; /* PRF */
-    memcpy(&buf[21], &data->interlock.one_pulse.count_abnormal, sizeof(uint16_t));    /* pulse abnormal */
+    buf[22] = dose_value_status_get(PRF_CURRENT);//data->treatment.prf_hz; /* PRF */
+    memcpy(&buf[23], &data->interlock.one_pulse.count_abnormal, sizeof(uint16_t));    /* pulse abnormal */
     uint8_t one_pulse_valid = dose_value_status_get(ONE_PULSE_COMPLETE);
     uint32_t one_pulse_dose = dose_value_status_get(ONE_PULSE_DOSE);
-    buf[23] = one_pulse_valid;    /* one pulse valid */
-    memcpy(&buf[24], &one_pulse_dose, sizeof(uint32_t));  /* dose one pulse */
+    buf[25] = one_pulse_valid;    /* one pulse valid */
+    memcpy(&buf[26], &one_pulse_dose, sizeof(uint32_t));  /* dose one pulse */
 
     uint64_t timestamp = timestamp_ns_get();
-    memcpy(&buf[28], &trigger_interval_ms, sizeof(uint32_t));  /* trigger interval */
-    memcpy(&buf[32], &timestamp, sizeof(uint64_t));  /* timestamp */
+    memcpy(&buf[30], &trigger_interval_ms, sizeof(uint32_t));  /* trigger interval */
+    memcpy(&buf[34], &timestamp, sizeof(uint64_t));  /* timestamp */
 
     osMutexRelease(data->mutex);
 
-    *len = 40;
+    *len = 42;
 
     return ret;
 }

@@ -7,30 +7,31 @@
 extern "C" {
 #endif
 
-enum interlock_status_bits
+#define MUTEX_TIMEOUT_MS    (10)
+
+enum interlock_fault_info
 {
-    INTERLOCK_BOARD_POWER_FAULT = 0,
-    INTERLOCK_HV_LIMIT,
-    INTERLOCK_COMM_TIMEOUT,
-    INTERLOCK_WDT_FAULT,
-    INTERLOCK_ADCS7476_1_LIMIT_HIGH,
-    INTERLOCK_ADCS7476_1_LIMIT_LOW,
-    INTERLOCK_ADCS7476_2_LIMIT_HIGH,
-    INTERLOCK_ADCS7476_2_LIMIT_LOW,
-    INTERLOCK_ILLEGAL_WRITE,
-    INTERLOCK_DOSE_RATE_LOW,
-    INTERLOCK_DOSE_RATE_HIGH,
-    INTERLOCK_DOSE_TOTAL_LOW,
-    INTERLOCK_DOSE_TOTAL_HIGH,
-    INTERLOCK_DOSE_SYMMETRY_FAULT,
-    INTERLOCK_DOSE_DUMMY_TIMEOUT,
-    INTERLOCK_MAX
+    INTERLOCK_FAULT_COM_TIMEOUT = 0,
+    INTERLOCK_FAULT_ADCS7476_1_OFFSET_LIMIT_LOW,
+    INTERLOCK_FAULT_ADCS7476_1_OFFSET_LIMIT_HIGH,
+    INTERLOCK_FAULT_ADCS7476_2_OFFSET_LIMIT_LOW,
+    INTERLOCK_FAULT_ADCS7476_2_OFFSET_LIMIT_HIGH,
+    INTERLOCK_FAULT_DOSE_RATE_LOW,
+    INTERLOCK_FAULT_DOSE_RATE_HIGH,
+    INTERLOCK_FAULT_DOSE_CP_LOW,
+    INTERLOCK_FAULT_DOSE_CP_HIGH,
+    INTERLOCK_FAULT_DOSE_SYMMETRY_FAULT,
+    INTERLOCK_FAULT_DOSE_DUMMY_END_TIME,
+    INTERLOCK_FAULT_MAX
 };
 
-int8_t interlock_status_set(enum interlock_status_bits bit, uint8_t value);
-uint16_t interlock_status_get(void);
+int8_t interlock_fault_info_set(enum interlock_fault_info type, uint32_t value);
+int8_t interlock_fault_info_clear(void);
+
+int8_t interlock_status_value_locked_set(uint32_t value);
+uint32_t interlock_status_get(void);
 int8_t interlock_status_cleanup(void);
-int8_t interlock_fault_register_callback(int8_t (*cb)(void));
+int8_t interlock_fault_register_callback(int8_t (*cb)(uint32_t interlock));
 
 #ifdef __cplusplus
 }

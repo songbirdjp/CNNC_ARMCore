@@ -1,6 +1,8 @@
 #include "adcs7476.h"
 #include "drv_spi.h"
 #include "init_call.h"
+#include "ulog.h"
+#include "timestamp.h"
 
 #define ADC7476_MASTER_FLAG (1 << 0)
 #define ADC7476_SLAVE_FLAG  (1 << 1)
@@ -27,7 +29,7 @@ static struct adcs7476_object
 adcs7476_object_master = {.event_flags = ADC7476_MASTER_FLAG, .limit_h = 0xFFFF, .limit_l = 0, .buf = master_data, .buf_len = BUF_LEN},
 adcs7476_object_slave = {.event_flags = ADC7476_SLAVE_FLAG, .limit_h = 0xFFFF, .limit_l = 0, .buf = slave_data, .buf_len = BUF_LEN};
 
-struct adcs7476_object *adcs7476_object_get(uint8_t *device_name)
+static struct adcs7476_object *adcs7476_object_get(uint8_t *device_name)
 {
     if (!memcmp(device_name, DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT, sizeof(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT)))
     {
@@ -140,7 +142,7 @@ static int8_t adcs7476_object_init(uint8_t *device_name, osEventFlagsId_t event)
     return 0;
 }
 
-int8_t adcs7476_object_data_read(uint8_t *device_name, uint16_t *data, uint16_t len, uint32_t timeout)
+static int8_t adcs7476_object_data_read(uint8_t *device_name, uint16_t *data, uint16_t len, uint32_t timeout)
 {
     if (device_name == NULL || data == NULL)
     {
@@ -195,7 +197,7 @@ int8_t adcs7476_object_data_limit_set(uint8_t *device_name, uint16_t limit_h, ui
     return 0;
 }
 
-int8_t adcs7476_object_data_limit_get(uint8_t *device_name, uint16_t *limit_h, uint16_t *limit_l)
+static int8_t adcs7476_object_data_limit_get(uint8_t *device_name, uint16_t *limit_h, uint16_t *limit_l)
 {
     if (device_name == NULL || limit_h == NULL || limit_l == NULL)
     {
@@ -268,6 +270,52 @@ int8_t adcs7476_object_data_callback_register(void (*cb)(uint16_t *buf, uint16_t
     return 0;
 }
 
+int8_t adcs7476_object_offset_limit_check(uint16_t *buf, uint16_t *buf_1, uint16_t len)
+{
+    int8_t ret = 0, value = 0;
+    uint16_t limit_h = 0, limit_l = 0, idx = 0;
+
+    ret = adcs7476_object_data_limit_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT, &limit_h, &limit_l);
+    if (ret != 0)
+    {
+        printf("adcs7476 %s data limit get err: %d\r\n", DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT, ret);
+        return -1;
+    }
+
+    for (idx = 0; idx < len; idx++)
+    {
+        if (buf[idx] < limit_l)
+        {
+            value |= (1 << 0);
+        }
+        else if (buf[idx] > limit_h)
+        {
+            value |= (1 << 1);
+        }
+    }
+
+    ret = adcs7476_object_data_limit_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT, &limit_h, &limit_l);
+    if (ret != 0)
+    {
+        printf("adcs7476 %s data limit get err: %d\r\n", DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT, ret);
+        return -2;
+    }
+
+    for (idx = 0; idx < len; idx++)
+    {
+        if (buf_1[idx] < limit_l)
+        {
+            value |= (1 << 2);
+        }
+        else if (buf_1[idx] > limit_h)
+        {
+            value |= (1 << 3);
+        }
+    }
+
+    return value;
+}
+
 static osEventFlagsId_t adcs7476_event = NULL;
 static int8_t adcs7476_sample_init(void)
 {
@@ -299,8 +347,7 @@ int8_t adcs7476_sample_enable(uint8_t enable)
 {
     return device_adcs7476_sample_enable(enable);
 }
-#include "ulog.h"
-#include "timestamp.h"
+
 static int8_t adcs7476_sample_data_recv_process(void)
 {
     int8_t ret = 0;
@@ -317,17 +364,9 @@ static int8_t adcs7476_sample_data_recv_process(void)
     {
         event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll, osWaitForever);
 
+data_process:
         osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
         osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
-
-        if (osMessageQueueGetCount(obj_master->queue) != 0)
-        {
-            LOG_E("master: %d\r\n", osMessageQueueGetCount(obj_master->queue));
-        }
-        if (osMessageQueueGetCount(obj_slave->queue) != 0)
-        {
-            LOG_E("slave: %d\r\n", osMessageQueueGetCount(obj_slave->queue));
-        }
 
         // osMutexAcquire(obj_master->mutex, osWaitForever);
         // memcpy(obj_master->data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
@@ -342,6 +381,12 @@ static int8_t adcs7476_sample_data_recv_process(void)
         if (callback != NULL)
         {
             callback(recv_tmp, recv_tmp_1, obj_master->buf_len);
+        }
+
+        if (osMessageQueueGetCount(obj_master->queue) != 0 && osMessageQueueGetCount(obj_slave->queue) != 0)
+        {
+            LOG_E("master: %d, slave: %d\r\n", osMessageQueueGetCount(obj_master->queue), osMessageQueueGetCount(obj_slave->queue));
+            goto data_process;
         }
 
         // end = timestamp_ns_get();

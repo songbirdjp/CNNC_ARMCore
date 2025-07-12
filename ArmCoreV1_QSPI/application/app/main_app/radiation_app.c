@@ -10,6 +10,7 @@
 #include "gpio_app.h"
 #include "ulog.h"
 #include "timestamp.h"
+#include "os_tool.h"
 
 // #define RADIATION_SIMULATION_MODE    /* used for different plan data test */
 #ifdef RADIATION_SIMULATION_MODE
@@ -141,54 +142,91 @@ enum radiation_data_state
 static uint64_t radiation_data_value_get(enum radiation_data_state state)
 {
     uint64_t value = 0;
+    osStatus_t stat = osOK;
     struct radiation_index_data *obj = radiation_data_get();
 
     switch (state)
     {
     case DOSE_BOARD_ID:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->board_id;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_BEAM_METER:
         {
-            osMutexAcquire(obj->control_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->control_data->mutex);
+            }
             uint32_t factor = obj->control_data->calibration.adc_factor[0];
             osMutexRelease(obj->control_data->mutex);
 
-            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->beam_data->mutex);
+            }
             value = (uint64_t)(obj->beam_data->dose_meter * factor + 0.5f);
             osMutexRelease(obj->beam_data->mutex);
         }
         break;
     case DOSE_BEAM_DELIVER_TYPE:
-        osMutexAcquire(obj->beam_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->beam_data->mutex, __FILE__, __LINE__, __FUNCTION__);
+        }
         value = obj->beam_data->deliver_type;
         osMutexRelease(obj->beam_data->mutex);
         break;
     case DOSE_RADIATION_IDX_CURRENT:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->radiation.index;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_CONTROL_POINT_CURRENT:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->radiation.cp;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_CONTROL_POINT_PREV_RADIATION_IDX:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->radiation.cp_prev;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_PREV_RADIATION_IDX:
         {
-            osMutexAcquire(obj->control_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->control_data->mutex);
+            }
             uint16_t idx = obj->control_data->radiation.index;
             uint32_t factor = obj->control_data->calibration.adc_factor[0];
             osMutexRelease(obj->control_data->mutex);
 
-            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->beam_data->mutex);
+            }
             if (idx <= obj->beam_data->total_ri)
             {
                 value = (uint64_t)(obj->beam_data->radiation_data[idx < 1 ? 0 : idx - 1].dose_cumulative * factor + 0.5f);
@@ -202,12 +240,20 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
         break;
     case DOSE_RADIATION_IDX:
         {
-            osMutexAcquire(obj->control_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->control_data->mutex);
+            }
             uint16_t idx = obj->control_data->radiation.index;
             uint32_t factor = obj->control_data->calibration.adc_factor[0];
             osMutexRelease(obj->control_data->mutex);
 
-            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->beam_data->mutex);
+            }
             if (idx <= obj->beam_data->total_ri)
             {
                 value = (uint64_t)(obj->beam_data->radiation_data[idx].dose_cumulative * factor + 0.5f);
@@ -221,12 +267,20 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
         break;
     case DOSE_RATE_RADIATION_IDX:
         {
-            osMutexAcquire(obj->control_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->control_data->mutex);
+            }
             uint16_t idx = obj->control_data->radiation.index;
             uint32_t factor = obj->control_data->calibration.adc_factor[0];
             osMutexRelease(obj->control_data->mutex);
 
-            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->beam_data->mutex);
+            }
             if (idx <= obj->beam_data->total_ri)
             {
                 value = (uint64_t)(obj->beam_data->radiation_data[idx < 1 ? 0 : idx - 1].dose_rate * factor / 60.0f + 0.5f);
@@ -240,11 +294,19 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
         break;
     case DOSE_TIME_RADIATION_IDX:
         {
-            osMutexAcquire(obj->control_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->control_data->mutex);
+            }
             uint16_t idx = obj->control_data->radiation.index;
             osMutexRelease(obj->control_data->mutex);
 
-            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->beam_data->mutex);
+            }
             if (idx <= obj->beam_data->total_ri)
             {
                 value = (uint64_t)obj->beam_data->radiation_data[idx < 1 ? 0 : idx - 1].time_expected;
@@ -257,79 +319,139 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
         }
         break;
     case DOSE_INTERPOLATED_RADIATION_IDX:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->radiation.dose_interpolated;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_RATE_INTERPOLATED_RADIATION_IDX:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->radiation.dose_rate_interpolated;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_CALIBRATION_FACTOR:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->calibration.adc_factor[0];
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_GENERATION_MODE:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->treatment.dose_mode;
         osMutexRelease(obj->control_data->mutex);
         break;
     case PULSE_GENERATION_MODE:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->treatment.pulse_mode;
         osMutexRelease(obj->control_data->mutex);
         break;
     case PULSE_INTERVAL:
         {
-            osMutexAcquire(obj->control_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->control_data->mutex);
+            }
             uint8_t pulse_mode = obj->control_data->treatment.pulse_mode;
             uint8_t prf_hz = obj->control_data->treatment.prf_hz;
             osMutexRelease(obj->control_data->mutex);
 
-            osMutexAcquire(obj->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->mutex);
+            }
             value = (pulse_mode == 0) ? 1000000 / prf_hz : obj->pulse_interval_us;
             osMutexRelease(obj->mutex);
         }
         break;
     case PULSE_INTERVAL_MIN:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->calibration.trig_interval_min;
         osMutexRelease(obj->control_data->mutex);
         break;
     case PULSE_SYMMETRY:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->interlock.threshold_symmetry;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_LIMIT:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->interlock.threshold_dose_cp.high << 8 | obj->control_data->interlock.threshold_dose_cp.low;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_RATE_LIMIT:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->interlock.threshold_dose_rate.high << 8 | obj->control_data->interlock.threshold_dose_rate.low;
         osMutexRelease(obj->control_data->mutex);
         break;
     case TIME_RADIATION_IDX_BEGIN:
-        osMutexAcquire(obj->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->mutex);
+        }
         value = obj->ri_time.ri_start_time;
         osMutexRelease(obj->mutex);
         break;
     case TIME_RADIATION_IDX_END:
-        osMutexAcquire(obj->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->mutex);
+        }
         value = obj->ri_time.ri_end_time;
         osMutexRelease(obj->mutex);
         break;
     case TIME_RADIATION_IDX_ELAPSE:
-        osMutexAcquire(obj->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->mutex);
+        }
         value = obj->ri_time.ri_elapse_time;
         osMutexRelease(obj->mutex);
         break;
     case RADIATION_ENABLE:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         value = obj->control_data->radiation_ctrl.radiation_enable;
         osMutexRelease(obj->control_data->mutex);
         break;
@@ -343,33 +465,54 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
 static int8_t radiation_data_value_set(enum radiation_data_state state, uint64_t value)
 {
     int8_t ret = 0;
+    osStatus_t stat = osOK;
     struct radiation_index_data *obj = radiation_data_get();
 
     switch (state)
     {
     case DOSE_BEAM_DELIVER_TYPE:
-        osMutexAcquire(obj->beam_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->beam_data->mutex);
+        }
         obj->beam_data->deliver_type = value;
         osMutexRelease(obj->beam_data->mutex);
         break;
     case DOSE_RADIATION_IDX_CURRENT:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         obj->control_data->radiation.index = value;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_CONTROL_POINT_CURRENT:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         obj->control_data->radiation.cp = value;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_CONTROL_POINT_PREV_RADIATION_IDX:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         obj->control_data->radiation.cp_prev = value;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_CONTROL_POINT_UPDATE:
         {
-            osMutexAcquire(obj->control_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->control_data->mutex);
+            }
             uint16_t idx = obj->control_data->radiation.index;
             obj->control_data->radiation.cp_prev = obj->control_data->radiation.cp;
             obj->control_data->radiation.cp = beam_data_value_get(0, BEAM_RI_IN_CP, idx);
@@ -378,28 +521,48 @@ static int8_t radiation_data_value_set(enum radiation_data_state state, uint64_t
         }
         break;
     case DOSE_INTERPOLATED_RADIATION_IDX:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         obj->control_data->radiation.dose_interpolated = value;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_RATE_INTERPOLATED_RADIATION_IDX:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         obj->control_data->radiation.dose_rate_interpolated = value;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_GENERATION_MODE:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         obj->control_data->treatment.dose_mode = value;
         osMutexRelease(obj->control_data->mutex);
         break;
     case PULSE_GENERATION_MODE:
-        osMutexAcquire(obj->control_data->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
         obj->control_data->treatment.pulse_mode = value;
         osMutexRelease(obj->control_data->mutex);
         break;
     case PULSE_INTERVAL:
         {
-            osMutexAcquire(obj->control_data->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->control_data->mutex);
+            }
             uint32_t interval_min = obj->control_data->calibration.trig_interval_min;
             osMutexRelease(obj->control_data->mutex);
             if (value < interval_min)
@@ -408,23 +571,39 @@ static int8_t radiation_data_value_set(enum radiation_data_state state, uint64_t
                 LOG_E("invalid pulse interval set: %llu\r\n", value);
                 break;
             }
-            osMutexAcquire(obj->mutex, osWaitForever);
+            stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+            if (stat != osOK)
+            {
+                os_tool_mutex_holder_get(obj->mutex);
+            }
             obj->pulse_interval_us = value;
             osMutexRelease(obj->mutex);
         }
         break;
     case TIME_RADIATION_IDX_BEGIN:
-        osMutexAcquire(obj->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->mutex);
+        }
         obj->ri_time.ri_start_time = value;
         osMutexRelease(obj->mutex);
         break;
     case TIME_RADIATION_IDX_END:
-        osMutexAcquire(obj->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->mutex);
+        }
         obj->ri_time.ri_end_time = value;
         osMutexRelease(obj->mutex);
         break;
     case TIME_RADIATION_IDX_ELAPSE:
-        osMutexAcquire(obj->mutex, osWaitForever);
+        stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->mutex);
+        }
         obj->ri_time.ri_elapse_time = value;
         osMutexRelease(obj->mutex);
         break;
@@ -459,8 +638,13 @@ static struct dose_value *dose_value_obj_get(void)
 static int8_t dose_value_status_update(enum pulse_state state, uint32_t pulse_cnt, uint32_t dose_value)
 {
     int8_t ret = 0;
+    osStatus_t stat = osOK;
     struct dose_value *obj = dose_value_obj_get();
-    osMutexAcquire(obj->mutex, osWaitForever);
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
 
     switch (state)
     {
@@ -502,8 +686,13 @@ static int8_t dose_value_status_update(enum pulse_state state, uint32_t pulse_cn
 int8_t dose_value_status_set(enum pulse_state state, uint64_t value)
 {
     int8_t ret = 0;
+    osStatus_t stat = osOK;
     struct dose_value *obj = dose_value_obj_get();
-    osMutexAcquire(obj->mutex, osWaitForever);
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
 
     switch (state)
     {
@@ -538,8 +727,13 @@ int8_t dose_value_status_set(enum pulse_state state, uint64_t value)
 uint64_t dose_value_status_get(enum pulse_state state)
 {
     uint64_t value = 0;
+    osStatus_t stat = osOK;
     struct dose_value *obj = dose_value_obj_get();
-    osMutexAcquire(obj->mutex, osWaitForever);
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
 
     switch (state)
     {
@@ -599,8 +793,13 @@ enum trigger_out_state
 static int8_t trigger_out_info_set(enum trigger_out_state state, uint32_t value)
 {
     int8_t ret = 0;
+    osStatus_t stat = osOK;
     struct trigger_out *obj = trigger_out_obj_get();
-    osMutexAcquire(obj->mutex, osWaitForever);
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
 
     switch (state)
     {
@@ -628,8 +827,13 @@ static int8_t trigger_out_info_set(enum trigger_out_state state, uint32_t value)
 static uint32_t trigger_out_info_get(enum trigger_out_state state)
 {
     uint32_t value = 0;
+    osStatus_t stat = osOK;
     struct trigger_out *obj = trigger_out_obj_get();
-    osMutexAcquire(obj->mutex, osWaitForever);
+    stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
+    if (stat != osOK)
+    {
+        os_tool_mutex_holder_get(obj->mutex);
+    }
 
     switch (state)
     {
@@ -1086,6 +1290,7 @@ static int8_t lptim3_delay_entry(void *argument)
 /*****************************************************************/
 #define ADCS7476_SERVO_VALUE    50
 #define ADCS7476_VALUE_ACCUMULATE_LIMIT 100
+#define ADCS7476_VALUE_MAX_LIMIT    4096
 static uint16_t adcs7476_value_check(uint16_t *buf, uint16_t len, uint64_t *pulse_val, uint32_t *servo_val)
 {
     uint16_t valid_cnt = 0;
@@ -1097,9 +1302,9 @@ static uint16_t adcs7476_value_check(uint16_t *buf, uint16_t len, uint64_t *puls
         {
             *pulse_val += buf[i] - ADCS7476_SERVO_VALUE;
 
-            if(buf[i] >= 4096)
+            if(buf[i] >= ADCS7476_VALUE_MAX_LIMIT)
             {
-                LOG_I("adcs7476 value err: %d\r\n", buf[i]);
+                LOG_E("adcs7476 value err: %d\r\n", buf[i]);
             }
 
 // #ifdef LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US
@@ -1243,9 +1448,13 @@ static int8_t adcs7476_value_dose(uint32_t value, uint32_t value_1, uint16_t pul
     if (value_diff > value_max * percentage / 100)
     {
         // LOG_I("dose symmetry fault, value_diff: %d, value_max: %d, percentage: %d\r\n", value_diff, value_max, percentage);
+        int8_t ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_SYMMETRY_FAULT, 1);
+        if (ret != 0)
+        {
+            LOG_E("interlock fault info set err: %d\r\n", ret);
+        }
     }
 
-    interlock_status_set(INTERLOCK_DOSE_SYMMETRY_FAULT, value_diff > value_max * percentage / 100);
 
     return dose_value_status_update(ONE_PULSE_RUNNING, pulse_cnt, value + value_1);
 }
@@ -1455,7 +1664,7 @@ static int8_t dose_data_upload_once(enum fsm_state state)
             return ret;
         }
 
-        ret = dose_data_upload(REAL_TIME_DATA_TYPE_RADIATION);
+        // ret = dose_data_upload(REAL_TIME_DATA_TYPE_RADIATION);
         // ret |= dose_data_upload(REAL_TIME_DATA_TYPE_QAM);
         if (ret != 0)
         {
@@ -1628,17 +1837,22 @@ static int8_t control_point_limit_check(void)
         if (dose_accumulated_cur > dose_prev_radiation_index * (1 + dose_high_percentage / 100.0))
         {
             /* dose high limit reached */
-            interlock_status_set(INTERLOCK_DOSE_TOTAL_HIGH, 1);
+            ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_CP_HIGH, 1);
+            if (ret != 0)
+            {
+                LOG_E("interlock fault info set err: %d\r\n", ret);
+                return ret;
+            }
         }
         else if (dose_accumulated_cur < dose_prev_radiation_index * (1 - dose_low_percentage / 100.0))
         {
             /* dose low limit reached */
-            interlock_status_set(INTERLOCK_DOSE_TOTAL_LOW, 1);
-        }
-        else
-        {
-            interlock_status_set(INTERLOCK_DOSE_TOTAL_HIGH, 0);
-            interlock_status_set(INTERLOCK_DOSE_TOTAL_LOW, 0);
+            ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_CP_LOW, 1);
+            if (ret != 0)
+            {
+                LOG_E("interlock fault info set err: %d\r\n", ret);
+                return ret;
+            }
         }
 
         /* 2. check dose rate limit */
@@ -1813,6 +2027,62 @@ static int8_t dose_radiation_index_update(uint32_t time_excess_ms)
     return ret;
 }
 
+static int8_t dose_rate_calculate_and_check(uint64_t *dose_accumulated, uint64_t *dose_target, uint32_t *time_expected_ms, uint32_t *time_elapse_ms)
+{
+    uint64_t dose_rate_cur = 0;
+    uint64_t dose_prev_radiation_index = radiation_data_value_get(DOSE_PREV_RADIATION_IDX);
+    uint64_t dose_rate_radiation_index = radiation_data_value_get(DOSE_RATE_RADIATION_IDX);
+
+    /* 1. calculate dose rate */
+    if (*dose_accumulated < *dose_target)
+    {
+        dose_rate_cur = (*dose_accumulated - dose_prev_radiation_index) * 1000 * 60 / *time_elapse_ms;
+    }
+    else
+    {
+        if (*time_elapse_ms <= *time_expected_ms)
+        {
+            dose_rate_cur = dose_rate_radiation_index * 60;
+        }
+        else
+        {
+            dose_rate_cur = dose_rate_radiation_index * 60 * *time_expected_ms / *time_elapse_ms;
+        }
+    }
+
+    int8_t ret = dose_value_status_set(DOSE_RATE_CURRENT, dose_rate_cur);
+    if (ret != 0)
+    {
+        LOG_E("dose rate set err: %d\r\n", ret);
+    }
+
+    /* 2. check dose rate limit */
+    uint16_t dose_rate_limit = radiation_data_value_get(DOSE_RATE_LIMIT);
+    uint8_t dose_rate_low_percentage = dose_rate_limit & 0xFF;
+    uint8_t dose_rate_high_percentage = dose_rate_limit >> 8;
+
+    if (dose_rate_cur < dose_rate_radiation_index * (1 - dose_rate_low_percentage / 100.0))
+    {
+        ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_RATE_LOW, 1);
+        if (ret != 0)
+        {
+            LOG_E("interlock fault info set err: %d\r\n", ret);
+            return ret;
+        }
+    }
+    else if (dose_rate_cur > dose_rate_radiation_index * (1 + dose_rate_high_percentage / 100.0))
+    {
+        ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_RATE_HIGH, 1);
+        if (ret != 0)
+        {
+            LOG_E("interlock fault info set err: %d\r\n", ret);
+            return ret;
+        }
+    }
+
+    return 0;
+}
+
 static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *interval_us, uint32_t time_compensation_us)
 {
     int8_t ret = 0;
@@ -1829,6 +2099,9 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *inter
         LOG_E("radiation data value set err: %d\r\n", ret);
         return ret;
     }
+
+    uint32_t time_expected_ms = (radiation_data_value_get(TIME_RADIATION_IDX_END) + UINT32_MAX - radiation_data_value_get(TIME_RADIATION_IDX_BEGIN)) % UINT32_MAX;
+    time_elapse_ms += time_compensation_us / 1000;
 
     if (dose_accumulated_cur < dose_radiation_index)
     {
@@ -1856,14 +2129,21 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *inter
             LOG_E("radiation data value set err: %d\r\n", ret);
             return ret;
         }
+
+        // if (time_elapse_ms > time_expected_ms)
+        // {
+        //     ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_RATE_LOW, 1);
+        //     if (ret != 0)
+        //     {
+        //         LOG_E("interlock fault info set err: %d\r\n", ret);
+        //         return ret;
+        //     }
+        // }
     }
     else
     {
         if (deliver_type == DELIVER_TYPE_SWIMRT || deliver_type == DELIVER_TYPE_CRT) /* 主动轴 */
         {
-            uint32_t time_expected_ms = (radiation_data_value_get(TIME_RADIATION_IDX_END) + UINT32_MAX - radiation_data_value_get(TIME_RADIATION_IDX_BEGIN)) % UINT32_MAX;
-            time_elapse_ms += time_compensation_us / 1000;
-
             /* 0. just delay to consume surplus time */
             time_elapse_ms < time_expected_ms ? osDelay(time_expected_ms - time_elapse_ms) : NULL;
 
@@ -1884,10 +2164,16 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *inter
         }
     }
 
+    ret = dose_rate_calculate_and_check(&dose_accumulated_cur, &dose_radiation_index, &time_expected_ms, &time_elapse_ms);
+    if (ret != 0)
+    {
+        LOG_E("dose rate calculate and check err: %d\r\n", ret);
+        return ret;
+    }
+
     return ret;
 }
 
-static uint32_t timestamp_dummy_end = 0;
 static int8_t detect_whether_one_pulse_repeat(void)
 {
     int8_t ret = 0;
@@ -1933,13 +2219,20 @@ static int8_t detect_whether_one_pulse_repeat(void)
         /* calculate dummy time */
         #define DUMMY_VALUE_INCREASE_PER_US (DUMMY_VALUE / 30 - ADCS7476_SERVO_VALUE)
         uint32_t dummy_time_ms = radiation_data_value_get(DOSE_BEAM_METER) / (DUMMY_VALUE_INCREASE_PER_US * 2) / 1000;
-        timestamp_dummy_end = osKernelGetTickCount() * 1000 / osKernelGetTickFreq() + dummy_time_ms + DUMMY_START_DELAY_TIME_US / 1000;
+        uint32_t timestamp_dummy_end = osKernelGetTickCount() * 1000 / osKernelGetTickFreq() + dummy_time_ms + DUMMY_START_DELAY_TIME_US / 1000;
         timestamp_dummy_end *= DOSE_BOARD_NO_TRIGGER_OUT_SCALE;
         if (radiation_data_value_get(DOSE_BOARD_ID) == DOSE_BOARD_NO_TRIGGER_OUT)
         {
             timestamp_dummy_end *= DOSE_BOARD_NO_TRIGGER_OUT_SCALE;
         }
         // LOG_I("dummy end time: %u\r\n", timestamp_dummy_end);
+
+        ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_DUMMY_END_TIME, timestamp_dummy_end);
+        if (ret != 0)
+        {
+            LOG_E("interlock fault info set err: %d\r\n", ret);
+            return ret;
+        }
 
 #ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
         ret = timer_delay_start(TIM_DELAY_DUMMY_START, DUMMY_START_DELAY_TIME_US);
@@ -1959,6 +2252,17 @@ static int8_t detect_whether_one_pulse_repeat(void)
             LOG_E("dose data upload once err: %d\r\n", ret);
             return ret;
         }
+
+        if (fsm_state_cur == FSM_STATE_PREPARE)
+        {
+            ret = interlock_fault_info_clear();
+            if (ret != 0)
+            {
+                LOG_E("interlock fault info clear err: %d\r\n", ret);
+                return ret;
+            }
+        }
+
     }
     else if (fsm_state_cur == FSM_STATE_WORK)
     {
@@ -2216,6 +2520,37 @@ static int8_t adcs7476_data_dump(uint8_t argc, char *argv[])
 MSH_CMD_EXPORT_ALIAS(adcs7476_data_dump, adcs7476_data_dump, adcs7476 data dump);
 #endif
 
+static int8_t dose_channel_offset_check(uint16_t *buf, uint16_t *buf_1, uint16_t len)
+{
+    int8_t ret = 0;
+    enum fsm_state fsm_state_cur = fsm_state_get();
+
+    if (fsm_state_cur == FSM_STATE_PRELIMINARY_BEGIN || fsm_state_cur == FSM_STATE_WORK)
+    {
+        return 0;
+    }
+
+    /* check adc offset limit */
+    ret = adcs7476_object_offset_limit_check(buf, buf_1, len);
+    if (ret < 0)
+    {
+        LOG_E("adcs7476 offset limit check err: %d\r\n", ret);
+    }
+    else if (ret > 0)
+    {
+        ret = interlock_fault_info_set(INTERLOCK_FAULT_ADCS7476_1_OFFSET_LIMIT_LOW, (ret >> 0) & 0x01);
+        ret |= interlock_fault_info_set(INTERLOCK_FAULT_ADCS7476_1_OFFSET_LIMIT_HIGH, (ret >> 1) & 0x01);
+        ret |= interlock_fault_info_set(INTERLOCK_FAULT_ADCS7476_2_OFFSET_LIMIT_LOW, (ret >> 2) & 0x01);
+        ret |= interlock_fault_info_set(INTERLOCK_FAULT_ADCS7476_2_OFFSET_LIMIT_HIGH, (ret >> 3) & 0x01);
+        if (ret != 0)
+        {
+            LOG_E("interlock fault info set err: %d\r\n", ret);
+        }
+    }
+
+    return ret;
+}
+
 int8_t adcs7476_value_process(uint16_t *buf, uint16_t *buf_1, uint16_t len)
 {
     int8_t ret = 0;
@@ -2237,6 +2572,12 @@ int8_t adcs7476_value_process(uint16_t *buf, uint16_t *buf_1, uint16_t len)
     //     LOG_E("adcs7476_object_data_read err: %d\r\n", ret);
     //     return ret;
     // }
+
+    ret = dose_channel_offset_check(buf, buf_1, len);
+    if (ret != 0)
+    {
+        LOG_E("dose channel offset check err: %d\r\n", ret);
+    }
 
 #ifdef RADIATION_SIMULATION_MODE
     if (radiation_simulation_trigger_out_flag)
@@ -2385,7 +2726,6 @@ static int8_t dose_rate_calculate(void *argument)
     uint64_t dose_meter_cur = 0, dose_rate_cur = 0, dose_meter_pre = 0, dose_diff[DOSE_RATE_SAMPLE_COUNT + 1] = {0};
 
     uint32_t trigger_out_count_pre = 0, trigger_out_count = 0, prf_cur = 0;
-    uint32_t time_now = 0;
 
     for (;;)
     {
@@ -2394,11 +2734,11 @@ static int8_t dose_rate_calculate(void *argument)
         if (cnt++ % 5 == 0)
         {
             /* 1. upload data to arm io periodically */
-            ret = dose_data_upload(REAL_TIME_DATA_TYPE_RADIATION);
-            if (ret != 0)
-            {
-                LOG_E("dose data upload err: %d\r\n", ret);
-            }
+            // ret = dose_data_upload(REAL_TIME_DATA_TYPE_RADIATION);
+            // if (ret != 0)
+            // {
+            //     LOG_E("dose data upload err: %d\r\n", ret);
+            // }
 
             /* 2. calculate prf */
             trigger_out_count = trigger_out_info_get(TRIGGER_OUT_COUNT);
@@ -2413,65 +2753,124 @@ static int8_t dose_rate_calculate(void *argument)
         }
 
         /* 3. calculate dose rate */
-        dose_meter_cur = dose_value_status_get(DOSE_ACCUMULATED);
-        dose_meter_pre = dose_meter_cur == 0 ? dose_meter_cur : dose_meter_pre;
-        dose_diff[dose_diff_index++] = dose_meter_cur - dose_meter_pre;
-        dose_diff_index %= DOSE_RATE_SAMPLE_COUNT;
-        dose_diff[DOSE_RATE_SAMPLE_COUNT] = 0;
-        for (uint8_t i = 0; i < DOSE_RATE_SAMPLE_COUNT; i++)
+        if (radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
         {
-            dose_diff[DOSE_RATE_SAMPLE_COUNT] += dose_diff[i];
-        }
-        dose_diff[DOSE_RATE_SAMPLE_COUNT] /= DOSE_RATE_SAMPLE_COUNT;
-
-        dose_rate_cur = dose_diff[DOSE_RATE_SAMPLE_COUNT] * 10 * 60;  /* calculate period is 100ms */
-
-        ret = dose_value_status_set(DOSE_RATE_CURRENT, dose_rate_cur);
-        if (ret != 0)
-        {
-            LOG_E("dose rate set err: %d\r\n", ret);
-        }
-        dose_meter_pre = dose_meter_cur;
-
-        /* 4. dummy timeout check */
-        if (fsm_state_get() == FSM_STATE_PRELIMINARY_BEGIN)
-        {
-            time_now = osKernelGetTickCount() * 1000 / osKernelGetTickFreq();
-            if (time_now > timestamp_dummy_end)
+            dose_meter_cur = dose_value_status_get(DOSE_ACCUMULATED);
+            dose_meter_pre = dose_meter_cur == 0 ? dose_meter_cur : dose_meter_pre;
+            dose_diff[dose_diff_index++] = dose_meter_cur - dose_meter_pre;
+            dose_diff_index %= DOSE_RATE_SAMPLE_COUNT;
+            dose_diff[DOSE_RATE_SAMPLE_COUNT] = 0;
+            for (uint8_t i = 0; i < DOSE_RATE_SAMPLE_COUNT; i++)
             {
-                LOG_E("dummy timeout\r\n");
-                interlock_status_set(INTERLOCK_DOSE_DUMMY_TIMEOUT, 1);
+                dose_diff[DOSE_RATE_SAMPLE_COUNT] += dose_diff[i];
             }
-            else
+            dose_diff[DOSE_RATE_SAMPLE_COUNT] /= DOSE_RATE_SAMPLE_COUNT;
+
+            dose_rate_cur = dose_diff[DOSE_RATE_SAMPLE_COUNT] * 10 * 60;  /* calculate period is 100ms */
+
+            ret = dose_value_status_set(DOSE_RATE_CURRENT, dose_rate_cur);
+            if (ret != 0)
             {
-                interlock_status_set(INTERLOCK_DOSE_DUMMY_TIMEOUT, 0);
+                LOG_E("dose rate set err: %d\r\n", ret);
             }
+            dose_meter_pre = dose_meter_cur;
         }
+
     }
 
     return 0;
 }
 
+#define RADIATION_EFFICIENCY_TEST
+#ifdef RADIATION_EFFICIENCY_TEST
+struct radiation_ri_data
+{
+    uint32_t timestamp; /* unit: ms, record timestamp of ri received */
+    uint64_t dose_cumulated;    /* record dose cumulated when ri update */
+};
+static struct radiation_ri_data ri_data_array[4096] __attribute__((section(".ram_itcm"))) = {0};
+#endif
+
 static int8_t dose_interpolation_init(void)
 {
+#ifdef RADIATION_EFFICIENCY_TEST
+    uint16_t ri = radiation_data_value_get(DOSE_RADIATION_IDX_CURRENT);
+    if (ri < sizeof(ri_data_array) / sizeof(ri_data_array[0]))
+    {
+        ri_data_array[ri].timestamp = osKernelGetTickCount() * 1000 / osKernelGetTickFreq();
+        ri_data_array[ri].dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
+    }
+#endif
+
     return radiation_index_update_callback(dose_radiation_index_update);
 }
 
-static int8_t interlock_fault_callback(void)
+static int8_t interlock_fault_callback(uint32_t interlock)
 {
-    // int8_t ret = fsm_state_switch(FSM_STATE_TERMINATE);
-    // if (ret != 0)
-    // {
-    //     LOG_E("fsm state switch err: %d\r\n", ret);
-    // }
+    int8_t ret = 0;
+    enum fsm_state state = fsm_state_get();
 
-    // return ret;
-    return 0;
+    switch (state)
+    {
+    case FSM_STATE_INIT:
+        break;
+    case FSM_STATE_IDLE:
+        break;
+    case FSM_STATE_PRELIMINARY_BEGIN:
+    case FSM_STATE_PRELIMINARY:
+    case FSM_STATE_PREPARE:
+    case FSM_STATE_READY:
+    case FSM_STATE_WORK:
+    case FSM_STATE_INTERRUPT:
+        // ret = fsm_state_switch(FSM_STATE_TERMINATE);
+        ret |= interlock_status_value_locked_set(interlock);
+        break;
+    case FSM_STATE_COMPLETE:
+        break;
+    case FSM_STATE_TERMINATE:
+        break;
+    case FSM_STATE_PARK:
+    case FSM_STATE_MANUAL:
+    case FSM_STATE_SHUTDOWN:
+    case FSM_STATE_POWERSAVER:
+        break;
+    default:
+        ret = -1;
+        LOG_E("invalid fsm state: %d\r\n", state);
+        break;
+    }
+
+    return ret;
 }
 
 static int8_t interlock_fault_process_init(void)
 {
     return interlock_fault_register_callback(interlock_fault_callback);
+}
+
+static osEventFlagsId_t fsm_state_change_event = NULL;
+static int8_t fsm_state_change(void)
+{
+    osEventFlagsSet(fsm_state_change_event, 1);
+
+    return 0;
+}
+static int8_t fsm_state_change_entry(void *argument)
+{
+    int8_t ret = 0;
+
+    for (;;)
+    {
+        osEventFlagsWait(fsm_state_change_event, 1, osFlagsWaitAny, osWaitForever);
+
+        ret = dose_data_upload(REAL_TIME_DATA_TYPE_RADIATION);
+        if (ret != 0)
+        {
+            LOG_E("dose data upload err: %d\r\n", ret);
+        }
+    }
+
+    return 0;
 }
 
 static int8_t radiation_thread_init(void)
@@ -2512,12 +2911,6 @@ static int8_t radiation_thread_init(void)
         return -3;
     }
 
-    osThreadAttr_t time_delay_thread_attributes = {
-    .name = "time_delay_thread",
-    .stack_size = 1024 * 4,
-    .priority = (osPriority_t) osPriorityAboveNormal6,
-    };
-
 #ifdef USING_TIM5_FOR_RADIATION_TIMEOUT
     timer_delay_event = osEventFlagsNew(NULL);
     if (timer_delay_event == NULL)
@@ -2525,6 +2918,12 @@ static int8_t radiation_thread_init(void)
         LOG_E("timer delay event create failed\r\n");
         return -4;
     }
+
+    osThreadAttr_t time_delay_thread_attributes = {
+    .name = "time_delay_thread",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t) osPriorityAboveNormal6,
+    };
 
     osThreadId_t time_delay_threadHandle = osThreadNew(time_delay_entry, NULL, &time_delay_thread_attributes);
     if (time_delay_threadHandle == NULL)
@@ -2604,6 +3003,33 @@ static int8_t radiation_thread_init(void)
     {
         LOG_E("adcs7476 callback register err: %d\r\n", ret);
         return -13;
+    }
+
+    fsm_state_change_event = osEventFlagsNew(NULL);
+    if (fsm_state_change_event == NULL)
+    {
+        LOG_E("fsm state change event create failed\r\n");
+        return -14;
+    }
+
+    ret = fsm_state_change_event_callback_register(fsm_state_change);
+    if (ret != 0)
+    {
+        LOG_E("fsm state change event callback register err: %d\r\n", ret);
+        return -15;
+    }
+
+    osThreadAttr_t attr = {
+        .name = "fsm_state_change_thread",
+       .stack_size = 1024 * 4,
+       .priority = (osPriority_t)osPriorityAboveNormal,
+    };
+
+    osThreadId_t fsm_state_change_threadHandle = osThreadNew(fsm_state_change_entry, NULL, &attr);
+    if (fsm_state_change_threadHandle == NULL)
+    {
+        LOG_E("thread fsm state change create failed\r\n");
+        return -16;
     }
 
     return 0;
@@ -2920,8 +3346,10 @@ static int8_t one_pulse_dose_get(uint8_t argc, char **argv)
     LOG_I("one pulse timeout: %llu\r\n", dose_value_status_get(ONE_PULSE_COUNT));
     LOG_I("one pulse flag: %llu\r\n", dose_value_status_get(ONE_PULSE_COMPLETE));
     LOG_I("one pulse dose: %llu\r\n", dose_value_status_get(ONE_PULSE_DOSE));
-    LOG_I("dose cumulated: %llu\r\n", dose_value_status_get(DOSE_ACCUMULATED));
-    LOG_I("dose rate: %llu\r\n", dose_value_status_get(DOSE_RATE_CURRENT));
+
+    uint32_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
+    LOG_I("dose cumulated: %lf\r\n",  (double)dose_value_status_get(DOSE_ACCUMULATED) / factor);
+    LOG_I("dose rate: %lf\r\n",  (double)dose_value_status_get(DOSE_RATE_CURRENT) / factor);
     LOG_I("prf current: %llu\r\n", dose_value_status_get(PRF_CURRENT));
 
     return 0;
@@ -2966,5 +3394,72 @@ static int8_t radiation_trigger_out_count_clear(uint8_t argc, char **argv)
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(radiation_trigger_out_count_clear, radiation_trigger_out_count_clear, radiation trigger out count clear);
+#endif
+
+#ifdef RADIATION_EFFICIENCY_TEST
+static int8_t radiation_efficiency_array_dump(uint8_t argc, char **argv)
+{
+    switch (atoi(argv[1]))
+    {
+    case 0:
+        {
+            adcs7476_sample_enable(0);
+
+            struct radiation_index_data *obj = radiation_data_get();
+            float time_expected = 0.0f, time_actual = 0.0f;
+
+            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
+            for (uint16_t i = 1; i < obj->beam_data->total_ri; i++)
+            {
+                time_expected = obj->beam_data->radiation_data[i].time_expected;
+                time_actual = ri_data_array[i + 1].timestamp - ri_data_array[i].timestamp;
+
+                LOG_I("[ri: %4d]: time_expected: %10.6f, time_actual: %10.6f, diff: %10.6f\r\n", i, time_expected, time_actual, time_expected - time_actual);
+
+                osDelay(10);
+            }
+
+            osMutexRelease(obj->beam_data->mutex);
+            adcs7476_sample_enable(1);
+        }
+        break;
+    case 1:
+        {
+            adcs7476_sample_enable(0);
+
+            struct radiation_index_data *obj = radiation_data_get();
+            float dose_expected = 0.0f, dose_actual = 0.0f;
+            uint32_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
+
+            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
+            for (uint16_t i = 1; i < obj->beam_data->total_ri; i++)
+            {
+                dose_expected = obj->beam_data->radiation_data[i].dose_cumulative;
+                dose_actual = (float)(ri_data_array[i + 1].dose_cumulated / factor);
+
+                LOG_I("[ri: %4d]: dose_expected: %10.6f, dose_actual: %10.6f, diff: %10.6f\r\n", i, dose_expected, dose_actual, dose_expected - dose_actual);
+
+                osDelay(10);
+            }
+
+            osMutexRelease(obj->beam_data->mutex);
+            adcs7476_sample_enable(1);
+        }
+        break;
+    default:
+        LOG_E("invalid argument: %d\r\n", atoi(argv[1]));
+        break;
+    }
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(radiation_efficiency_array_dump, radiation_efficiency_array_dump, dump radiation efficiency array);
+static int8_t radiation_efficiency_array_clear(uint8_t argc, char **argv)
+{
+    memset(ri_data_array, 0, sizeof(ri_data_array));
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(radiation_efficiency_array_clear, radiation_efficiency_array_clear, clear radiation efficiency array);
 #endif
 #endif

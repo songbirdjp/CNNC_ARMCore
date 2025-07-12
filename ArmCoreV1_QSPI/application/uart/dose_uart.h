@@ -104,6 +104,8 @@ struct interlock_para
     struct dose_one_pulse one_pulse;
     uint8_t threshold_symmetry;     /* percentage */
     uint16_t communication_timeout; /* Unit: ms */
+    uint32_t interlock_override;
+    uint32_t unready_override;
 };
 
 struct radiation_control_para

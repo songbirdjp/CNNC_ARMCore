@@ -17,11 +17,12 @@ struct radiation_point_data
 };
 
 #define BEAMS_MAX           1
-#define CP_RI_MAP_MAX       256
-#define RADIATION_POINT_MAX 2048
+#define CP_RI_MAP_MAX       1280
+#define RADIATION_POINT_MAX 10240
 
 struct beam_data
 {
+    uint8_t beam_valid; /* 0: invalid, 1: valid */
     uint8_t beam_type;
     uint8_t radiation_type;
     uint8_t deliver_type;
@@ -57,7 +58,8 @@ enum deliver_type
 
 enum beam_data_state
 {
-    BEAM_TYPE = 0,
+    BEAM_VALID = 0,
+    BEAM_TYPE,
     BEAM_RADIATION_TYPE,
     BEAM_DELIVER_TYPE,
     BEAM_DOSE_METER,
