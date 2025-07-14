@@ -13,25 +13,25 @@ struct board_status
     uint8_t sw_version[6];
     union
     {
-        uint16_t bytes;
+        uint32_t bytes;
         struct
         {
-            uint16_t board_power_fault : 1;
-            uint16_t hv_limit : 1;
-            uint16_t comm_timeout : 1;
-            uint16_t wdt_fault : 1;
-            uint16_t adcs7476_1_limit_high : 1;
-            uint16_t adcs7476_1_limit_low : 1;
-            uint16_t adcs7476_2_limit_high :1;
-            uint16_t adcs7476_2_limit_low : 1;
-            uint16_t illegal_write : 1;
-            uint16_t dose_rate_low : 1;
-            uint16_t dose_rate_high : 1;
-            uint16_t dose_total_low : 1;
-            uint16_t dose_total_high : 1;
-            uint16_t dose_symmetry_fault : 1;
-            uint16_t dose_dummy_timeout : 1;
-            uint16_t reserved : 1;
+            uint32_t board_power_fault : 1;
+            uint32_t hv_limit : 1;
+            uint32_t comm_timeout : 1;
+            uint32_t wdt_fault : 1;
+            uint32_t adcs7476_1_limit_high : 1;
+            uint32_t adcs7476_1_limit_low : 1;
+            uint32_t adcs7476_2_limit_high : 1;
+            uint32_t adcs7476_2_limit_low : 1;
+            uint32_t illegal_write : 1;
+            uint32_t dose_rate_low : 1;
+            uint32_t dose_rate_high : 1;
+            uint32_t dose_total_low : 1;
+            uint32_t dose_total_high : 1;
+            uint32_t dose_symmetry_fault : 1;
+            uint32_t dose_dummy_timeout : 1;
+            uint32_t reserved : 17;
         } bits;
     }interlock;
 
@@ -315,8 +315,11 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
             obj->treatment.status.bits.lock = cmd->data[2];
             break;
         case 0x01:
-            cmd->data[2] == 0 ? LOG_I("[%d]: beam data valid\r\n", id) : LOG_I("[%d]: beam data invalid\r\n", id);
+            cmd->data[2] == 0 ? LOG_I("[%d]: treatment para set valid\r\n", id) : LOG_I("[%d]: treatment para set invalid\r\n", id);
             obj->treatment.status.bits.check = cmd->data[2];
+            break;
+        case 0x02:
+            LOG_I("[%d]: beam valid set: %d\r\n", id, cmd->data[2]);
             break;
         default:
             ret = -1;
@@ -421,8 +424,21 @@ static int8_t dose_interlock_parse(enum uart_id id, struct cmd_object *cmd)
         }
         break;
     case 0xB0:
-        // LOG_I("[%d]: dose interlock get %#.4x\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
-        obj->status.interlock.bytes = cmd->data[3] << 8 | cmd->data[2];
+        switch (cmd->data[1])
+        {
+        case 0x00:
+            LOG_I("[%d]: dose interlock override set: %#.x\r\n", id, cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
+            break;
+        case 0x01:
+            LOG_I("[%d]: dose unready override set: %#.x\r\n", id, cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
+            break;
+        case 0x02:
+            obj->status.interlock.bytes = cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
+            break;
+        default:
+            ret = -1;
+            break;
+        }
         break;
     case 0xB1:
         break;
@@ -589,31 +605,33 @@ static int8_t dose_realtime_frame_parse(enum uart_id id, struct cmd_object *cmd)
 #endif
         obj->realtime.state.byte = cmd->data[1];
         obj->fsm_state = cmd->data[2];
-        obj->status.interlock.bytes = cmd->data[4] << 8 | cmd->data[3];
-        obj->realtime.control_point = cmd->data[6] << 8 | cmd->data[5];
-        obj->realtime.radiation_index = cmd->data[8] << 8 | cmd->data[7];
-        uint32_t dose_cumulated = cmd->data[13] | cmd->data[14] << 8 | cmd->data[15] << 16 | cmd->data[16] << 24;
+        obj->status.interlock.bytes = cmd->data[6] << 24 | cmd->data[5] << 16 | cmd->data[4] << 8 | cmd->data[3];
+        obj->realtime.control_point = cmd->data[8] << 8 | cmd->data[7];
+        obj->realtime.radiation_index = cmd->data[10] << 8 | cmd->data[9];
+        uint32_t dose_cumulated = cmd->data[15] | cmd->data[16] << 8 | cmd->data[17] << 16 | cmd->data[18] << 24;
         obj->realtime.dose_cumulated = *(float *)&dose_cumulated;
-        uint32_t dose_rate = cmd->data[17] | cmd->data[18] << 8 | cmd->data[19] << 16 | cmd->data[20] << 24;
+        uint32_t dose_rate = cmd->data[19] | cmd->data[20] << 8 | cmd->data[21] << 16 | cmd->data[22] << 24;
         obj->realtime.dose_rate = *(float *)&dose_rate;
-        obj->realtime.prf_current = cmd->data[21];
-        obj->interlock.one_pulse.count_abnormal= cmd->data[23] << 8 | cmd->data[22];
-        obj->realtime.one_pulse_valid_flag = cmd->data[24];
-        obj->realtime.one_pulse_dose = cmd->data[25] | cmd->data[26] << 8 | cmd->data[27] << 16 | cmd->data[28] << 24;;
+        obj->realtime.prf_current = cmd->data[23];
+        obj->interlock.one_pulse.count_abnormal= cmd->data[25] << 8 | cmd->data[24];
+        obj->realtime.one_pulse_valid_flag = cmd->data[26];
+        obj->realtime.one_pulse_dose = cmd->data[27] | cmd->data[28] << 8 | cmd->data[29] << 16 | cmd->data[30] << 24;;
         // LOG_I("[%d]: recv dose realtime frame: %f\r\n", id, obj->realtime.dose_cumulated);
 
+#if 0
         if (id == BGM_UART_DOSE1)
         {
             /* to fkp and qam */
             uint8_t buf[32] = {0};
-            memcpy(&buf[0], &cmd->data[9], 8); /* dose meter、dose cumulated */
-            memcpy(&buf[8], &cmd->data[29], 12);/* trigger interval、timestamp */
+            memcpy(&buf[0], &cmd->data[11], 8); /* dose meter、dose cumulated */
+            memcpy(&buf[8], &cmd->data[31], 12);/* trigger interval、timestamp */
             ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM | RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, buf, 20);
             if (ret != 0)
             {
                 LOG_E("[%d]: cmd to rtm upload err: %d\r\n", id, ret);
             }
         }
+#endif
         break;
     default:
         LOG_E("[%d]: invalid realtime cmd type: %x\r\n", id, cmd->data[0]);
@@ -648,19 +666,19 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                 osMutexAcquire(obj->mutex, osWaitForever);
                 obj->realtime.state.byte = cmd->data[3];
                 obj->fsm_state = cmd->data[4];
-                obj->status.interlock.bytes = cmd->data[6] << 8 | cmd->data[5];
-                obj->realtime.control_point = cmd->data[8] << 8 | cmd->data[7];
-                obj->realtime.radiation_index = cmd->data[10] << 8 | cmd->data[9];
-                // uint32_t dose_meter = cmd->data[11] | cmd->data[12] << 8 | cmd->data[13] << 16 | cmd->data[14] << 24;
-                uint32_t dose_cumulated = cmd->data[15] | cmd->data[16] << 8 | cmd->data[17] << 16 | cmd->data[18] << 24;
+                obj->status.interlock.bytes = cmd->data[8] << 24 | cmd->data[7] << 16 | cmd->data[6] << 8 | cmd->data[5];
+                obj->realtime.control_point = cmd->data[10] << 8 | cmd->data[9];
+                obj->realtime.radiation_index = cmd->data[12] << 8 | cmd->data[11];
+                // uint32_t dose_meter = cmd->data[13] | cmd->data[14] << 8 | cmd->data[15] << 16 | cmd->data[16] << 24;
+                uint32_t dose_cumulated = cmd->data[17] | cmd->data[18] << 8 | cmd->data[19] << 16 | cmd->data[20] << 24;
 
                 obj->realtime.dose_cumulated = *(float *)&dose_cumulated;
-                uint32_t dose_rate = cmd->data[19] | cmd->data[20] << 8 | cmd->data[21] << 16 | cmd->data[22] << 24;
+                uint32_t dose_rate = cmd->data[21] | cmd->data[22] << 8 | cmd->data[23] << 16 | cmd->data[24] << 24;
                 obj->realtime.dose_rate = *(float *)&dose_rate;
-                obj->realtime.prf_current = cmd->data[23];
-                obj->interlock.one_pulse.count_abnormal= cmd->data[25] << 8 | cmd->data[24];
-                obj->realtime.one_pulse_valid_flag = cmd->data[26];
-                obj->realtime.one_pulse_dose = cmd->data[27] | cmd->data[28] << 8 | cmd->data[29] << 16 | cmd->data[30] << 24;
+                obj->realtime.prf_current = cmd->data[25];
+                obj->interlock.one_pulse.count_abnormal= cmd->data[27] << 8 | cmd->data[26];
+                obj->realtime.one_pulse_valid_flag = cmd->data[28];
+                obj->realtime.one_pulse_dose = cmd->data[29] | cmd->data[30] << 8 | cmd->data[31] << 16 | cmd->data[32] << 24;
                 osMutexRelease(obj->mutex);
 
                 // LOG_I("[%d]: recv dose realtime data: %f\r\n", id, obj->realtime.dose_cumulated);
@@ -669,8 +687,8 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                 {
                     /* to fkp and qam */
                     uint8_t buf[32] = {0};
-                    memcpy(&buf[0], &cmd->data[11], 8); /* dose meter、dose cumulated */
-                    memcpy(&buf[8], &cmd->data[31], 12);/* trigger interval、timestamp */
+                    memcpy(&buf[0], &cmd->data[13], 8); /* dose meter、dose cumulated */
+                    memcpy(&buf[8], &cmd->data[33], 12);/* trigger interval、timestamp */
 
                     ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM | RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, buf, 20);
                     if (ret != 0)
@@ -1066,19 +1084,25 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
     case DOSE_INFO_BEAM_SET:
     {
         struct one_beam_order *beam_info = (struct one_beam_order *)data;
-        /* 1. beam unlock */
+        /* 0. beam invalid set */
+        offset = 0;
+        buf[offset++] = 0x43;
+        buf[offset++] = 0x02;
+        buf[offset++] = 0x00;
+        ret = dose_cmd_write(id, 0x02, buf, offset);
+        /* 1. treatment para unlock */
         offset = 0;
         buf[offset++] = 0x43;
         buf[offset++] = 0x00;
         buf[offset++] = 0x00;
-        ret = dose_cmd_write(id, 0x02, buf, offset);
+        ret |= dose_cmd_write(id, 0x02, buf, offset);
         /* 2. beam meter set */
         offset = 0;
         buf[offset++] = 0x42;
         buf[offset++] = 0x01;
         memcpy(&buf[offset], &beam_info->info->beamMeterSet, sizeof(float));
         offset += sizeof(float);
-        ret = dose_cmd_write(id, 0x02, buf, offset);
+        ret |= dose_cmd_write(id, 0x02, buf, offset);
         LOG_I("[%d]: beam meter set: %f\r\n", id, beam_info->info->beamMeterSet);
         /* 3. beam cp & ri num */
         offset = 0;
@@ -1088,7 +1112,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = beam_info->info->CPQuantityInBeam >> 8;
         buf[offset++] = beam_info->info->RIQuantityInBeam;          /* ri num low */
         buf[offset++] = beam_info->info->RIQuantityInBeam >> 8;     /* ri num high */
-        ret = dose_cmd_write(id, 0x02, buf, offset);
+        ret |= dose_cmd_write(id, 0x02, buf, offset);
         LOG_I("[%d]: beam cp num: %d, ri num: %d\r\n", id, beam_info->info->CPQuantityInBeam, beam_info->info->RIQuantityInBeam);
         /* 4. beam cp & ri map */
         offset = 0;
@@ -1100,7 +1124,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
             buf[offset++] = (i + 1) >> 8;
             buf[offset++] = beam_info->cp_ri_map[i];        /* ri value low */
             buf[offset++] = beam_info->cp_ri_map[i] >> 8;   /* ri value high */
-            ret = dose_cmd_write(id, 0x02, buf, offset);
+            ret |= dose_cmd_write(id, 0x02, buf, offset);
             offset = 2;
         }
         /* 5. beam ri value */
@@ -1119,7 +1143,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
             memcpy(&buf[offset], &dose_expect_time, sizeof(float));
             offset += sizeof(float);
 
-            ret = dose_cmd_write(id, 0x02, buf, offset);
+            ret |= dose_cmd_write(id, 0x02, buf, offset);
             offset = 2;
         }
         /* 6. beam info */
@@ -1129,17 +1153,29 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0;
         buf[offset++] = beam_info->info->radiationType;
         buf[offset++] = beam_info->info->deliveryType;
-        ret = dose_cmd_write(id, 0x02, buf, offset);
-        /* 7. beam lock and validate */
+        ret |= dose_cmd_write(id, 0x02, buf, offset);
+        /* 7. treatment para lock and validate */
         offset = 0;
         buf[offset++] = 0x43;
         buf[offset++] = 0x00;
         buf[offset++] = 0x01;
-        ret = dose_cmd_write(id, 0x02, buf, offset);
+        ret |= dose_cmd_write(id, 0x02, buf, offset);
 
         offset = 0;
         buf[offset++] = 0x43;
         buf[offset++] = 0x01;
+        buf[offset++] = 0x01;
+        ret |= dose_cmd_write(id, 0x02, buf, offset);
+
+        if (ret != 0)
+        {
+            LOG_E("[%d]: beam set failed\r\n", id);
+            return -5;
+        }
+        /* 8. beam valid set */
+        offset = 0;
+        buf[offset++] = 0x43;
+        buf[offset++] = 0x02;
         buf[offset++] = 0x01;
         ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
@@ -1235,7 +1271,7 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         break;
     case DOSE_INFO_INTERLOCK_GET:
         buf[offset++] = 0xB0;
-        buf[offset++] = 0x00;
+        buf[offset++] = 0x02;
         ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
     case DOSE_INFO_CUMULATED_CLEAR:
@@ -1249,12 +1285,18 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = *(uint8_t *)data;
         ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
+    case DOSE_INFO_PLAN_DATA_CLEAR:
+        buf[offset++] = 0xC1;
+        buf[offset++] = 0x01;
+        ret = dose_cmd_write(id, 0x02, buf, offset);
+        break;
     case DOSE_INFO_FAULT_ALL_CLEAR:
         buf[offset++] = 0xC1;
         buf[offset++] = 0x05;
         ret = dose_cmd_write(id, 0x02, buf, offset);
         break;
     default:
+        ret = -1;
         break;
     }
 

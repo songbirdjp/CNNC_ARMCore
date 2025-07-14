@@ -3,6 +3,7 @@
 #include "ulog.h"
 #include "afc_cmd.h"
 #include "bgm_app.h"
+#include "bgm_def.h"
 
 typedef struct
 {
@@ -304,6 +305,8 @@ int8_t websocket_cmd_parse(APP_DATA_RECV *info)
         break;
     case TAG_PLAN_DATA_CLEAR:
         ret = clearPlan();
+        ret |= dose_data_info_set(BGM_UART_DOSE1, DOSE_INFO_PLAN_DATA_CLEAR, NULL, 0);
+        ret |= dose_data_info_set(BGM_UART_DOSE2, DOSE_INFO_PLAN_DATA_CLEAR, NULL, 0);
         break;
     case TAG_CALI_DATA_SETTING:
         ret = cali_data_set(info);

@@ -68,12 +68,14 @@ static int8_t vps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     switch (buf[1])
     {
     case READ_HOLDING_REGISTERS:
+#if 0
         LOG_I("[%d][vps] ", id);
         for (uint8_t i = 0; i < buf[2] / 2; i++)
         {
             LOG_I("%.4x ", buf[3 + i * 2] << 8 | buf[4 + i * 2]);
         }
         LOG_I("\r\n");
+#endif
         switch (cmd_id)
         {
         case VPS_SOFTWARE_VERSION:
@@ -616,6 +618,46 @@ static int8_t vps_functions_init(void)
 }
 INIT_ENV_EXPORT(vps_functions_init);
 
+static int8_t vps_status_get_entry(void *argument)
+{
+    int8_t ret = 0;
+
+    osDelay(10000);
+
+    for (;;)
+    {
+        ret = vps_link_menu_value_read();
+        if (ret != 0)
+        {
+            LOG_E("vps status read err: %d\r\n", ret);
+        }
+
+        osDelay(500);
+    }
+
+    return 0;
+}
+
+static int8_t vps_thread_init(void)
+{
+    osThreadAttr_t attr = {
+    .name = "vps_thread",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
+    };
+
+    osThreadId_t vps_threadHandle = osThreadNew(vps_status_get_entry, NULL, &attr);
+    if (vps_threadHandle == NULL)
+    {
+        LOG_E("thread vps status get create err\r\n");
+        return -1;
+    }
+
+    return 0;
+}
+INIT_APP_EXPORT(vps_thread_init);
+
+
 #ifndef VPS_TEST
 #include "shell.h"
 static int8_t vps_read_test(uint8_t argc, char **argv)
@@ -685,4 +727,26 @@ static int8_t vps_cmd_test(uint8_t argc, char **argv)
     return ret;
 }
 MSH_CMD_EXPORT_ALIAS(vps_cmd_test, vps_cmd_test, vps cmd test);
+static int8_t vps_status_output(uint8_t argc, char **argv)
+{
+    struct vps_status *obj = vps_status_get();
+    osMutexAcquire(obj->mutex, osWaitForever);
+    LOG_I("software_version: %.3f\r\n", obj->software_version / 1000.0f);
+    LOG_I("button_lock: %d\r\n", obj->button_lock);
+    LOG_I("run_status: %d\r\n", obj->run_status);
+    LOG_I("voltage_output: %f\r\n", obj->voltage_output);
+    LOG_I("current_output: %f\r\n", obj->current_output);
+    LOG_I("power_voltage: %f\r\n", obj->power_voltage);
+    LOG_I("fault_stop: %d\r\n", obj->fault_stop);
+    LOG_I("fault_cur: %d\r\n", obj->fault_cur);
+    LOG_I("fault_record: %d %d %d %d\r\n", obj->fault_record[0], obj->fault_record[1], obj->fault_record[2], obj->fault_record[3]);
+    LOG_I("fault_code: %d\r\n", obj->fault_code);
+    LOG_I("fire_count: %d\r\n", obj->fire_count);
+    LOG_I("fire_count_uplimit: %d\r\n", obj->fire_count_uplimit);
+    LOG_I("fire_stop_time: %d\r\n", obj->fire_stop_time);
+    osMutexRelease(obj->mutex);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(vps_status_output, vps_status_output, vps status output);
 #endif

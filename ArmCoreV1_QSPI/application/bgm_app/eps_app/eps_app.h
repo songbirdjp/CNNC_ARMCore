@@ -47,11 +47,6 @@ struct eps_status
     osMutexId_t mutex;
 };
 
-struct eps_data
-{
-    uint8_t software_version;
-};
-
 
 #ifdef __cplusplus
 }

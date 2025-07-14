@@ -11,6 +11,7 @@
 #include "bgm_app.h"
 #include "io_port.h"
 #include "plan_data.h"
+#include "event_override.h"
 
 #define DATA_PROCESS_LAN_EVENT      (1<<0)
 #define DATA_PROCESS_TCP_EVENT      (1<<1)
@@ -100,7 +101,6 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
 {
     int8_t ret = 0;
     static enum bgm_fsm_state last_fsm_state = BGM_STATE_MAX;
-    static uint16_t last_radiation_index = 0;
     struct bgm_data_info *obj = bgm_data_info_get();
 
     osMutexAcquire(obj->mutex, osWaitForever);
@@ -115,40 +115,49 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
         obj->fsm_state_request_pre = last_fsm_state;
         last_fsm_state = obj->fsm_state_request;
     }
-    // obj->beam_id = recv->OutU8_BeamId;
 
-    // if (obj->fsm_state != BGM_STATE_WORK && obj->fsm_state != BGM_STATE_COMPLETE)
-    // {
-    //     obj->radiation_index = recv->OutU16_RadiationIndex;
-    // }
-    // else
-    // {
-    //     switch (obj->deliver_type)
-    //     {
-    //     case DELIVER_TYPE_VMAT:
-    //     case DELIVER_TYPE_HiMAT:
-    //     case DELIVER_TYPE_SURVIEW:
-    //     case DELIVER_TYPE_CT:
-    //     case DELIVER_TYPE_SSIMRT:
-    //         obj->radiation_index = recv->OutU16_RadiationIndex;
-    //         if (last_radiation_index != recv->OutU16_RadiationIndex)
-    //         {
-    //             last_radiation_index = recv->OutU16_RadiationIndex;
+#if 0
+    static uint16_t last_radiation_index = 0;
+    obj->beam_id = recv->OutU8_BeamId;
 
-    //             ret = dose_radiation_index_set(BGM_UART_DOSE1, last_radiation_index, 0);
-    //             ret |= dose_radiation_index_set(BGM_UART_DOSE2, last_radiation_index, 0);
-    //         }
-    //         break;
-    //     case DELIVER_TYPE_SWIMRT:
-    //     case DELIVER_TYPE_CRT:
-    //         /* radiation index is updated by dose board */
-    //         obj->radiation_index = dose_radiation_index_get(BGM_UART_DOSE1);
-    //         break;
-    //     default:
-    //         LOG_E("invalid deliver type: %d\r\n", obj->deliver_type);
-    //         break;
-    //     }
-    // }
+    if (obj->fsm_state != BGM_STATE_WORK && obj->fsm_state != BGM_STATE_COMPLETE)
+    {
+        obj->radiation_index = recv->OutU16_RadiationIndex;
+    }
+    else
+    {
+        switch (obj->deliver_type)
+        {
+        case DELIVER_TYPE_VMAT:
+        case DELIVER_TYPE_HiMAT:
+        case DELIVER_TYPE_SURVIEW:
+        case DELIVER_TYPE_CT:
+        case DELIVER_TYPE_SSIMRT:
+            obj->radiation_index = recv->OutU16_RadiationIndex;
+            if (last_radiation_index != recv->OutU16_RadiationIndex)
+            {
+                last_radiation_index = recv->OutU16_RadiationIndex;
+
+                ret = dose_radiation_index_set(BGM_UART_DOSE1, last_radiation_index, 0);
+                ret |= dose_radiation_index_set(BGM_UART_DOSE2, last_radiation_index, 0);
+            }
+            break;
+        case DELIVER_TYPE_SWIMRT:
+        case DELIVER_TYPE_CRT:
+            /* radiation index is updated by dose board */
+            obj->radiation_index = dose_radiation_index_get(BGM_UART_DOSE1);
+            break;
+        default:
+            LOG_E("invalid deliver type: %d\r\n", obj->deliver_type);
+            break;
+        }
+    }
+#endif
+
+    obj->interlock_override = recv->OutU32_InterlockOverride;
+    obj->unready_override = recv->OutU32_UnreadyOveride;
+
+    /* TODO: add function send override to dose */
 
     osMutexRelease(obj->mutex);
 
@@ -166,7 +175,7 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
     send->InU16_RadiationIndex = obj->radiation_index;
     osMutexRelease(obj->mutex);
 
-    send->InU16_NotReadyEvent = checkPlanRecvStatus() != 0 ? 1 : 0;
+    send->InU16_NotReadyEvent = unready_event_get();
 
     struct interlocks interlock = interlock_status_get();
     send->InU32_WaringInterlock = 0;

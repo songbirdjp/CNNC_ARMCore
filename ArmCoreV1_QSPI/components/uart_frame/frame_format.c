@@ -100,7 +100,7 @@ static void frame_format_timer_callback(void *arg)
         return;
     }
 
-#if 1
+#if 0
     LOG_I("send repeat count: %d\r\n", self->tx_retry_count);
     for (uint8_t i = 0; i < self->tx_retry_data_len; i++)
     {

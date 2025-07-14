@@ -8,6 +8,7 @@ set(include_path ${include_path}
     "${current_path}/vps_app" 
     "${current_path}/io_app" 
     "${current_path}/rtm_app" 
+    "${current_path}/interlock_app" 
     "${current_path}" 
     PARENT_SCOPE)
 
@@ -19,5 +20,6 @@ set(src_path ${src_path}
     "${current_path}/vps_app/*.*" 
     "${current_path}/io_app/*.*" 
     "${current_path}/rtm_app/*.*" 
+    "${current_path}/interlock_app/*.*" 
     "${current_path}/*.*" 
     PARENT_SCOPE)

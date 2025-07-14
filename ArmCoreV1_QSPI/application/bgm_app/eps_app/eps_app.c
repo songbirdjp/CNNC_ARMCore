@@ -68,13 +68,14 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
     switch (buf[1])
     {
     case READ_HOLDING_REGISTERS:
+#if 0
         LOG_I("[%d][eps] ", id);
         for (uint8_t i = 0; i < buf[2] / 2; i++)
         {
             LOG_I("%.4x ", buf[3 + i * 2] << 8 | buf[4 + i * 2]);
         }
         LOG_I("\r\n");
-
+#endif
         switch (cmd_id)
         {
         case EPS_SOFTWARE_VERSION:
@@ -87,7 +88,7 @@ static int8_t eps_cmd_parse(enum uart_id id, struct cmd_object *cmd)
             obj->run_status = buf[3] << 8 | buf[4];
             obj->voltage_output = (float)(buf[5] << 8 | buf[6]) / 100.0f;
             obj->current_output = (float)(buf[7] << 8 | buf[8]) / 100.0f;
-            obj->power_output = (float)(buf[9] << 8 | buf[10]) / 100.0f;
+            obj->power_output = (float)(buf[9] << 8 | buf[10]);
             osMutexRelease(obj->mutex);
             break;
         case EPS_FAULT_STOP:
@@ -581,6 +582,45 @@ static int8_t eps_functions_init(void)
 }
 INIT_ENV_EXPORT(eps_functions_init);
 
+static int8_t eps_status_get_entry(void *argument)
+{
+    int8_t ret = 0;
+
+    osDelay(10000);
+
+    for (;;)
+    {
+        ret = eps_link_menu_value_read();
+        if (ret != 0)
+        {
+            LOG_E("eps status read err: %d\r\n", ret);
+        }
+
+        osDelay(500);
+    }
+
+    return 0;
+}
+
+static int8_t eps_thread_init(void)
+{
+    osThreadAttr_t attr = {
+    .name = "eps_thread",
+    .stack_size = 1024 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
+    };
+
+    osThreadId_t eps_threadHandle = osThreadNew(eps_status_get_entry, NULL, &attr);
+    if (eps_threadHandle == NULL)
+    {
+        LOG_E("thread eps status get create err\r\n");
+        return -1;
+    }
+
+    return 0;
+}
+INIT_APP_EXPORT(eps_thread_init);
+
 #ifndef EPS_TEST
 #include "shell.h"
 static int8_t eps_read_test(uint8_t argc, char **argv)
@@ -650,4 +690,24 @@ static int8_t eps_cmd_test(uint8_t argc, char **argv)
     return ret;
 }
 MSH_CMD_EXPORT_ALIAS(eps_cmd_test, eps_cmd_test, eps cmd test);
+static int8_t eps_status_output(uint8_t argc, char **argv)
+{
+    struct eps_status *obj = eps_status_get();
+    osMutexAcquire(obj->mutex, osWaitForever);
+    LOG_I("software_version: %.3f\r\n", obj->software_version / 1000.0f);
+    LOG_I("run_status: %d\r\n", obj->run_status);
+    LOG_I("voltage_output: %f\r\n", obj->voltage_output);
+    LOG_I("current_output: %f\r\n", obj->current_output);
+    LOG_I("power_output: %f\r\n", obj->power_output);
+    LOG_I("fault_stop: %d\r\n", obj->fault_stop);
+    LOG_I("fault_cur: %d\r\n", obj->fault_cur);
+    LOG_I("fault_record: %d %d %d %d\r\n", obj->fault_record[0], obj->fault_record[1], obj->fault_record[2], obj->fault_record[3]);
+    LOG_I("fault_code: %d\r\n", obj->fault_code);
+    LOG_I("fan_fault_enable: %d\r\n", obj->fan_fault_enable);
+    LOG_I("storage: %d\r\n", obj->storage);
+    osMutexRelease(obj->mutex);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(eps_status_output, eps_status_output, eps status output);
 #endif

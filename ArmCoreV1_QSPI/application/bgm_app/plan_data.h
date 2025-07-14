@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 #define MAX_BEAM_NUM    30
-#define MAX_CP_IN_BEAM 256
+#define MAX_CP_IN_BEAM 1280
 #define CP_IN_PACK 32
 
 typedef enum{

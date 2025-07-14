@@ -805,47 +805,46 @@ static int8_t dose_rate_calculate(void *argument)
 {
     int8_t ret = 0;
     float dose1_meter_cur = 0, dose2_meter_cur = 0;
-    // enum bgm_fsm_state state_current = BGM_STATE_MAX;
-    // float dose1_rate = 0, dose2_rate = 0;
-    // struct bgm_data_info *obj = bgm_data_info_get();
+    enum bgm_fsm_state state_current = BGM_STATE_MAX;
+    struct bgm_data_info *obj = bgm_data_info_get();
 
     for (;;)
     {
         osDelay(200);
 
-        // osMutexAcquire(obj->mutex, osWaitForever);
-        // state_current = obj->fsm_state;
-        // osMutexRelease(obj->mutex);
+        osMutexAcquire(obj->mutex, osWaitForever);
+        state_current = obj->fsm_state;
+        osMutexRelease(obj->mutex);
 
+        /* 1. get dose state */
         // if (state_current != BGM_STATE_WORK)
-        // {
-        //     ret = dose_rate_value_set(BGM_UART_DOSE1, &dose1_rate);
-        //     ret |= dose_rate_value_set(BGM_UART_DOSE2, &dose2_rate);
-        //     if (ret != 0)
-        //     {
-        //         LOG_E("dose rate set err: %d\r\n", ret);
-        //     }
-        // }
+        {
+            ret = dose_radiation_data_get(BGM_UART_DOSE1);
+            ret |= dose_radiation_data_get(BGM_UART_DOSE2);
+            if (ret != 0)
+            {
+                LOG_E("dose_radiation_data_get err: %d\r\n", ret);
+            }
+        }
 
-        /* 0. get afc encoder value */
+        /* 2. get afc encoder value */
         ret = afc_encoder_value_get();
         if (ret != 0)
         {
             LOG_E("afc encoder value get err: %d\r\n", ret);
         }
 
-        /* TODO: */
-        /* 1. 周期性核对dose1和dose2的剂量偏差，控制在10%以内？ */
-        dose1_meter_cur = dose_meter_value_get(BGM_UART_DOSE1);
-        dose2_meter_cur = dose_meter_value_get(BGM_UART_DOSE2);
-        if (fabs(dose1_meter_cur - dose2_meter_cur) / dose1_meter_cur > 0.1)
+        /* 3. 周期性核对dose1和dose2的剂量偏差，控制在10%以内？ */
+        if (state_current == BGM_STATE_WORK)
         {
-            // LOG_E("dose meter difference exceed 10%% limit\r\n");
+            dose1_meter_cur = dose_meter_value_get(BGM_UART_DOSE1);
+            dose2_meter_cur = dose_meter_value_get(BGM_UART_DOSE2);
+            if ((fabs(dose1_meter_cur - dose2_meter_cur) / dose1_meter_cur > 0.1) && fabs(dose1_meter_cur - dose2_meter_cur) > 10.0f)
+            {
+                LOG_E("dose meter difference exceed 10%% limit: %f, %f\r\n", dose1_meter_cur, dose2_meter_cur);
+                /* TODO: 触发异常处理 */
+            }
         }
-
-        /* 2.  */
-
-
     }
 
     return 0;
@@ -991,8 +990,8 @@ static int8_t bgm_info_get(uint8_t argc, char **argv)
     LOG_I("fsm_state_dose2: %d\r\n", dose_fsm_state_get(BGM_UART_DOSE2));
 #endif
 
-    LOG_I("interlock_dose1: %d\r\n", dose_interlock_get(BGM_UART_DOSE1));
-    LOG_I("interlock_dose2: %d\r\n", dose_interlock_get(BGM_UART_DOSE2));
+    LOG_I("interlock_dose1: %#.8x\r\n", dose_interlock_get(BGM_UART_DOSE1));
+    LOG_I("interlock_dose2: %#.8x\r\n", dose_interlock_get(BGM_UART_DOSE2));
 
     LOG_I("beam_id: %d\r\n", info.beam_id);
     LOG_I("radiation_index: %d\r\n", info.radiation_index);

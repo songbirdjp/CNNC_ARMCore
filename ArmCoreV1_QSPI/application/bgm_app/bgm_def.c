@@ -115,7 +115,7 @@ enum dose_fsm_state dose_fsm_state_get(enum uart_id id)
     return dose_data_info_get(id, DOSE_INFO_FSM_STATE_GET, NULL);
 }
 
-uint16_t dose_interlock_get(enum uart_id id)
+uint32_t dose_interlock_get(enum uart_id id)
 {
     return dose_data_info_get(id, DOSE_INFO_INTERLOCK_GET, NULL);
 }

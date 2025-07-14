@@ -18,7 +18,7 @@ int8_t dose_generate_mode_set(enum uart_id id, uint8_t *mode);
 int8_t dose_pulse_mode_set(enum uart_id id, uint8_t *pulse_mode);
 int8_t dose_fsm_state_set(enum uart_id id, enum dose_fsm_state state);
 enum dose_fsm_state dose_fsm_state_get(enum uart_id id);
-uint16_t dose_interlock_get(enum uart_id id);
+uint32_t dose_interlock_get(enum uart_id id);
 int8_t dose_state_polling(enum uart_id id);
 int8_t dose_beam_cumulated_clear(enum uart_id id);
 int8_t beam_deliver_type_get(uint16_t beam_id, uint8_t *deliver_type);

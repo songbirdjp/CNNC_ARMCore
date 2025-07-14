@@ -98,7 +98,7 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
          nrtBeamData.errorCode = 0xf0;
          return 0;
     }   
- //   LOG_I("head1: %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength);
+   LOG_I("head1: %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength);
 
     if((u8LenTotal != PLAN_DATA_LENGTH) || (frameHead.frmLength != PLAN_PAYLOAD_LENGTH))
     {
@@ -106,7 +106,7 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
         LOG_E("recv error #1: tcp buf len = %d frame len =%d!!! \r\n", u8LenTotal, frameHead.frmLength);
         return -1;
     }
-  //  LOG_I("head2:%d %d %d %d\r\n", frameHead.totalPackInOneBeam,frameHead.packIndexInOneBeam,frameHead.CPQuantityInPack,frameHead.RIQuantityInPack);
+   LOG_I("head2:%d %d %d %d\r\n", frameHead.totalPackInOneBeam,frameHead.packIndexInOneBeam,frameHead.CPQuantityInPack,frameHead.RIQuantityInPack);
 
     if(frameHead.packIndexInOneBeam == 1)
     {
@@ -118,7 +118,7 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
 
         lastPackIndex = 0;
         nrtBeamData.beamIndex = data[headLength];//current beam index
-
+		LOG_E("new beam %d %d\r\n", nrtBeamData.totalBeam, nrtBeamData.beamIndex);
         nrtBeamData.totalCPInBeam[nrtBeamData.totalBeam - 1] = 0;
         nrtBeamData.totalRIInBeam[nrtBeamData.totalBeam - 1] = 0;
     }  
@@ -202,6 +202,7 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
         nrtBeamData.pRIData = nrtBeamData.pCPData +  MAX_CP_IN_BEAM*2;
         nrtBeamData.oneBeamSize[beamBufIndex] += sdFixDataLen; //length fix area, beamID,doseRateSet,beamMeterSet,totalCP,totalRI
         nrtBeamData.oneBeamSize[beamBufIndex] += MAX_CP_IN_BEAM*2;//cp area, always 512B in one beam in sdram
+		LOG_I("111 nrtBeamData.oneBeamSize[%d] = %d\r\n",beamBufIndex, nrtBeamData.oneBeamSize[beamBufIndex]);
     } 
    
     saveDataIndex += sdFixDataLen;
@@ -223,7 +224,7 @@ int8_t nrtRecvPlan(APP_DATA_RECV *info)
     // LOG_I("\r\n");
     nrtBeamData.pRIData += frameHead.RIQuantityInPack*riDataLen;
     nrtBeamData.oneBeamSize[beamBufIndex] += frameHead.RIQuantityInPack*riDataLen;
-
+	LOG_I("nnn nrtBeamData.oneBeamSize[%d] = %d\r\n",beamBufIndex, nrtBeamData.oneBeamSize[beamBufIndex]);
     if (frameHead.packIndexInOneBeam == frameHead.totalPackInOneBeam) //the last pack in one beam
     {
         lastPackIndex = 0;

@@ -56,7 +56,7 @@ static int8_t ioe_config(void)
         uint8_t iocon[2];
         uint8_t gppu[2]
     };
-    
+
     struct reg_cfg reg_cfg = 
     {
         .dir = {0xFF, 0xFF},
@@ -398,15 +398,15 @@ static GPIO_PinState ReadIO_ModSumDetect(void)
 }
 static GPIO_PinState ReadIO_Dose1Detect(void)
 {
-    return gpio_common_get()->read("GPIOB_8");   
+    return gpio_common_get()->read("GPIOB_8");
 }
 static GPIO_PinState ReadIO_Dose2Detect(void)
 {
-    return gpio_common_get()->read("GPIOB_9");  
+    return gpio_common_get()->read("GPIOB_9");
 }
 static GPIO_PinState ReadIO_EmergencyDetect(void)
 {
-    return gpio_common_get()->read("GPIOC_8");  
+    return gpio_common_get()->read("GPIOC_8");
 }
 
 static int8_t io_init(void)

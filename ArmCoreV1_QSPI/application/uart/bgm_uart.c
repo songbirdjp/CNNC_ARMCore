@@ -490,10 +490,14 @@ repeat:
         if (id == BGM_UART_EPS_VPS) /* modbus连接 */
         {
             #define UART_MODBUS_TIMEOUT 100
+            #define UART_MODBUS_RETRY_TIMES 50
+            #define UART_MODBUS_RETRY_INTERVAL 50
+            static uint8_t retry_times = 0;
+
             ret = uart_data_recv_with_block(id, buf, sizeof(buf), UART_MODBUS_TIMEOUT);
             if (ret != 0)
             {
-                LOG_E("[%d]: uart data recv with block err: %d\r\n", id, ret);
+                LOG_E("[%d]: uart data recv with block err: %d, retry_times: %d\r\n", id, ret, retry_times);
             }
             else
             {
@@ -521,16 +525,11 @@ repeat:
                 }
             }
 
-            #define UART_MODBUS_RETRY_TIMES 50
-            static uint8_t retry_times = 0;
-
             if (ret != 0)
             {
-                LOG_E("[%d]: retry times: %d\r\n", id, retry_times);
-
                 if (retry_times++ < UART_MODBUS_RETRY_TIMES)
                 {
-                    osDelay(50);
+                    osDelay(UART_MODBUS_RETRY_INTERVAL);
                     goto repeat;
                 }
                 else
@@ -578,7 +577,7 @@ static int8_t uart_thread_init(void)
 
         attr.name = "uart_recv_thread";
         attr.stack_size = 1024 * 4;
-        attr.priority = osPriorityAboveNormal;
+        attr.priority = osPriorityAboveNormal1;
         thread_id = osThreadNew(uart_recv_entry, &uart_id[i], &attr);
         if (thread_id == NULL)
         {
