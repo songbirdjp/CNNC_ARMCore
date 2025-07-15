@@ -979,7 +979,7 @@ static int8_t dose_cmd_write(enum uart_id id, uint8_t type, void *data, uint16_t
     ret = uart_cmd_write(id, &cmd);
     if (ret != 0)
     {
-        LOG_E("uart cmd write err: %d\r\n", ret);
+        LOG_E("[%d]: uart cmd write err: %d\r\n", id, ret);
         return -4;
     }
 

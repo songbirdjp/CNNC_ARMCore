@@ -102,6 +102,7 @@ static void frame_format_timer_callback(void *arg)
 
 #if 0
     LOG_I("send repeat count: %d\r\n", self->tx_retry_count);
+    LOG_I("recv_response_count: %#.4x\r\n", self->recv_response_count);
     for (uint8_t i = 0; i < self->tx_retry_data_len; i++)
     {
         LOG_I("%.2x ", self->tx_buffer[i]);

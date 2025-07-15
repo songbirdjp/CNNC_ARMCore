@@ -392,7 +392,7 @@ int8_t uart_modbus_cmd_write(enum uart_id id, struct modbus_cmd_object *obj)
     ret = uart_cmd_write(id, &cmd);
     if (ret != 0)
     {
-        LOG_E("uart cmd write err: %d\r\n", ret);
+        LOG_E("[%d]: uart cmd write err: %d\r\n", id, ret);
         return -2;
     }
 
