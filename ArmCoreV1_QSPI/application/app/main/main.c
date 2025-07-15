@@ -195,7 +195,7 @@ static int8_t fpu_test(uint8_t argc, uint8_t **argv)
         end += __HAL_TIM_GET_AUTORELOAD(&htim2);
     }
     printf("time:%u\r\n", end - start);
-    
+
     printf("%f\r\n", f);
 
     return 0;
@@ -278,7 +278,7 @@ static int8_t hw_crc_test(uint8_t argc, uint8_t **argv)
 
     res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
     printf("crc16 res = %#x\r\n", res);
-    
+
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(hw_crc_test, hw_crc_test, test crc);
@@ -374,7 +374,7 @@ int main(void)
   /* Console initialize */
   device_console_init();
   system_info_print();
-  system_fun_init(); 
+  system_fun_init();
 
 //   printf("----this is bootloader----\r\n");
 

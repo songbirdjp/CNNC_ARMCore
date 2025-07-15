@@ -17,7 +17,7 @@ uint8_t *os_tool_mutex_holder_get(osMutexId_t mutex_id, ...)
     osThreadId_t holder_id = osMutexGetOwner(mutex_id);
     uint8_t *holder_name = osThreadGetName(holder_id);
 
-    if (file != NULL)
+    if (file != NULL && line != 0 && function != NULL)
     {
         LOG_I("[file]: %s\r\n[line]: %d\r\n[function]: %s\r\n", file, line, function);
     }

@@ -2753,7 +2753,7 @@ static int8_t dose_rate_calculate(void *argument)
         }
 
         /* 3. calculate dose rate */
-        if (radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
+        if (fsm_state_get() == FSM_STATE_WORK && radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
         {
             dose_meter_cur = dose_value_status_get(DOSE_ACCUMULATED);
             dose_meter_pre = dose_meter_cur == 0 ? dose_meter_cur : dose_meter_pre;
@@ -2789,20 +2789,28 @@ struct radiation_ri_data
     uint64_t dose_cumulated;    /* record dose cumulated when ri update */
 };
 static struct radiation_ri_data ri_data_array[4096] __attribute__((section(".ram_itcm"))) = {0};
+static int8_t dose_radiation_index_update_dump(uint32_t time_excess_ms)
+{
+    uint16_t ri = radiation_data_value_get(DOSE_RADIATION_IDX_CURRENT);
+    uint16_t ri_max = sizeof(ri_data_array) / sizeof(ri_data_array[0]);
+    if (ri < ri_max)
+    {
+        ri_data_array[ri].timestamp = osKernelGetTickCount() * 1000 / osKernelGetTickFreq();
+        ri_data_array[ri].dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
+    }
+
+    return dose_radiation_index_update(time_excess_ms);
+}
 #endif
 
 static int8_t dose_interpolation_init(void)
 {
 #ifdef RADIATION_EFFICIENCY_TEST
-    uint16_t ri = radiation_data_value_get(DOSE_RADIATION_IDX_CURRENT);
-    if (ri < sizeof(ri_data_array) / sizeof(ri_data_array[0]))
-    {
-        ri_data_array[ri].timestamp = osKernelGetTickCount() * 1000 / osKernelGetTickFreq();
-        ri_data_array[ri].dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
-    }
+    return radiation_index_update_callback(dose_radiation_index_update_dump);
+#else
+    return radiation_index_update_callback(dose_radiation_index_update);
 #endif
 
-    return radiation_index_update_callback(dose_radiation_index_update);
 }
 
 static int8_t interlock_fault_callback(uint32_t interlock)
@@ -3120,7 +3128,7 @@ static int8_t dose_interpolation_init_test(uint8_t argc, char **argv)
     }
 
     /* 2. set dose meter value */
-    ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, 1000);
+    ret = beam_data_value_set(0, BEAM_DOSE_METER, 0, 10240);
     if (ret != 0)
     {
         LOG_E("radiation data value set err: %d\r\n", ret);
@@ -3128,8 +3136,8 @@ static int8_t dose_interpolation_init_test(uint8_t argc, char **argv)
     }
 
     /* 3. set plan data */
-    #define TOTAL_CP    100
-    #define TOTAL_RI    1000
+    #define TOTAL_CP    1024
+    #define TOTAL_RI    10240
     ret = beam_data_value_set(0, BEAM_TOTAL_CP, 0, TOTAL_CP);
     if (ret != 0)
     {
@@ -3348,8 +3356,8 @@ static int8_t one_pulse_dose_get(uint8_t argc, char **argv)
     LOG_I("one pulse dose: %llu\r\n", dose_value_status_get(ONE_PULSE_DOSE));
 
     uint32_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
-    LOG_I("dose cumulated: %lf\r\n",  (double)dose_value_status_get(DOSE_ACCUMULATED) / factor);
-    LOG_I("dose rate: %lf\r\n",  (double)dose_value_status_get(DOSE_RATE_CURRENT) / factor);
+    LOG_I("dose cumulated: %f\r\n",  (float)((double)dose_value_status_get(DOSE_ACCUMULATED) / factor));
+    LOG_I("dose rate: %f\r\n",  (float)((double)dose_value_status_get(DOSE_RATE_CURRENT) / factor));
     LOG_I("prf current: %llu\r\n", dose_value_status_get(PRF_CURRENT));
 
     return 0;
@@ -3406,20 +3414,19 @@ static int8_t radiation_efficiency_array_dump(uint8_t argc, char **argv)
             adcs7476_sample_enable(0);
 
             struct radiation_index_data *obj = radiation_data_get();
-            float time_expected = 0.0f, time_actual = 0.0f;
+            uint32_t time_expected = 0, time_actual = 0;
 
-            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
-            for (uint16_t i = 1; i < obj->beam_data->total_ri; i++)
+            for (uint16_t i = 1; i < 4095/* obj->beam_data->total_ri */; i++)
             {
+                osMutexAcquire(obj->beam_data->mutex, osWaitForever);
                 time_expected = obj->beam_data->radiation_data[i].time_expected;
                 time_actual = ri_data_array[i + 1].timestamp - ri_data_array[i].timestamp;
+                osMutexRelease(obj->beam_data->mutex);
 
-                LOG_I("[ri: %4d]: time_expected: %10.6f, time_actual: %10.6f, diff: %10.6f\r\n", i, time_expected, time_actual, time_expected - time_actual);
-
+                LOG_I("[ri: %4d]: time_expected: %d, time_actual: %d, diff: %d\r\n", i, time_expected, time_actual, time_expected - time_actual);
                 osDelay(10);
             }
 
-            osMutexRelease(obj->beam_data->mutex);
             adcs7476_sample_enable(1);
         }
         break;
@@ -3431,18 +3438,17 @@ static int8_t radiation_efficiency_array_dump(uint8_t argc, char **argv)
             float dose_expected = 0.0f, dose_actual = 0.0f;
             uint32_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
 
-            osMutexAcquire(obj->beam_data->mutex, osWaitForever);
-            for (uint16_t i = 1; i < obj->beam_data->total_ri; i++)
+            for (uint16_t i = 1; i < 4095/* obj->beam_data->total_ri */; i++)
             {
+                osMutexAcquire(obj->beam_data->mutex, osWaitForever);
                 dose_expected = obj->beam_data->radiation_data[i].dose_cumulative;
                 dose_actual = (float)(ri_data_array[i + 1].dose_cumulated / factor);
+                osMutexRelease(obj->beam_data->mutex);
 
-                LOG_I("[ri: %4d]: dose_expected: %10.6f, dose_actual: %10.6f, diff: %10.6f\r\n", i, dose_expected, dose_actual, dose_expected - dose_actual);
-
+                LOG_I("[ri: %4d]: dose_expected: %11.6f, dose_actual: %11.6f, diff: %11.6f\r\n", i, dose_expected, dose_actual, dose_expected - dose_actual);
                 osDelay(10);
             }
 
-            osMutexRelease(obj->beam_data->mutex);
             adcs7476_sample_enable(1);
         }
         break;
