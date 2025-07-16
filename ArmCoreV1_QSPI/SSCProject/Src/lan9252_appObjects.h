@@ -92,6 +92,8 @@
 * SubIndex 56 - Reference to 0x7010.56<br>
 * SubIndex 57 - Reference to 0x7010.57<br>
 * SubIndex 58 - Reference to 0x7010.58<br>
+* SubIndex 59 - Reference to 0x7010.59<br>
+* SubIndex 60 - Reference to 0x7010.60<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -152,7 +154,9 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex55 - Reference to 0x7010.55 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex56 - Reference to 0x7010.56 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex57 - Reference to 0x7010.57 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex58 - Reference to 0x7010.58 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex58 - Reference to 0x7010.58 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex59 - Reference to 0x7010.59 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex60 - Reference to 0x7010.60 */
 
 /**
 * \brief Object/Entry names
@@ -215,7 +219,9 @@ OBJCONST UCHAR OBJMEM aName0x1601[] = "OutputData process data mapping\000"
 "SubIndex 055\000"
 "SubIndex 056\000"
 "SubIndex 057\000"
-"SubIndex 058\000\377";
+"SubIndex 058\000"
+"SubIndex 059\000"
+"SubIndex 060\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -282,6 +288,8 @@ UINT32 SI55; /* Subindex55 - Reference to 0x7010.55 */
 UINT32 SI56; /* Subindex56 - Reference to 0x7010.56 */
 UINT32 SI57; /* Subindex57 - Reference to 0x7010.57 */
 UINT32 SI58; /* Subindex58 - Reference to 0x7010.58 */
+UINT32 SI59; /* Subindex59 - Reference to 0x7010.59 */
+UINT32 SI60; /* Subindex60 - Reference to 0x7010.60 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1601;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -291,7 +299,7 @@ TOBJ1601;
 */
 PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={58,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100910,0x70100A08,0x70100B08,0x70100C08,0x70100D08,0x70100E20,0x70100F20,0x70101008,0x70101108,0x70101210,0x70101320,0x70101420,0x70101520,0x70101608,0x70101708,0x70101820,0x70101920,0x70101A08,0x70101B08,0x70101C20,0x70101D20,0x70101E08,0x70101F08,0x70102020,0x70102120,0x70102208,0x70102308,0x70102420,0x70102520,0x70102608,0x70102708,0x70102808,0x70102908,0x70102A20,0x70102B20,0x70102C08,0x70102D08,0x70102E20,0x70102F20,0x70103008,0x70103108,0x70103210,0x70103308,0x70103408,0x70103508,0x70103608,0x70103708,0x70103808,0x70103908,0x70103A08}
+={60,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100910,0x70100A08,0x70100B08,0x70100C08,0x70100D08,0x70100E10,0x70100F20,0x70101020,0x70101108,0x70101208,0x70101310,0x70101420,0x70101520,0x70101620,0x70101708,0x70101808,0x70101920,0x70101A20,0x70101B08,0x70101C08,0x70101D20,0x70101E20,0x70101F08,0x70102008,0x70102120,0x70102220,0x70102308,0x70102408,0x70102510,0x70102620,0x70102720,0x70102808,0x70102908,0x70102A08,0x70102B08,0x70102C20,0x70102D20,0x70102E08,0x70102F08,0x70103020,0x70103120,0x70103208,0x70103308,0x70103410,0x70103508,0x70103608,0x70103708,0x70103808,0x70103908,0x70103A08,0x70103B20,0x70103C08}
 #endif
 ;
 /** @}*/
@@ -2064,51 +2072,53 @@ PROTO TOBJ6000 InputData0x6000
 * SubIndex 11 - OutU8_ethercat_Link_state<br>
 * SubIndex 12 - OutU8_rtm_on_require_state<br>
 * SubIndex 13 - OutU8_rtm_on_require_ctrl_mode<br>
-* SubIndex 14 - OutU32_rtm_on_interlock_override<br>
-* SubIndex 15 - OutU32_rtm_on_unready_override<br>
-* SubIndex 16 - OutU8_icm_require_state<br>
-* SubIndex 17 - OutU8_icm_require_ctrl_mode<br>
-* SubIndex 18 - OutU16_ct_status<br>
-* SubIndex 19 - OutF_gantry_velocity_prepare<br>
-* SubIndex 20 - OutU32_icm_interlock_override<br>
-* SubIndex 21 - OutU32_icm_unready_override<br>
-* SubIndex 22 - OutU8_bgm_require_state<br>
-* SubIndex 23 - OutU8_bgm_require_ctrl_mode<br>
-* SubIndex 24 - OutU32_bgm_interlock_override<br>
-* SubIndex 25 - OutU32_bgm_unready_override<br>
-* SubIndex 26 - OutU8_qam_require_state<br>
-* SubIndex 27 - OutU8_qam_require_ctrl_mode<br>
-* SubIndex 28 - OutU32_qam_interlock_override<br>
-* SubIndex 29 - OutU32_qam_unready_override<br>
-* SubIndex 30 - OutU8_bsm_require_state<br>
-* SubIndex 31 - OutU8_bsm_require_ctrl_mode<br>
-* SubIndex 32 - OutU32_bsm_interlock_override<br>
-* SubIndex 33 - OutU32_bsm_unready_override<br>
-* SubIndex 34 - OutU8_rtm_off_require_state<br>
-* SubIndex 35 - OutU8_rtm_off_require_ctrl_mode<br>
-* SubIndex 36 - OutU32_rtm_off_interlock_override<br>
-* SubIndex 37 - OutU32_rtm_off_unready_override<br>
-* SubIndex 38 - OutU8_led_belt<br>
-* SubIndex 39 - OutU8_reserved2<br>
-* SubIndex 40 - OutU8_gmm_require_state<br>
-* SubIndex 41 - OutU8_gmm_require_ctrl_mode<br>
-* SubIndex 42 - OutU32_gmm_interlock_override<br>
-* SubIndex 43 - OutU32_gmm_unready_override<br>
-* SubIndex 44 - OutU8_psm_require_state<br>
-* SubIndex 45 - OutU8_psm_require_ctrl_mode<br>
-* SubIndex 46 - OutU32_psm_interlock_override<br>
-* SubIndex 47 - OutU32_psm_unready_override<br>
-* SubIndex 48 - OutU8_fkp_led_blink<br>
-* SubIndex 49 - OutU8_fkp_userPrompt<br>
-* SubIndex 50 - OutU16_fkp_year<br>
-* SubIndex 51 - OutU8_fkp_month<br>
-* SubIndex 52 - OutU8_fkp_day<br>
-* SubIndex 53 - OutU8_fkp_hour<br>
-* SubIndex 54 - OutU8_fkp_minute<br>
-* SubIndex 55 - OutU8_fkp_fractions<br>
-* SubIndex 56 - OutU8_reserved3<br>
-* SubIndex 57 - OutU8_cpg_led_blink<br>
-* SubIndex 58 - OutU8_cpg_vibration<br>
+* SubIndex 14 - OutU16_rtm_on_plc_info<br>
+* SubIndex 15 - OutU32_rtm_on_interlock_override<br>
+* SubIndex 16 - OutU32_rtm_on_unready_override<br>
+* SubIndex 17 - OutU8_icm_require_state<br>
+* SubIndex 18 - OutU8_icm_require_ctrl_mode<br>
+* SubIndex 19 - OutU16_ct_status<br>
+* SubIndex 20 - OutF_gantry_velocity_prepare<br>
+* SubIndex 21 - OutU32_icm_interlock_override<br>
+* SubIndex 22 - OutU32_icm_unready_override<br>
+* SubIndex 23 - OutU8_bgm_require_state<br>
+* SubIndex 24 - OutU8_bgm_require_ctrl_mode<br>
+* SubIndex 25 - OutU32_bgm_interlock_override<br>
+* SubIndex 26 - OutU32_bgm_unready_override<br>
+* SubIndex 27 - OutU8_qam_require_state<br>
+* SubIndex 28 - OutU8_qam_require_ctrl_mode<br>
+* SubIndex 29 - OutU32_qam_interlock_override<br>
+* SubIndex 30 - OutU32_qam_unready_override<br>
+* SubIndex 31 - OutU8_bsm_require_state<br>
+* SubIndex 32 - OutU8_bsm_require_ctrl_mode<br>
+* SubIndex 33 - OutU32_bsm_interlock_override<br>
+* SubIndex 34 - OutU32_bsm_unready_override<br>
+* SubIndex 35 - OutU8_rtm_off_require_state<br>
+* SubIndex 36 - OutU8_rtm_off_require_ctrl_mode<br>
+* SubIndex 37 - OutU16_rtm_off_plc_info<br>
+* SubIndex 38 - OutU32_rtm_off_interlock_override<br>
+* SubIndex 39 - OutU32_rtm_off_unready_override<br>
+* SubIndex 40 - OutU8_led_belt<br>
+* SubIndex 41 - OutU8_reserved2<br>
+* SubIndex 42 - OutU8_gmm_require_state<br>
+* SubIndex 43 - OutU8_gmm_require_ctrl_mode<br>
+* SubIndex 44 - OutU32_gmm_interlock_override<br>
+* SubIndex 45 - OutU32_gmm_unready_override<br>
+* SubIndex 46 - OutU8_psm_require_state<br>
+* SubIndex 47 - OutU8_psm_require_ctrl_mode<br>
+* SubIndex 48 - OutU32_psm_interlock_override<br>
+* SubIndex 49 - OutU32_psm_unready_override<br>
+* SubIndex 50 - OutU8_fkp_led_blink<br>
+* SubIndex 51 - OutU8_fkp_userPrompt<br>
+* SubIndex 52 - OutU16_fkp_year<br>
+* SubIndex 53 - OutU8_fkp_month<br>
+* SubIndex 54 - OutU8_fkp_day<br>
+* SubIndex 55 - OutU8_fkp_hour<br>
+* SubIndex 56 - OutU8_fkp_minute<br>
+* SubIndex 57 - OutU8_fkp_fractions<br>
+* SubIndex 58 - OutU8_reserved3<br>
+* SubIndex 59 - OutU32_cpg_led_blink<br>
+* SubIndex 60 - OutU8_cpg_vibration<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -2125,51 +2135,53 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex11 - OutU8_ethercat_Link_state */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex12 - OutU8_rtm_on_require_state */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex13 - OutU8_rtm_on_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex14 - OutU32_rtm_on_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - OutU32_rtm_on_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex16 - OutU8_icm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex17 - OutU8_icm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex18 - OutU16_ct_status */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex19 - OutF_gantry_velocity_prepare */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex20 - OutU32_icm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex21 - OutU32_icm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex22 - OutU8_bgm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex23 - OutU8_bgm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex24 - OutU32_bgm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex25 - OutU32_bgm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex26 - OutU8_qam_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex27 - OutU8_qam_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex28 - OutU32_qam_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex29 - OutU32_qam_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex30 - OutU8_bsm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex31 - OutU8_bsm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex32 - OutU32_bsm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex33 - OutU32_bsm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex34 - OutU8_rtm_off_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex35 - OutU8_rtm_off_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex36 - OutU32_rtm_off_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex37 - OutU32_rtm_off_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex38 - OutU8_led_belt */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex39 - OutU8_reserved2 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex40 - OutU8_gmm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex41 - OutU8_gmm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex42 - OutU32_gmm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex43 - OutU32_gmm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex44 - OutU8_psm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex45 - OutU8_psm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex46 - OutU32_psm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex47 - OutU32_psm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex48 - OutU8_fkp_led_blink */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex49 - OutU8_fkp_userPrompt */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex50 - OutU16_fkp_year */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex51 - OutU8_fkp_month */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex52 - OutU8_fkp_day */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex53 - OutU8_fkp_hour */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex54 - OutU8_fkp_minute */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex55 - OutU8_fkp_fractions */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex56 - OutU8_reserved3 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex57 - OutU8_cpg_led_blink */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex58 - OutU8_cpg_vibration */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex14 - OutU16_rtm_on_plc_info */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - OutU32_rtm_on_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex16 - OutU32_rtm_on_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex17 - OutU8_icm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex18 - OutU8_icm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex19 - OutU16_ct_status */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex20 - OutF_gantry_velocity_prepare */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex21 - OutU32_icm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex22 - OutU32_icm_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex23 - OutU8_bgm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex24 - OutU8_bgm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex25 - OutU32_bgm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex26 - OutU32_bgm_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex27 - OutU8_qam_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex28 - OutU8_qam_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex29 - OutU32_qam_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex30 - OutU32_qam_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex31 - OutU8_bsm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex32 - OutU8_bsm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex33 - OutU32_bsm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex34 - OutU32_bsm_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex35 - OutU8_rtm_off_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex36 - OutU8_rtm_off_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex37 - OutU16_rtm_off_plc_info */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex38 - OutU32_rtm_off_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex39 - OutU32_rtm_off_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex40 - OutU8_led_belt */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex41 - OutU8_reserved2 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex42 - OutU8_gmm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex43 - OutU8_gmm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex44 - OutU32_gmm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex45 - OutU32_gmm_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex46 - OutU8_psm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex47 - OutU8_psm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex48 - OutU32_psm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex49 - OutU32_psm_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex50 - OutU8_fkp_led_blink */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex51 - OutU8_fkp_userPrompt */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex52 - OutU16_fkp_year */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex53 - OutU8_fkp_month */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex54 - OutU8_fkp_day */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex55 - OutU8_fkp_hour */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex56 - OutU8_fkp_minute */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex57 - OutU8_fkp_fractions */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex58 - OutU8_reserved3 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex59 - OutU32_cpg_led_blink */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex60 - OutU8_cpg_vibration */
 
 /**
 * \brief Object/Entry names
@@ -2188,6 +2200,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU8_ethercat_Link_state\000"
 "OutU8_rtm_on_require_state\000"
 "OutU8_rtm_on_require_ctrl_mode\000"
+"OutU16_rtm_on_plc_info\000"
 "OutU32_rtm_on_interlock_override\000"
 "OutU32_rtm_on_unready_override\000"
 "OutU8_icm_require_state\000"
@@ -2210,6 +2223,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU32_bsm_unready_override\000"
 "OutU8_rtm_off_require_state\000"
 "OutU8_rtm_off_require_ctrl_mode\000"
+"OutU16_rtm_off_plc_info\000"
 "OutU32_rtm_off_interlock_override\000"
 "OutU32_rtm_off_unready_override\000"
 "OutU8_led_belt\000"
@@ -2231,7 +2245,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU8_fkp_minute\000"
 "OutU8_fkp_fractions\000"
 "OutU8_reserved3\000"
-"OutU8_cpg_led_blink\000"
+"OutU32_cpg_led_blink\000"
 "OutU8_cpg_vibration\000\377";
 #endif //#ifdef _OBJD_
 
@@ -2254,51 +2268,53 @@ UINT8 OutU8_Reserved1; /* Subindex10 - OutU8_Reserved1 */
 UINT8 OutU8_ethercat_Link_state; /* Subindex11 - OutU8_ethercat_Link_state */
 UINT8 OutU8_rtm_on_require_state; /* Subindex12 - OutU8_rtm_on_require_state */
 UINT8 OutU8_rtm_on_require_ctrl_mode; /* Subindex13 - OutU8_rtm_on_require_ctrl_mode */
-UINT32 OutU32_rtm_on_interlock_override; /* Subindex14 - OutU32_rtm_on_interlock_override */
-UINT32 OutU32_rtm_on_unready_override; /* Subindex15 - OutU32_rtm_on_unready_override */
-UINT8 OutU8_icm_require_state; /* Subindex16 - OutU8_icm_require_state */
-UINT8 OutU8_icm_require_ctrl_mode; /* Subindex17 - OutU8_icm_require_ctrl_mode */
-UINT16 OutU16_ct_status; /* Subindex18 - OutU16_ct_status */
-REAL32 OutF_gantry_velocity_prepare; /* Subindex19 - OutF_gantry_velocity_prepare */
-UINT32 OutU32_icm_interlock_override; /* Subindex20 - OutU32_icm_interlock_override */
-UINT32 OutU32_icm_unready_override; /* Subindex21 - OutU32_icm_unready_override */
-UINT8 OutU8_bgm_require_state; /* Subindex22 - OutU8_bgm_require_state */
-UINT8 OutU8_bgm_require_ctrl_mode; /* Subindex23 - OutU8_bgm_require_ctrl_mode */
-UINT32 OutU32_bgm_interlock_override; /* Subindex24 - OutU32_bgm_interlock_override */
-UINT32 OutU32_bgm_unready_override; /* Subindex25 - OutU32_bgm_unready_override */
-UINT8 OutU8_qam_require_state; /* Subindex26 - OutU8_qam_require_state */
-UINT8 OutU8_qam_require_ctrl_mode; /* Subindex27 - OutU8_qam_require_ctrl_mode */
-UINT32 OutU32_qam_interlock_override; /* Subindex28 - OutU32_qam_interlock_override */
-UINT32 OutU32_qam_unready_override; /* Subindex29 - OutU32_qam_unready_override */
-UINT8 OutU8_bsm_require_state; /* Subindex30 - OutU8_bsm_require_state */
-UINT8 OutU8_bsm_require_ctrl_mode; /* Subindex31 - OutU8_bsm_require_ctrl_mode */
-UINT32 OutU32_bsm_interlock_override; /* Subindex32 - OutU32_bsm_interlock_override */
-UINT32 OutU32_bsm_unready_override; /* Subindex33 - OutU32_bsm_unready_override */
-UINT8 OutU8_rtm_off_require_state; /* Subindex34 - OutU8_rtm_off_require_state */
-UINT8 OutU8_rtm_off_require_ctrl_mode; /* Subindex35 - OutU8_rtm_off_require_ctrl_mode */
-UINT32 OutU32_rtm_off_interlock_override; /* Subindex36 - OutU32_rtm_off_interlock_override */
-UINT32 OutU32_rtm_off_unready_override; /* Subindex37 - OutU32_rtm_off_unready_override */
-UINT8 OutU8_led_belt; /* Subindex38 - OutU8_led_belt */
-UINT8 OutU8_reserved2; /* Subindex39 - OutU8_reserved2 */
-UINT8 OutU8_gmm_require_state; /* Subindex40 - OutU8_gmm_require_state */
-UINT8 OutU8_gmm_require_ctrl_mode; /* Subindex41 - OutU8_gmm_require_ctrl_mode */
-UINT32 OutU32_gmm_interlock_override; /* Subindex42 - OutU32_gmm_interlock_override */
-UINT32 OutU32_gmm_unready_override; /* Subindex43 - OutU32_gmm_unready_override */
-UINT8 OutU8_psm_require_state; /* Subindex44 - OutU8_psm_require_state */
-UINT8 OutU8_psm_require_ctrl_mode; /* Subindex45 - OutU8_psm_require_ctrl_mode */
-UINT32 OutU32_psm_interlock_override; /* Subindex46 - OutU32_psm_interlock_override */
-UINT32 OutU32_psm_unready_override; /* Subindex47 - OutU32_psm_unready_override */
-UINT8 OutU8_fkp_led_blink; /* Subindex48 - OutU8_fkp_led_blink */
-UINT8 OutU8_fkp_userPrompt; /* Subindex49 - OutU8_fkp_userPrompt */
-UINT16 OutU16_fkp_year; /* Subindex50 - OutU16_fkp_year */
-UINT8 OutU8_fkp_month; /* Subindex51 - OutU8_fkp_month */
-UINT8 OutU8_fkp_day; /* Subindex52 - OutU8_fkp_day */
-UINT8 OutU8_fkp_hour; /* Subindex53 - OutU8_fkp_hour */
-UINT8 OutU8_fkp_minute; /* Subindex54 - OutU8_fkp_minute */
-UINT8 OutU8_fkp_fractions; /* Subindex55 - OutU8_fkp_fractions */
-UINT8 OutU8_reserved3; /* Subindex56 - OutU8_reserved3 */
-UINT8 OutU8_cpg_led_blink; /* Subindex57 - OutU8_cpg_led_blink */
-UINT8 OutU8_cpg_vibration; /* Subindex58 - OutU8_cpg_vibration */
+UINT16 OutU16_rtm_on_plc_info; /* Subindex14 - OutU16_rtm_on_plc_info */
+UINT32 OutU32_rtm_on_interlock_override; /* Subindex15 - OutU32_rtm_on_interlock_override */
+UINT32 OutU32_rtm_on_unready_override; /* Subindex16 - OutU32_rtm_on_unready_override */
+UINT8 OutU8_icm_require_state; /* Subindex17 - OutU8_icm_require_state */
+UINT8 OutU8_icm_require_ctrl_mode; /* Subindex18 - OutU8_icm_require_ctrl_mode */
+UINT16 OutU16_ct_status; /* Subindex19 - OutU16_ct_status */
+REAL32 OutF_gantry_velocity_prepare; /* Subindex20 - OutF_gantry_velocity_prepare */
+UINT32 OutU32_icm_interlock_override; /* Subindex21 - OutU32_icm_interlock_override */
+UINT32 OutU32_icm_unready_override; /* Subindex22 - OutU32_icm_unready_override */
+UINT8 OutU8_bgm_require_state; /* Subindex23 - OutU8_bgm_require_state */
+UINT8 OutU8_bgm_require_ctrl_mode; /* Subindex24 - OutU8_bgm_require_ctrl_mode */
+UINT32 OutU32_bgm_interlock_override; /* Subindex25 - OutU32_bgm_interlock_override */
+UINT32 OutU32_bgm_unready_override; /* Subindex26 - OutU32_bgm_unready_override */
+UINT8 OutU8_qam_require_state; /* Subindex27 - OutU8_qam_require_state */
+UINT8 OutU8_qam_require_ctrl_mode; /* Subindex28 - OutU8_qam_require_ctrl_mode */
+UINT32 OutU32_qam_interlock_override; /* Subindex29 - OutU32_qam_interlock_override */
+UINT32 OutU32_qam_unready_override; /* Subindex30 - OutU32_qam_unready_override */
+UINT8 OutU8_bsm_require_state; /* Subindex31 - OutU8_bsm_require_state */
+UINT8 OutU8_bsm_require_ctrl_mode; /* Subindex32 - OutU8_bsm_require_ctrl_mode */
+UINT32 OutU32_bsm_interlock_override; /* Subindex33 - OutU32_bsm_interlock_override */
+UINT32 OutU32_bsm_unready_override; /* Subindex34 - OutU32_bsm_unready_override */
+UINT8 OutU8_rtm_off_require_state; /* Subindex35 - OutU8_rtm_off_require_state */
+UINT8 OutU8_rtm_off_require_ctrl_mode; /* Subindex36 - OutU8_rtm_off_require_ctrl_mode */
+UINT16 OutU16_rtm_off_plc_info; /* Subindex37 - OutU16_rtm_off_plc_info */
+UINT32 OutU32_rtm_off_interlock_override; /* Subindex38 - OutU32_rtm_off_interlock_override */
+UINT32 OutU32_rtm_off_unready_override; /* Subindex39 - OutU32_rtm_off_unready_override */
+UINT8 OutU8_led_belt; /* Subindex40 - OutU8_led_belt */
+UINT8 OutU8_reserved2; /* Subindex41 - OutU8_reserved2 */
+UINT8 OutU8_gmm_require_state; /* Subindex42 - OutU8_gmm_require_state */
+UINT8 OutU8_gmm_require_ctrl_mode; /* Subindex43 - OutU8_gmm_require_ctrl_mode */
+UINT32 OutU32_gmm_interlock_override; /* Subindex44 - OutU32_gmm_interlock_override */
+UINT32 OutU32_gmm_unready_override; /* Subindex45 - OutU32_gmm_unready_override */
+UINT8 OutU8_psm_require_state; /* Subindex46 - OutU8_psm_require_state */
+UINT8 OutU8_psm_require_ctrl_mode; /* Subindex47 - OutU8_psm_require_ctrl_mode */
+UINT32 OutU32_psm_interlock_override; /* Subindex48 - OutU32_psm_interlock_override */
+UINT32 OutU32_psm_unready_override; /* Subindex49 - OutU32_psm_unready_override */
+UINT8 OutU8_fkp_led_blink; /* Subindex50 - OutU8_fkp_led_blink */
+UINT8 OutU8_fkp_userPrompt; /* Subindex51 - OutU8_fkp_userPrompt */
+UINT16 OutU16_fkp_year; /* Subindex52 - OutU16_fkp_year */
+UINT8 OutU8_fkp_month; /* Subindex53 - OutU8_fkp_month */
+UINT8 OutU8_fkp_day; /* Subindex54 - OutU8_fkp_day */
+UINT8 OutU8_fkp_hour; /* Subindex55 - OutU8_fkp_hour */
+UINT8 OutU8_fkp_minute; /* Subindex56 - OutU8_fkp_minute */
+UINT8 OutU8_fkp_fractions; /* Subindex57 - OutU8_fkp_fractions */
+UINT8 OutU8_reserved3; /* Subindex58 - OutU8_reserved3 */
+UINT32 OutU32_cpg_led_blink; /* Subindex59 - OutU32_cpg_led_blink */
+UINT8 OutU8_cpg_vibration; /* Subindex60 - OutU8_cpg_vibration */
 } OBJ_STRUCT_PACKED_END
 TOBJ7010;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -2308,7 +2324,7 @@ TOBJ7010;
 */
 PROTO TOBJ7010 OutputData0x7010
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={58,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+={60,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -2322,7 +2338,7 @@ PROTO TOBJ7010 OutputData0x7010
 #ifdef _OBJD_
 TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1601 */
-{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 58 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 60 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
 /* Object 0x1A00 */
 {NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 194 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
 /* Object 0x1C12 */
@@ -2332,7 +2348,7 @@ TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x6000 */
 {NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 194 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
 /* Object 0x7010 */
-{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 58 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 60 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
 {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL}};
 #endif    //#ifdef _OBJD_
 

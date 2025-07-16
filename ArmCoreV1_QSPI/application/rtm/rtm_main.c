@@ -120,8 +120,9 @@ static void app_rtm_main_thread(void *argument)
                 {
                     system_state_require = queue_frame.payload.data[1];
 
-                    self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[3]);
-                    self->unready_override = *(uint32_t *)&(queue_frame.payload.data[7]);
+                    self->PLC_info = *(uint16_t *)&(queue_frame.payload.data[3]);
+                    self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[5]);
+                    self->unready_override = *(uint32_t *)&(queue_frame.payload.data[9]);
                     break;
                 }
                 case OUTPUT_FAULT_CLEAR_CMD: /*故障清除*/
@@ -314,8 +315,8 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             break;
         case OUTPUT_DATA_CPG_LED_BLINK:
             flag = OUTPUT_DATA_BEAM_ID;
-            len = sizeof(output_data.OutU8_cpg_led_blink);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], CPG_ID, OUTPUT_FKP_VIBRATION_CMD, &data->OutU8_cpg_led_blink, len);
+            len = sizeof(output_data.OutU32_cpg_led_blink);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], CPG_ID, OUTPUT_CPG_LED_BLINK_CMD, &data->OutU32_cpg_led_blink, len);
             break;
         default:
             break;
@@ -483,10 +484,10 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_TIMESTAMP_CMD, &data->OutU16_fkp_year, len);
         }
 
-        len = (uint8_t *)&output_data.OutU8_cpg_vibration - (uint8_t *)&output_data.OutU8_cpg_led_blink + sizeof(output_data.OutU8_cpg_vibration);
-        if (memcmp(&output_data.OutU8_cpg_led_blink, &data->OutU8_cpg_led_blink, len) != 0)
+        len = (uint8_t *)&output_data.OutU8_cpg_vibration - (uint8_t *)&output_data.OutU32_cpg_led_blink + sizeof(output_data.OutU8_cpg_vibration);
+        if (memcmp(&output_data.OutU32_cpg_led_blink, &data->OutU32_cpg_led_blink, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], CPG_ID, OUTPUT_CPG_LED_BLINK_CMD, &data->OutU8_cpg_led_blink, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], CPG_ID, OUTPUT_CPG_LED_BLINK_CMD, &data->OutU32_cpg_led_blink, len);
         }
         memcpy(&output_data, data, sizeof(TOBJ7010));
     }

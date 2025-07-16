@@ -242,10 +242,10 @@ static void ulog_output(ulog_level_t severity, char *msg)
 #endif
 
 #ifdef USING_ULOG_THREAD
-    osStatus_t stat = osMessageQueuePut (ulog_output_queueHandle, &msg_info, 0, 1000);
+    osStatus_t stat = osMessageQueuePut (ulog_output_queueHandle, &msg_info, 0, 0);
     if (stat != osOK)
     {
-        printf("ulog output queue put err:%d\r\n", stat);
+        // printf("ulog output queue put err:%d\r\n", stat);
     }
 #else
     /* 2. callback function process */

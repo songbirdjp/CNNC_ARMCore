@@ -173,7 +173,7 @@
 							</DataType>
 							<DataType>
 								<Name>DT1601</Name>
-								<BitSize>1872</BitSize>
+								<BitSize>1936</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -818,6 +818,28 @@
 									<Comment>Reference to 0x7010.58</Comment>
 									<BitSize>32</BitSize>
 									<BitOffs>1840</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>59</SubIdx>
+									<Name>SubIndex 059</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x7010.59</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>1872</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>60</SubIdx>
+									<Name>SubIndex 060</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x7010.60</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>1904</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -5294,7 +5316,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 							</DataType>
 							<DataType>
 								<Name>DT7010</Name>
-								<BitSize>944</BitSize>
+								<BitSize>1000</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -5437,9 +5459,9 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 								</SubItem>
 								<SubItem>
 									<SubIdx>14</SubIdx>
-									<Name>OutU32_rtm_on_interlock_override</Name>
-									<Type>UDINT</Type>
-									<BitSize>32</BitSize>
+									<Name>OutU16_rtm_on_plc_info</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
 									<BitOffs>160</BitOffs>
 									<Flags>
 										<Access>ro</Access>
@@ -5447,49 +5469,49 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 								</SubItem>
 								<SubItem>
 									<SubIdx>15</SubIdx>
-									<Name>OutU32_rtm_on_unready_override</Name>
+									<Name>OutU32_rtm_on_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>192</BitOffs>
+									<BitOffs>176</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>16</SubIdx>
-									<Name>OutU8_icm_require_state</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
-									<BitOffs>224</BitOffs>
+									<Name>OutU32_rtm_on_unready_override</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>208</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>17</SubIdx>
-									<Name>OutU8_icm_require_ctrl_mode</Name>
+									<Name>OutU8_icm_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>232</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>18</SubIdx>
-									<Name>OutU16_ct_status</Name>
-									<Type>UINT</Type>
-									<BitSize>16</BitSize>
 									<BitOffs>240</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
+									<SubIdx>18</SubIdx>
+									<Name>OutU8_icm_require_ctrl_mode</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>248</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
 									<SubIdx>19</SubIdx>
-									<Name>OutF_gantry_velocity_prepare</Name>
-									<Type>REAL</Type>
-									<BitSize>32</BitSize>
+									<Name>OutU16_ct_status</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
 									<BitOffs>256</BitOffs>
 									<Flags>
 										<Access>ro</Access>
@@ -5497,177 +5519,187 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 								</SubItem>
 								<SubItem>
 									<SubIdx>20</SubIdx>
-									<Name>OutU32_icm_interlock_override</Name>
-									<Type>UDINT</Type>
+									<Name>OutF_gantry_velocity_prepare</Name>
+									<Type>REAL</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>288</BitOffs>
+									<BitOffs>272</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>21</SubIdx>
-									<Name>OutU32_icm_unready_override</Name>
+									<Name>OutU32_icm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>320</BitOffs>
+									<BitOffs>304</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>22</SubIdx>
-									<Name>OutU8_bgm_require_state</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
-									<BitOffs>352</BitOffs>
+									<Name>OutU32_icm_unready_override</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>336</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>23</SubIdx>
-									<Name>OutU8_bgm_require_ctrl_mode</Name>
+									<Name>OutU8_bgm_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>360</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>24</SubIdx>
-									<Name>OutU32_bgm_interlock_override</Name>
-									<Type>UDINT</Type>
-									<BitSize>32</BitSize>
 									<BitOffs>368</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
+									<SubIdx>24</SubIdx>
+									<Name>OutU8_bgm_require_ctrl_mode</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>376</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
 									<SubIdx>25</SubIdx>
-									<Name>OutU32_bgm_unready_override</Name>
+									<Name>OutU32_bgm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>400</BitOffs>
+									<BitOffs>384</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>26</SubIdx>
-									<Name>OutU8_qam_require_state</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
-									<BitOffs>432</BitOffs>
+									<Name>OutU32_bgm_unready_override</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>416</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>27</SubIdx>
-									<Name>OutU8_qam_require_ctrl_mode</Name>
+									<Name>OutU8_qam_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>440</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>28</SubIdx>
-									<Name>OutU32_qam_interlock_override</Name>
-									<Type>UDINT</Type>
-									<BitSize>32</BitSize>
 									<BitOffs>448</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
+									<SubIdx>28</SubIdx>
+									<Name>OutU8_qam_require_ctrl_mode</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>456</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
 									<SubIdx>29</SubIdx>
-									<Name>OutU32_qam_unready_override</Name>
+									<Name>OutU32_qam_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>480</BitOffs>
+									<BitOffs>464</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>30</SubIdx>
-									<Name>OutU8_bsm_require_state</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
-									<BitOffs>512</BitOffs>
+									<Name>OutU32_qam_unready_override</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>496</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>31</SubIdx>
-									<Name>OutU8_bsm_require_ctrl_mode</Name>
+									<Name>OutU8_bsm_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>520</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>32</SubIdx>
-									<Name>OutU32_bsm_interlock_override</Name>
-									<Type>UDINT</Type>
-									<BitSize>32</BitSize>
 									<BitOffs>528</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
+									<SubIdx>32</SubIdx>
+									<Name>OutU8_bsm_require_ctrl_mode</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>536</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
 									<SubIdx>33</SubIdx>
-									<Name>OutU32_bsm_unready_override</Name>
+									<Name>OutU32_bsm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>560</BitOffs>
+									<BitOffs>544</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>34</SubIdx>
-									<Name>OutU8_rtm_off_require_state</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
-									<BitOffs>592</BitOffs>
+									<Name>OutU32_bsm_unready_override</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>576</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>35</SubIdx>
-									<Name>OutU8_rtm_off_require_ctrl_mode</Name>
+									<Name>OutU8_rtm_off_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>600</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>36</SubIdx>
-									<Name>OutU32_rtm_off_interlock_override</Name>
-									<Type>UDINT</Type>
-									<BitSize>32</BitSize>
 									<BitOffs>608</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
+									<SubIdx>36</SubIdx>
+									<Name>OutU8_rtm_off_require_ctrl_mode</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>616</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
 									<SubIdx>37</SubIdx>
-									<Name>OutU32_rtm_off_unready_override</Name>
+									<Name>OutU16_rtm_off_plc_info</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
+									<BitOffs>624</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>38</SubIdx>
+									<Name>OutU32_rtm_off_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
 									<BitOffs>640</BitOffs>
@@ -5676,58 +5708,58 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>38</SubIdx>
-									<Name>OutU8_led_belt</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
+									<SubIdx>39</SubIdx>
+									<Name>OutU32_rtm_off_unready_override</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
 									<BitOffs>672</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>39</SubIdx>
-									<Name>OutU8_reserved2</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
-									<BitOffs>680</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
 									<SubIdx>40</SubIdx>
-									<Name>OutU8_gmm_require_state</Name>
+									<Name>OutU8_led_belt</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>688</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>41</SubIdx>
-									<Name>OutU8_gmm_require_ctrl_mode</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
-									<BitOffs>696</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>42</SubIdx>
-									<Name>OutU32_gmm_interlock_override</Name>
-									<Type>UDINT</Type>
-									<BitSize>32</BitSize>
 									<BitOffs>704</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
+									<SubIdx>41</SubIdx>
+									<Name>OutU8_reserved2</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>712</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>42</SubIdx>
+									<Name>OutU8_gmm_require_state</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>720</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
 									<SubIdx>43</SubIdx>
-									<Name>OutU32_gmm_unready_override</Name>
+									<Name>OutU8_gmm_require_ctrl_mode</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>728</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>44</SubIdx>
+									<Name>OutU32_gmm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
 									<BitOffs>736</BitOffs>
@@ -5736,38 +5768,38 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>44</SubIdx>
-									<Name>OutU8_psm_require_state</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
+									<SubIdx>45</SubIdx>
+									<Name>OutU32_gmm_unready_override</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
 									<BitOffs>768</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>45</SubIdx>
-									<Name>OutU8_psm_require_ctrl_mode</Name>
+									<SubIdx>46</SubIdx>
+									<Name>OutU8_psm_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>776</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>46</SubIdx>
-									<Name>OutU32_psm_interlock_override</Name>
-									<Type>UDINT</Type>
-									<BitSize>32</BitSize>
-									<BitOffs>784</BitOffs>
+									<BitOffs>800</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>47</SubIdx>
-									<Name>OutU32_psm_unready_override</Name>
+									<Name>OutU8_psm_require_ctrl_mode</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>808</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>48</SubIdx>
+									<Name>OutU32_psm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
 									<BitOffs>816</BitOffs>
@@ -5776,38 +5808,18 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>48</SubIdx>
-									<Name>OutU8_fkp_led_blink</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
+									<SubIdx>49</SubIdx>
+									<Name>OutU32_psm_unready_override</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
 									<BitOffs>848</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>49</SubIdx>
-									<Name>OutU8_fkp_userPrompt</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
-									<BitOffs>856</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
 									<SubIdx>50</SubIdx>
-									<Name>OutU16_fkp_year</Name>
-									<Type>UINT</Type>
-									<BitSize>16</BitSize>
-									<BitOffs>864</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>51</SubIdx>
-									<Name>OutU8_fkp_month</Name>
+									<Name>OutU8_fkp_led_blink</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
 									<BitOffs>880</BitOffs>
@@ -5816,8 +5828,8 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>52</SubIdx>
-									<Name>OutU8_fkp_day</Name>
+									<SubIdx>51</SubIdx>
+									<Name>OutU8_fkp_userPrompt</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
 									<BitOffs>888</BitOffs>
@@ -5826,28 +5838,18 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>53</SubIdx>
-									<Name>OutU8_fkp_hour</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
+									<SubIdx>52</SubIdx>
+									<Name>OutU16_fkp_year</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
 									<BitOffs>896</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>54</SubIdx>
-									<Name>OutU8_fkp_minute</Name>
-									<Type>USINT</Type>
-									<BitSize>8</BitSize>
-									<BitOffs>904</BitOffs>
-									<Flags>
-										<Access>ro</Access>
-									</Flags>
-								</SubItem>
-								<SubItem>
-									<SubIdx>55</SubIdx>
-									<Name>OutU8_fkp_fractions</Name>
+									<SubIdx>53</SubIdx>
+									<Name>OutU8_fkp_month</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
 									<BitOffs>912</BitOffs>
@@ -5856,8 +5858,8 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>56</SubIdx>
-									<Name>OutU8_reserved3</Name>
+									<SubIdx>54</SubIdx>
+									<Name>OutU8_fkp_day</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
 									<BitOffs>920</BitOffs>
@@ -5866,8 +5868,8 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>57</SubIdx>
-									<Name>OutU8_cpg_led_blink</Name>
+									<SubIdx>55</SubIdx>
+									<Name>OutU8_fkp_hour</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
 									<BitOffs>928</BitOffs>
@@ -5876,11 +5878,51 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									</Flags>
 								</SubItem>
 								<SubItem>
-									<SubIdx>58</SubIdx>
-									<Name>OutU8_cpg_vibration</Name>
+									<SubIdx>56</SubIdx>
+									<Name>OutU8_fkp_minute</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
 									<BitOffs>936</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>57</SubIdx>
+									<Name>OutU8_fkp_fractions</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>944</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>58</SubIdx>
+									<Name>OutU8_reserved3</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>952</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>59</SubIdx>
+									<Name>OutU32_cpg_led_blink</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>960</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>60</SubIdx>
+									<Name>OutU8_cpg_vibration</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>992</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -6026,12 +6068,12 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 								<Index>#x1601</Index>
 								<Name>OutputData process data mapping</Name>
 								<Type>DT1601</Type>
-								<BitSize>1872</BitSize>
+								<BitSize>1936</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
 										<Info>
-											<DefaultData>3A</DefaultData>
+											<DefaultData>3C</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6115,7 +6157,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 014</Name>
 										<Info>
-											<DefaultData>200E1070</DefaultData>
+											<DefaultData>100E1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6127,7 +6169,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 016</Name>
 										<Info>
-											<DefaultData>08101070</DefaultData>
+											<DefaultData>20101070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6139,13 +6181,13 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 018</Name>
 										<Info>
-											<DefaultData>10121070</DefaultData>
+											<DefaultData>08121070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 019</Name>
 										<Info>
-											<DefaultData>20131070</DefaultData>
+											<DefaultData>10131070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6163,7 +6205,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 022</Name>
 										<Info>
-											<DefaultData>08161070</DefaultData>
+											<DefaultData>20161070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6175,7 +6217,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 024</Name>
 										<Info>
-											<DefaultData>20181070</DefaultData>
+											<DefaultData>08181070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6187,7 +6229,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 026</Name>
 										<Info>
-											<DefaultData>081A1070</DefaultData>
+											<DefaultData>201A1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6199,7 +6241,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 028</Name>
 										<Info>
-											<DefaultData>201C1070</DefaultData>
+											<DefaultData>081C1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6211,7 +6253,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 030</Name>
 										<Info>
-											<DefaultData>081E1070</DefaultData>
+											<DefaultData>201E1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6223,7 +6265,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 032</Name>
 										<Info>
-											<DefaultData>20201070</DefaultData>
+											<DefaultData>08201070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6235,7 +6277,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 034</Name>
 										<Info>
-											<DefaultData>08221070</DefaultData>
+											<DefaultData>20221070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6247,25 +6289,25 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 036</Name>
 										<Info>
-											<DefaultData>20241070</DefaultData>
+											<DefaultData>08241070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 037</Name>
 										<Info>
-											<DefaultData>20251070</DefaultData>
+											<DefaultData>10251070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 038</Name>
 										<Info>
-											<DefaultData>08261070</DefaultData>
+											<DefaultData>20261070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 039</Name>
 										<Info>
-											<DefaultData>08271070</DefaultData>
+											<DefaultData>20271070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6283,55 +6325,55 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 042</Name>
 										<Info>
-											<DefaultData>202A1070</DefaultData>
+											<DefaultData>082A1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 043</Name>
 										<Info>
-											<DefaultData>202B1070</DefaultData>
+											<DefaultData>082B1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 044</Name>
 										<Info>
-											<DefaultData>082C1070</DefaultData>
+											<DefaultData>202C1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 045</Name>
 										<Info>
-											<DefaultData>082D1070</DefaultData>
+											<DefaultData>202D1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 046</Name>
 										<Info>
-											<DefaultData>202E1070</DefaultData>
+											<DefaultData>082E1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 047</Name>
 										<Info>
-											<DefaultData>202F1070</DefaultData>
+											<DefaultData>082F1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 048</Name>
 										<Info>
-											<DefaultData>08301070</DefaultData>
+											<DefaultData>20301070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 049</Name>
 										<Info>
-											<DefaultData>08311070</DefaultData>
+											<DefaultData>20311070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
 										<Name>SubIndex 050</Name>
 										<Info>
-											<DefaultData>10321070</DefaultData>
+											<DefaultData>08321070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6343,7 +6385,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 052</Name>
 										<Info>
-											<DefaultData>08341070</DefaultData>
+											<DefaultData>10341070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -6380,6 +6422,18 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 										<Name>SubIndex 058</Name>
 										<Info>
 											<DefaultData>083A1070</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 059</Name>
+										<Info>
+											<DefaultData>203B1070</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 060</Name>
+										<Info>
+											<DefaultData>083C1070</DefaultData>
 										</Info>
 									</SubItem>
 								</Info>
@@ -7722,12 +7776,12 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 								<Index>#x7010</Index>
 								<Name>OutputData</Name>
 								<Type>DT7010</Type>
-								<BitSize>944</BitSize>
+								<BitSize>1000</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
 										<Info>
-											<DefaultData>3A</DefaultData>
+											<DefaultData>3C</DefaultData>
 										</Info>
 									</SubItem>
 								</Info>
@@ -7740,7 +7794,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 				<Fmmu>MBoxState</Fmmu>
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1000" ControlByte="#x26" Enable="1">MBoxOut</Sm>
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1080" ControlByte="#x22" Enable="1">MBoxIn</Sm>
-				<Sm DefaultSize="116" StartAddress="#x1100" ControlByte="#x64" Enable="1">Outputs</Sm>
+				<Sm DefaultSize="123" StartAddress="#x1100" ControlByte="#x64" Enable="1">Outputs</Sm>
 				<Sm DefaultSize="308" StartAddress="#x1400" ControlByte="#x20" Enable="1">Inputs</Sm>
 				<RxPdo Fixed="true" Mandatory="true" Sm="2">
 					<Index>#x1601</Index>
@@ -7839,314 +7893,328 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 					<Entry>
 						<Index>#x7010</Index>
 						<SubIndex>14</SubIndex>
+						<BitLen>16</BitLen>
+						<Name>OutU16_rtm_on_plc_info</Name>
+						<DataType>UINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x7010</Index>
+						<SubIndex>15</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_rtm_on_interlock_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>15</SubIndex>
+						<SubIndex>16</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_rtm_on_unready_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>16</SubIndex>
+						<SubIndex>17</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_icm_require_state</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>17</SubIndex>
+						<SubIndex>18</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_icm_require_ctrl_mode</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>18</SubIndex>
+						<SubIndex>19</SubIndex>
 						<BitLen>16</BitLen>
 						<Name>OutU16_ct_status</Name>
 						<DataType>UINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>19</SubIndex>
+						<SubIndex>20</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutF_gantry_velocity_prepare</Name>
 						<DataType>REAL</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>20</SubIndex>
+						<SubIndex>21</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_icm_interlock_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>21</SubIndex>
+						<SubIndex>22</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_icm_unready_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>22</SubIndex>
+						<SubIndex>23</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_bgm_require_state</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>23</SubIndex>
+						<SubIndex>24</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_bgm_require_ctrl_mode</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>24</SubIndex>
+						<SubIndex>25</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_bgm_interlock_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>25</SubIndex>
+						<SubIndex>26</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_bgm_unready_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>26</SubIndex>
+						<SubIndex>27</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_qam_require_state</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>27</SubIndex>
+						<SubIndex>28</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_qam_require_ctrl_mode</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>28</SubIndex>
+						<SubIndex>29</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_qam_interlock_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>29</SubIndex>
+						<SubIndex>30</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_qam_unready_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>30</SubIndex>
+						<SubIndex>31</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_bsm_require_state</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>31</SubIndex>
+						<SubIndex>32</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_bsm_require_ctrl_mode</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>32</SubIndex>
+						<SubIndex>33</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_bsm_interlock_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>33</SubIndex>
+						<SubIndex>34</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_bsm_unready_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>34</SubIndex>
+						<SubIndex>35</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_rtm_off_require_state</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>35</SubIndex>
+						<SubIndex>36</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_rtm_off_require_ctrl_mode</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>36</SubIndex>
+						<SubIndex>37</SubIndex>
+						<BitLen>16</BitLen>
+						<Name>OutU16_rtm_off_plc_info</Name>
+						<DataType>UINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x7010</Index>
+						<SubIndex>38</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_rtm_off_interlock_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>37</SubIndex>
+						<SubIndex>39</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_rtm_off_unready_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>38</SubIndex>
+						<SubIndex>40</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_led_belt</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>39</SubIndex>
+						<SubIndex>41</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_reserved2</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>40</SubIndex>
+						<SubIndex>42</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_gmm_require_state</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>41</SubIndex>
+						<SubIndex>43</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_gmm_require_ctrl_mode</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>42</SubIndex>
+						<SubIndex>44</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_gmm_interlock_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>43</SubIndex>
+						<SubIndex>45</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_gmm_unready_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>44</SubIndex>
+						<SubIndex>46</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_psm_require_state</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>45</SubIndex>
+						<SubIndex>47</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_psm_require_ctrl_mode</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>46</SubIndex>
+						<SubIndex>48</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_psm_interlock_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>47</SubIndex>
+						<SubIndex>49</SubIndex>
 						<BitLen>32</BitLen>
 						<Name>OutU32_psm_unready_override</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>48</SubIndex>
+						<SubIndex>50</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_fkp_led_blink</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>49</SubIndex>
+						<SubIndex>51</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_fkp_userPrompt</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>50</SubIndex>
+						<SubIndex>52</SubIndex>
 						<BitLen>16</BitLen>
 						<Name>OutU16_fkp_year</Name>
 						<DataType>UINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>51</SubIndex>
+						<SubIndex>53</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_fkp_month</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>52</SubIndex>
+						<SubIndex>54</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_fkp_day</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>53</SubIndex>
+						<SubIndex>55</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_fkp_hour</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>54</SubIndex>
+						<SubIndex>56</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_fkp_minute</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>55</SubIndex>
+						<SubIndex>57</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_fkp_fractions</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>56</SubIndex>
+						<SubIndex>58</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_reserved3</Name>
 						<DataType>USINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>57</SubIndex>
-						<BitLen>8</BitLen>
-						<Name>OutU8_cpg_led_blink</Name>
-						<DataType>USINT</DataType>
+						<SubIndex>59</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>OutU32_cpg_led_blink</Name>
+						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
-						<SubIndex>58</SubIndex>
+						<SubIndex>60</SubIndex>
 						<BitLen>8</BitLen>
 						<Name>OutU8_cpg_vibration</Name>
 						<DataType>USINT</DataType>
