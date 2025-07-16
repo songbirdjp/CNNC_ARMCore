@@ -14,37 +14,11 @@
 #include <string.h>
 #include "init_call.h"
 
-#define USING_UART_OPTION_FUNCTION
-
 typedef struct uart_drv
 {
     uart_dev_t dev;
     UART_HandleTypeDef *huart;
-
-#ifdef USING_UART_OPTION_FUNCTION
-    struct drv_opt *opt;
-#endif
 } uart_drv_t;
-
-#ifdef USING_UART_OPTION_FUNCTION
-typedef struct drv_opt
-{
-    int8_t (*before_write)(uart_drv_t *uart);
-    int8_t (*after_write)(uart_drv_t *uart);
-    int8_t (*complete_write)(uart_drv_t *uart);
-
-    int8_t (*before_read)(uart_drv_t *uart);
-    int8_t (*after_read)(uart_drv_t *uart);
-    int8_t (*complete_read)(uart_drv_t *uart);
-
-} drv_opt_t;
-static int8_t drv_uart_write_before(uart_drv_t *uart);
-static int8_t drv_uart_write_after(uart_drv_t *uart);
-static int8_t drv_uart_write_complete(uart_drv_t *uart);
-static int8_t drv_uart_read_before(uart_drv_t *uart);
-static int8_t drv_uart_read_after(uart_drv_t *uart);
-static int8_t drv_uart_read_complete(uart_drv_t *uart);
-#endif
 
 static uart_drv_t *uart_drv_get(UART_HandleTypeDef *huart);
 static int8_t drv_uart_init(uart_dev_t *const self);
@@ -148,12 +122,6 @@ static int8_t drv_uart_write(uart_dev_t *const self,
     }
     uart_drv_t *uart_drv = (uart_drv_t *)self->user_data;
 
-#ifdef USING_UART_OPTION_FUNCTION
-    if (uart_drv->opt->before_write != NULL)
-    {
-        uart_drv->opt->before_write(uart_drv);
-    }
-#endif
     HAL_StatusTypeDef status = HAL_UART_Transmit_DMA(uart_drv->huart,
                                                      (uint8_t const *)buffer,
                                                      size);
@@ -161,19 +129,7 @@ static int8_t drv_uart_write(uart_dev_t *const self,
     {
         return -2;
     }
-#ifdef USING_UART_OPTION_FUNCTION
-    if (uart_drv->opt->after_write != NULL)
-    {
-        uart_drv->opt->after_write(uart_drv);
-    }
-#endif
 
-#ifdef USING_UART_OPTION_FUNCTION
-    if (uart_drv->opt->complete_write != NULL)
-    {
-        uart_drv->opt->complete_write(uart_drv);
-    }
-#endif
     return 0;
 }
 static int8_t drv_uart_read(uart_dev_t *const self,
@@ -187,26 +143,6 @@ static int8_t drv_uart_read(uart_dev_t *const self,
     }
     uart_drv_t *uart_drv = (uart_drv_t *)self->user_data;
 
-#ifdef USING_UART_OPTION_FUNCTION
-    if (uart_drv->opt->before_read != NULL)
-    {
-        uart_drv->opt->before_read(uart_drv);
-    }
-#endif
-
-#ifdef USING_UART_OPTION_FUNCTION
-    if (uart_drv->opt->after_read != NULL)
-    {
-        uart_drv->opt->after_read(uart_drv);
-    }
-#endif
-
-#ifdef USING_UART_OPTION_FUNCTION
-    if (uart_drv->opt->complete_read != NULL)
-    {
-        uart_drv->opt->complete_read(uart_drv);
-    }
-#endif
     return 0;
 }
 static int8_t drv_uart_ioctl(uart_dev_t *const self, uint8_t cmd, void *const arg)
@@ -227,6 +163,8 @@ static int8_t drv_uart_ioctl(uart_dev_t *const self, uint8_t cmd, void *const ar
     return 0;
 }
 
+static int8_t drv_uart_write_before(uart_dev_t *const self);
+static int8_t drv_uart_write_complete(uart_dev_t *const self);
 static int32_t drv_uart_register(uart_drv_t *drv,
                                  UART_HandleTypeDef *huart,
                                  const char *name,
@@ -246,19 +184,6 @@ static int32_t drv_uart_register(uart_drv_t *drv,
 
     drv->huart = huart;
 
-#ifdef USING_UART_OPTION_FUNCTION
-    static drv_opt_t uart_opt = {
-        .before_write = drv_uart_write_before,
-        .after_write = drv_uart_write_after,
-        .complete_write = drv_uart_write_complete,
-
-        .before_read = drv_uart_read_before,
-        .after_read = drv_uart_read_after,
-        .complete_read = drv_uart_read_complete,
-    };
-    drv->opt = &uart_opt;
-#endif
-
     static device_uart_ops_t const uart_ops = {
         .init = drv_uart_init,
         .open = drv_uart_open,
@@ -266,6 +191,8 @@ static int32_t drv_uart_register(uart_drv_t *drv,
         .read = drv_uart_read,
         .write = drv_uart_write,
         .ioctl = drv_uart_ioctl,
+        .write_before = drv_uart_write_before,
+        .write_complete = drv_uart_write_complete,
     };
 
     int32_t ret = device_uart_register(&drv->dev,
@@ -332,7 +259,7 @@ static int8_t drv_uart_init(uart_dev_t *const self)
                                                UART_CLEAR_CMF |
                                                UART_CLEAR_WUF |
                                                UART_CLEAR_RTOF);
-
+                                               
     HAL_UART_RegisterCallback(uart_drv->huart, HAL_UART_ERROR_CB_ID, ErrorCallback);
     HAL_UART_RegisterCallback(uart_drv->huart, HAL_UART_TX_COMPLETE_CB_ID, TxCpltCallback);
     HAL_UART_RegisterRxEventCallback(uart_drv->huart, RxEventCallback);
@@ -382,9 +309,10 @@ static uart_drv_t *uart_drv_get(UART_HandleTypeDef *huart)
     return NULL;
 }
 
-#ifdef USING_UART_OPTION_FUNCTION
-static int8_t drv_uart_write_before(uart_drv_t *uart)
+static int8_t drv_uart_write_before(uart_dev_t *const self)
 {
+    uart_drv_t *uart = (uart_drv_t *)self->user_data;
+
     if (uart == NULL)
     {
         return -1;
@@ -401,8 +329,10 @@ static int8_t drv_uart_write_before(uart_drv_t *uart)
 
     return 0;
 }
-static int8_t drv_uart_write_after(uart_drv_t *uart)
+static int8_t drv_uart_write_complete(uart_dev_t *const self)
 {
+    uart_drv_t *uart = (uart_drv_t *)self->user_data;
+
     if (uart == NULL)
     {
         return -1;
@@ -419,79 +349,6 @@ static int8_t drv_uart_write_after(uart_drv_t *uart)
 
     return 0;
 }
-static int8_t drv_uart_write_complete(uart_drv_t *uart)
-{
-    if (uart == NULL)
-    {
-        return -1;
-    }
-
-    if (uart->huart == &huart1)
-    {
-        /* do nothing */
-    }
-    else
-    {
-        /* add other uart here */ /**<------ add other uart here*/
-    }
-
-    return 0;
-}
-static int8_t drv_uart_read_before(uart_drv_t *uart)
-{
-    if (uart == NULL)
-    {
-        return -1;
-    }
-
-    if (uart->huart == &huart1)
-    {
-        /* do nothing */
-    }
-    else
-    {
-        /* add other uart here */ /**<------ add other uart here*/
-    }
-
-    return 0;
-}
-static int8_t drv_uart_read_after(uart_drv_t *uart)
-{
-    if (uart == NULL)
-    {
-        return -1;
-    }
-
-    if (uart->huart == &huart1)
-    {
-        /* do nothing */
-    }
-    else
-    {
-        /* add other uart here */ /**<------ add other uart here*/
-    }
-
-    return 0;
-}
-static int8_t drv_uart_read_complete(uart_drv_t *uart)
-{
-    if (uart == NULL)
-    {
-        return -1;
-    }
-
-    if (uart->huart == &huart1)
-    {
-        /* do nothing */
-    }
-    else
-    {
-        /* add other uart here */ /**<------ add other uart here*/
-    }
-
-    return 0;
-}
-#endif
 
 int32_t drv_console_init(void)
 {

@@ -239,12 +239,15 @@ int32_t uart_protocol_recv(uart_protocol_t *const self,
     }
     uart_protocol_payload_t *payload = (uart_protocol_payload_t *)data;
     ret = frame_format_recv(&self->frame_format, payload, len, timeout);
-    if (ret != 0)
+    if (ret < 0)
     {
         LOG_E("frame_format_recv error: %d\r\n", ret);
         return -2;
     }
-
+    if(ret > 0)
+    {
+        return 0;
+    }
     switch (payload->type)
     {
     case 0x01: /*心跳帧*/
@@ -338,10 +341,10 @@ int32_t uart_protocol_recv(uart_protocol_t *const self,
                                                                                         payload->data,
                                                                                         &payload->length,
                                                                                         self->uart_protocol_rx_callback[UART_PROTOCOL_SET_RX_CB_ID].arg);
-            if (ret != 0)
-            {
-                return -8;
-            }
+            // if (ret != 0)
+            // {
+            //     return -8;
+            // }
         }
 
         struct
@@ -366,10 +369,10 @@ int32_t uart_protocol_recv(uart_protocol_t *const self,
                                                                                         payload->data,
                                                                                         &payload->length,
                                                                                         self->uart_protocol_rx_callback[UART_PROTOCOL_GET_RX_CB_ID].arg);
-            if (ret != 0)
-            {
-                return -10;
-            }
+            // if (ret != 0)
+            // {
+            //     return -10;
+            // }
         }
         uart_protocol_payload_t send_data = {0};
         send_data.id_ack = payload->id_ack & 0xFFFFFFFE;
@@ -383,6 +386,15 @@ int32_t uart_protocol_recv(uart_protocol_t *const self,
         }
     }
     break;
+    case 0x83: /*参数配置应答*/
+        break;
+    case 0x84: /*参数获取应答*/
+        osStatus = osMessageQueuePut(self->config_get_response_queue, payload->data, 0, 100);
+        if (osStatus != osOK)
+        {
+            return -12;
+        }
+        break;
     case 0x85: /*数据set应答*/
         break;
     case 0x86: /*数据get应答*/
@@ -492,6 +504,7 @@ int32_t uart_protocol_config_get(uart_protocol_t *const self,
                                  uint32_t *len,
                                  uint32_t timeout)
 {
+    return 0;
 }
 int32_t uart_protocol_set(uart_protocol_t *const self,
                           uint32_t ID,
@@ -762,14 +775,12 @@ static int8_t uart_protocol_timerout_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(uart_protocol_timerout_init);
+INIT_COMPONENT_EXPORT(uart_protocol_timerout_init);
 
 // #define UART_DEV_TEST
 
 #ifdef UART_DEV_TEST
-#include "init_call.h"
 #include "shell.h"
-#include "ulog.h"
 static uart_protocol_t uart_protocol;
 int8_t uart_test_statistics(uint8_t argc, uint8_t **argv)
 {
