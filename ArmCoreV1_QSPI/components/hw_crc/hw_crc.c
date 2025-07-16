@@ -28,7 +28,7 @@ static struct hardware_crc_para crc_config_default[] =
     {CRC_POLYLENGTH_32B, DEFAULT_CRC32_POLY, DEFAULT_CRC_INITVALUE, CRC_INPUTDATA_INVERSION_BYTE, CRC_OUTPUTDATA_INVERSION_ENABLE}
 };
 
-HAL_StatusTypeDef hardware_crc_config(enum hardware_crc_default index)
+static HAL_StatusTypeDef hardware_crc_config(enum hardware_crc_default index)
 {
     HAL_StatusTypeDef status = HAL_OK;
 
@@ -40,7 +40,7 @@ HAL_StatusTypeDef hardware_crc_config(enum hardware_crc_default index)
     return status;
 }
 
-static uint32_t hardware_crc_calculate_continue(uint8_t pBuffer[], uint32_t size)
+uint32_t hardware_crc_calculate_continue(uint8_t pBuffer[], uint32_t size)
 {
     return HAL_CRC_Accumulate(&hcrc, (uint32_t *)pBuffer, size);
 }

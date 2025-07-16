@@ -21,6 +21,7 @@ enum hardware_crc_default
 //uint32_t hardware_crc_calculate(uint8_t pBuffer[], uint32_t size);
 //uint32_t hardware_crc_calculate_continue(uint8_t pBuffer[], uint32_t size);
 uint32_t hardware_crc_calculate(enum hardware_crc_default index, uint8_t pBuffer[], uint32_t size);
+uint32_t hardware_crc_calculate_continue(uint8_t pBuffer[], uint32_t size);
 
 
 #ifdef __cplusplus

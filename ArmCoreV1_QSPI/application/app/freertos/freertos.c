@@ -26,7 +26,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "iwdg.h"
-#include "jaw_drv.h"
 
 /* USER CODE END Includes */
 

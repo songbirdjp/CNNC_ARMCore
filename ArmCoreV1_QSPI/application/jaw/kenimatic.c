@@ -77,11 +77,11 @@ void initSVG(struct SVG_Type* inst, uint8_t axes)
     inst->DynamicLimits.JerkPos = 1000;
     if(axes){   //Y Jaw 
         inst->DynamicLimits.PositionNeg = 0.0;
-        inst->DynamicLimits.PositionPos = 1000;// = 120mm @ISO enc:24002
+        inst->DynamicLimits.PositionPos = 1000;
     }    
     else{   //X Jaw 
         inst->DynamicLimits.PositionNeg = 0.0;
-        inst->DynamicLimits.PositionPos = 1000;// = 50mm @ISO 18534
+        inst->DynamicLimits.PositionPos = 1000;
     }
     inst->DynamicLimits.VelocityNeg = 17.5;
     inst->DynamicLimits.VelocityPos = 17.5;

@@ -108,6 +108,7 @@ void Error_Handler(void);
 #define W5500_RSTn_GPIO_Port GPIOD
 #define W5500_INTn_Pin GPIO_PIN_4
 #define W5500_INTn_GPIO_Port GPIOD
+#define W5500_INTn_EXTI_IRQn EXTI4_IRQn
 #define nFaultY_Pin GPIO_PIN_6
 #define nFaultY_GPIO_Port GPIOD
 #define nFaultY_EXTI_IRQn EXTI9_5_IRQn

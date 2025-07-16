@@ -332,7 +332,7 @@ static int8_t device_w5500_opt_init(DEVICE_SPI *spi, DEVICE_SPI_OPT *spi_opt)
 }
 #endif
 
-#undef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
+//#undef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
 #ifdef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
 #define W5500_INTn_Pin GPIO_PIN_4
 #define W5500_IRQ_EVENT (1 << 0)

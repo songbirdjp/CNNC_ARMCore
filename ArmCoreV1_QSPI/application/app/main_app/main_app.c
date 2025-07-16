@@ -732,7 +732,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
             rtFeedback.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
             rtFeedback.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
             rtFeedback.MlcCurFsm = recvBuf[FPGA_RT_UPLOAD_START+168];//RT 168
-           // printf("sta: %d %d %d %d\r\n", recvBuf[FPGA_RT_UPLOAD_START+166],recvBuf[FPGA_RT_UPLOAD_START+167], recvBuf[FPGA_RT_UPLOAD_START+168],recvBuf[FPGA_RT_UPLOAD_START+169]);
+          //  printf("sta: %d %d %d %d\r\n", rtFeedback.faultInfo1,rtFeedback.faultInfo2, rtFeedback.MlcCurFsm,recvBuf[FPGA_RT_UPLOAD_START+169]);
           //  rtFeedback.jawTowardPos[X] = (recvBuf[170 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 171];//RT 170 - 171
          //   rtFeedback.jawTowardPos[Y] = (recvBuf[172 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 173];//RT 172 - 173
             memcpy(&rtFeedback.jawTowardPos[X], &recvBuf[FPGA_RT_UPLOAD_START+170], 4);
@@ -747,7 +747,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
            // interlockFeedback.boardLoss = recvBuf[FPGA_NRT_UPLOAD_START + 168];//NRT 166 bit6-7
           //  interlockFeedback.FPGAStatus = (recvBuf[FPGA_NRT_UPLOAD_START + 166] << 8) + recvBuf[FPGA_NRT_UPLOAD_START + 167]; //NRT 166-167 
             memcpy(&interlockFeedback.FPGAStatus, &recvBuf[FPGA_NRT_UPLOAD_START + 166], 2);  
-          //  printf("FPGAStatus %x\r\n",interlockFeedback.FPGAStatus);      
+         //   printf("FPGAStatus %x\r\n",interlockFeedback.FPGAStatus);      
         }
         else if (recvBuf[4] == PACKF1_CMD) 
         {
@@ -770,9 +770,9 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
             // }
             memcpy(interlockFeedback.leafNcarInterlock, &recvBuf[FPGA_NRT_UPLOAD_START], 166);
             memcpy(&interlockFeedback.versionFPGA, &recvBuf[FPGA_NRT_UPLOAD_START + 166], 4);
-          //  interlockFeedback.versionFPGA = 
-              //  (recvBuf[FPGA_NRT_UPLOAD_START + 166]<<24)+(recvBuf[FPGA_NRT_UPLOAD_START + 167]<<16)+(recvBuf[FPGA_NRT_UPLOAD_START + 168]<<8)+recvBuf[FPGA_NRT_UPLOAD_START + 169];
-           // printf("ver %x\r\n",interlockFeedback.versionFPGA);       
+        //    interlockFeedback.versionFPGA = 
+        //        (recvBuf[FPGA_NRT_UPLOAD_START + 166]<<24)+(recvBuf[FPGA_NRT_UPLOAD_START + 167]<<16)+(recvBuf[FPGA_NRT_UPLOAD_START + 168]<<8)+recvBuf[FPGA_NRT_UPLOAD_START + 169];
+        //    printf("ver %x\r\n",interlockFeedback.versionFPGA);       
         }
         operateSendMutex(0, 0, 0);
         #endif

@@ -63,6 +63,36 @@ uint32_t Crc32Buffer(uint32_t crc, uint8_t *buf, uint32_t size)
     return crc;
 }
 
+ void planDataCheck(uint8_t *pSDBeamEnd)
+ {
+    uint8_t *pBeamData = pSDBeamEnd - rtBeamData.oneBeamSize[rtBeamData.beamIndex];
+    uint16_t leafPos[80], max, xJawTarget, beamID,radiationID;
+    uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.beamIndex];
+
+    pBeamData += 2; //skip total RI 
+    memcpy(beamID, pBeamData, 2);
+    pBeamData += 2;//skip beam index
+    for(uint16_t ri = 1; ri <= totalRI; ri++)
+    {
+        memcpy(radiationID, pBeamData, 2);
+        pBeamData += 4; //skip (RI index + 1st big leaf)
+        memcpy(leafPos, pBeamData, 160); //copy out 80 leaf pos in RI
+        max = leafPos[0];//get max leaf pos
+        for (uint8_t i = 1; i < 80; i++) {
+            if (max < leafPos[i])   max = leafPos[i];
+        }
+        pBeamData += 160;//skip leaf pos * 80
+        pBeamData += 4; //skip (2th big leaf + carrier pos)
+        memcpy(xJawTarget, pBeamData, 2);
+        if((max/325/0.44*0.213 - xJawTarget/2.5/ENCODER_CNT_PER_MM) > 59)
+        {
+            printf("Xjaw can't mask leaf end %d %d!\r\n",beamID,radiationID);
+            interlockFeedback.jawInterlock[X] |= 0x10;
+        }
+        pBeamData += 20;
+    }
+ }
+
 void updateNRTFeedback(void)
 {
     uint16_t typeLen = 0, *pFDAry = feedback;
@@ -168,10 +198,9 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
                // printf("%d ", info->gDATABUF[12+i]);
             }
           //  for(i = 12; i < frameHead.frmLength; i++)  printf("%x ", data[i]);
-            crcCal = 0xffffffff;
-            crcCal = Crc32Buffer(crcCal, &data[12], saveLength);//ok
-           // crcCal = hardware_crc_calculate(CRC32, &data[12], saveLength);
-          //  crcCal^= 0xFFFFFFFF;
+         //   crcCal = 0xffffffff;
+          //  crcCal = Crc32Buffer(crcCal, &data[12], saveLength);//ok
+            crcCal = hardware_crc_calculate(CRC32, &data[12], saveLength);
         }
         else {
             saveLength = frameHead.frmLength;
@@ -191,9 +220,8 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
                 }
             }
 
-            crcCal = Crc32Buffer(crcCal, &data[16], saveLength);//ok
-          //  crcCal = hardware_crc_calculate(CRC32, &data[16], saveLength);
-          //  crcCal^= 0xFFFFFFFF;
+          //  crcCal = Crc32Buffer(crcCal, &data[16], saveLength);//ok
+            crcCal = hardware_crc_calculate_continue(&data[16], saveLength);
         }
         pSDRAM += sdramLength;
 
@@ -230,17 +258,8 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             if (rtBeamData.totalBeam >= MAX_BEAM_NUM) printf("Warn: beam > 30, will not be sent to FPGA!\r\n");
             printf("Beam %d transfer finish, size is %d, crc is %u\r\n",
                    rtBeamData.beamIndex, rtBeamData.oneBeamSize[beamBufIndex], crcInData);
-#if 0
-            pSDRAM = (__IO u_int8_t *) (SDRAM_BANK1_ADDR);
-            pBeamData = pSDRAM + 6;
-            sndCtrl.pCrt = sndCtrl.paramSendBuf;
-            makeSingleSendAry(24, pBeamData, RT_DOWNLOAD_PAYLOAD_LEN, 1);
-
-            // for(uint8_t i = 0; i <sndCtrl.singleSize[24]; i++)  printf("%x ",sndCtrl.paramSendBuf[i]);
-          //   printf("\r\n");
-
-            FPGA_WriteByteArray(sndCtrl.paramSendBuf, sndCtrl.singleSize[24]);
-#endif
+            
+            planDataCheck(pSDRAM);
         }
         secondPosFeedback.packIndexInOneBeam = frameHead.packIndexInOneBeam;
         secondPosFeedback.errorCode = 0xF0; //ok
@@ -265,11 +284,11 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         // printf("data:");
         // for(uint16_t n = 0; n < frameHead.frmLength; n++)   printf("%d ", data[6+n]);
         // printf("\r\n");
-        crcCal = 0xffffffff;
-        crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
+      //  crcCal = 0xffffffff;
+      //  crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
+        crcCal = hardware_crc_calculate(CRC32, &data[6], frameHead.frmLength);
         crcCal ^= 0xffffffff;
-      //  crcCal = hardware_crc_calculate(CRC32, &data[6], frameHead.frmLength);
-      //  crcCal^= 0xFFFFFFFF;
+    
         last = u8LenTotal - 1;
         frameEnd.crcHigh = (data[last-2] << 8) + data[last - 3];
         frameEnd.crcLow = (data[last] << 8) + data[last - 1];
@@ -369,7 +388,7 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
     uint16_t pos[2];
     pos[X] = (pBeamData[1] << 8) + pBeamData[0];
     pos[Y] = (pBeamData[3] << 8) + pBeamData[2];
-    messageToJawTask(JawPos, COMMAND, XY, pos);
+    messageToJawTask(JawPos, PLAN_DATA, XY, pos);
     
     pBeamData += 4;//skip X/Y Jaw pos
     // makeSingleSendAry(24, pBeamData, 8, 0,1);//CP limit pos

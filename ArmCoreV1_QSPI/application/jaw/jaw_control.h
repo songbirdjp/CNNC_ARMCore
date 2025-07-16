@@ -46,7 +46,8 @@ typedef enum {
 typedef enum {
     COMMAND,    //state or pos changed
     LIMIT_SWITCH,   //limit switch is triggered
-    ENC_Z  //encoder Z signal
+    ENC_Z,  //encoder Z signal
+    PLAN_DATA
 } JawSignalType;
 
 typedef enum {
@@ -78,7 +79,8 @@ struct JawFlagType
     uint8_t axes;
     uint16_t JawEncZ[2];
     uint16_t JawLimit[2];
-    uint16_t masterCmd[2];
+    uint16_t stateCmd[2];
+    uint16_t cmdPos[2];
 };
 
 typedef struct
