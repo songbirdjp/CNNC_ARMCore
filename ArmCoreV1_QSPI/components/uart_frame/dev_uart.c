@@ -202,7 +202,7 @@ device_err_t dev_uart_init(uart_dev_t *dev, uint16_t oflags, uint32_t queueSpace
     }
     dev->rx_buf_len = queueMsgSize;
 
-    dev->rx_buf_tmp = (uint8_t *)pvPortMalloc(sizeof(uart_frame_t));
+    dev->rx_buf_tmp = (uint8_t *)pvPortMalloc(queueMsgSize);
     if (dev->rx_buf_tmp == NULL)
     {
         return DEV_ENOMEM;
@@ -320,6 +320,15 @@ device_err_t dev_uart_send(uart_dev_t *dev, uint8_t *buf, uint16_t len, uint32_t
         return ret;
     }
 
+    if (dev->ops->write_before != NULL)
+    {
+        err = dev->ops->write_before(dev);
+        if (err != DEV_EOK)
+        {
+            goto error;
+        }
+    }
+
     err = dev->ops->write(dev, buf, len, timeout);
     if (err != DEV_EOK)
     {
@@ -330,6 +339,15 @@ device_err_t dev_uart_send(uart_dev_t *dev, uint8_t *buf, uint16_t len, uint32_t
     {
         err = ret;
         goto error;
+    }
+
+    if (dev->ops->write_complete != NULL)
+    {
+        err = dev->ops->write_complete(dev);
+        if (err != DEV_EOK)
+        {
+            goto error;
+        }
     }
 
     ret = osMutexRelease(dev->mutex_tx);
