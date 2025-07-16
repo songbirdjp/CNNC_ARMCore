@@ -576,6 +576,11 @@ static int8_t getClientType(uint8_t s, uint8_t *pString)
             client[s].clientType = SHELL;//this client is shell
             printf("client %d is shell\r\n", s);
         }
+        else if( strstr(p, RAM_DATA_AUTHORIZATION) )
+        {
+            client[s].clientType = RAM_DATA;//this client is shell
+            printf("client %d is ram data\r\n", s);
+        }
         else    return -1;
     }
     else    return -1;
@@ -698,7 +703,7 @@ int32_t ws_recv_data_process(TCP_DATA_t *recvData)
              case WDT_PING:	
                 uint16_t payloadLen = len - retHeadLen;
                 uint8_t *pdata = NULL;
-                printf("recv ping and reply pong %d\r\n",payloadLen);
+                // printf("recv ping and reply pong %d\r\n",payloadLen);
                 //  for(i=0; i< payloadLen; i++)
                 //     printf("%x ",data[i]);
                 // printf("\r\n");

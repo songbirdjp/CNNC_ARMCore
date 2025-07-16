@@ -247,7 +247,16 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.serious_interlock.rtm_on_link = 0;
     }
-
+    // PSM
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_PSM].manage_info.status_word, MODULE_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_PSM].manage_info.status_word, MODULE_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.psm_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.psm_link = 0;
+    }
     if ((self->cur_time - self->last_time > RTM_ERROR_WAIT_TIME) || (retval == 0))
     {
         if (self->fault_clear_flag == 1) // 清除故障

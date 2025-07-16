@@ -11,7 +11,7 @@
 #define CONTROLLER_AUTHORIZATION    "CONTROLLER"
 #define SERVICE_AUTHORIZATION       "SERVICE"
 #define SHELL_AUTHORIZATION         "SHELL"
-
+#define RAM_DATA_AUTHORIZATION      "RAM_DATA"
 typedef enum
 {
     WDT_NULL = 0, // 非标准数据包
@@ -34,6 +34,7 @@ typedef enum
     CONTROLLER = 1,
     SERVICE,
     SHELL,
+    RAM_DATA,
     ALL_CLIENTS
 } Client_Type;
 

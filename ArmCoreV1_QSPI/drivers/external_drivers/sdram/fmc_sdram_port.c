@@ -66,7 +66,7 @@ void SDRAM_Init(void)
 #endif
 static struct dev_sdram bank1_sdram = {0};
 
-struct dev_sdram *bank1_sdram_get(voide)
+struct dev_sdram *bank1_sdram_get(void)
 {
     return &bank1_sdram;
 }

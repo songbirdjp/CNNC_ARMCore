@@ -290,6 +290,26 @@ int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_
     }
     return 0;
 }
+int32_t app_data_record_from_ethercat(rtm_module_info_t *self, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len)
+{
+    if (self == NULL || data == NULL || len == 0 || len > UART_PROTOCOL_DATA_MAX_LENGTH)
+    {
+        return -1;
+    }
+    payload_t payload;
+    payload.id_ack = ID << 1 | 0x01;
+    payload.type = 0x05;
+    payload.length = len + 1;
+    payload.data[0] = cmd;
+    memcpy(payload.data + 1, data, len);
+    uint32_t length = payload.length + sizeof(payload_t) - UART_PROTOCOL_DATA_MAX_LENGTH;
+    int32_t ret = app_data_record(self->app_data_record, self->ID, &payload, length);
+    if (ret != 0)
+    {
+        return -2;
+    }
+    return 0;
+}
 #define APP_RTM_EVENT_FLAG_OUTPUT (1 << 0)
 
 void app_rtm_event_output_set(void)
@@ -329,11 +349,13 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             flag = OUTPUT_DATA_GMM_MOVE_STATUS;
             len = (uint8_t *)&output_data.OutU32_gmm_move_status - (uint8_t *)&output_data.OutU8_gmm_fsm_state_current;
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], RTM_ON_PLC_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
+            app_data_record_from_ethercat(self, RTM_ON_PLC_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
             break;
         case OUTPUT_DATA_GMM_MOVE_STATUS:
-            flag = OUTPUT_DATA_GMM_MOVE_STATUS;
+            flag = OUTPUT_DATA_GMM_CURRENT_STATE;
             len = (uint8_t *)&output_data.OutU8_psm_fsm_state_current - (uint8_t *)&output_data.OutU32_gmm_move_status;
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], ICM_ID | RTM_ON_PLC_ID | QAM_ID | BGM_ID, SEND_GMM_INFO_CMD, &data->OutU32_gmm_move_status, len);
+            app_data_record_from_ethercat(self, ICM_ID | RTM_ON_PLC_ID | QAM_ID | BGM_ID, SEND_GMM_INFO_CMD, &data->OutU32_gmm_move_status, len);
             break;
         // case OUTPUT_DATA_PSM_CURRENT_STATE:
         //     flag = OUTPUT_DATA_PSM_MOVE_STATUS;
@@ -356,19 +378,23 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU16_radiation_index, len);
             // rtm_set_data_distribute(self->queue_group[RTM_MODULE_GMM], BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU8_beam_id, len);
-            // rtm_set_data_distribute(self->queue_group[RTM_MODULE_PSM], BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_PSM], BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU8_beam_id, len);
+
+            app_data_record_from_ethercat(self, BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU16_radiation_index, len);
         }
 
         len = (uint8_t *)&output_data.OutU32_gmm_move_status - (uint8_t *)&output_data.OutU8_gmm_fsm_state_current;
         if (memcmp(&output_data.OutU8_gmm_fsm_state_current, &data->OutU8_gmm_fsm_state_current, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], RTM_ON_PLC_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
+            app_data_record_from_ethercat(self, RTM_ON_PLC_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_psm_fsm_state_current - (uint8_t *)&output_data.OutU32_gmm_move_status;
         if (memcmp(&output_data.OutU32_gmm_move_status, &data->OutU32_gmm_move_status, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], ICM_ID | RTM_ON_PLC_ID | QAM_ID | BGM_ID, SEND_GMM_INFO_CMD, &data->OutU32_gmm_move_status, len);
+            app_data_record_from_ethercat(self, ICM_ID | RTM_ON_PLC_ID | QAM_ID | BGM_ID, SEND_GMM_INFO_CMD, &data->OutU32_gmm_move_status, len);
         }
 
         // len = (uint8_t *)&output_data.OutU32_psm_move_status - (uint8_t *)&output_data.OutU8_psm_fsm_state_current;
@@ -417,6 +443,8 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
         break;
     case RECEIVE_FAULT_CLEAR_CMD:
         memcpy(&input_data->InU8_fault_clear, queue_frame->payload.data + 1, len);
+        break;
+    case RECEIVE_SYSTEM_STATE_CMD:
         break;
     case RECEIVE_GMM_REQUIRE_STATE_CMD:
         memcpy(&input_data->InU8_gmm_require_state, queue_frame->payload.data + 1, len);
@@ -470,7 +498,7 @@ static void app_ethercat_rx_thread(void *argument)
         if (current_time - last_time > 1000)
         {
             // LOG_I("%s unlink\r\n", self->module_name);
-            // bit_set(app_rtm.rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
+            bit_set(app_rtm.rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
         }
     }
 exit:
@@ -493,6 +521,7 @@ static void app_ethercat_tx_thread(void *argument)
         status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 500);
         if (status == osOK)
         {
+            app_data_record(self->app_data_record, self->ID, &queue_frame.payload, queue_frame.length);
             ethercat_input_data_distribute(self, &input_data, &queue_frame);
             ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
         }
@@ -709,6 +738,11 @@ static void app_module_rx_thread(void *argument)
             LOG_E("%s recv handle error, ret = %d\r\n", self->module_name, ret);
             continue;
         }
+        ret = app_data_record(self->app_data_record, self->ID, data, len);
+        if (ret != 0)
+        {
+            LOG_E("%s data record send error, ret = %d\r\n", self->module_name, ret);
+        }
     }
 exit:
     osThreadExit();
@@ -779,6 +813,11 @@ static void app_module_tx_thread(void *argument)
         {
             LOG_E("%s queue get error, status = %d\r\n", self->module_name, status);
             continue;
+        }
+        ret = app_data_record(self->app_data_record, self->ID, (uint8_t *)&queue_frame, queue_frame.length);
+        if (ret != 0)
+        {
+            LOG_E("%s data record send error, ret = %d\r\n", self->module_name, ret);
         }
         ret = uart_protocol_send(&self->uart_protocol, (uint8_t *)&queue_frame, queue_frame.length, 100);
         if (ret != 0)
@@ -857,14 +896,14 @@ static void app_fkp_rx_thread(void *argument)
                 LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
             }
             ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_FKP].queue_group[RTM_MODULE_PSM],
-                                           GMM_ID | PSM_ID | RTM_ON_PLC_ID | RTM_OFF_ARM_ID,
-                                           RECEIVE_FKP_BUTTON_CMD,
-                                           &recv_data.fkp_recv_structure.FkpButton,
-                                           2);
-             if (ret != 0)
-             {
-                 LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
-             }
+                                          GMM_ID | PSM_ID | RTM_ON_PLC_ID | RTM_OFF_ARM_ID,
+                                          RECEIVE_FKP_BUTTON_CMD,
+                                          &recv_data.fkp_recv_structure.FkpButton,
+                                          2);
+            if (ret != 0)
+            {
+                LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
+            }
             // LOG_I("FkpButton:%x\r\n", recv_data.fkp_recv_structure.FkpButton);
         }
     }
@@ -1012,14 +1051,14 @@ static void app_cpg_rx_thread(void *argument)
                 LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
             }
             ret = rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_CPG].queue_group[RTM_MODULE_PSM],
-                                           GMM_ID | PSM_ID | RTM_ON_PLC_ID | RTM_OFF_ARM_ID,
-                                           SEND_CPG_BUTTON_CMD,
-                                           &CpgButton,
-                                           sizeof(CpgButton));
-             if (ret != 0)
-             {
-                 LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
-             }
+                                          GMM_ID | PSM_ID | RTM_ON_PLC_ID | RTM_OFF_ARM_ID,
+                                          SEND_CPG_BUTTON_CMD,
+                                          &CpgButton,
+                                          sizeof(CpgButton));
+            if (ret != 0)
+            {
+                LOG_E("rtm_set_data_distribute error, ret = %d\r\n", ret);
+            }
         }
     }
 exit:
@@ -1122,7 +1161,7 @@ int app_rtm_data_handle_create(void)
     self->rtm_module_info[RTM_MODULE_FKP].ID = FKP_ID;
     self->rtm_module_info[RTM_MODULE_CPG].ID = CPG_ID;
     self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].ID = RTM_OFF_ARM_ID;
-    self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].ID = GMM_ID | PSM_ID;
+    self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].ID = GMM_ID;
     for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
     {
         for (uint8_t j = 0; j < RTM_MODULE_MAX; j++)
@@ -1168,11 +1207,20 @@ int app_rtm_data_handle_create(void)
         self->rtm_module_info[i].heartbeat_info_tx.HardwareVersion = 0;
         self->rtm_module_info[i].heartbeat_info_tx.FirmWareVersion = 0;
     }
+    ret = app_data_record_init(&self->app_data_record);
+    if (ret != 0)
+    {
+        return -2;
+    }
+    for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
+    {
+        self->rtm_module_info[i].app_data_record = &self->app_data_record;
+    }
     ret = ethercat_thread_init();
     if (ret != 0)
     {
         bit_set(self->rtm_ethercat_info.manage_info.status_word, ETHERCAT_SLAVE_INIT_BIT);
-        return -1;
+        return -3;
     }
     osEventFlagsAttr_t event_attributes = {
         .name = "output_event"};
@@ -1180,13 +1228,13 @@ int app_rtm_data_handle_create(void)
     self->ethercat_Event = osEventFlagsNew(&event_attributes);
     if (self->ethercat_Event == NULL)
     {
-        return -1;
+        return -4;
     }
 
     ret = app_dido_create(&self->app_dido);
     if (ret != 0)
     {
-        return -1;
+        return -5;
     }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_PSM].uart_protocol,
                              UART_DEV_NAME_USART2,
@@ -1195,7 +1243,7 @@ int app_rtm_data_handle_create(void)
                              10000);
     if (ret != 0)
     {
-        return -2;
+        return -6;
     }
     // ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_GMM].uart_protocol,
     //                          UART_DEV_NAME_USART3,
@@ -1204,23 +1252,23 @@ int app_rtm_data_handle_create(void)
     //                          10000);
     // if (ret != 0)
     // {
-    //     return -3;
+    //     return -7;
     // }
     self->uart_fkp = device_uart_find(UART_DEV_NAME_UART4);
     if (self->uart_fkp == NULL)
     {
-        return -4;
+        return -8;
     }
     device_err = dev_uart_init(self->uart_fkp, DEV_UART_IOCTL_USE_DMA, 5, (sizeof(fkp_recv_structure_t) + sizeof(serial_frame_format_t) + sizeof(uint32_t)) * 2);
     if (device_err != DEV_EOK)
     {
-        return -5;
+        return -9;
     }
 
     ret = fdcan1_init();
     if (ret != 0)
     {
-        return -6;
+        return -10;
     }
 
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_RTM_ON].uart_protocol,
@@ -1231,7 +1279,7 @@ int app_rtm_data_handle_create(void)
     if (ret != 0)
     {
         printf("uart_protocol_init error, ret = %d", ret);
-        return -7;
+        return -11;
     }
     for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
     {
@@ -1241,7 +1289,7 @@ int app_rtm_data_handle_create(void)
         self->rtm_module_info[i].module_queue = osMessageQueueNew(5, sizeof(queue_frame_t), NULL);
         if (self->rtm_module_info[i].module_queue == NULL)
         {
-            return -8;
+            return -12;
         }
         for (uint8_t j = 0; j < RTM_MODULE_MAX; j++)
         {
@@ -1255,7 +1303,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_ethercat_rx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -9;
+        return -13;
     }
     thread_attributes.name = "app_ethercat_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1263,7 +1311,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_ethercat_tx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -10;
+        return -14;
     }
     thread_attributes.name = "app_rtm_main_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1271,7 +1319,7 @@ int app_rtm_data_handle_create(void)
     app_rtm_main_threadId = osThreadNew(app_rtm_main_thread, self, &thread_attributes);
     if (app_rtm_main_threadId == NULL)
     {
-        return -11;
+        return -15;
     }
     // thread_attributes.name = "app_gmm_rx_thread";
     // thread_attributes.stack_size = 1024 * 4;
@@ -1279,7 +1327,7 @@ int app_rtm_data_handle_create(void)
     // threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_GMM]), &thread_attributes);
     // if (threadHandle == NULL)
     // {
-    //     return -12;
+    //     return -16;
     // }
     // thread_attributes.name = "app_gmm_tx_thread";
     // thread_attributes.stack_size = 1024 * 4;
@@ -1287,7 +1335,7 @@ int app_rtm_data_handle_create(void)
     // threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_GMM]), &thread_attributes);
     // if (threadHandle == NULL)
     // {
-    //     return -13;
+    //     return -17;
     // }
     thread_attributes.name = "app_psm_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1295,7 +1343,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_PSM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -14;
+        return -18;
     }
     thread_attributes.name = "app_psm_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1303,7 +1351,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_PSM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -15;
+        return -19;
     }
     thread_attributes.name = "app_fkp_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1311,7 +1359,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_fkp_rx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -16;
+        return -20;
     }
     thread_attributes.name = "app_fkp_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1319,7 +1367,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_fkp_tx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -17;
+        return -21;
     }
     thread_attributes.name = "app_cpg_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1327,7 +1375,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_cpg_rx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -18;
+        return -22;
     }
     thread_attributes.name = "app_cpg_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1335,7 +1383,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_cpg_tx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -19;
+        return -23;
     }
     thread_attributes.name = "app_rtm_on_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1343,7 +1391,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_ON]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -20;
+        return -24;
     }
     thread_attributes.name = "app_rtm_on_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1351,7 +1399,7 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_ON]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -21;
+        return -25;
     }
     return 0;
 }

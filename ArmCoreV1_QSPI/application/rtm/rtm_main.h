@@ -14,6 +14,7 @@
 #include "app_dido.h"
 #include "uart_protocol.h"
 #include "app_state_machine.h"
+#include "app_data_record.h"
 #ifdef __cplusplus
 extern "C"
 {
@@ -96,6 +97,7 @@ extern "C"
 #define MODULE_INIT_BIT (0)
 #define MODULE_LINK_STATE_BIT (1)
         manage_info_t manage_info;
+        app_data_record_t *app_data_record;
         const char *module_name;
         const char *module_type;
         uint32_t ID;
@@ -121,6 +123,7 @@ extern "C"
     {
 #define RTM_MAIN_INIT_BIT (0)
         manage_info_t manage_info;
+        app_data_record_t app_data_record;
 
         rtm_fault_check_t fault_check;
         interlock_table_t interlock_table;
