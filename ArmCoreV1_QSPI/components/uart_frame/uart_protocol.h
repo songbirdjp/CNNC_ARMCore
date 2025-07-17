@@ -12,7 +12,7 @@
 #define __UART_PROTOCOL_H__
 
 #include <stdint.h>
-#include "stdbool.h"
+#include <stdbool.h>
 #include "cmsis_os2.h"
 #include "FreeRTOS.h"
 #include "dev_uart.h"

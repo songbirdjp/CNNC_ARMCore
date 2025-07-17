@@ -42,6 +42,38 @@ static uint8_t tcp_link_status_get(void)
 {
     return tcp_link_state;
 }
+int32_t checkWsHsStatus(uint8_t sn)
+{
+    return client[sn].connectStatus;
+}
+int32_t get_sn(int8_t *sn, uint8_t type)
+{
+    uint8_t itemCnt = 0;
+    if (sn == NULL || type == 0)
+    {
+        return -1;
+    }
+    else
+    {
+        for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
+        {
+            if(client[i].clientType == type)
+            {
+                sn[i] = client[i].socketNum;
+                itemCnt++;
+            }
+            else
+            {
+                sn[i] = -1;
+            }
+        }
+        if(itemCnt == 0)
+        {
+            return -2;
+        }
+    }
+    return 0;
+}
 
 static void (*fun_ptr)(uint8_t sn);
 

@@ -214,13 +214,32 @@ static int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID,
     }
     return 0;
 }
+int32_t app_data_record_from_ethercat(rtm_module_info_t *self, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len)
+{
+    if (self == NULL || data == NULL || len == 0 || len > UART_PROTOCOL_DATA_MAX_LENGTH)
+    {
+        return -1;
+    }
+    payload_t payload;
+    payload.id_ack = ID << 1 | 0x01;
+    payload.type = 0x05;
+    payload.length = len + 1;
+    payload.data[0] = cmd;
+    memcpy(payload.data + 1, data, len);
+    uint32_t length = payload.length + sizeof(payload_t) - UART_PROTOCOL_DATA_MAX_LENGTH;
+    int32_t ret = app_data_record(self->app_data_record, self->ID, &payload, length);
+    if (ret != 0)
+    {
+        return -2;
+    }
+    return 0;
+}
 #define APP_RTM_EVENT_FLAG_OUTPUT (1 << 0)
 
 void app_rtm_event_output_set(void)
 {
     osEventFlagsSet(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT);
 }
-
 enum
 {
     OUTPUT_DATA_BEAM_ID = 0,
@@ -428,6 +447,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         if (memcmp(&output_data.OutU8_rtm_on_require_state, &data->OutU8_rtm_on_require_state, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], RTM_ON_ARM_ID, OUTPUT_RTM_ON_ARM_REQUIRE_STATE_CMD, &data->OutU8_rtm_on_require_state, len);
+            app_data_record_from_ethercat(self, RTM_ON_ARM_ID, OUTPUT_RTM_ON_ARM_REQUIRE_STATE_CMD, &data->OutU8_rtm_on_require_state, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_bgm_require_state - (uint8_t *)&output_data.OutU8_icm_require_state;
@@ -591,7 +611,7 @@ static void app_ethercat_rx_thread(void *argument)
         if (current_time - last_time > 1000)
         {
             // LOG_I("%s unlink\r\n", self->module_name);
-            // bit_set(app_rtm.rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
+            bit_set(app_rtm.rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
         }
     }
 exit:
@@ -614,6 +634,7 @@ static void app_ethercat_tx_thread(void *argument)
         status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 500);
         if (status == osOK)
         {
+            app_data_record(self->app_data_record, self->ID, &queue_frame.payload, queue_frame.length);
             ethercat_input_data_distribute(self, &input_data, &queue_frame);
             ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
         }
@@ -821,6 +842,11 @@ static void app_module_rx_thread(void *argument)
             LOG_E("%s recv handle error, ret = %d\r\n", self->module_name, ret);
             continue;
         }
+        ret = app_data_record(self->app_data_record, self->ID, data, len);
+        if (ret != 0)
+        {
+            LOG_E("%s data record send error, ret = %d\r\n", self->module_name, ret);
+        }
     }
 exit:
     osThreadExit();
@@ -891,6 +917,11 @@ static void app_module_tx_thread(void *argument)
         {
             LOG_E("%s queue get error, status = %d\r\n", self->module_name, status);
             continue;
+        }
+        ret = app_data_record(self->app_data_record, self->ID, (uint8_t *)&queue_frame, queue_frame.length);
+        if (ret != 0)
+        {
+            LOG_E("%s data record send error, ret = %d\r\n", self->module_name, ret);
         }
         ret = uart_protocol_send(&self->uart_protocol, (uint8_t *)&queue_frame, queue_frame.length, 100);
         if (ret != 0)
@@ -981,6 +1012,15 @@ int app_rtm_data_handle_create(void)
         self->rtm_module_info[i].heartbeat_info_tx.board_id = 0;
         self->rtm_module_info[i].heartbeat_info_tx.HardwareVersion = 0;
         self->rtm_module_info[i].heartbeat_info_tx.FirmWareVersion = 0;
+    }
+    ret = app_data_record_init(&self->app_data_record);
+    if (ret != 0)
+    {
+        return -2;
+    }
+    for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
+    {
+        self->rtm_module_info[i].app_data_record = &self->app_data_record;
     }
     ret = ethercat_thread_init();
     if (ret != 0)

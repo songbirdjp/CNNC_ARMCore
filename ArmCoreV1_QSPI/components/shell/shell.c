@@ -45,7 +45,7 @@ static int8_t shell_cmd_exec(uint8_t *cmd, uint16_t length)
         return -2;
     }
 
-    uint8_t *argv[8] = {NULL};
+    uint8_t *argv[20] = {NULL};
 
     int8_t argc = split_string(cmd, ' ', argv);
     if (argc == 0)
