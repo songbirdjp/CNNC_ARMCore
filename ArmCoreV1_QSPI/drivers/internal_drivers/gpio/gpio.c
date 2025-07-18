@@ -104,23 +104,23 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : DI_GATING_Pin DI_INT_Pin */
-  GPIO_InitStruct.Pin = DI_GATING_Pin|DI_INT_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pins : DI_GATING_Pin DI_Slipring_HVEN_Pin DI_Slipring_KV_TreatmentEN_Pin DI_Slipring_MV_TreatmentEN_Pin */
+  GPIO_InitStruct.Pin = DI_GATING_Pin|DI_Slipring_HVEN_Pin|DI_Slipring_KV_TreatmentEN_Pin|DI_Slipring_MV_TreatmentEN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : DI_INT_Pin */
+  GPIO_InitStruct.Pin = DI_INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(DI_INT_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LAN9252_SYNC0_Pin */
   GPIO_InitStruct.Pin = LAN9252_SYNC0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(LAN9252_SYNC0_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : DI_Slipring_HVEN_Pin DI_Slipring_KV_TreatmentEN_Pin DI_Slipring_MV_TreatmentEN_Pin */
-  GPIO_InitStruct.Pin = DI_Slipring_HVEN_Pin|DI_Slipring_KV_TreatmentEN_Pin|DI_Slipring_MV_TreatmentEN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : RUN_LED1_Pin RUN_LED2_Pin WATCHDOG1_Pin W5500_CSn_Pin
                            FM25V02_CSn_Pin */

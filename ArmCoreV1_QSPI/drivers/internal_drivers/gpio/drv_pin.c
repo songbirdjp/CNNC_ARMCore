@@ -23,25 +23,6 @@ typedef struct driver_pin
     uint16_t GPIO_Pin;
 } driver_pin_t;
 
-static driver_pin_t driver_pin_A15 = {0};
-static driver_pin_t driver_pin_C6 = {0};
-static driver_pin_t driver_pin_A8 = {0};
-static driver_pin_t driver_pin_C7 = {0};
-static driver_pin_t driver_pin_C8 = {0};
-static driver_pin_t driver_pin_C9 = {0};
-
-static driver_pin_t driver_pin_B1 = {0};
-static driver_pin_t driver_pin_B0 = {0};
-static driver_pin_t driver_pin_B13 = {0};
-static driver_pin_t driver_pin_B14 = {0};
-static driver_pin_t driver_pin_B15 = {0};
-
-static driver_pin_t driver_pin_E6 = {0};
-static driver_pin_t driver_pin_E5 = {0};
-static driver_pin_t driver_pin_E4 = {0};
-static driver_pin_t driver_pin_E2 = {0};
-static driver_pin_t driver_pin_G6 = {0};
-static driver_pin_t driver_pin_G7 = {0};
 
 // void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 // {
@@ -140,7 +121,7 @@ static driver_pin_t driver_pin_E2 = {0};
 static driver_pin_t driver_pin_G6 = {0};
 static driver_pin_t driver_pin_G7 = {0};
 
-void driver_pin_init(void)
+int driver_pin_init(void)
 {
     driver_pin_register(&driver_pin_A15, GPIOA, GPIO_PIN_15, DEVICE_NAME_PIN_DO_POWER_CUT);
     driver_pin_register(&driver_pin_C6, GPIOC, GPIO_PIN_6, DEVICE_NAME_PIN_DO_HVEN);

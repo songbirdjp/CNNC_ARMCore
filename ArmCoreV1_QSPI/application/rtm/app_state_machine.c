@@ -124,7 +124,7 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         (state == STATE_MACHINE_CT_READY) ||
         (state == STATE_MACHINE_CT_WORK))
     {
-        if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_HVEN != 1)
+        if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_HVEN != 1)
         {
             self->interlock_table.serious_interlock.HvEN = 1;
             retval = -1;
@@ -139,7 +139,7 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.serious_interlock.HvEN = 0;
     }
     // kv_treatment_en check
-    if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_KV_TreatmentEN != 1)
+    if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_KV_TreatmentEN != 1)
     {
         if ((state == STATE_MACHINE_SURVIEW_WORK) ||
             (state == STATE_MACHINE_CT_WORK))
@@ -157,7 +157,7 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.serious_interlock.KVTreatmentEn = 0;
     }
     // mv_treatment_en check
-    if (dido_structure.tca9535_0x00_u.tca9535_0x00_bit.DI_MV_TreatmentEN != 1)
+    if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_MV_TreatmentEN != 1)
     {
         if (state == STATE_MACHINE_WORK)
         {

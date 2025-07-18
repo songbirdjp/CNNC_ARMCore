@@ -36,8 +36,7 @@ extern "C" {
 #define DEVICE_NAME_PIN_RUN_LED_5 "RUN_LED5"
 #define DEVICE_NAME_PIN_RUN_LED_6 "RUN_LED6"
 
-void driver_pin_init(void);
-int8_t pin_test(void);
+int driver_pin_init(void);
 
 #ifdef __cplusplus
 }

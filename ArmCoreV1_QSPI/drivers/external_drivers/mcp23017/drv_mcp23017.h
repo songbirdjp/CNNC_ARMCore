@@ -49,6 +49,18 @@ extern "C"
         DRIVER_MCP23017_CMD_MAX
     } driver_mcp23017_cmd_t;
 
+    typedef enum driver_mcp23017_GPx
+    {
+        DRIVER_MCP23017_GPA = 0x00,              /**< GPIO A0~A7 */
+        DRIVER_MCP23017_GPB = 0x01,              /**< GPIO B0~B7 */
+    } driver_mcp23017_GPx_t;
+
+    typedef struct MCP23017_msg
+    {
+        driver_mcp23017_GPx_t gpio_port;
+        uint8_t *data;
+        uint16_t dataLen;
+    } mcp23017_msg_t;
     void driver_mcp23017_init(void);
 #ifdef __cplusplus
 }

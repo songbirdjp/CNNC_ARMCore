@@ -963,7 +963,7 @@ int app_rtm_data_handle_create(void)
     }
     ret = ethercat_thread_init();
     if (ret != 0)
-    {   
+    {
         bit_set(self->rtm_ethercat_info.manage_info.status_word, ETHERCAT_SLAVE_INIT_BIT);
         return -1;
     }
@@ -982,7 +982,7 @@ int app_rtm_data_handle_create(void)
         return -1;
     }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_ICM].uart_protocol,
-                             UART_DEV_NAME_USART2,
+                             UART_DEV_NAME_UART5,
                              1000,
                              10000,
                              10000);
@@ -1000,7 +1000,7 @@ int app_rtm_data_handle_create(void)
         return -3;
     }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_QAM].uart_protocol,
-                             UART_DEV_NAME_UART4,
+                             UART_DEV_NAME_UART7,
                              1000,
                              10000,
                              10000);
@@ -1009,7 +1009,7 @@ int app_rtm_data_handle_create(void)
         return -4;
     }
     // ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_BSM].uart_protocol,
-    //                          UART_DEV_NAME_USART3,
+    //                          UART_DEV_NAME_UART4,
     //                          1000,
     //                          10000,
     //                          10000);
@@ -1018,7 +1018,7 @@ int app_rtm_data_handle_create(void)
     //     return -5;
     // }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_RTM_OFF].uart_protocol,
-                             UART_DEV_NAME_UART5,
+                             UART_DEV_NAME_USART2,
                              1000,
                              10000,
                              10000);
@@ -1165,4 +1165,72 @@ static int reboot_test(int argc, char **argv)
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(reboot_test, reboot_test, reboot test);
+#endif
+
+#define DIDO_TEST
+#ifdef DIDO_TEST
+
+#include "shell.h"
+#include "ulog.h"
+
+int8_t dido_test(uint8_t argc, uint8_t **argv)
+{
+    dido_structure_t dido_value;
+    if (argc < 3)
+    {
+        goto usage;
+    }
+    if (strcmp(argv[1], "di") == 0)
+    {
+        if (strcmp(argv[2], "read") == 0)
+        {
+            app_di_get(&app_rtm.app_dido, &dido_value);
+            LOG_I("DI RTC_WD_OK_IN value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.RTC_WD_OK_IN);
+            LOG_I("DI DI_BSM_NOT_READY value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_BSM_NOT_READY);
+            LOG_I("DI DI_MV_TreatmentEN value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_MV_TreatmentEN);
+            LOG_I("DI DI_HVEN value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_HVEN);
+            LOG_I("DI DI_Pulse_Inhibit value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_Pulse_Inhibit);
+            LOG_I("DI DI_KV_TreatmentEN value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_KV_TreatmentEN);
+            LOG_I("DI DI_Power_cut_FB value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_Power_cut_FB);
+
+            LOG_I("DI DI_GATING_IN value: %d\r\n", dido_value.gpio_di_u.gpio_di_bit.DI_GATING_IN);
+            LOG_I("DI DI_Slipring_HVEN_IN value: %d\r\n", dido_value.gpio_di_u.gpio_di_bit.DI_Slipring_HVEN_IN);
+            LOG_I("DI DI_Slipring_KV_TreatmentEN_IN value: %d\r\n", dido_value.gpio_di_u.gpio_di_bit.DI_Slipring_KV_TreatmentEN_IN);
+            LOG_I("DI DI_Slipring_MV_TreatmentEN_IN value: %d\r\n", dido_value.gpio_di_u.gpio_di_bit.DI_Slipring_MV_TreatmentEN_IN);
+        }
+        else
+        {
+            goto usage;
+        }
+    }
+    else if (strcmp(argv[1], "do") == 0)
+    {
+        if (argc < 4)
+        {
+            goto usage;
+        }
+        if (strcmp(argv[2], "write") == 0)
+        {
+            app_do_get(&app_rtm.app_dido, &dido_value);
+
+            dido_value.gpio_do_u.gpio_do = atoi(argv[3]);
+
+            app_do_set(&app_rtm.app_dido, &dido_value);
+            LOG_I("DO GPIO_DO value: %d\r\n", dido_value.gpio_do_u.gpio_do);
+        }
+        else
+        {
+            goto usage;
+        }
+    }
+    else
+    {
+        goto usage;
+    }
+    return 0;
+usage:
+    LOG_E("Usage: %s <di|do> <read|write> <value>\r\n", argv[0]);
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(dido_test, dido_test, dido test);
 #endif

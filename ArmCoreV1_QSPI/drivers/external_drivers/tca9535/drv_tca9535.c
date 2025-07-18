@@ -256,4 +256,4 @@ void driver_tca9535_init(void)
                             DEVICE_NAME_I2C1,
                             TCA9535_BOARD_ID_ADDR);
 }
-INIT_DEVICE_EXPORT(driver_tca9535_init);
+// INIT_DEVICE_EXPORT(driver_tca9535_init);

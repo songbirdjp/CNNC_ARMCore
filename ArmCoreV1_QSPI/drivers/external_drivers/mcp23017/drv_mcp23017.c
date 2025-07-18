@@ -92,12 +92,28 @@ static device_err_t driver_mcp23017_read(device_t *const self,
 
     device_err_t device_err;
 
+    mcp23017_msg_t *mcp23017_msg = (mcp23017_msg_t *)buffer;
     i2c_msg_t i2c_msg = {
         .dev_addr = device->device_addr,
-        .reg_addr = DRIVER_MCP23017_REG_GPIO_A,
-        .data = buffer,
-        .dataLen = 2};
+        .data = mcp23017_msg->data,
+        .dataLen = mcp23017_msg->dataLen};
 
+    if (mcp23017_msg->gpio_port == DRIVER_MCP23017_GPA)
+    {
+        i2c_msg.reg_addr = DRIVER_MCP23017_REG_GPIO_A;
+    }
+    else if (mcp23017_msg->gpio_port == DRIVER_MCP23017_GPB)
+    {
+        if (mcp23017_msg->dataLen != 1)
+        {
+            return DEV_EINVAL;
+        }
+        i2c_msg.reg_addr = DRIVER_MCP23017_REG_GPIO_B;
+    }
+    else
+    {
+        return DEV_EINVAL;
+    }
     if (device->mcp23017_i2c_addr_len != device->device_i2c->i2c_addr_len)
     {
         device_err = device_ioctl((device_t *)(device->device_i2c),
@@ -144,11 +160,28 @@ static device_err_t driver_mcp23017_write(device_t *const self,
 
     device_err_t device_err;
 
+    mcp23017_msg_t *mcp23017_msg = (mcp23017_msg_t *)buffer;
     i2c_msg_t i2c_msg = {
         .dev_addr = device->device_addr,
-        .reg_addr = DRIVER_MCP23017_REG_OLAT_A,
-        .data = buffer,
-        .dataLen = 2};
+        .data = mcp23017_msg->data,
+        .dataLen = mcp23017_msg->dataLen};
+
+    if (mcp23017_msg->gpio_port == DRIVER_MCP23017_GPA)
+    {
+        i2c_msg.reg_addr = DRIVER_MCP23017_REG_GPIO_A;
+    }
+    else if (mcp23017_msg->gpio_port == DRIVER_MCP23017_GPB)
+    {
+        if (mcp23017_msg->dataLen != 1)
+        {
+            return DEV_EINVAL;
+        }
+        i2c_msg.reg_addr = DRIVER_MCP23017_REG_GPIO_B;
+    }
+    else
+    {
+        return DEV_EINVAL;
+    }
 
     if (device->mcp23017_i2c_addr_len != device->device_i2c->i2c_addr_len)
     {

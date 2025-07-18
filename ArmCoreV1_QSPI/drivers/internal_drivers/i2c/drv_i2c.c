@@ -24,11 +24,16 @@ typedef struct i2c_software_io
     uint16_t i2c_pin_scl;
 } i2c_software_io_t;
 
+#define I2C_BDMA_MEM_SIZE (64)
+static uint8_t data_buf[I2C_BDMA_MEM_SIZE] __attribute__((section(".ram_d3"))) = {0};
 typedef struct driver_i2c
 {
     device_i2c_t device_i2c;
 
     I2C_HandleTypeDef *hi2cx;
+    uint8_t *bdma_mem;
+    uint8_t *data_buf;
+    uint16_t data_len;
     i2c_software_io_t i2c_software_io;
 } driver_i2c_t;
 
@@ -77,6 +82,10 @@ void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
 
 void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
+    if (driver_i2c4.device_i2c.i2c_mode == I2C_MODE_HARDWARE_DMA)
+    {
+        memcpy(driver_i2c4.data_buf, driver_i2c4.bdma_mem, driver_i2c4.data_len);
+    }
     if (hi2c->Instance == I2C4)
     {
         device_i2c_xfer_end((device_i2c_t *)&driver_i2c4);
@@ -93,6 +102,10 @@ void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c)
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
+    if (driver_i2c4.device_i2c.i2c_mode == I2C_MODE_HARDWARE_DMA)
+    {
+        memcpy(driver_i2c4.data_buf, driver_i2c4.bdma_mem, driver_i2c4.data_len);
+    }
     if (hi2c->Instance == I2C4)
     {
         device_i2c_xfer_end((device_i2c_t *)&driver_i2c4);
@@ -171,6 +184,9 @@ static device_err_t driver_i2c_write(device_i2c_t *const self, i2c_msg_t const *
 
     driver_i2c_t *driver = (driver_i2c_t *)self->super.user_data;
     i2c_mode_t i2c_mode = driver->device_i2c.i2c_mode;
+
+    memcpy(driver->bdma_mem, buf->data, buf->dataLen);
+    driver->data_len = buf->dataLen;
 
     if (HAL_I2C_GetState(driver->hi2cx) != HAL_I2C_STATE_READY)
     {
@@ -296,8 +312,8 @@ static device_err_t driver_i2c_write(device_i2c_t *const self, i2c_msg_t const *
                                                    buf->dev_addr,
                                                    buf->reg_addr,
                                                    I2C_MEMADD_SIZE_8BIT,
-                                                   buf->data,
-                                                   buf->dataLen);
+                                                   driver->bdma_mem,
+                                                   driver->data_len);
                 if (HAL_Status != HAL_OK)
                 {
                     return DEV_EIO;
@@ -309,8 +325,8 @@ static device_err_t driver_i2c_write(device_i2c_t *const self, i2c_msg_t const *
                                                    buf->dev_addr,
                                                    buf->reg_addr,
                                                    I2C_MEMADD_SIZE_16BIT,
-                                                   buf->data,
-                                                   buf->dataLen);
+                                                   driver->bdma_mem,
+                                                   driver->data_len);
                 if (HAL_Status != HAL_OK)
                 {
                     return DEV_EIO;
@@ -325,8 +341,8 @@ static device_err_t driver_i2c_write(device_i2c_t *const self, i2c_msg_t const *
         {
             HAL_Status = HAL_I2C_Master_Transmit_DMA(driver->hi2cx,
                                                      buf->dev_addr,
-                                                     buf->data,
-                                                     buf->dataLen);
+                                                     driver->bdma_mem,
+                                                     driver->data_len);
             if (HAL_Status != HAL_OK)
             {
                 return DEV_EIO;
@@ -365,6 +381,9 @@ static device_err_t driver_i2c_read(device_i2c_t *const self, i2c_msg_t *const b
 
     driver_i2c_t *driver = (driver_i2c_t *)self->super.user_data;
     i2c_mode_t i2c_mode = driver->device_i2c.i2c_mode;
+
+    driver->data_buf = (uint8_t *)buf->data;
+    driver->data_len = buf->dataLen;
 
     if (HAL_I2C_GetState(driver->hi2cx) != HAL_I2C_STATE_READY)
     {
@@ -489,8 +508,8 @@ static device_err_t driver_i2c_read(device_i2c_t *const self, i2c_msg_t *const b
                                                   buf->dev_addr,
                                                   buf->reg_addr,
                                                   I2C_MEMADD_SIZE_8BIT,
-                                                  buf->data,
-                                                  buf->dataLen);
+                                                  driver->bdma_mem,
+                                                  driver->data_len);
                 if (HAL_Status != HAL_OK)
                 {
                     return DEV_EIO;
@@ -502,8 +521,8 @@ static device_err_t driver_i2c_read(device_i2c_t *const self, i2c_msg_t *const b
                                                   buf->dev_addr,
                                                   buf->reg_addr,
                                                   I2C_MEMADD_SIZE_16BIT,
-                                                  buf->data,
-                                                  buf->dataLen);
+                                                  driver->bdma_mem,
+                                                  driver->data_len);
                 if (HAL_Status != HAL_OK)
                 {
                     return DEV_EIO;
@@ -518,8 +537,8 @@ static device_err_t driver_i2c_read(device_i2c_t *const self, i2c_msg_t *const b
         {
             HAL_Status = HAL_I2C_Master_Transmit_DMA(driver->hi2cx,
                                                      buf->dev_addr,
-                                                     buf->data,
-                                                     buf->dataLen);
+                                                     driver->bdma_mem,
+                                                     driver->data_len);
             if (HAL_Status != HAL_OK)
             {
                 return DEV_EIO;
@@ -631,12 +650,14 @@ static void driver_i2c_register(driver_i2c_t *const self, I2C_HandleTypeDef *con
     dev_assert(self != NULL);
     dev_assert(!strcmp(name, DEVICE_NAME_I2C1) ||
                !strcmp(name, DEVICE_NAME_I2C2) ||
-               !strcmp(name, DEVICE_NAME_I2C3));
+               !strcmp(name, DEVICE_NAME_I2C3) ||
+               !strcmp(name, DEVICE_NAME_I2C4));
 
     memset(self, 0, sizeof(driver_i2c_t));
-
+    memset(data_buf, 0, I2C_BDMA_MEM_SIZE);
     self->hi2cx = hi2cx;
-
+    self->bdma_mem = data_buf;
+    self->data_len = 0;
     static device_i2c_ops_t device_i2c_ops = {
         .open = driver_i2c_open,
         .close = driver_i2c_close,

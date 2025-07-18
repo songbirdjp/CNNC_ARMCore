@@ -314,6 +314,10 @@ static int8_t drv_uart_init(uart_dev_t *const self)
     {
         MX_UART5_Init();
     }
+    else if (!memcmp(uart_drv->dev.name, UART_DEV_NAME_UART7, sizeof(UART_DEV_NAME_UART7)))
+    {
+        MX_UART7_Init();
+    }
     else
     {
         /* add other uart here */ /**<------ add other uart here*/
@@ -346,6 +350,7 @@ static uart_drv_t usart2;
 static uart_drv_t usart3;
 static uart_drv_t uart4;
 static uart_drv_t uart5;
+static uart_drv_t uart7;
 /*static uart_drv_t usartx;*/ /**<------ add other uart here*/
 
 static uart_drv_t *uart_drv_get(UART_HandleTypeDef *huart)
@@ -374,6 +379,10 @@ static uart_drv_t *uart_drv_get(UART_HandleTypeDef *huart)
     {
         return &uart5;
     }
+     else if (huart == &huart7)
+    {
+        return &uart7;
+    }   
     else
     {
         /* add other uart here */ /**<------ add other uart here*/
@@ -535,6 +544,14 @@ static int32_t drv_uartx_init(void)
     ret = drv_uart_register(uart_drv_get(&huart5),
                             &huart5,
                             UART_DEV_NAME_UART5,
+                            UART_TYPE_FULL_DUPLEX);
+    if (ret != 0)
+    {
+        return -4;
+    }
+    ret = drv_uart_register(uart_drv_get(&huart7),
+                            &huart7,
+                            UART_DEV_NAME_UART7,
                             UART_TYPE_FULL_DUPLEX);
     if (ret != 0)
     {
