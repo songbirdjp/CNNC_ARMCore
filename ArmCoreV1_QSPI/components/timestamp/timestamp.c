@@ -110,7 +110,7 @@ static int8_t timestamp_thread_init(void)
     osThreadAttr_t thread_attributes = {
     .name = "timestamp_thread",
     .stack_size = 1024 * 4,
-    .priority = (osPriority_t) osPriorityAboveNormal,
+    .priority = (osPriority_t) osPriorityHigh,
     };
     
     osThreadId_t tid = osThreadNew(timestamp_entry, obj, &thread_attributes);

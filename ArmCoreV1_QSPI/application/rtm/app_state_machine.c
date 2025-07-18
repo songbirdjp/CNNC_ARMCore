@@ -308,6 +308,7 @@ static State_t module_init(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        //TODO 打开电源
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -503,6 +504,7 @@ static State_t module_shutdown(void *self, Event_t const *const e)
     rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     dido_structure_t dido_structure = {0};
+    static uint16_t PLC_info = 0;
     switch (e->sig)
     {
     case ENTER_SIG:
@@ -518,6 +520,24 @@ static State_t module_shutdown(void *self, Event_t const *const e)
     case EXIT_SIG:
     {
         // LOG_I("module_shutdown exit\r\n");
+        PLC_info = 0;
+        status = HANDLED();
+        break;
+    }
+    case SYSTEM_ON_SIG:
+    {
+        status = TRAN(&system_initialization);
+        break;
+    }
+    case TIME_SIG:
+    {
+        if ((rtm->PLC_info & 0x01) && (PLC_info == 0))
+        {
+            PLC_info = 1;
+            app_do_get(&(rtm->app_dido), &dido_structure);
+            // TODO 关闭电源
+            app_do_set(&(rtm->app_dido), &dido_structure);
+        }
         status = HANDLED();
         break;
     }

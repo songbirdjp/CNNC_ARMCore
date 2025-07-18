@@ -14,6 +14,7 @@
 #include "app_dido.h"
 #include "uart_protocol.h"
 #include "app_state_machine.h"
+#include "app_data_record.h"
 #ifdef __cplusplus
 extern "C"
 {
@@ -43,6 +44,7 @@ extern "C"
         OUTPUT_BEAM_ID_CMD = 0x00,
         OUTPUT_RADIATION_INDEX_CMD = 0x01,
         OUTPUT_FAULT_CLEAR_CMD = 0x02,
+        OUTPUT_SYSTEM_STATE_CMD = 0x03,
         OUTPUT_ICM_REQUIRE_STATE_CMD = 0x12,
         OUTPUT_BGM_REQUIRE_STATE_CMD = 0x13,
         OUTPUT_QAM_REQUIRE_STATE_CMD = 0x14,
@@ -51,7 +53,6 @@ extern "C"
         OUTPUT_FKP_LED_BLINK_CMD = 0x17,
         OUTPUT_FKP_VIBRATION_CMD = 0x1B,
         OUTPUT_FKP_TIMESTAMP_CMD = 0x1C,
-        OUTPUT_FKP_SYSTEM_STATE_CMD = 0x1D,
         OUTPUT_CPG_LED_BLINK_CMD = 0x18,
         OUTPUT_GMM_REQUIRE_STATE_CMD = 0x19,
         OUTPUT_PSM_REQUIRE_STATE_CMD = 0x1A,
@@ -68,6 +69,7 @@ extern "C"
         INPUT_BGM_INFO_CMD = 0x32,
         INPUT_QAM_CURRENT_STATE_CMD = 0x41,
         INPUT_RTM_OFF_ARM_CURRENT_STATE_CMD = 0x61,
+        INPUT_RTM_OFF_ARM_DIDO_CMD = 0x63,
         INPUT_PSM_CURRENT_STATE_CMD = 0x71,
         INPUT_PSM_INFO_CMD = 0x72,
         INPUT_GMM_CURRENT_STATE_CMD = 0x81,
@@ -76,6 +78,7 @@ extern "C"
         INPUT_CPG_BUTTON_CMD = 0xA1,
         INPUT_MAX_CMD,
         INPUT_RTM_ON_ARM_CURRENT_STATE_CMD = INPUT_MAX_CMD,
+        INPUT_RTM_ON_ARM_DIDO_CMD = INPUT_MAX_CMD + 1,
     };
 
     typedef enum
@@ -98,6 +101,7 @@ extern "C"
 #define MODULE_INIT_BIT (0)
 #define MODULE_LINK_STATE_BIT (1)
         manage_info_t manage_info;
+        app_data_record_t *app_data_record;
         const char *module_name;
         const char *module_type;
         uint32_t ID;
@@ -123,10 +127,12 @@ extern "C"
     {
 #define RTM_MAIN_INIT_BIT (0)
         manage_info_t manage_info;
+        app_data_record_t app_data_record;
 
         rtm_fault_check_t fault_check;
         interlock_table_t interlock_table;
 
+        uint16_t PLC_info;
         uint32_t interlock_override;
         uint32_t unready_override;
 

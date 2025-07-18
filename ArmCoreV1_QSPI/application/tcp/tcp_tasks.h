@@ -37,6 +37,8 @@ int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg));
 uint8_t tcp_socket_state_get(uint8_t sn); //the state defined in w5500.h
 void clearClientInfo(uint8_t s);
 
+int32_t checkWsHsStatus(uint8_t sn);
+int32_t get_sn(int8_t *sn, uint8_t type);
 #ifdef __cplusplus
 }
 #endif
