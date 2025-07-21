@@ -36,18 +36,6 @@ typedef struct uart_frame
     uint32_t crc;
 } __attribute__((packed)) uart_frame_t;
 
-typedef struct uart_crc_error_frame
-{
-    uint16_t header;
-    uint16_t count;
-    uint16_t length;
-    uint32_t id_ack;
-    uint8_t type;
-    uint16_t len;
-    uint32_t data;
-    uint32_t crc;
-} __attribute__((packed)) uart_crc_error_frame_t;
-
 static void frame_format_set_format(frame_format_t *self,
                                     uint16_t header,
                                     crc_type_t crc_type,
@@ -208,6 +196,26 @@ int32_t frame_format_recv_func_register(frame_format_t *self, uart_xfer_func_t r
     self->recv_arg = arg;
     return 0;
 }
+int32_t frame_format_crc_error_handle_func_register(frame_format_t *self, uart_crc_error_handle_func_t crc_error_handle_func, void *arg)
+{
+    if (self == NULL)
+    {
+        return -1;
+    }
+    self->crc_error_handle_func = crc_error_handle_func;
+    self->crc_error_handle_arg = arg;
+    return 0;
+}
+int32_t frame_format_retry_judge_handle_func_register(frame_format_t *self, uart_crc_error_handle_func_t retry_judge_handle_func, void *arg)
+{
+    if (self == NULL)
+    {
+        return -1;
+    }
+    self->retry_judge_handle_func = retry_judge_handle_func;
+    self->retry_judge_handle_arg = arg;
+    return 0;
+}
 int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len, uint32_t timeout)
 {
     int32_t ret = 0;
@@ -329,19 +337,11 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
     int32_t ret = 0;
     osStatus_t status = osOK;
     uint32_t recv_len = 0;
-    uart_crc_error_frame_t uart_crc_error_frame = {
-        .header = 0xAA55,
-        .count = 0x0000,
-        .length = 0x0B,
-        .id_ack = 0x00,
-        .type = 0xFF,
-        .len = 0x0004,
-        .data = 0x65637263,
-        .crc = 0x3453FD02};
     if (self == NULL || data == NULL || data_len == NULL)
     {
         return -1;
     }
+wait_recv:
     ret = self->recv_func(self->rx_buffer, 0xFFFF, timeout, self->recv_arg);
     if (ret != 0)
     {
@@ -362,32 +362,22 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
         if (crc != *(uint32_t *)&(self->rx_buffer[recv_len - FRAME_CRC_LEN]))
         {
             self->frame_format_statistics.recv_crc_error_count++;
-            struct uart_frame
+
+            if (self->crc_error_handle_func != NULL)
             {
-                uint16_t header;
-                uint16_t count;
-                uint16_t length;
-                uint32_t id_ack;
-                uint8_t type;
-            } __attribute__((packed));
-            struct uart_frame *frame = (struct uart_frame *)self->rx_buffer;
-            if ((frame->header == 0xAA55) &&
-                (frame->id_ack & 0x01) &&
-                ((frame->type == 0x03) || (frame->type == 0x04) || (frame->type == 0x05) || (frame->type == 0x06)))
-            {
-                ret = self->send_func(&uart_crc_error_frame, sizeof(uart_crc_error_frame), 100, self->send_arg);
+                ret = self->crc_error_handle_func(self->rx_buffer, recv_len, self->crc_error_handle_arg);
                 if (ret != 0)
                 {
                     return -4;
                 }
-                return 1;
+                goto wait_recv;
             }
             return -5;
         }
     }
-    if (recv_len == sizeof(uart_crc_error_frame_t))
+    if (self->retry_judge_handle_func != NULL)
     {
-        if (memcmp(self->rx_buffer, &uart_crc_error_frame, sizeof(uart_crc_error_frame)) == 0)
+        if (self->retry_judge_handle_func(self->rx_buffer, recv_len, self->retry_judge_handle_arg) == 0) // 接收到重发帧
         {
             // 接收到CRC错误帧，重试
             if (osTimerIsRunning(self->osTimerId) != 0)
@@ -402,19 +392,19 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
             if (self->tx_retry_count >= self->retry_count)
             {
                 self->frame_format_statistics.send_error_count++;
-                return 2;
+                 goto wait_recv;
             }
 
             status = osTimerStart(self->osTimerId, self->timeout_ms / portTICK_RATE_MS);
             if (status != osOK)
             {
-                return -8;
+                return -7;
             }
 
             ret = self->send_func(self->tx_buffer, self->tx_retry_data_len, 100, self->send_arg);
             if (ret != 0)
             {
-                return -9;
+                return -8;
             }
 
             self->tx_retry_count++;
@@ -423,8 +413,7 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
             {
                 self->frame_format_statistics.send_retry_count++;
             }
-
-            return 3;
+            goto wait_recv;
         }
     }
     *data_len = recv_len - FRAME_EXTRA_LEN;
@@ -436,12 +425,12 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
         {
             if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)
             {
-                return -10;
+                return -9;
             }
             status = osSemaphoreRelease(self->osSemaphoreId);
             if (status != osOK)
             {
-                return -11;
+                return -10;
             }
         }
     }

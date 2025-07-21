@@ -125,7 +125,8 @@ typedef struct app_serious_interlock_table
     uint32_t qam_link : 1;
     uint32_t bsm_link : 1;
     uint32_t rtm_off_link : 1;
-    uint32_t reserved : 23;
+    uint32_t reserved : 22;
+    uint32_t RTC_WD_OK : 1;
 } app_serious_interlock_table_t;
 
 

@@ -124,7 +124,8 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         (state == STATE_MACHINE_CT_READY) ||
         (state == STATE_MACHINE_CT_WORK))
     {
-        if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_HVEN != 1)
+        if ((dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_HVEN != 1) ||
+            (dido_structure.gpio_di_u.gpio_di_bit.DI_Slipring_HVEN_IN != 1))
         {
             self->interlock_table.serious_interlock.HvEN = 1;
             retval = -1;
@@ -139,7 +140,8 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.serious_interlock.HvEN = 0;
     }
     // kv_treatment_en check
-    if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_KV_TreatmentEN != 1)
+    if ((dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_KV_TreatmentEN != 1) ||
+        (dido_structure.gpio_di_u.gpio_di_bit.DI_Slipring_KV_TreatmentEN_IN != 1))
     {
         if ((state == STATE_MACHINE_SURVIEW_WORK) ||
             (state == STATE_MACHINE_CT_WORK))
@@ -157,7 +159,8 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.serious_interlock.KVTreatmentEn = 0;
     }
     // mv_treatment_en check
-    if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_MV_TreatmentEN != 1)
+    if ((dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_MV_TreatmentEN != 1) ||
+        (dido_structure.gpio_di_u.gpio_di_bit.DI_Slipring_MV_TreatmentEN_IN != 1))
     {
         if (state == STATE_MACHINE_WORK)
         {
@@ -228,6 +231,16 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.serious_interlock.rtm_off_link = 0;
     }
 
+    if(dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.RTC_WD_OK_IN != 1)
+    {
+        self->interlock_table.serious_interlock.RTC_WD_OK = 1;
+        retval = -1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.RTC_WD_OK = 0;
+    }
+
     if ((self->cur_time - self->last_time > RTM_ERROR_WAIT_TIME) || (retval == 0))
     {
         if (self->fault_clear_flag == 1) // 清除故障
@@ -243,8 +256,8 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
             *((uint32_t *)&(interlock_table->warning_interlock)) |= *((uint32_t *)&(self->interlock_table.warning_interlock));
         }
 
-        *(uint32_t *)&(interlock_table->not_ready_event) &= ~(app_rtm->unready_override);
-        *(uint32_t *)&(interlock_table->serious_interlock) &= ~(app_rtm->interlock_override);
+        // *(uint32_t *)&(interlock_table->not_ready_event) &= ~(app_rtm->unready_override);
+        // *(uint32_t *)&(interlock_table->serious_interlock) &= ~(app_rtm->interlock_override);
         retval = 0;
     }
     else
@@ -308,7 +321,7 @@ static State_t module_init(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
-        //TODO 打开电源
+        dido_structure.gpio_do_u.gpio_do_bit.DO_PowerCut = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -389,6 +402,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_PowerCut = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -535,7 +549,7 @@ static State_t module_shutdown(void *self, Event_t const *const e)
         {
             PLC_info = 1;
             app_do_get(&(rtm->app_dido), &dido_structure);
-            // TODO 关闭电源
+            dido_structure.gpio_do_u.gpio_do_bit.DO_PowerCut = 0;
             app_do_set(&(rtm->app_dido), &dido_structure);
         }
         status = HANDLED();
