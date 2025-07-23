@@ -557,7 +557,7 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
         memcpy(&input_data->InU8_rtm_off_fsm_state_current, queue_frame->payload.data + 1, len);
         break;
     case INPUT_RTM_OFF_ARM_DIDO_CMD:
-        memcpy((uint8_t *)(&input_data->InU8_ON_DO_reserve1) + sizeof(input_data->InU8_ON_DO_reserve1), queue_frame->payload.data + 1, len);
+        memcpy((uint8_t *)(&input_data->InU8_ON_DO_reserve2) + sizeof(input_data->InU8_ON_DO_reserve2), queue_frame->payload.data + 1, len);
         break;
     case INPUT_GMM_CURRENT_STATE_CMD:
         memcpy(&input_data->InU8_gmm_fsm_state_current, queue_frame->payload.data + 1, len);
@@ -926,6 +926,7 @@ static void app_module_tx_thread(void *argument)
         ret = uart_protocol_send(&self->uart_protocol, (uint8_t *)&queue_frame, queue_frame.length, 100);
         if (ret != 0)
         {
+            bit_set(self->manage_info.status_word, MODULE_LINK_STATE_BIT);
             LOG_E("%s send error, ret = %d\r\n", self->module_name, ret);
             continue;
         }

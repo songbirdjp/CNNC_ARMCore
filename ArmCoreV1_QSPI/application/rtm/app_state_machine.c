@@ -231,7 +231,7 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.serious_interlock.rtm_off_link = 0;
     }
 
-    if(dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.RTC_WD_OK_IN != 1)
+    if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.RTC_WD_OK_IN != 1)
     {
         self->interlock_table.serious_interlock.RTC_WD_OK = 1;
         retval = -1;
@@ -280,7 +280,19 @@ static void fault_clear(rtm_fault_check_t *self)
     self->fault_clear_flag = 1;
     memset(&self->interlock_table, 0, sizeof(interlock_table_t));
 }
-
+static int32_t fault_override(app_rtm_main_t *self)
+{
+    if (self == NULL)
+    {
+        return -1;
+    }
+    if (((*(uint32_t *)&(self->interlock_table.not_ready_event) & (~(self->unready_override))) != 0) ||
+        ((*(uint32_t *)&(self->interlock_table.serious_interlock) & (~(self->interlock_override))) != 0))
+    {
+        return -2;
+    }
+    return 0;
+}
 static State_t system_initialization(void *self, Event_t const *const e)
 {
     State_t status;
@@ -435,9 +447,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     }
     case MV_PREPARE_SIG:
     {
-        if ((check_finish == 0) &&
-            (*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-            (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+        if ((check_finish == 0) && (fault_override(rtm) == 0))
         {
             status = TRAN(&system_mv_preliminary);
         }
@@ -449,9 +459,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     }
     case KV_PRELIMINARY_SIG:
     {
-        if ((check_finish == 0) &&
-            (*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-            (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+        if ((check_finish == 0) && (fault_override(rtm) == 0))
         {
             status = TRAN(&system_kv_preliminary);
         }
@@ -699,8 +707,7 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_mv_prepare);
             }
@@ -791,9 +798,7 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
     }
     case MV_READY_SIG:
     {
-        if ((check_finish == 0) &&
-            *(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0 &&
-            (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+        if ((check_finish == 0) && (fault_override(rtm) == 0))
         {
             status = TRAN(&system_mv_ready);
         }
@@ -880,8 +885,7 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_mv_radiation);
             }
@@ -910,8 +914,7 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) != 0) ||
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) != 0))
+            if (fault_override(rtm) != 0)
             {
                 status = TRAN(&system_mv_interrupt);
             }
@@ -987,8 +990,7 @@ static State_t module_mv_work(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_mv_complete);
             }
@@ -1017,8 +1019,7 @@ static State_t module_mv_work(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) != 0) ||
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) != 0))
+            if (fault_override(rtm) != 0)
             {
                 status = TRAN(&system_mv_interrupt);
             }
@@ -1191,8 +1192,7 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_mv_ready);
             }
@@ -1216,8 +1216,7 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) != 0) ||
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) != 0))
+            if (fault_override(rtm) != 0)
             {
                 app_do_get(&(rtm->app_dido), &dido_structure);
                 dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
@@ -1485,7 +1484,7 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0)
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_kv_prepare);
             }
@@ -1504,8 +1503,7 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) != 0) ||
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) != 0))
+            if (fault_override(rtm) != 0)
             {
                 status = TRAN(&system_kv_terminate);
             }
@@ -1598,8 +1596,7 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_surview_ready);
             }
@@ -1614,8 +1611,7 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_ct_ready);
             }
@@ -1722,8 +1718,7 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_surview_radiation);
             }
@@ -1830,8 +1825,7 @@ static State_t module_surview_work(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_kv_complete);
             }
@@ -1938,8 +1932,7 @@ static State_t module_ct_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_ct_radiation);
             }
@@ -2048,8 +2041,7 @@ static State_t module_ct_work(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if ((*(uint32_t *)&(rtm->interlock_table.not_ready_event) == 0) &&
-                (*(uint32_t *)&(rtm->interlock_table.serious_interlock) == 0))
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_kv_complete);
             }

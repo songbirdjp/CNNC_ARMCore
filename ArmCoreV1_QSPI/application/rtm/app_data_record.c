@@ -134,6 +134,8 @@ static module_current_status_t icm_current_status = {0};
 static module_current_status_t bgm_current_status = {0};
 static module_current_status_t qam_current_status = {0};
 
+static dido_structure_t  rtm_on_dido_structure = {0};
+
 static struct
 {
     uint8_t require_state;
@@ -191,7 +193,11 @@ static int32_t app_data_record_filter(uint32_t ID, void *data, uint32_t len)
             memcpy(&rtm_on_state_require, payload->data + 1, sizeof(module_state_require_t) + sizeof(uint16_t));
             break;
         case INPUT_RTM_ON_ARM_DIDO_CMD:
-            goto ret;
+            if (memcmp(&rtm_on_dido_structure, payload->data + 1, sizeof(dido_structure_t)) == 0)
+            {
+                goto ret;
+            }
+            memcpy(&rtm_on_dido_structure, payload->data + 1, sizeof(dido_structure_t));
             break;
         default:
             goto ret;
