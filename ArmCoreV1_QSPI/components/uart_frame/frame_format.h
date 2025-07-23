@@ -72,6 +72,7 @@ extern "C"
         float recv_lose_rate;          /*< 接收丢包率 = recv_lose_count / (recv_total_count +  recv_lose_count)*/
     } frame_format_statistics_t;
     typedef int32_t (*uart_xfer_func_t)(uint8_t *data, uint16_t data_len, uint32_t timeout, void *arg);
+    typedef int32_t (*uart_crc_error_handle_func_t)(uint8_t *data, uint16_t data_len, void *arg);
     typedef struct frame_format
     {
         format_t format;
@@ -81,6 +82,7 @@ extern "C"
         uint32_t timeout_ms;
         osTimerId_t osTimerId;
         osSemaphoreId_t osSemaphoreId;
+        uint8_t semaphore_lock;
 
         osMutexId_t tx_mutex;
         uint8_t *tx_buffer;
@@ -101,6 +103,11 @@ extern "C"
         void *recv_arg;
         uint16_t recv_response_count;
 
+        uart_crc_error_handle_func_t crc_error_handle_func;
+        void *crc_error_handle_arg;
+        uart_crc_error_handle_func_t retry_judge_handle_func;
+        void *retry_judge_handle_arg;
+
         uint16_t send_count;
         uint16_t recv_count;
 
@@ -116,6 +123,8 @@ extern "C"
 
     int32_t frame_format_send_func_register(frame_format_t *self, uart_xfer_func_t send_func, void *arg);
     int32_t frame_format_recv_func_register(frame_format_t *self, uart_xfer_func_t recv_func, void *arg);
+    int32_t frame_format_crc_error_handle_func_register(frame_format_t *self, uart_crc_error_handle_func_t crc_error_handle_func, void *arg);
+    int32_t frame_format_retry_judge_handle_func_register(frame_format_t *self, uart_crc_error_handle_func_t retry_judge_handle_func, void *arg);
 
     int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len, uint32_t timeout);
 

@@ -76,6 +76,7 @@ void HSEM1_IRQHandler(void);
 void BDMA_Channel0_IRQHandler(void);
 void LPTIM2_IRQHandler(void);
 void LPTIM3_IRQHandler(void);
+void ECC_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

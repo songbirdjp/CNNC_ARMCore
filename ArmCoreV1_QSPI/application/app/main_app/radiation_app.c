@@ -1448,6 +1448,7 @@ static int8_t adcs7476_value_dose(uint32_t value, uint32_t value_1, uint16_t pul
     if (value_diff > value_max * percentage / 100)
     {
         // LOG_I("dose symmetry fault, value_diff: %d, value_max: %d, percentage: %d\r\n", value_diff, value_max, percentage);
+        LOG_I("dose symmetry fault, ch1: %d, ch2: %d, percentage: %d\r\n", value, value_1, percentage);
         int8_t ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_SYMMETRY_FAULT, 1);
         if (ret != 0)
         {

@@ -48,6 +48,28 @@ typedef struct
     uint32_t crc32;
 } __attribute__((aligned(1), packed)) uart_protocol_frame_t;
 
+typedef struct uart_crc_error_frame
+{
+    uint16_t header;
+    uint16_t count;
+    uint16_t length;
+    uint32_t id_ack;
+    uint8_t type;
+    uint16_t len;
+    uint32_t data;
+    uint32_t crc;
+} __attribute__((aligned(1), packed)) uart_crc_error_frame_t;
+
+uart_crc_error_frame_t uart_crc_error_frame = {
+    .header = 0xAA55,
+    .count = 0x0000,
+    .length = 0x0B,
+    .id_ack = 0x00,
+    .type = 0xFF,
+    .len = 0x0004,
+    .data = 0x65637263,
+    .crc = 0x3453FD02};
+
 #define UART_PROTOCOL_FRAME_QUEUE_SIZE (sizeof(uart_protocol_frame_t) + sizeof(uint16_t))
 
 static void uart_protocol_heartbeat_tx_timer_callback(void *arg);
@@ -94,7 +116,43 @@ static int32_t uart_recv_func(uint8_t *data, uint16_t data_len, uint32_t timeout
     }
     return 0;
 }
-
+static int32_t uart_crc_error_func(uint8_t *data, uint16_t data_len, void *arg)
+{
+    if (arg == NULL || data == NULL || data_len == 0)
+    {
+        return -1;
+    }
+    int32_t ret = 0;
+    uart_protocol_t *uart_protocol = (uart_protocol_t *)arg;
+    uart_protocol_frame_t *frame = data;
+    // if ((frame->header == 0xAA55) &&
+    //     (frame->payload.id_ack & 0x01) &&
+    //     ((frame->payload.type == 0x03) || (frame->payload.type == 0x04) || (frame->payload.type == 0x05) || (frame->payload.type == 0x06)))
+    {
+        ret = dev_uart_send(uart_protocol->uart_dev, &uart_crc_error_frame, sizeof(uart_crc_error_frame), 100);
+        if (ret != 0)
+        {
+            return -2;
+        }
+    }
+    return 0;
+}
+static int32_t uart_retry_judge_func(uint8_t *data, uint16_t data_len, void *arg)
+{
+    if (arg == NULL || data == NULL || data_len == 0)
+    {
+        return -1;
+    }
+    if(data_len != sizeof(uart_crc_error_frame_t))
+    {
+        return -2;
+    }
+    if(memcmp(data, &uart_crc_error_frame, sizeof(uart_crc_error_frame_t)) != 0)
+    {
+        return -3;
+    }
+    return 0;
+}
 int32_t uart_protocol_init(uart_protocol_t *const self,
                            const char *name,
                            uint32_t heartbeat_tx_timeout,
@@ -149,6 +207,16 @@ int32_t uart_protocol_init(uart_protocol_t *const self,
     {
         return -7;
     }
+    ret = frame_format_crc_error_handle_func_register(&self->frame_format, uart_crc_error_func, self);
+    if (ret != 0)
+    {
+        return -8;
+    }
+    ret = frame_format_retry_judge_handle_func_register(&self->frame_format, uart_retry_judge_func, self);
+    if (ret != 0)
+    {
+        return -9;
+    }
 
     queue_attributes.name = "get_rx_response_queue";
     self->get_rx_response_queue = osMessageQueueNew(1, UART_PROTOCOL_RX_DATA_QUEUE_SIZE, &queue_attributes);
@@ -158,7 +226,7 @@ int32_t uart_protocol_init(uart_protocol_t *const self,
 
     if ((self->get_rx_response_queue == NULL) || (self->config_get_response_queue == NULL))
     {
-        return -8;
+        return -10;
     }
 
     self->uart_protocol_heartbeat_timer = osTimerNew(uart_protocol_heartbeat_tx_timer_callback,
@@ -167,26 +235,26 @@ int32_t uart_protocol_init(uart_protocol_t *const self,
                                                      NULL);
     if (self->uart_protocol_heartbeat_timer == NULL)
     {
-        return -9;
+        return -11;
     }
     osStatus = osTimerStart(self->uart_protocol_heartbeat_timer, heartbeat_tx_timeout / portTICK_PERIOD_MS);
     if (osStatus != osOK)
     {
-        return -10;
+        return -12;
     }
 
     self->uart_protocol_heartbeat_timeout_timer = osTimerNew(uart_protocol_heartbeat_rx_timeout_timer_callback,
-                                                             osTimerOnce,
+                                                             osTimerPeriodic,
                                                              self,
                                                              NULL);
     if (self->uart_protocol_heartbeat_timeout_timer == NULL)
     {
-        return -11;
+        return -13;
     }
     osStatus = osTimerStart(self->uart_protocol_heartbeat_timeout_timer, heartbeat_rx_timeout / portTICK_PERIOD_MS);
     if (osStatus != osOK)
     {
-        return -12;
+        return -14;
     }
     self->uart_protocol_heartbeat_rx_timeout = heartbeat_rx_timeout;
     self->uart_protocol_pnt_timer = osTimerNew(uart_protocol_pnt_timer_callback,
@@ -195,12 +263,12 @@ int32_t uart_protocol_init(uart_protocol_t *const self,
                                                NULL);
     if (self->uart_protocol_pnt_timer == NULL)
     {
-        return -13;
+        return -15;
     }
     osStatus = osTimerStart(self->uart_protocol_pnt_timer, pnt_timeout / portTICK_PERIOD_MS);
     if (osStatus != osOK)
     {
-        return -14;
+        return -16;
     }
 
     return 0;

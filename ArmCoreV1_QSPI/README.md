@@ -68,8 +68,6 @@ ArmCoreV1_QSPI
 │  │  ├─ ltc2632_port.c
 │  │  └─ ltc2632_port.h
 │  ├─ system_common
-│  │  ├─ memorymap.c
-│  │  ├─ memorymap.h
 │  │  ├─ syscall.h
 │  │  ├─ syscalls.c
 │  │  └─ sysmem.c
@@ -145,6 +143,9 @@ ArmCoreV1_QSPI
 │  ├─ hw_crc
 │  │  ├─ hw_crc.c
 │  │  └─ hw_crc.h
+│  ├─ hw_ramecc
+│  │  ├─ hw_ramecc.c
+│  │  └─ hw_ramecc.h
 │  ├─ hw_semaphore
 │  │  ├─ hw_semaphore.c
 │  │  └─ hw_semaphore.h
@@ -282,6 +283,9 @@ ArmCoreV1_QSPI
 │     │  ├─ drv_octospi.h
 │     │  ├─ octospi.c
 │     │  └─ octospi.h
+│     ├─ ramecc
+│     │  ├─ ramecc.c
+│     │  └─ ramecc.h
 │     ├─ rtc
 │     │  ├─ rtc.c
 │     │  └─ rtc.h
@@ -380,6 +384,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_mdma.h
 │     │  ├─ stm32h7xx_hal_pwr.h
 │     │  ├─ stm32h7xx_hal_pwr_ex.h
+│     │  ├─ stm32h7xx_hal_ramecc.h
 │     │  ├─ stm32h7xx_hal_rcc.h
 │     │  ├─ stm32h7xx_hal_rcc_ex.h
 │     │  ├─ stm32h7xx_hal_rtc.h
@@ -435,6 +440,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_mdma.c
 │        ├─ stm32h7xx_hal_pwr.c
 │        ├─ stm32h7xx_hal_pwr_ex.c
+│        ├─ stm32h7xx_hal_ramecc.c
 │        ├─ stm32h7xx_hal_rcc.c
 │        ├─ stm32h7xx_hal_rcc_ex.c
 │        ├─ stm32h7xx_hal_rtc.c

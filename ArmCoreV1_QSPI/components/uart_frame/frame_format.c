@@ -207,6 +207,26 @@ int32_t frame_format_recv_func_register(frame_format_t *self, uart_xfer_func_t r
     self->recv_arg = arg;
     return 0;
 }
+int32_t frame_format_crc_error_handle_func_register(frame_format_t *self, uart_crc_error_handle_func_t crc_error_handle_func, void *arg)
+{
+    if (self == NULL)
+    {
+        return -1;
+    }
+    self->crc_error_handle_func = crc_error_handle_func;
+    self->crc_error_handle_arg = arg;
+    return 0;
+}
+int32_t frame_format_retry_judge_handle_func_register(frame_format_t *self, uart_crc_error_handle_func_t retry_judge_handle_func, void *arg)
+{
+    if (self == NULL)
+    {
+        return -1;
+    }
+    self->retry_judge_handle_func = retry_judge_handle_func;
+    self->retry_judge_handle_arg = arg;
+    return 0;
+}
 int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len, uint32_t timeout)
 {
     int32_t ret = 0;
@@ -292,14 +312,9 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
                     goto error;
                 }
             }
-
-            status = osSemaphoreAcquire(self->osSemaphoreId, 0);
-            if (status == osOK)
-            {
-                // LOG_I("recv semaphore is valid when send request frame\r\n");
-            }
-
-            status = osSemaphoreAcquire(self->osSemaphoreId, timeout);  /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
+            self->semaphore_lock++;
+            status = osSemaphoreAcquire(self->osSemaphoreId, timeout); /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
+            self->semaphore_lock--;
             if (status != osOK)
             {
                 self->send_count++;
@@ -337,6 +352,7 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
     {
         return -1;
     }
+wait_recv:
     ret = self->recv_func(self->rx_buffer, 0xFFFF, timeout, self->recv_arg);
     if (ret != 0)
     {
@@ -357,10 +373,61 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
         if (crc != *(uint32_t *)&(self->rx_buffer[recv_len - FRAME_CRC_LEN]))
         {
             self->frame_format_statistics.recv_crc_error_count++;
-            return -4;
+
+            if (self->crc_error_handle_func != NULL)
+            {
+                ret = self->crc_error_handle_func(self->rx_buffer, recv_len, self->crc_error_handle_arg);
+                if (ret != 0)
+                {
+                    return -4;
+                }
+                goto wait_recv;
+            }
+            return -5;
         }
     }
-	*data_len = recv_len - FRAME_EXTRA_LEN;
+    if (self->retry_judge_handle_func != NULL)
+    {
+        if (self->retry_judge_handle_func(self->rx_buffer, recv_len, self->retry_judge_handle_arg) == 0) // 接收到重发帧
+        {
+            // 接收到CRC错误帧，重试
+            if (osTimerIsRunning(self->osTimerId) != 0)
+            {
+                status = osTimerStop(self->osTimerId);
+                if (status != osOK)
+                {
+                    self->send_count++;
+                    return -6;
+                }
+            }
+            if (self->tx_retry_count >= self->retry_count)
+            {
+                self->frame_format_statistics.send_error_count++;
+                 goto wait_recv;
+            }
+
+            status = osTimerStart(self->osTimerId, self->timeout_ms / portTICK_RATE_MS);
+            if (status != osOK)
+            {
+                return -7;
+            }
+
+            ret = self->send_func(self->tx_buffer, self->tx_retry_data_len, 100, self->send_arg);
+            if (ret != 0)
+            {
+                return -8;
+            }
+
+            self->tx_retry_count++;
+
+            if (self->tx_retry_count == 0)
+            {
+                self->frame_format_statistics.send_retry_count++;
+            }
+            goto wait_recv;
+        }
+    }
+    *data_len = recv_len - FRAME_EXTRA_LEN;
     memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
 
 #if 0
@@ -375,15 +442,17 @@ int32_t frame_format_recv(frame_format_t *self, uint8_t *data, uint16_t *data_le
 
     if (self->rx_buffer[FRAME_DATA_OFFSET + 4] & 0x80) // receive a response frame
     {
-        if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)
+        if (self->semaphore_lock)
         {
-            // LOG_I("recv response count error: %d  %d\r\n", self->recv_response_count, ((uart_frame_t *)self->rx_buffer)->count);
-            return -5;
-        }
-        status = osSemaphoreRelease(self->osSemaphoreId);
-        if (status != osOK)
-        {
-            return -6;
+            if (self->recv_response_count != ((uart_frame_t *)self->rx_buffer)->count)
+            {
+                return -9;
+            }
+            status = osSemaphoreRelease(self->osSemaphoreId);
+            if (status != osOK)
+            {
+                return -10;
+            }
         }
     }
     else
