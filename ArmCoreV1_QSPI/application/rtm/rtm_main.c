@@ -357,16 +357,6 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], ICM_ID | RTM_ON_PLC_ID | QAM_ID | BGM_ID, SEND_GMM_INFO_CMD, &data->OutU32_gmm_move_status, len);
             app_data_record_from_ethercat(self, ICM_ID | RTM_ON_PLC_ID | QAM_ID | BGM_ID, SEND_GMM_INFO_CMD, &data->OutU32_gmm_move_status, len);
             break;
-        // case OUTPUT_DATA_PSM_CURRENT_STATE:
-        //     flag = OUTPUT_DATA_PSM_MOVE_STATUS;
-        //     len = (uint8_t *)&output_data.OutU32_psm_move_status - (uint8_t *)&output_data.OutU8_psm_fsm_state_current;
-        //     rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], 0x1, 0x71, &data->OutU8_psm_fsm_state_current, len);
-        //     break;
-        // case OUTPUT_DATA_PSM_MOVE_STATUS:
-        //     flag = OUTPUT_DATA_GMM_CURRENT_STATE;
-        //     len = (uint8_t *)&output_data.OutF_psm_velocity_z_r_cur - (uint8_t *)&output_data.OutU32_psm_move_status + sizeof(output_data.OutF_psm_velocity_z_r_cur);
-        //     rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], 0x4 | 0x01 | 0x10, 0x72, &data->OutU32_psm_move_status, len);
-        //     break;
         default:
             break;
         }
@@ -377,7 +367,6 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         if (memcmp(&output_data.OutU16_radiation_index, &data->OutU16_radiation_index, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU16_radiation_index, len);
-            // rtm_set_data_distribute(self->queue_group[RTM_MODULE_GMM], BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_PSM], BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU8_beam_id, len);
 
             app_data_record_from_ethercat(self, BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU16_radiation_index, len);
@@ -396,18 +385,6 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], ICM_ID | RTM_ON_PLC_ID | QAM_ID | BGM_ID, SEND_GMM_INFO_CMD, &data->OutU32_gmm_move_status, len);
             app_data_record_from_ethercat(self, ICM_ID | RTM_ON_PLC_ID | QAM_ID | BGM_ID, SEND_GMM_INFO_CMD, &data->OutU32_gmm_move_status, len);
         }
-
-        // len = (uint8_t *)&output_data.OutU32_psm_move_status - (uint8_t *)&output_data.OutU8_psm_fsm_state_current;
-        // if (memcmp(&output_data.OutU8_psm_fsm_state_current, &data->OutU8_psm_fsm_state_current, len) != 0)
-        // {
-        //     rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], 0x1, 0x71, &data->OutU8_psm_fsm_state_current, len);
-        // }
-
-        // len = (uint8_t *)&output_data.OutF_psm_velocity_z_r_cur - (uint8_t *)&output_data.OutU32_psm_move_status + sizeof(output_data.OutF_psm_velocity_z_r_cur);
-        // if (memcmp(&output_data.OutU32_psm_move_status, &data->OutU32_psm_move_status, len) != 0)
-        // {
-        //     rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], 0x4 | 0x01 | 0x10, 0x72, &data->OutU32_psm_move_status, len);
-        // }
 
         memcpy(&output_data, data, sizeof(TOBJ7010));
     }
@@ -822,6 +799,7 @@ static void app_module_tx_thread(void *argument)
         ret = uart_protocol_send(&self->uart_protocol, (uint8_t *)&queue_frame, queue_frame.length, 100);
         if (ret != 0)
         {
+            bit_set(self->manage_info.status_word, MODULE_LINK_STATE_BIT);
             LOG_E("%s send error, ret = %d\r\n", self->module_name, ret);
             continue;
         }

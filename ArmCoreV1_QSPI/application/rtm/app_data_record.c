@@ -133,9 +133,14 @@ static module_current_status_t rtm_off_current_status = {0};
 static module_current_status_t psm_current_status = {0};
 static module_current_status_t gmm_current_status = {0};
 
+static dido_structure_t  rtm_off_dido_structure = {0};
 static struct
 {
-    module_state_require_t rtm_off_state_require;
+    uint8_t require_state;
+    uint8_t require_ctrl_mode;
+    uint16_t rtm_off_plc_info;
+    uint32_t interlock_override;
+    uint32_t unready_override;
     uint16_t led_belt;
 } __attribute__((aligned(1), packed)) rtm_off_state_require = {0};
 static module_state_require_t psm_state_require = {0};
@@ -178,7 +183,11 @@ static int32_t app_data_record_filter(uint32_t ID, void *data, uint32_t len)
             memcpy(&rtm_off_state_require, payload->data + 1, sizeof(module_state_require_t) + sizeof(uint16_t));
             break;
         case SEND_RTM_OFF_ARM_DIDO_CMD:
-            goto ret;
+            if (memcmp(&rtm_off_dido_structure, payload->data + 1, sizeof(dido_structure_t)) == 0)
+            {
+                goto ret;
+            }
+            memcpy(&rtm_off_dido_structure, payload->data + 1, sizeof(dido_structure_t));
             break;
         default:
             goto ret;
