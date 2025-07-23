@@ -21,7 +21,7 @@
 *****************************************************************************
 ** @attention
 **
-** Copyright (c) 2024 STMicroelectronics.
+** Copyright (c) 2025 STMicroelectronics.
 ** All rights reserved.
 **
 ** This software is licensed under terms that can be found in the LICENSE file
@@ -50,7 +50,7 @@ MEMORY
   RAM_D2  (xrw)    : ORIGIN = 0x30000000,   LENGTH = 32K
   RAM_D3  (xrw)    : ORIGIN = 0x38000000,   LENGTH = 16K
   RAM_BKP  (rw)    : ORIGIN = 0x38800000,   LENGTH = 4K
-  EXT_SDRAM (xrw)  : ORIGIN = 0xC0000000,   LENGTH = 32M
+  EXT_SDRAM (xrw)  : ORIGIN = 0xC0000000,   LENGTH = 64M
 }
 
 /* Define output sections */

@@ -77,7 +77,7 @@ static int8_t timestamp_entry(void *argument)
         osEventFlagsWait(obj->event, TIMESTAMP_EVENT, osFlagsWaitAny, osWaitForever);
 
         osMutexAcquire(obj->mutex, osWaitForever);
-        obj->timestamp_ns += (uint64_t)__HAL_TIM_GET_AUTORELOAD(&htim24) * 1000;
+        obj->timestamp_ns += ((uint64_t)__HAL_TIM_GET_AUTORELOAD(&htim24) + 1) * 1000;
         osMutexRelease(obj->mutex);
     }
 
@@ -112,7 +112,7 @@ static int8_t timestamp_thread_init(void)
     .stack_size = 1024 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
-    
+
     osThreadId_t tid = osThreadNew(timestamp_entry, obj, &thread_attributes);
     if (tid == NULL)
     {

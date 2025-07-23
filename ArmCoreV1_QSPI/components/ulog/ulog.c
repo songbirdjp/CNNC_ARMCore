@@ -70,7 +70,7 @@ void log_printf(ulog_level_t severity, char *msg)
     uint32_t time_ms_left = ostick % tick_pre_second;
 
     struct tm tm_temp, *tm;
-    
+
     tm = localtime_r(&time_s_cur, &tm_temp);
 
     printf("[%04u-%02u-%02u %02u:%02u:%02u.%03u] [%s]: %s",
@@ -228,7 +228,7 @@ static void ulog_output(ulog_level_t severity, char *msg)
 #endif
 
     struct tm tm_temp, *tm;
-    
+
     tm = localtime_r(&time_s_cur, &tm_temp);
 
     sprintf(msg_info.buf, "[%04u-%02u-%02u %02u:%02u:%02u.%03u] ",
@@ -264,7 +264,7 @@ static void ulog_output(ulog_level_t severity, char *msg)
                 func_info[i].func_callback(msg_info.buf, strlen(msg_info.buf));
             }
             break;
-        
+
         default:
             if (msg_info.level >= func_info[i].level)
             {
@@ -285,7 +285,7 @@ static int8_t ulog_component_init(void)
 
     memset(s_subscribers, 0, sizeof(s_subscribers));
     ulog_subscribe(ulog_output, ULOG_DEBUG_LEVEL);   /* register callback function */
-    
+
     /* 1. callback function init */
     for (uint8_t i = 0; i < sizeof(func_info)/sizeof(func_info[0]); i++)
     {
@@ -330,9 +330,9 @@ static void ulog_output_entry(void *argument)
                 if (msg.level >= func_info[i].level)
                 {
                     func_info[i].func_callback(msg.buf, strlen(msg.buf));
-                }                
+                }
                 break;
-            
+
             default:
                 if (msg.level >= func_info[i].level)
                 {

@@ -23,7 +23,6 @@
 #include "dma.h"
 #include "iwdg.h"
 #include "mdma.h"
-#include "memorymap.h"
 #include "rtc.h"
 #include "tim.h"
 #include "gpio.h"
@@ -63,7 +62,7 @@ uint8_t ucHeap[configTOTAL_HEAP_SIZE] = {0};
 static HeapRegion_t xHeapRegions[] = 
 {
     { ucHeap, configTOTAL_HEAP_SIZE },
-    { (uint8_t *)0xC0000000, 0x2000000},
+    { (uint8_t *)0xC0000000, 0x4000000},
     { NULL,   0                     }
 };
 #endif
@@ -197,7 +196,7 @@ static int8_t fpu_test(uint8_t argc, uint8_t **argv)
         end += __HAL_TIM_GET_AUTORELOAD(&htim2);
     }
     printf("time:%u\r\n", end - start);
-    
+
     printf("%f\r\n", f);
 
     return 0;
@@ -293,7 +292,7 @@ static int8_t hw_crc_test(uint8_t argc, uint8_t **argv)
 
     res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
     printf("crc16 res = %#x\r\n", res);
-    
+
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(hw_crc_test, hw_crc_test, test crc);
@@ -437,7 +436,7 @@ int main(void)
   /* Console initialize */
   device_console_init();
   system_info_print();
-  system_fun_init(); 
+  system_fun_init();
 
 //   printf("----this is bootloader----\r\n");
 
@@ -461,9 +460,7 @@ int main(void)
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();
-
-  /* Call init function for freertos objects (in cmsis_os2.c) */
+  osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
   MX_FREERTOS_Init();
 
   /* Start scheduler */
@@ -617,8 +614,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

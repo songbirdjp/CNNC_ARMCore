@@ -45,20 +45,20 @@ void MX_FMC_Init(void)
   hsdram1.Instance = FMC_SDRAM_DEVICE;
   /* hsdram1.Init */
   hsdram1.Init.SDBank = FMC_SDRAM_BANK1;
-  hsdram1.Init.ColumnBitsNumber = FMC_SDRAM_COLUMN_BITS_NUM_9;
+  hsdram1.Init.ColumnBitsNumber = FMC_SDRAM_COLUMN_BITS_NUM_10;
   hsdram1.Init.RowBitsNumber = FMC_SDRAM_ROW_BITS_NUM_13;
   hsdram1.Init.MemoryDataWidth = FMC_SDRAM_MEM_BUS_WIDTH_16;
   hsdram1.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
   hsdram1.Init.CASLatency = FMC_SDRAM_CAS_LATENCY_3;
   hsdram1.Init.WriteProtection = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
-  hsdram1.Init.SDClockPeriod = FMC_SDRAM_CLOCK_PERIOD_2;
+  hsdram1.Init.SDClockPeriod = FMC_SDRAM_CLOCK_PERIOD_3;
   hsdram1.Init.ReadBurst = FMC_SDRAM_RBURST_ENABLE;
   hsdram1.Init.ReadPipeDelay = FMC_SDRAM_RPIPE_DELAY_0;
   /* SdramTiming */
   SdramTiming.LoadToActiveDelay = 2;
   SdramTiming.ExitSelfRefreshDelay = 10;
   SdramTiming.SelfRefreshTime = 9;
-  SdramTiming.RowCycleDelay = 9;
+  SdramTiming.RowCycleDelay = 10;
   SdramTiming.WriteRecoveryTime = 6;
   SdramTiming.RPDelay = 3;
   SdramTiming.RCDDelay = 3;
@@ -89,7 +89,7 @@ static void HAL_FMC_MspInit(void){
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_FMC;
-    PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_PLL;
+    PeriphClkInitStruct.FmcClockSelection = RCC_FMCCLKSOURCE_D1HCLK;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -145,7 +145,7 @@ static void HAL_FMC_MspInit(void){
                           |GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
 
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
@@ -154,7 +154,7 @@ static void HAL_FMC_MspInit(void){
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_3|GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
 
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
@@ -163,7 +163,7 @@ static void HAL_FMC_MspInit(void){
   GPIO_InitStruct.Pin = GPIO_PIN_4;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
 
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -173,7 +173,7 @@ static void HAL_FMC_MspInit(void){
                           |GPIO_PIN_5|GPIO_PIN_8|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
 
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
@@ -184,7 +184,7 @@ static void HAL_FMC_MspInit(void){
                           |GPIO_PIN_0|GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
 
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
@@ -194,7 +194,7 @@ static void HAL_FMC_MspInit(void){
                           |GPIO_PIN_15|GPIO_PIN_0|GPIO_PIN_1;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   GPIO_InitStruct.Alternate = GPIO_AF12_FMC;
 
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);

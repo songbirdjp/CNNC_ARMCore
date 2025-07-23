@@ -52,6 +52,9 @@ ArmCoreV1_QSPI
 │  │  ├─ eps_app
 │  │  │  ├─ eps_app.c
 │  │  │  └─ eps_app.h
+│  │  ├─ interlock_app
+│  │  │  ├─ event_override.c
+│  │  │  └─ event_override.h
 │  │  ├─ io_app
 │  │  │  ├─ io_port.c
 │  │  │  └─ io_port.h
@@ -84,8 +87,6 @@ ArmCoreV1_QSPI
 │  │  ├─ i2c_port.c
 │  │  └─ i2c_port.h
 │  ├─ system_common
-│  │  ├─ memorymap.c
-│  │  ├─ memorymap.h
 │  │  ├─ syscall.h
 │  │  ├─ syscalls.c
 │  │  └─ sysmem.c
@@ -162,12 +163,18 @@ ArmCoreV1_QSPI
 │  ├─ hw_crc
 │  │  ├─ hw_crc.c
 │  │  └─ hw_crc.h
+│  ├─ hw_ramecc
+│  │  ├─ hw_ramecc.c
+│  │  └─ hw_ramecc.h
 │  ├─ hw_semaphore
 │  │  ├─ hw_semaphore.c
 │  │  └─ hw_semaphore.h
 │  ├─ hw_wwdg
 │  │  ├─ hw_wwdg.c
 │  │  └─ hw_wwdg.h
+│  ├─ os_tools
+│  │  ├─ os_tool.c
+│  │  └─ os_tool.h
 │  ├─ pid_ctrl
 │  │  ├─ pid_ctrl.c
 │  │  └─ pid_ctrl.h
@@ -295,6 +302,9 @@ ArmCoreV1_QSPI
 │     │  ├─ drv_octospi.h
 │     │  ├─ octospi.c
 │     │  └─ octospi.h
+│     ├─ ramecc
+│     │  ├─ ramecc.c
+│     │  └─ ramecc.h
 │     ├─ rtc
 │     │  ├─ rtc.c
 │     │  └─ rtc.h
@@ -396,6 +406,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_ospi.h
 │     │  ├─ stm32h7xx_hal_pwr.h
 │     │  ├─ stm32h7xx_hal_pwr_ex.h
+│     │  ├─ stm32h7xx_hal_ramecc.h
 │     │  ├─ stm32h7xx_hal_rcc.h
 │     │  ├─ stm32h7xx_hal_rcc_ex.h
 │     │  ├─ stm32h7xx_hal_rtc.h
@@ -458,6 +469,7 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_ospi.c
 │        ├─ stm32h7xx_hal_pwr.c
 │        ├─ stm32h7xx_hal_pwr_ex.c
+│        ├─ stm32h7xx_hal_ramecc.c
 │        ├─ stm32h7xx_hal_rcc.c
 │        ├─ stm32h7xx_hal_rcc_ex.c
 │        ├─ stm32h7xx_hal_rtc.c

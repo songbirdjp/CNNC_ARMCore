@@ -269,13 +269,13 @@ static int8_t uart_recv_entry(void *argument)
     enum uart_id id = *(enum uart_id *)argument;
     uint8_t buf[UART_FRAME_SIZE_MAX] = {0};
 
-    // ret = uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID, uart_recv_heartbeat_timeout_callback, NULL);
-    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_HEARTBEAT_RX_CB_ID, uart_recv_heartbeat_cmd_callback,  NULL);
-    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_PNT_RX_CB_ID, uart_recv_time_sync_cmd_callback, NULL);
-    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_SET_RX_CB_ID, uart_recv_set_cmd_callback, NULL);
-    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_GET_RX_CB_ID, uart_recv_get_cmd_callback, NULL);
-    ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_REBOOT_RX_CB_ID, uart_recv_reboot_cmd_callback, NULL);
-    // ret |= uart_protocol_tx_RegisterCallback(uart_protocal_get(id), UART_PROTOCOL_HEARTBEAT_TX_CB_ID, uart_send_heartbeat_cmd_callback, NULL);
+    // ret = uart_protocol_rx_RegisterCallback(bgm_uart_protocol_get(id), UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID, uart_recv_heartbeat_timeout_callback, NULL);
+    ret |= uart_protocol_rx_RegisterCallback(bgm_uart_protocol_get(id), UART_PROTOCOL_HEARTBEAT_RX_CB_ID, uart_recv_heartbeat_cmd_callback,  NULL);
+    ret |= uart_protocol_rx_RegisterCallback(bgm_uart_protocol_get(id), UART_PROTOCOL_PNT_RX_CB_ID, uart_recv_time_sync_cmd_callback, NULL);
+    ret |= uart_protocol_rx_RegisterCallback(bgm_uart_protocol_get(id), UART_PROTOCOL_SET_RX_CB_ID, uart_recv_set_cmd_callback, NULL);
+    ret |= uart_protocol_rx_RegisterCallback(bgm_uart_protocol_get(id), UART_PROTOCOL_GET_RX_CB_ID, uart_recv_get_cmd_callback, NULL);
+    ret |= uart_protocol_rx_RegisterCallback(bgm_uart_protocol_get(id), UART_PROTOCOL_REBOOT_RX_CB_ID, uart_recv_reboot_cmd_callback, NULL);
+    // ret |= uart_protocol_tx_RegisterCallback(bgm_uart_protocol_get(id), UART_PROTOCOL_HEARTBEAT_TX_CB_ID, uart_send_heartbeat_cmd_callback, NULL);
     if (ret != 0)
     {
         LOG_E("[%d]: uart_protocol_rx_RegisterCallback err: %d\r\n", id, ret);

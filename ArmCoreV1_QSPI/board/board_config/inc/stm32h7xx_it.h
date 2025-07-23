@@ -92,6 +92,7 @@ void BDMA_Channel1_IRQHandler(void);
 void BDMA_Channel2_IRQHandler(void);
 void BDMA_Channel3_IRQHandler(void);
 void BDMA_Channel4_IRQHandler(void);
+void ECC_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

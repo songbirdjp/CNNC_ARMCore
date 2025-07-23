@@ -42,7 +42,7 @@ struct uart_data
     uint8_t *data;
 };
 
-uart_protocol_t *uart_protocal_get(enum uart_protocol_id id);
+uart_protocol_t *bgm_uart_protocol_get(enum uart_protocol_id id);
 int8_t uart_open(enum uart_id id);
 int8_t uart_data_recv_with_block(enum uart_id id, uint8_t *buf, uint16_t size, uint32_t timeout);
 int8_t uart_data_write(enum uart_id id, struct uart_data *cmd, uint16_t size, uint32_t timeout);

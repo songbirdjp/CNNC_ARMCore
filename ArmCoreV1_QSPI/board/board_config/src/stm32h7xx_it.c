@@ -67,6 +67,16 @@ extern MDMA_HandleTypeDef hmdma_mdma_channel1_dma1_stream2_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel2_dma1_stream5_tc_0;
 extern MDMA_HandleTypeDef hmdma_mdma_channel3_sw_0;
 extern MDMA_HandleTypeDef hmdma_octospi1_fifo_th;
+extern RAMECC_HandleTypeDef hramecc1_m1;
+extern RAMECC_HandleTypeDef hramecc1_m2;
+extern RAMECC_HandleTypeDef hramecc1_m3;
+extern RAMECC_HandleTypeDef hramecc1_m4;
+extern RAMECC_HandleTypeDef hramecc1_m6;
+extern RAMECC_HandleTypeDef hramecc2_m1;
+extern RAMECC_HandleTypeDef hramecc2_m2;
+extern RAMECC_HandleTypeDef hramecc2_m3;
+extern RAMECC_HandleTypeDef hramecc3_m1;
+extern RAMECC_HandleTypeDef hramecc3_m2;
 extern DMA_HandleTypeDef hdma_spi1_rx;
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern DMA_HandleTypeDef hdma_spi6_rx;
@@ -773,6 +783,29 @@ void BDMA_Channel4_IRQHandler(void)
   /* USER CODE BEGIN BDMA_Channel4_IRQn 1 */
 
   /* USER CODE END BDMA_Channel4_IRQn 1 */
+}
+
+/**
+  * @brief This function handles RAM ECC diagnostic global interrupt.
+  */
+void ECC_IRQHandler(void)
+{
+  /* USER CODE BEGIN ECC_IRQn 0 */
+
+  /* USER CODE END ECC_IRQn 0 */
+  HAL_RAMECC_IRQHandler(&hramecc1_m1);
+  HAL_RAMECC_IRQHandler(&hramecc1_m2);
+  HAL_RAMECC_IRQHandler(&hramecc1_m3);
+  HAL_RAMECC_IRQHandler(&hramecc1_m4);
+  HAL_RAMECC_IRQHandler(&hramecc1_m6);
+  HAL_RAMECC_IRQHandler(&hramecc2_m1);
+  HAL_RAMECC_IRQHandler(&hramecc2_m2);
+  HAL_RAMECC_IRQHandler(&hramecc2_m3);
+  HAL_RAMECC_IRQHandler(&hramecc3_m1);
+  HAL_RAMECC_IRQHandler(&hramecc3_m2);
+  /* USER CODE BEGIN ECC_IRQn 1 */
+
+  /* USER CODE END ECC_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

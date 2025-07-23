@@ -12,7 +12,7 @@
  */
 
 static uart_protocol_t uart_protocal[UART_PROTOCOL_MAX] = {0};
-uart_protocol_t *uart_protocal_get(enum uart_protocol_id id)
+uart_protocol_t *bgm_uart_protocol_get(enum uart_protocol_id id)
 {
     return &uart_protocal[id];
 }
@@ -20,25 +20,25 @@ static int8_t bgm_uart_protocol_init(void)
 {
     int8_t ret = 0;
 
-    ret = uart_protocol_init(uart_protocal_get(UART_PROTOCOL_AFC),
+    ret = uart_protocol_init(bgm_uart_protocol_get(UART_PROTOCOL_AFC),
                              UART_DEV_NAME_UART7,
                              1000,
                              10000,
                              10000);
 
-    ret |= uart_protocol_init(uart_protocal_get(UART_PROTOCOL_DOSE1),
+    ret |= uart_protocol_init(bgm_uart_protocol_get(UART_PROTOCOL_DOSE1),
                              UART_DEV_NAME_UART5,
                              1000,
                              10000,
                              10000);
 
-    ret |= uart_protocol_init(uart_protocal_get(UART_PROTOCOL_DOSE2),
+    ret |= uart_protocol_init(bgm_uart_protocol_get(UART_PROTOCOL_DOSE2),
                              UART_DEV_NAME_USART2,
                              1000,
                              10000,
                              10000);
 
-    ret |= uart_protocol_init(uart_protocal_get(UART_PROTOCOL_RTM),
+    ret |= uart_protocol_init(bgm_uart_protocol_get(UART_PROTOCOL_RTM),
                              UART_DEV_NAME_USART3,
                              1000,
                              10000,
@@ -87,7 +87,7 @@ int8_t uart_open(enum uart_id id)
 {
     if (id < UART_PROTOCOL_MAX)
     {
-        return uart_protocol_open(uart_protocal_get(id));
+        return uart_protocol_open(bgm_uart_protocol_get(id));
     }
     else if (id - UART_PROTOCOL_MAX < UART_DEV_MAX)
     {
@@ -105,7 +105,7 @@ int8_t uart_data_recv_with_block(enum uart_id id, uint8_t *buf, uint16_t size, u
 {
     if (id < UART_PROTOCOL_MAX)
     {
-        return uart_protocol_recv(uart_protocal_get(id), buf, size, timeout);
+        return uart_protocol_recv(bgm_uart_protocol_get(id), buf, size, timeout);
     }
     else if (id - UART_PROTOCOL_MAX < UART_DEV_MAX)
     {
@@ -123,7 +123,7 @@ int8_t uart_data_write(enum uart_id id, struct uart_data *cmd, uint16_t size, ui
 {
     if (id < UART_PROTOCOL_MAX)
     {
-        return uart_protocol_set(uart_protocal_get(id), cmd->id, cmd->cmd, cmd->data, cmd->len, timeout);
+        return uart_protocol_set(bgm_uart_protocol_get(id), cmd->id, cmd->cmd, cmd->data, cmd->len, timeout);
     }
     else if (id - UART_PROTOCOL_MAX < UART_DEV_MAX)
     {
@@ -141,7 +141,7 @@ int8_t uart_data_read(enum uart_id id, struct uart_data *cmd, uint32_t timeout)
 {
     if (id < UART_PROTOCOL_MAX)
     {
-        return uart_protocol_get(uart_protocal_get(id), cmd->id, cmd->cmd, cmd->data, cmd->len, timeout);
+        return uart_protocol_get(bgm_uart_protocol_get(id), cmd->id, cmd->cmd, cmd->data, cmd->len, timeout);
     }
     else if (id - UART_PROTOCOL_MAX < UART_DEV_MAX)
     {

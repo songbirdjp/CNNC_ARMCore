@@ -101,9 +101,16 @@ target_link_libraries(${PROJECT_NAME}.elf ${link_path})
 set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
 set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
 set(INFO_BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_INFO.bin)
-set(MAKE_FILE ${PROJECT_BINARY_DIR}/Makefile)
 set(EC_FILE ${CMAKE_SOURCE_DIR}/drivers/external_drivers/lan9252/lan9252_appObjects.h)
 set(SYS_CFG_FILE ${CMAKE_SOURCE_DIR}/application/app/sys_cfg/sys_cfg.c)
+
+if(CMAKE_GENERATOR MATCHES "Ninja")
+    set(CMAKE_TYPE "Ninja")
+    set(MAKE_FILE ${PROJECT_BINARY_DIR}/build.ninja)
+elseif(CMAKE_GENERATOR MATCHES "Unix Makefiles")
+    set(CMAKE_TYPE "Unix_Makefiles")
+    set(MAKE_FILE ${PROJECT_BINARY_DIR}/Makefile)
+endif()
 
 cmake_host_system_information(RESULT OS_NAME QUERY OS_NAME)
 message(STATUS "os: ${OS_NAME}")
@@ -125,7 +132,7 @@ set(CMAKE_USER_FILE_TIME ${CMAKE_SOURCE_DIR}/file_time_update)
 
 add_custom_command(TARGET ${PROJECT_NAME}.elf PRE_BUILD
         COMMAND ${CMAKE_USER_EC} -input_file_path ${EC_FILE} -output_file_path ${EC_FILE}
-        COMMAND ${CMAKE_USER_MAKEFILE} -input_file_path ${MAKE_FILE} -output_file_path ${MAKE_FILE} -name ${PROJECT_NAME}
+        COMMAND ${CMAKE_USER_MAKEFILE} -cmake_type ${CMAKE_TYPE} -input_file_path ${MAKE_FILE} -output_file_path ${MAKE_FILE} -name ${PROJECT_NAME}
         COMMAND ${CMAKE_USER_FILE_TIME} -input_file_path ${SYS_CFG_FILE}
         COMMENT "Updating ${MAKE_FILE}")
 
