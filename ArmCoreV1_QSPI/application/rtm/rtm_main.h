@@ -45,10 +45,12 @@ extern "C"
         SEND_RTM_OFF_ARM_CURRENT_STATE_CMD = 0x61,
         SEND_FKP_POWER_OFF_CMD = 0x62,
         SEND_RTM_OFF_ARM_DIDO_CMD = 0x63,
+        SEND_RTM_OFF_INFO_CMD = 0x64,
         SEND_PSM_CURRENT_STATE_CMD = 0x71,
         SEND_PSM_INFO_CMD = 0x72,
         SEND_GMM_CURRENT_STATE_CMD = 0x81,
         SEND_GMM_INFO_CMD = 0x82,
+        SEND_GMM_PLC_INFO_CMD = 0x83,
         SEND_FKP_BUTTON_CMD = 0x91,
         SEND_CPG_BUTTON_CMD = 0xA1,
         SEND_MAX_CMD,
@@ -128,6 +130,8 @@ extern "C"
         rtm_fault_check_t fault_check;
         interlock_table_t interlock_table;
 
+        uint8_t gmm_state;
+        uint8_t psm_state;
         uint16_t PLC_info;
         uint32_t interlock_override;
         uint32_t unready_override;

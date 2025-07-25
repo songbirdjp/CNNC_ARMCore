@@ -13,7 +13,7 @@
 #include "rtm_main.h"
 
 #define RTM_ERROR_WAIT_TIME (50)
-
+#define RTM_INIT_WAIT_TIME (150000)
 static int32_t stateMachine_ctor(StateMachine_t *self,
                                  StateHandler_t initial)
 {
@@ -108,6 +108,31 @@ static State_t module_ct_ready(void *self, Event_t const *const e);
 static State_t module_ct_work(void *self, Event_t const *const e);
 static State_t module_kv_complete(void *self, Event_t const *const e);
 static State_t module_kv_terminate(void *self, Event_t const *const e);
+
+static int32_t fault_handle(interlock_table_t *interlock_table, uint8_t state, void *arg)
+{
+    app_rtm_main_t *app_rtm = (app_rtm_main_t *)arg;
+    dido_structure_t dido_structure = {0};
+    app_do_get(&(app_rtm->app_dido), &dido_structure);
+    if(interlock_table->serious_interlock.emergency_stop == 1)
+    {
+        dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 0;
+    }
+    else
+    {
+        if(state == STATE_MACHINE_SHUTDOWN)
+        {
+            dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 0;
+        }
+        else
+        {
+            dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 1;
+        }
+    }
+    app_do_set(&(app_rtm->app_dido), &dido_structure);
+    return 0;
+}
+
 static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock_table, uint8_t state, void *arg)
 {
     int32_t retval = 0;
@@ -259,7 +284,7 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
             *((uint32_t *)&(interlock_table->minor_interlock)) |= *((uint32_t *)&(self->interlock_table.minor_interlock));
             *((uint32_t *)&(interlock_table->warning_interlock)) |= *((uint32_t *)&(self->interlock_table.warning_interlock));
         }
-
+        fault_handle(interlock_table, state, app_rtm);
         // *(uint32_t *)&(interlock_table->not_ready_event) &= ~(app_rtm->unready_override);
         // *(uint32_t *)&(interlock_table->serious_interlock) &= ~(app_rtm->interlock_override);
         retval = 0;
@@ -332,6 +357,8 @@ static State_t module_init(void *self, Event_t const *const e)
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     dido_structure_t dido_structure = {0};
     static int32_t check_finish = -1;
+    uint32_t cur_time = 0;
+    static uint32_t last_time = 0;
     switch (e->sig)
     {
     case ENTER_SIG:
@@ -347,6 +374,8 @@ static State_t module_init(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
+
+        last_time = osKernelGetTickCount();
         // LOG_I("module_init enter\r\n");
         status = HANDLED();
         break;
@@ -366,7 +395,31 @@ static State_t module_init(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            status = TRAN(&system_systemOn);
+            app_di_get(&(rtm->app_dido), &dido_structure);
+            // TODO:罩壳状态获取
+            app_do_get(&(rtm->app_dido), &dido_structure);
+            dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+            dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+            app_do_set(&(rtm->app_dido), &dido_structure);
+
+            cur_time = osKernelGetTickCount();
+
+            if ((cur_time - last_time) > RTM_INIT_WAIT_TIME)
+            {
+                // 初始化失败
+                status = TRAN(&system_systemOn);
+            }
+            else
+            {
+                if (rtm->gmm_state == SYSTEM_ON_SIG)
+                {
+                    status = TRAN(&system_systemOn);
+                }
+                else
+                {
+                    status = HANDLED();
+                }
+            }
         }
         else
         {
@@ -485,6 +538,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     case INITIALIZATION_SIG:
     {
         HAL_NVIC_SystemReset(); // reset system
+        // status = TRAN(&system_initialization);
         break;
     }
     case MANUAL_ENTER_SIG:

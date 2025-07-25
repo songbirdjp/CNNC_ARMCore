@@ -196,6 +196,31 @@ static void app_rtm_main_thread(void *argument)
                     }
                 }
                 break;
+                case SEND_GMM_CURRENT_STATE_CMD: /*GMM状态*/
+                {
+                    self->gmm_state = *(uint8_t *)&(queue_frame.payload.data[1]);
+                }
+                break;
+                case SEND_PSM_CURRENT_STATE_CMD: /*PAM状态*/
+                {
+                    self->psm_state = *(uint8_t *)&(queue_frame.payload.data[1]);
+                }
+                break;
+                case SEND_GMM_PLC_INFO_CMD: /*GMM PLC信息*/
+                {
+                    uint8_t plc_info = *(uint8_t *)&(queue_frame.payload.data[1]);
+                    if (plc_info & 0x01)
+                    {
+                        rtm_event.sig = MANUAL_ENTER_SIG;
+                        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                    }
+                    else
+                    {
+                        rtm_event.sig = MANUAL_EXIT_SIG;
+                        rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
+                    }
+                }
+                break;
                 default:
                     break;
                 }
@@ -241,6 +266,8 @@ static void app_rtm_main_thread(void *argument)
         {
             memcpy(&dido_structure_old, &dido_structure, sizeof(dido_structure_t));
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON].module_queue, RTM_ON_PLC_ID, SEND_RTM_OFF_ARM_DIDO_CMD, (uint8_t *)&dido_structure, sizeof(dido_structure_t));
+            uint8_t rtm_off_info = 0;
+            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].module_queue, GMM_ID, SEND_RTM_OFF_INFO_CMD, (uint8_t *)&rtm_off_info, sizeof(rtm_off_info));
         }
 
 #if 1
@@ -348,8 +375,8 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         case OUTPUT_DATA_GMM_CURRENT_STATE:
             flag = OUTPUT_DATA_GMM_MOVE_STATUS;
             len = (uint8_t *)&output_data.OutU32_gmm_move_status - (uint8_t *)&output_data.OutU8_gmm_fsm_state_current;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], RTM_ON_PLC_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
-            app_data_record_from_ethercat(self, RTM_ON_PLC_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], RTM_ON_PLC_ID | RTM_OFF_ARM_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
+            app_data_record_from_ethercat(self, RTM_ON_PLC_ID | RTM_OFF_ARM_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
             break;
         case OUTPUT_DATA_GMM_MOVE_STATUS:
             flag = OUTPUT_DATA_GMM_CURRENT_STATE;
@@ -363,7 +390,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
     }
     else
     {
-        len = (uint8_t *)&output_data.OutU8_gmm_fsm_state_current - (uint8_t *)&output_data.OutU16_radiation_index;
+        len = (uint8_t *)&output_data.OutU8_ethercat_Link_state - (uint8_t *)&output_data.OutU16_radiation_index;
         if (memcmp(&output_data.OutU16_radiation_index, &data->OutU16_radiation_index, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], BROADCAST_ID, SEND_GMM_RADIATION_INDEX_CMD, &data->OutU16_radiation_index, len);
@@ -375,8 +402,9 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         len = (uint8_t *)&output_data.OutU32_gmm_move_status - (uint8_t *)&output_data.OutU8_gmm_fsm_state_current;
         if (memcmp(&output_data.OutU8_gmm_fsm_state_current, &data->OutU8_gmm_fsm_state_current, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], RTM_ON_PLC_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
-            app_data_record_from_ethercat(self, RTM_ON_PLC_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON], RTM_ON_PLC_ID | RTM_OFF_ARM_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF_ARM], RTM_ON_PLC_ID | RTM_OFF_ARM_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
+            app_data_record_from_ethercat(self, RTM_ON_PLC_ID | RTM_OFF_ARM_ID, SEND_GMM_CURRENT_STATE_CMD, &data->OutU8_gmm_fsm_state_current, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_psm_fsm_state_current - (uint8_t *)&output_data.OutU32_gmm_move_status;
@@ -386,6 +414,12 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             app_data_record_from_ethercat(self, ICM_ID | RTM_ON_PLC_ID | QAM_ID | BGM_ID, SEND_GMM_INFO_CMD, &data->OutU32_gmm_move_status, len);
         }
 
+        len = (uint8_t *)&output_data.OutU8_gmm_fsm_state_current - (uint8_t *)&output_data.OutU8_plc_info;
+        if (memcmp(&output_data.OutU8_plc_info, &data->OutU8_plc_info, len) != 0)
+        {
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF_ARM], RTM_OFF_ARM_ID, SEND_GMM_PLC_INFO_CMD, &data->OutU8_plc_info, len);
+            app_data_record_from_ethercat(self, RTM_OFF_ARM_ID, SEND_GMM_PLC_INFO_CMD, &data->OutU8_plc_info, len);
+        }
         memcpy(&output_data, data, sizeof(TOBJ7010));
     }
 }
@@ -428,6 +462,9 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
         break;
     case RECEIVE_GMM_CTRL_CMD:
         memcpy(&input_data->InF_gmm_position_tar, queue_frame->payload.data + 1, len);
+        break;
+    case SEND_RTM_OFF_INFO_CMD:
+        memcpy(&input_data->InU8_rtm_off_info, queue_frame->payload.data + 1, len);
         break;
     case RECEIVE_PSM_REQUIRE_STATE_CMD:
         memcpy(&input_data->InU8_psm_require_state, queue_frame->payload.data + 1, len);
