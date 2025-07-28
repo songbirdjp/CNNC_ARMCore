@@ -62,7 +62,8 @@ struct treatment_para
         {
             uint8_t lock : 1;   /* 0: unlock  1: lock */
             uint8_t check : 1;  /* 0: fail  1: pass */
-            uint8_t reserved : 6;
+            uint8_t beam_valid : 1; /* 0: invalid 1: valid */
+            uint8_t reserved : 5;
         }bits;
 
         uint8_t byte;

@@ -290,7 +290,8 @@ static int8_t dose_treatment_parse(struct dose_object *cmd)
             *cmd->len = 3;
             break;
         case 0x02:
-            ret = beam_data_value_set(0, BEAM_VALID, 0, cmd->data[2]);
+            obj->treatment.status.bits.beam_valid = (cmd->data[2] == 0) ? 0 : 1;
+            ret = beam_data_value_set(0, BEAM_VALID, 0, obj->treatment.status.bits.beam_valid);
             if (ret != 0)
             {
                 LOG_E("beam data valid set err: %d\r\n", ret);
@@ -517,7 +518,11 @@ static int8_t fsm_state_switch_check(enum fsm_state new_state)
     case FSM_STATE_PRELIMINARY:
         if (new_state == FSM_STATE_PREPARE)
         {
-            uint8_t beam_valid = beam_data_value_get(0, BEAM_VALID, 0);
+            struct control_para *obj = control_data_get();
+            osMutexAcquire(obj->mutex, osWaitForever);
+            uint8_t beam_valid = obj->treatment.status.bits.beam_valid;
+            osMutexRelease(obj->mutex);
+            beam_valid &= (uint8_t)beam_data_value_get(0, BEAM_VALID, 0);
             if (beam_valid != 1)
             {
                 LOG_E("beam valid: %d\r\n", beam_valid);
@@ -686,6 +691,11 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             }
             break;
         case 0x01:
+            struct control_para *obj = control_data_get();
+            osMutexAcquire(obj->mutex, osWaitForever);
+            obj->treatment.status.bits.beam_valid = 0;
+            osMutexRelease(obj->mutex);
+
             ret = beam_data_cleanup(0);
             if (ret != 0)
             {
@@ -1122,7 +1132,9 @@ static int8_t uart_recv_heartbeat_cmd_callback(struct uart_protocol *const self,
 }
 static int8_t uart_recv_time_sync_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
 {
-    return timestamp_ns_set(*(uint64_t *)data);
+    uint64_t timestamp_ns = (uint64_t)data[0] | (uint64_t)data[1] << 8 | (uint64_t)data[2] << 16 | (uint64_t)data[3] << 24 | 
+                                (uint64_t)data[4] << 32 | (uint64_t)data[5] << 40 | (uint64_t)data[6] << 48 | (uint64_t)data[7] << 56;
+    return timestamp_ns_set(timestamp_ns);
 }
 static int8_t uart_recv_set_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
 {
