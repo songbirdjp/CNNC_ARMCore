@@ -455,8 +455,6 @@ void MagMotorInitFSM(void)
             {
                 MagMotorState = MotorFSM_Init;
                 LOG_I("Left position fault = %d\r\n", MagFindZeroCheckCounterPrev);
-                //LOG_I("FindZeroCheck Failed %d\r\n", MagFindZeroCheckCounter-MagFindZeroCheckCounterPrev);
-                //LOG_I("2MagFindZeroCheckCounter = %d MagFindZeroCheckCounterPrev = %d\r\n", MagFindZeroCheckCounter, MagFindZeroCheckCounterPrev);
             }
             break;
         case MotorFSM_StayAtPresetPos:
@@ -502,7 +500,7 @@ uint8_t AFTMotorInitDone = 0;
 uint16_t AFTMotorEncoderData;
 uint16_t AFTMotorIsKeyDown = 0;
 uint16_t AFTMotorSetPos = 20000;
-void  AFTMotorInitFSM()
+void  AFTMotorInitFSM(void)
 {
    // uint16_t AFTMotorPos = 20000;
     uint16_t AFTForwardEncCounter;
@@ -514,7 +512,7 @@ void  AFTMotorInitFSM()
     switch (AFTMotorState)
     {
         case MotorFSM_Init:
-            printf("MotorInit\r\n");
+            printf(" AFT MotorInit\r\n");
             if(0 == AFTMotorInitDone)
             {
                 motorEnable(MOTOR_AFT);
@@ -632,11 +630,11 @@ MSH_CMD_EXPORT_ALIAS(Shell_GetAFTMotorPos, AFTPOSGET,AFT motor get position);
 static void MotorInitial_thread_entry(void *argument)
 {
     MX_TIM2_Init();
-    MX_TIM3_Init();
-    MX_TIM5_Init();
+    // MX_TIM3_Init();
+    // MX_TIM5_Init();
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
-    gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
+    // gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
     MagMotorParameter.presetPos = 27419;// 25118;
     MagMotorParameter.encoderValTarget = MagMotorParameter.presetPos;
     AFCApplicationParam.positionCalculated = MagMotorParameter.presetPos;
@@ -664,6 +662,11 @@ static int8_t MotorInitial_thread_init(void)
 }
 static void AFTMotorInitial_thread_entry(void *argument)
 {
+    MX_TIM3_Init();
+    MX_TIM5_Init();
+    gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
+    AFTMotorParameter.presetPos = 20000;// 25118;
+    AFTMotorParameter.encoderValTarget = AFTMotorParameter.presetPos;
     for (;;)
     {
         AFTMotorInitFSM();
@@ -687,5 +690,5 @@ static int8_t AFTMotorInitial_thread_init(void)
     return 0;
 }
 
-INIT_APP_EXPORT(MotorInitial_thread_init);
+// INIT_APP_EXPORT(MotorInitial_thread_init);
 INIT_APP_EXPORT(AFTMotorInitial_thread_init);
