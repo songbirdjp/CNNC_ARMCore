@@ -4,6 +4,8 @@
 #include "tim.h"
 #include "ulog.h"
 #include "adc_app.h"
+#include "event_override.h"
+#include "dose_error.h"
 
 // #define BGM_FSM_STATE_SIMULATION
 #ifdef BGM_FSM_STATE_SIMULATION
@@ -295,23 +297,15 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         ret |= beam_deliver_type_get(info.beam_id, &deliver_type);
         osMutexAcquire(obj->mutex, osWaitForever);
         obj->deliver_type = deliver_type;
-        obj->error_code &= ~(1 << 0);
         osMutexRelease(obj->mutex);
-        if (ret != 0)
-        {
-            if (checkPlanRecvStatus() != 0)
-            {
-                obj->error_code |= 1 << 0;
-                LOG_I("now plan data is invalid\r\n");
-            }
-        }
         break;
     case BGM_STATE_PREPARE:
-        if (obj->error_code & (1 << 0))
+        if (unready_event_with_override_get(UNREADY_EVENT_PLAN_DATA) != 0)
         {
-            LOG_E("prepare request failed, plan data is invalid\r\n");
+            LOG_E("prepare request failed, plan data is not ready\r\n");
             return -1;
         }
+
         LOG_I("---remote set to prepare---\r\n");
 #if 0
         LOG_I("dose_mode: %d\r\n", info.dose_mode);
@@ -365,6 +359,11 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_PREPARE);
         break;
     case BGM_STATE_READY:
+        if (dose_err_info_get(BGM_UART_DOSE1) != 0 || dose_err_info_get(BGM_UART_DOSE2) != 0)
+        {
+            LOG_E("bgm set plan data to dose err: %d, %d\r\n", dose_err_info_get(BGM_UART_DOSE1), dose_err_info_get(BGM_UART_DOSE2));
+            return -1;
+        }
         /* 1. set dose board to ready */
         ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_READY);
         ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_READY);
@@ -965,8 +964,6 @@ static int8_t bgm_info_get(uint8_t argc, char **argv)
     osMutexAcquire(obj->mutex, osWaitForever);
     memcpy(&info, obj, sizeof(struct bgm_data_info));
     osMutexRelease(obj->mutex);
-
-    LOG_I("local error code: %#.8x\r\n", info.error_code);
 
     LOG_I("dose_mode: %d\r\n", info.dose_mode);
     LOG_I("pulse_mode: %d\r\n", info.pulse_mode);

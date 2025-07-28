@@ -6,6 +6,7 @@
 #include "plan_data.h"
 #include "rtm_app.h"
 #include "bgm_app.h"
+#include "dose_error.h"
 
 struct board_status
 {
@@ -69,7 +70,8 @@ struct treatment_para
         {
             uint8_t lock : 1;   /* 0: unlock  1: lock */
             uint8_t check : 1;  /* 0: fail  1: pass */
-            uint8_t reserved : 6;
+            uint8_t beam_valid : 1; /* 0: invalid 1: valid */
+            uint8_t reserved : 5;
         }bits;
 
         uint8_t byte;
@@ -231,6 +233,11 @@ static int8_t dose_calibration_parse(enum uart_id id, struct cmd_object *cmd)
         case 0x04:
             LOG_I("[%d]: dose adc factor set (1MU == %d code)\r\n", id, cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
             obj->calibration.adc_factor[cmd->data[1]] = cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
+            ret = dose_para_check(DOSE_PARA_ADC, id, cmd->data[1], &obj->calibration.adc_factor[cmd->data[1]]);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose adc factor check err: %d\r\n", id, ret);
+            }
             break;
         default:
             ret = -1;
@@ -240,10 +247,20 @@ static int8_t dose_calibration_parse(enum uart_id id, struct cmd_object *cmd)
     case 0x03:
         LOG_I("[%d]: dose dac factor set : %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
         obj->calibration.dac_factor = cmd->data[3] << 8 | cmd->data[2];
+        ret = dose_para_check(DOSE_PARA_DAC, id, 0, &obj->calibration.dac_factor);
+        if (ret != 0)
+        {
+            LOG_E("[%d]: dose dac factor check err: %d\r\n", id, ret);
+        }
         break;
     case 0x04:
         LOG_I("[%d]: dose trigger interval set: %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
         obj->calibration.trig_interval_min = cmd->data[3] << 8 | cmd->data[2];
+        ret = dose_para_check(DOSE_PARA_TRIGGER_INTERVAL_MIN, id, 0, &obj->calibration.trig_interval_min);
+        if (ret != 0)
+        {
+            LOG_E("[%d]: dose trigger interval check err: %d\r\n", id, ret);
+        }
         break;
     default:
         LOG_E("[%d]: invalid calibration cmd type: %x\r\n", id, cmd->data[0]);
@@ -268,6 +285,11 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
     case 0x40:
         cmd->data[2] == 0 ? LOG_I("[%d]: dose dummy mode set\r\n", id) : LOG_I("[%d]: dose normal mode set\r\n", id);
         obj->treatment.dose_mode = cmd->data[2];
+        ret = dose_para_check(DOSE_PARA_DOSE_MODE, id, 0, &obj->treatment.dose_mode);
+        if (ret != 0)
+        {
+            LOG_E("[%d]: dose mode check err: %d\r\n", id, ret);
+        }
         break;
     case 0x41:
         switch (cmd->data[1])
@@ -275,11 +297,20 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
         case 0x00:
             LOG_I("[%d]: pulse generation mode set %d\r\n", id, cmd->data[2]);
             obj->treatment.pulse_mode = cmd->data[2];
-            break;
+            ret = dose_para_check(DOSE_PARA_PULSE_MODE, id, 0, &obj->treatment.pulse_mode);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose pulse generation check err: %d\r\n", id, ret);
+            }
             break;
         case 0x01:
             LOG_I("[%d]: dose prf set %u ok\r\n", id, cmd->data[2]);
             obj->treatment.prf_hz = cmd->data[2];
+            ret = dose_para_check(DOSE_PARA_PRF, id, 0, &obj->treatment.prf_hz);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose prf check err: %d\r\n", id, ret);
+            }
             break;
         default:
             ret = -1;
@@ -295,12 +326,58 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
         case 0x01:
             uint32_t meter = cmd->data[2] | cmd->data[3] << 8 | cmd->data[4] << 16 | cmd->data[5] << 24;
             LOG_I("[%d]: dose meter set %f ok\r\n", id, *(float *)&meter);
+            ret = dose_para_check(DOSE_PARA_DOSE_METER, id, 0, &meter);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose meter check err: %d\r\n", id, ret);
+            }
             break;
         case 0x02:
+            uint16_t cp_num = cmd->data[2] | cmd->data[3] << 8;
+            ret = dose_para_check(DOSE_PARA_CP_NUM, id, 0, &cp_num);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose cp num check err: %d\r\n", id, ret);
+            }
+            uint16_t ri_num = cmd->data[4] | cmd->data[5] << 8;
+            ret = dose_para_check(DOSE_PARA_RI_NUM, id, 0, &ri_num);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose ri num check err: %d\r\n", id, ret);
+            }
+            break;
         case 0x03:
+            ret = dose_para_check(DOSE_PARA_CP_TOLERATE, id, 0, &cmd->data[2]);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose tolerate check err: %d\r\n", id, ret);
+            }
+            break;
         case 0x04:
+            uint16_t cp_ri_map = cmd->data[4] | cmd->data[5] << 8;
+            ret = dose_para_check(DOSE_PARA_CP_RI_MAP, id, cmd->data[2] | cmd->data[3] << 8, &cp_ri_map);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose cp ri map check err: %d\r\n", id, ret);
+            }
+            break;
         case 0x05:
+            float value[3] = {0};
+            value[0] = (float)(cmd->data[2] | cmd->data[3] << 8 | cmd->data[4] << 16 | cmd->data[5]); // cumulative dose
+            value[1] = (float)(cmd->data[6] | cmd->data[7] << 8 | cmd->data[8] << 16 | cmd->data[9]); // dose rate
+            value[2] = (float)(cmd->data[10] | cmd->data[11] << 8 | cmd->data[12] << 16 | cmd->data[13]) / 1000.0f; // delivery time in ms
+            ret = dose_para_check(DOSE_PARA_RI_INFO, id, cmd->data[2] | cmd->data[3] << 8, &value);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose ri info check err: %d\r\n", id, ret);
+            }
+            break;
         case 0x06:
+            ret = dose_para_check(DOSE_PARA_BEAM_INFO, id, 0, &cmd->data[2]);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose beam info check err: %d\r\n", id, ret);
+            }
             break;
         default:
             ret = -1;
@@ -320,6 +397,7 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
             break;
         case 0x02:
             LOG_I("[%d]: beam valid set: %d\r\n", id, cmd->data[2]);
+            obj->treatment.status.bits.beam_valid = cmd->data[2];
             break;
         default:
             ret = -1;
@@ -427,10 +505,22 @@ static int8_t dose_interlock_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:
-            LOG_I("[%d]: dose interlock override set: %#.x\r\n", id, cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
+            uint32_t interlock_override = cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
+            LOG_I("[%d]: dose interlock override set: %#.8x\r\n", id, interlock_override);
+            ret = dose_para_check(DOSE_PARA_INTERLOCK_OVERRIDE, id, 0, &interlock_override);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose interlock override check err: %d\r\n", id, ret);
+            }
             break;
         case 0x01:
-            LOG_I("[%d]: dose unready override set: %#.x\r\n", id, cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
+            uint32_t unready_override = cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
+            LOG_I("[%d]: dose unready override set: %#.8x\r\n", id, unready_override);
+            ret = dose_para_check(DOSE_PARA_UNREADY_OVERRIDE, id, 0, &unready_override);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose unready override check err: %d\r\n", id, ret);
+            }
             break;
         case 0x02:
             obj->status.interlock.bytes = cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
@@ -514,6 +604,16 @@ static int8_t dose_state_control_parse(enum uart_id id, struct cmd_object *cmd)
             break;
         case 0x01:
             LOG_I("[%d]: dose reset ok\r\n", id);
+            break;
+        case 0x02:
+            uint64_t timestamp_ns = (uint64_t)cmd->data[2] | (uint64_t)cmd->data[3] << 8 | (uint64_t)cmd->data[4] << 16 | (uint64_t)cmd->data[5] << 24 | 
+                                (uint64_t)cmd->data[6] << 32 | (uint64_t)cmd->data[7] << 40 | (uint64_t)cmd->data[8] << 48 | (uint64_t)cmd->data[9] << 56;
+            LOG_I("[%d]: dose timestamp set ok: %llu\r\n", timestamp_ns);
+            ret = dose_para_check(DOSE_PARA_TIMESTAMP, id, 0, &timestamp_ns);
+            if (ret != 0)
+            {
+                LOG_E("[%d]: dose timestamp check err: %d\r\n", id, ret);
+            }
             break;
         default:
             ret = -1;
@@ -1104,6 +1204,12 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         offset += sizeof(float);
         ret |= dose_cmd_write(id, 0x02, buf, offset);
         LOG_I("[%d]: beam meter set: %f\r\n", id, beam_info->info->beamMeterSet);
+
+        struct bgm_data_info *obj = bgm_data_info_get();
+        osMutexAcquire(obj->mutex, osWaitForever);
+        obj->dose_meter = beam_info->info->beamMeterSet;
+        osMutexRelease(obj->mutex);
+
         /* 3. beam cp & ri num */
         offset = 0;
         buf[offset++] = 0x42;
@@ -1192,6 +1298,11 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         memcpy(&buf[offset], (float *)data, sizeof(float));
         offset += sizeof(float);
         ret = dose_cmd_write(id, 0x02, buf, offset);
+
+        struct bgm_data_info *obj = bgm_data_info_get();
+        osMutexAcquire(obj->mutex, osWaitForever);
+        obj->dose_meter = *(float *)data;
+        osMutexRelease(obj->mutex);
 
         offset = 0;
         buf[offset++] = 0x43;

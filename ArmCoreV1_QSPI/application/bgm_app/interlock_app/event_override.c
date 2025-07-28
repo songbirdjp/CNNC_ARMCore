@@ -29,7 +29,7 @@ static int8_t unready_event_polling_entry(void *argument)
         event = 0;
 
         /* bit0: plan data */
-        event |= checkPlanRecvStatus() != 0 ? 1 : 0;
+        event |= checkPlanRecvStatus() == 0 ? 0 : 1;
         /* TODO: add other event check */
 
         osMutexAcquire(info->mutex, osWaitForever);
@@ -106,8 +106,8 @@ int8_t unready_event_with_override_get(enum unready_event type)
 
     switch (type)
     {
-    case UNREADY_EVENT_TYPE_PLAN_DATA:
-        ret = (value >> UNREADY_EVENT_TYPE_PLAN_DATA) & 0x01;
+    case UNREADY_EVENT_PLAN_DATA:
+        ret = (value >> UNREADY_EVENT_PLAN_DATA) & 0x01;
         break;
 
     default:
@@ -118,7 +118,6 @@ int8_t unready_event_with_override_get(enum unready_event type)
 
     return ret;
 }
-
 
 static uint32_t interlock_override_get(void)
 {
@@ -141,8 +140,8 @@ int8_t interlock_with_override_get(enum interlock_event type)
 
     switch (type)
     {
-    case INTERLOCK_EVENT_TYPE_PLAN_DATA:
-        ret = (value >> INTERLOCK_EVENT_TYPE_PLAN_DATA) & 0x01;
+    case INTERLOCK_EVENT_PLAN_DATA:
+        ret = (value >> INTERLOCK_EVENT_PLAN_DATA) & 0x01;
         break;
 
     default:
@@ -153,3 +152,32 @@ int8_t interlock_with_override_get(enum interlock_event type)
 
     return ret;
 }
+
+
+#ifndef EVENT_OVERRIDE_TEST
+#include "shell.h"
+static int8_t event_override_test(int argc, char **argv)
+{
+    switch (atoi(argv[1]))
+    {
+    case 0:
+        LOG_I("unready event: %#.8x\r\n", unready_event_get());
+        LOG_I("unready override: %#.8x\r\n", unready_override_get());
+        break;
+    case 1:
+        LOG_I("unready event with override: %d\r\n", unready_event_with_override_get(atoi(argv[2])));
+        break;
+    case 2:
+        LOG_I("interlock overide: %#.8x\r\n", interlock_override_get());
+        break;
+    case 3:
+        LOG_I("interlock with override: %d\r\n", interlock_with_override_get(atoi(argv[2])));
+        break;
+    default:
+        break;
+    }
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(event_override_test, event_override_test, event override test);
+#endif

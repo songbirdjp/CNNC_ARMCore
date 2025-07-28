@@ -5,6 +5,8 @@
 #include "bgm_app.h"
 #include "plan_data.h"
 #include "bgm_def.h"
+#include "dose_error.h"
+#include "bgm_error.h"
 
 struct uart_cmd_set_get
 {
@@ -137,6 +139,8 @@ static int8_t rtm_cmd_parse(enum uart_id id, struct cmd_object *cmd)
             {
                 ret = dose_fault_clear(BGM_UART_DOSE1);
                 ret |= dose_fault_clear(BGM_UART_DOSE2);
+                ret |= dose_err_info_clear();
+                ret |= bgm_error_info_clear();
             }
             break;
         case UART_DATA_CMD_RECV_SYSTEM_FSM_STATE:

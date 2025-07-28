@@ -227,7 +227,7 @@ static int8_t uart_recv_heartbeat_cmd_callback(struct uart_protocol *const self,
 }
 static int8_t uart_recv_time_sync_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
 {
-    uint64_t timestamp_ns = data[0] | (uint64_t)data[1] << 8 | (uint64_t)data[2] << 16 | (uint64_t)data[3] << 24 | 
+    uint64_t timestamp_ns = (uint64_t)data[0] | (uint64_t)data[1] << 8 | (uint64_t)data[2] << 16 | (uint64_t)data[3] << 24 | 
                                 (uint64_t)data[4] << 32 | (uint64_t)data[5] << 40 | (uint64_t)data[6] << 48 | (uint64_t)data[7] << 56;
     return timestamp_ns_set(timestamp_ns);
 }

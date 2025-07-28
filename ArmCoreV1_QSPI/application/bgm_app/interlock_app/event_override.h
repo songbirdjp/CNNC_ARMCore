@@ -9,14 +9,14 @@ extern "C" {
 
 enum unready_event
 {
-    UNREADY_EVENT_TYPE_PLAN_DATA = 0,
-    UNREADY_EVENT_TYPE_MAX,
+    UNREADY_EVENT_PLAN_DATA = 0,
+    UNREADY_EVENT_MAX,
 };
 
 enum interlock_event
 {
-    INTERLOCK_EVENT_TYPE_PLAN_DATA,
-    INTERLOCK_EVENT_TYPE_MAX,
+    INTERLOCK_EVENT_PLAN_DATA,
+    INTERLOCK_EVENT_MAX,
 };
 
 uint32_t unready_event_get(void);
