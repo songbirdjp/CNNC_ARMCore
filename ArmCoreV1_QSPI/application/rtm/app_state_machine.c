@@ -1630,7 +1630,7 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (*(uint32_t *)&(rtm->interlock_table.serious_interlock) != 0)
+            if (fault_override(rtm) != 0)
             {
                 status = TRAN(&system_kv_terminate);
             }
@@ -1718,7 +1718,7 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) != 0)
             {
                 status = TRAN(&system_surview_radiation);
             }
@@ -1737,7 +1737,7 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (*(uint32_t *)&(rtm->interlock_table.serious_interlock) != 0)
+            if (fault_override(rtm) != 0)
             {
                 status = TRAN(&system_kv_terminate);
             }
@@ -1844,7 +1844,7 @@ static State_t module_surview_work(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (*(uint32_t *)&(rtm->interlock_table.serious_interlock) != 0)
+            if (fault_override(rtm) != 0)
             {
                 status = TRAN(&system_kv_terminate);
             }
@@ -1951,7 +1951,7 @@ static State_t module_ct_ready(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (*(uint32_t *)&(rtm->interlock_table.serious_interlock) != 0)
+            if (fault_override(rtm) != 0)
             {
                 status = TRAN(&system_kv_terminate);
             }
@@ -2060,7 +2060,7 @@ static State_t module_ct_work(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (*(uint32_t *)&(rtm->interlock_table.serious_interlock) != 0)
+            if (fault_override(rtm) != 0)
             {
                 status = TRAN(&system_kv_terminate);
             }
