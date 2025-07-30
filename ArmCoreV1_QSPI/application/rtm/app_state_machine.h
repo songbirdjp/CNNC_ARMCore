@@ -128,15 +128,13 @@ extern "C"
         uint32_t KVTreatmentEn : 1;
         uint32_t MVTreatmentEn : 1;
         
-        uint32_t MoveEN : 1;
-
         uint32_t ethercat_link : 1;
         uint32_t rtm_on_link : 1;
         uint32_t psm_link : 1;
         uint32_t gmm_link : 1;
         uint32_t fkp_link : 1;
         uint32_t cpg_link : 1;
-        uint32_t reserved : 20;
+        uint32_t reserved : 21;
     } app_serious_interlock_table_t;
 
     typedef struct app_interlock_table

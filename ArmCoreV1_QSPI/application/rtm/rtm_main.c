@@ -828,6 +828,10 @@ static void app_module_tx_thread(void *argument)
             LOG_E("%s queue get error, status = %d\r\n", self->module_name, status);
             continue;
         }
+        if(self->tx_disable == MODULE_TX_DISABLE)
+        {
+            continue;
+        }
         ret = app_data_record(self->app_data_record, self->ID, (uint8_t *)&queue_frame, queue_frame.length);
         if (ret != 0)
         {
@@ -1797,4 +1801,64 @@ usage:
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(psm_test, psm_test, psm test);
+#endif
+#define DIDO_TEST
+#ifdef DIDO_TEST
+
+#include "shell.h"
+#include "ulog.h"
+
+int8_t dido_test(uint8_t argc, uint8_t **argv)
+{
+    dido_structure_t dido_value;
+    if (argc < 3)
+    {
+        goto usage;
+    }
+    if (strcmp(argv[1], "di") == 0)
+    {
+        if (strcmp(argv[2], "read") == 0)
+        {
+            app_di_get(&app_rtm.app_dido, &dido_value);
+            LOG_I("DI tca9535_0x01 value: %d\r\n", dido_value.tca9535_0x01_u.tca9535_0x01);
+            LOG_I("DI TCA9535_0x02 value: %d\r\n", dido_value.tca9535_0x02_u.tca9535_0x02);
+            LOG_I("DI TCA9535_0x03 value: %d\r\n", dido_value.tca9535_0x03_u.tca9535_0x03);
+            LOG_I("DI gpio_di value: %d\r\n", dido_value.gpio_di_u.gpio_di);
+        }
+        else
+        {
+            goto usage;
+        }
+    }
+    else if (strcmp(argv[1], "do") == 0)
+    {
+        if (argc < 4)
+        {
+            goto usage;
+        }
+        if (strcmp(argv[2], "write") == 0)
+        {
+            app_do_get(&app_rtm.app_dido, &dido_value);
+
+            uint32_t value = atoi(argv[3]);
+            dido_value.gpio_do_u.gpio_do = value & 0xFFFF;
+            dido_value.tca9535_0x04_u.tca9535_0x04 = (value >> 16) & 0xFFFF;
+            app_do_set(&app_rtm.app_dido, &dido_value);
+            LOG_I("DO GPIO_DO value: %d\r\n", dido_value.gpio_do_u.gpio_do);
+        }
+        else
+        {
+            goto usage;
+        }
+    }
+    else
+    {
+        goto usage;
+    }
+    return 0;
+usage:
+    LOG_E("Usage: %s <di|do> <read|write> <value>\r\n", argv[0]);
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(dido_test, dido_test, dido test);
 #endif

@@ -94,6 +94,11 @@ extern "C"
         RTM_MODULE_MAX
     } rtm_module_t;
 
+    typedef enum
+    {
+        MODULE_TX_ENABLE = 0,
+        MODULE_TX_DISABLE,
+    } module_tx_state_t;
     typedef struct rtm_module_info
     {
 #define MODULE_INIT_BIT (0)
@@ -102,6 +107,7 @@ extern "C"
         app_data_record_t *app_data_record;
         const char *module_name;
         const char *module_type;
+        module_tx_state_t tx_disable;
         uint32_t ID;
         osPriority_t module_priority;
         heartbeat_t heartbeat_info_rx; // receive heartbeat info
