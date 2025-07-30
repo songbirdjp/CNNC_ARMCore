@@ -255,9 +255,6 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
             *((uint32_t *)&(interlock_table->minor_interlock)) |= *((uint32_t *)&(self->interlock_table.minor_interlock));
             *((uint32_t *)&(interlock_table->warning_interlock)) |= *((uint32_t *)&(self->interlock_table.warning_interlock));
         }
-
-        // *(uint32_t *)&(interlock_table->not_ready_event) &= ~(app_rtm->unready_override);
-        // *(uint32_t *)&(interlock_table->serious_interlock) &= ~(app_rtm->interlock_override);
         retval = 0;
     }
     else
@@ -280,18 +277,35 @@ static void fault_clear(rtm_fault_check_t *self)
     self->fault_clear_flag = 1;
     memset(&self->interlock_table, 0, sizeof(interlock_table_t));
 }
+#define NO_FAULT (0x00)
+#define NOT_READY_EVENT (0x01)
+#define WARNING_INTERLOCK (0x02)
+#define MINOR_INTERLOCK (0x04)
+#define SERIOUS_INTERLOCK (0x08)
 static int32_t fault_override(app_rtm_main_t *self)
 {
+    int32_t retval = NO_FAULT;
     if (self == NULL)
     {
-        return -1;
+        return SERIOUS_INTERLOCK;
     }
-    if (((*(uint32_t *)&(self->interlock_table.not_ready_event) & (~(self->unready_override))) != 0) ||
-        ((*(uint32_t *)&(self->interlock_table.serious_interlock) & (~(self->interlock_override))) != 0))
+    if (((*(uint32_t *)&(self->interlock_table.not_ready_event) & (~(self->unready_override))) != 0))
     {
-        return -2;
+        retval |= NOT_READY_EVENT;
     }
-    return 0;
+    if (((*(uint32_t *)&(self->interlock_table.warning_interlock) & (~(self->interlock_override))) != 0))
+    {
+        retval |= WARNING_INTERLOCK;
+    }
+    if (((*(uint32_t *)&(self->interlock_table.minor_interlock) & (~(self->interlock_override))) != 0))
+    {
+        retval |= MINOR_INTERLOCK;
+    }
+    if (((*(uint32_t *)&(self->interlock_table.serious_interlock) & (~(self->interlock_override))) != 0))
+    {
+        retval |= SERIOUS_INTERLOCK;
+    }
+    return retval;
 }
 static State_t system_initialization(void *self, Event_t const *const e)
 {
@@ -334,9 +348,13 @@ static State_t module_init(void *self, Event_t const *const e)
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.gpio_do_u.gpio_do_bit.DO_PowerCut = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
+        rtm->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_ENABLE;
+        rtm->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_ENABLE;
+        rtm->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_ENABLE;
         fault_check_init(&(rtm->fault_check));
         // LOG_I("module_init enter\r\n");
         status = HANDLED();
@@ -415,6 +433,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.gpio_do_u.gpio_do_bit.DO_PowerCut = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -447,7 +466,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     }
     case MV_PREPARE_SIG:
     {
-        if ((check_finish == 0) && (fault_override(rtm) == 0))
+        if ((check_finish == 0) && (fault_override(rtm) == NO_FAULT))
         {
             status = TRAN(&system_mv_preliminary);
         }
@@ -459,7 +478,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     }
     case KV_PRELIMINARY_SIG:
     {
-        if ((check_finish == 0) && (fault_override(rtm) == 0))
+        if ((check_finish == 0) && (fault_override(rtm) == NO_FAULT))
         {
             status = TRAN(&system_kv_preliminary);
         }
@@ -532,9 +551,14 @@ static State_t module_shutdown(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
+        rtm->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_DISABLE;
+        rtm->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_DISABLE;
+        rtm->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_DISABLE;
+        // rtm->rtm_module_info[RTM_MODULE_BSM].tx_disable = MODULE_TX_DISABLE;
         // LOG_I("module_shutdown enter\r\n");
         status = HANDLED();
         break;
@@ -609,6 +633,7 @@ static State_t module_powerSaver(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -679,6 +704,7 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -707,7 +733,7 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_mv_prepare);
             }
@@ -776,6 +802,7 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -798,7 +825,7 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
     }
     case MV_READY_SIG:
     {
-        if ((check_finish == 0) && (fault_override(rtm) == 0))
+        if ((check_finish == 0) && (fault_override(rtm) == NO_FAULT))
         {
             status = TRAN(&system_mv_ready);
         }
@@ -885,7 +912,7 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_mv_radiation);
             }
@@ -914,9 +941,27 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            int32_t fault_flag = fault_override(rtm);
+
+            if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
                 status = TRAN(&system_mv_interrupt);
+            }
+            else if ((fault_flag & MINOR_INTERLOCK) != 0)
+            {
+                status = TRAN(&system_mv_interrupt);
+            }
+            else if ((fault_flag & WARNING_INTERLOCK) != 0)
+            {
+                status = HANDLED();
+            }
+            else if ((fault_flag & NOT_READY_EVENT) != 0)
+            {
+                status = HANDLED();
+            }
+            else if (fault_flag == NO_FAULT)
+            {
+                status = HANDLED();
             }
             else
             {
@@ -927,6 +972,13 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
         {
             status = HANDLED();
         }
+        break;
+    }
+    case ERROR_SIG:
+    {
+        fault_clear(&(rtm->fault_check));
+        check_finish = -1;
+        status = HANDLED();
         break;
     }
     default:
@@ -990,7 +1042,7 @@ static State_t module_mv_work(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_mv_complete);
             }
@@ -1019,9 +1071,27 @@ static State_t module_mv_work(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            int32_t fault_flag = fault_override(rtm);
+
+            if ((fault_flag & SERIOUS_INTERLOCK) != 0)
+            {
+                status = TRAN(&system_mv_terminate);
+            }
+            else if ((fault_flag & MINOR_INTERLOCK) != 0)
             {
                 status = TRAN(&system_mv_interrupt);
+            }
+            else if ((fault_flag & WARNING_INTERLOCK) != 0)
+            {
+                status = HANDLED();
+            }
+            else if ((fault_flag & NOT_READY_EVENT) != 0)
+            {
+                status = HANDLED();
+            }
+            else if (fault_flag == NO_FAULT)
+            {
+                status = HANDLED();
             }
             else
             {
@@ -1173,6 +1243,7 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -1192,7 +1263,7 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_mv_ready);
             }
@@ -1216,7 +1287,13 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            int32_t fault_flag = fault_override(rtm);
+
+            if ((fault_flag & SERIOUS_INTERLOCK) != 0)
+            {
+                status = TRAN(&system_mv_terminate);
+            }
+            else if ((fault_flag & MINOR_INTERLOCK) != 0)
             {
                 app_do_get(&(rtm->app_dido), &dido_structure);
                 dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
@@ -1224,13 +1301,27 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
                 app_do_set(&(rtm->app_dido), &dido_structure);
                 status = HANDLED();
             }
+            else if ((fault_flag & WARNING_INTERLOCK) != 0)
+            {
+                status = HANDLED();
+            }
+            else if ((fault_flag & NOT_READY_EVENT) != 0)
+            {
+                status = HANDLED();
+            }
+            else if (fault_flag == NO_FAULT)
+            {
+                status = HANDLED();
+            }
             else
             {
                 status = HANDLED();
             }
         }
-
-        status = HANDLED();
+        else
+        {
+            status = HANDLED();
+        }
         break;
     }
     case ERROR_SIG:
@@ -1291,6 +1382,7 @@ static State_t module_mv_terminate(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -1375,6 +1467,7 @@ static State_t module_kv_terminate(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -1461,6 +1554,7 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
     {
         // LOG_I("module_kv_preliminary enter\r\n");
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -1484,7 +1578,7 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_kv_prepare);
             }
@@ -1503,9 +1597,27 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            int32_t fault_flag = fault_override(rtm);
+
+            if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
                 status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & MINOR_INTERLOCK) != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & WARNING_INTERLOCK) != 0)
+            {
+                status = HANDLED();
+            }
+            else if ((fault_flag & NOT_READY_EVENT) != 0)
+            {
+                status = HANDLED();
+            }
+            else if (fault_flag == NO_FAULT)
+            {
+                status = HANDLED();
             }
             else
             {
@@ -1572,6 +1684,7 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
@@ -1596,7 +1709,7 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_surview_ready);
             }
@@ -1611,7 +1724,7 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_ct_ready);
             }
@@ -1630,9 +1743,27 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            int32_t fault_flag = fault_override(rtm);
+
+            if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
                 status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & MINOR_INTERLOCK) != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & WARNING_INTERLOCK) != 0)
+            {
+                status = HANDLED();
+            }
+            else if ((fault_flag & NOT_READY_EVENT) != 0)
+            {
+                status = HANDLED();
+            }
+            else if (fault_flag == NO_FAULT)
+            {
+                status = HANDLED();
             }
             else
             {
@@ -1718,7 +1849,7 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_surview_radiation);
             }
@@ -1737,9 +1868,27 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            int32_t fault_flag = fault_override(rtm);
+
+            if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
                 status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & MINOR_INTERLOCK) != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & WARNING_INTERLOCK) != 0)
+            {
+                status = HANDLED();
+            }
+            else if ((fault_flag & NOT_READY_EVENT) != 0)
+            {
+                status = HANDLED();
+            }
+            else if (fault_flag == NO_FAULT)
+            {
+                status = HANDLED();
             }
             else
             {
@@ -1752,13 +1901,13 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
         }
         break;
     }
-    // case ERROR_SIG:
-    // {
-    //     fault_clear(&(rtm->fault_check));
-    //     check_finish = -1;
-    //     status = HANDLED();
-    //     break;
-    // }
+    case ERROR_SIG:
+    {
+        fault_clear(&(rtm->fault_check));
+        check_finish = -1;
+        status = HANDLED();
+        break;
+    }
     default:
     {
         status = IGNORED();
@@ -1825,7 +1974,7 @@ static State_t module_surview_work(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_kv_complete);
             }
@@ -1844,9 +1993,27 @@ static State_t module_surview_work(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            int32_t fault_flag = fault_override(rtm);
+
+            if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
                 status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & MINOR_INTERLOCK) != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & WARNING_INTERLOCK) != 0)
+            {
+                status = HANDLED();
+            }
+            else if ((fault_flag & NOT_READY_EVENT) != 0)
+            {
+                status = HANDLED();
+            }
+            else if (fault_flag == NO_FAULT)
+            {
+                status = HANDLED();
             }
             else
             {
@@ -1932,7 +2099,7 @@ static State_t module_ct_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_ct_radiation);
             }
@@ -1951,9 +2118,27 @@ static State_t module_ct_ready(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            int32_t fault_flag = fault_override(rtm);
+
+            if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
                 status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & MINOR_INTERLOCK) != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & WARNING_INTERLOCK) != 0)
+            {
+                status = HANDLED();
+            }
+            else if ((fault_flag & NOT_READY_EVENT) != 0)
+            {
+                status = HANDLED();
+            }
+            else if (fault_flag == NO_FAULT)
+            {
+                status = HANDLED();
             }
             else
             {
@@ -2041,7 +2226,7 @@ static State_t module_ct_work(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(rtm) == 0)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_kv_complete);
             }
@@ -2060,9 +2245,27 @@ static State_t module_ct_work(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            if (fault_override(rtm) != 0)
+            int32_t fault_flag = fault_override(rtm);
+
+            if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
                 status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & MINOR_INTERLOCK) != 0)
+            {
+                status = TRAN(&system_kv_terminate);
+            }
+            else if ((fault_flag & WARNING_INTERLOCK) != 0)
+            {
+                status = HANDLED();
+            }
+            else if ((fault_flag & NOT_READY_EVENT) != 0)
+            {
+                status = HANDLED();
+            }
+            else if (fault_flag == NO_FAULT)
+            {
+                status = HANDLED();
             }
             else
             {
@@ -2075,13 +2278,13 @@ static State_t module_ct_work(void *self, Event_t const *const e)
         }
         break;
     }
-    case ERROR_SIG:
-    {
-        fault_clear(&(rtm->fault_check));
-        check_finish = -1;
-        status = HANDLED();
-        break;
-    }
+    // case ERROR_SIG:
+    // {
+    //     fault_clear(&(rtm->fault_check));
+    //     check_finish = -1;
+    //     status = HANDLED();
+    //     break;
+    // }
     default:
     {
         status = IGNORED();

@@ -918,6 +918,10 @@ static void app_module_tx_thread(void *argument)
             LOG_E("%s queue get error, status = %d\r\n", self->module_name, status);
             continue;
         }
+        if(self->tx_disable == MODULE_TX_DISABLE)
+        {
+            continue;
+        }
         ret = app_data_record(self->app_data_record, self->ID, (uint8_t *)&queue_frame, queue_frame.length);
         if (ret != 0)
         {
