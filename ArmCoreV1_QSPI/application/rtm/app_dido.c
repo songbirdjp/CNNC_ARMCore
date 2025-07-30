@@ -248,7 +248,7 @@ static void app_di_poll_entry(void *argument)
         LOG_I("di device init fail, errorCode:%d.\r\n", retVal);
         goto exit;
     }
-    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DI);
+    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DI_READY);
     for (;;)
     {
         // /*读取9535di*/
@@ -364,7 +364,7 @@ static void app_do_entry(void *argument)
         LOG_I("do device init fail, errorCode:%d.\r\n", retVal);
         goto exit;
     }
-    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DO);
+    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DO_READY);
     for (;;)
     {
         ret = osThreadFlagsWait(APP_RTM_THREAD_FLAG_DO_UPDATE, osFlagsWaitAll, 0xFFFFFFFF);

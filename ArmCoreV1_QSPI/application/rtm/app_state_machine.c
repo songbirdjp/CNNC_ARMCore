@@ -11,9 +11,10 @@
 #include "app_state_machine.h"
 #include "ulog.h"
 #include "rtm_main.h"
+#include "app_manage.h"
 
 #define RTM_ERROR_WAIT_TIME (50)
-
+#define RTM_INIT_WAIT_TIME (20000)
 static int32_t stateMachine_ctor(StateMachine_t *self,
                                  StateHandler_t initial)
 {
@@ -334,7 +335,6 @@ static State_t system_initialization(void *self, Event_t const *const e)
     }
     return status;
 }
-
 static State_t module_init(void *self, Event_t const *const e)
 {
     State_t status;
@@ -342,6 +342,8 @@ static State_t module_init(void *self, Event_t const *const e)
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     dido_structure_t dido_structure = {0};
     static int32_t check_finish = -1;
+    uint32_t cur_time = 0;
+    static uint32_t last_time = 0;
     switch (e->sig)
     {
     case ENTER_SIG:
@@ -352,9 +354,6 @@ static State_t module_init(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
-        rtm->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_ENABLE;
-        rtm->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_ENABLE;
-        rtm->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_ENABLE;
         fault_check_init(&(rtm->fault_check));
         // LOG_I("module_init enter\r\n");
         status = HANDLED();
@@ -363,6 +362,27 @@ static State_t module_init(void *self, Event_t const *const e)
     case EXIT_SIG:
     {
         // LOG_I("module_init exit\r\n");
+        uint32_t ret = osThreadFlagsGet();
+        if(ret & APP_RTM_THREAD_FLAG_RTM_OFF_READY)
+        {
+            rtm->rtm_module_info[RTM_MODULE_RTM_OFF].tx_disable = MODULE_TX_ENABLE;
+        }
+        if(ret & APP_RTM_THREAD_FLAG_ICM_READY)
+        {
+            rtm->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_ENABLE;
+        }       
+        if(ret & APP_RTM_THREAD_FLAG_BGM_READY)
+        {
+            rtm->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_ENABLE;
+        }
+        if(ret & APP_RTM_THREAD_FLAG_QAM_READY)
+        {
+            rtm->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_ENABLE;
+        }       
+        // if(ret & APP_RTM_THREAD_FLAG_BSM_READY)
+        // {
+        //     rtm->rtm_module_info[RTM_MODULE_BSM].tx_disable = MODULE_TX_ENABLE;
+        // } 
         check_finish = -1;
         status = HANDLED();
         break;
@@ -375,7 +395,25 @@ static State_t module_init(void *self, Event_t const *const e)
                                    rtm);
         if (check_finish == 0)
         {
-            status = TRAN(&system_systemOn);
+            cur_time = osKernelGetTickCount();
+
+            if ((cur_time - last_time) > RTM_INIT_WAIT_TIME)
+            {
+                // 初始化失败
+                bit_set(rtm->manage_info.status_word, RTM_MAIN_INIT_BIT);
+                status = TRAN(&system_systemOn);
+            }
+            else
+            {
+                if (app_rtm_thread_flag_get(1) == 0)
+                {
+                    status = TRAN(&system_systemOn);
+                }
+                else
+                {
+                    status = HANDLED();
+                }
+            }
         }
         else
         {
@@ -2381,7 +2419,8 @@ void rtm_state_machine_ctor(rtm_StateMachine_t *self, void *parameters)
     self->parameters = parameters;
     self->current_state = NULL_SIG;
     stateMachine_ctor(self, system_initialization);
-    stateMachine_dispatch(self, NULL_SIG);
+    Event_t event = {NULL_SIG, NULL};
+    stateMachine_dispatch(self, &event);
 }
 
 int32_t rtm_state_dispatch(rtm_StateMachine_t *self, Event_t const *e)

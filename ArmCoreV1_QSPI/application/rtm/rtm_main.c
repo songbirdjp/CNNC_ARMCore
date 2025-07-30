@@ -697,6 +697,8 @@ int32_t uart_protocol_heartbeat_rx_callback(struct uart_protocol *const self,
     {
         LOG_E("%s heartbeat rx err!\r\n", rtm_module_info->module_name);
     }
+    
+    app_rtm_thread_flag_set(rtm_module_info->module_thread_flags);
     return 0;
 }
 int32_t uart_protocol_heartbeat_rx_timeout_callback(struct uart_protocol *const self,
@@ -989,6 +991,21 @@ int app_rtm_data_handle_create(void)
     // self->rtm_module_info[RTM_MODULE_BSM].module_priority = osPriorityNormal;
     self->rtm_module_info[RTM_MODULE_RTM_OFF].module_priority = osPriorityAboveNormal;
 
+    self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_thread_flags = APP_RTM_THREAD_FLAG_ETHERCAT_READY;
+    self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].module_thread_flags = 0;
+    self->rtm_module_info[RTM_MODULE_ICM].module_thread_flags = APP_RTM_THREAD_FLAG_ICM_READY;
+    self->rtm_module_info[RTM_MODULE_BGM].module_thread_flags = APP_RTM_THREAD_FLAG_BGM_READY;
+    self->rtm_module_info[RTM_MODULE_QAM].module_thread_flags = APP_RTM_THREAD_FLAG_QAM_READY;
+    // self->rtm_module_info[RTM_MODULE_BSM].module_thread_flags = APP_RTM_THREAD_FLAG_BSM_READY;
+    self->rtm_module_info[RTM_MODULE_RTM_OFF].module_thread_flags = APP_RTM_THREAD_FLAG_RTM_OFF_READY;
+
+        self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_DISABLE;
+    // self->rtm_module_info[RTM_MODULE_BSM].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_RTM_OFF].tx_disable = MODULE_TX_DISABLE;
     // 远程模块信息赋值
     self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].heartbeat_info_rx.board_id = 0;
     self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].heartbeat_info_rx.HardwareVersion = 0;

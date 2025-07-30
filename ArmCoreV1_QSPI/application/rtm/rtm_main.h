@@ -106,6 +106,7 @@ extern "C"
 #define MODULE_INIT_BIT (0)
 #define MODULE_LINK_STATE_BIT (1)
         manage_info_t manage_info;
+        uint32_t module_thread_flags;
         app_data_record_t *app_data_record;
         const char *module_name;
         const char *module_type;
