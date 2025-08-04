@@ -59,12 +59,12 @@ static void motorParamInit(uint8_t axes)
     memset(&motor_pid_spd[axes], 0, sizeof(PID_TypeDef));
 
     motor_pid_pos[axes].Kp = 2.0;
-    motor_pid_pos[axes].Ki = 0.;
+    motor_pid_pos[axes].Ki = 0.2;
     motor_pid_pos[axes].Kd = 0;
     motor_pid_pos[axes].Setpoint = 15000;
     motor_pid_pos[axes].IntegralLimit =50;
     motor_pid_pos[axes].OutputLimit = 999;
-    motor_pid_pos[axes].deadZone = 20;
+    motor_pid_pos[axes].deadZone = 30;
     motor_pid_pos[axes].integralStartErr = 200;
 
     motor_pid_spd[axes].Kp = 0.8;
@@ -317,24 +317,24 @@ void plcSetJawParam(uint8_t *pData)
     printf("JawY home:%d\r\n",jawControlByAxes[Y].homeEncodeValue);
     printf("JawX park:%d\r\n",jawParameterByAxes[X].jawParkPos);
     printf("JawY park:%d\r\n",jawParameterByAxes[Y].jawParkPos);
-    printf("JawX pos min:%d\r\n",jawControlByAxes[X].limitNeg);
-    printf("JawY pos min:%d\r\n",jawControlByAxes[Y].limitNeg);
-    printf("JawX pos max:%d\r\n",jawControlByAxes[X].limitPos);
-    printf("JawY pos max:%d\r\n",jawControlByAxes[Y].limitPos);
+    printf("JawX limit pos:%d - %d\r\n",jawControlByAxes[X].limitNeg, jawControlByAxes[X].limitPos);
+    printf("JawY limit pos:%d - %d\r\n",jawControlByAxes[Y].limitNeg, jawControlByAxes[Y].limitPos);
 }
 
-static int8_t planPosCheck(uint16_t planPos, uint16_t actPos, uint8_t axes)
+int8_t planJawPosCheck(uint16_t planPos, uint16_t actPos, uint8_t axes)
 {
    // if((planPos < jawControlByAxes[axes].homeEncodeValue) || (planPos >= jawControlByAxes[axes].limitPos))   return -1; //pos error
     if(planPos < jawControlByAxes[axes].limitNeg)
     {
         interlockFeedback.jawInterlock[axes] |= 0x4;
+        printf("%d jaw plan too small %d!\r\n",axes,planPos);
        // rtFeedback.jawInfo[axes] |= 0x80;
         return -1;
     }
     else if(planPos > jawControlByAxes[axes].limitPos)
     {
         interlockFeedback.jawInterlock[axes] |= 0x8;
+        printf("%d jaw plan too big %d!\r\n",axes,planPos);
        // rtFeedback.jawInfo[axes] |= 0x80;
         return -1;
     }
@@ -483,9 +483,10 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axes)
         if(pFlag->cmdPos[axes] > 0)
         {
             enc = pFlag->cmdPos[axes]/2.5;//posInPlan*2.5 before send for precision
-            checkRet = planPosCheck(enc, rtFeedback.jawRTPos[axes], axes);
+            checkRet = planJawPosCheck(enc, rtFeedback.jawRTPos[axes], axes);
             if(checkRet >= 0){
-                jawControlByAxes[axes].posInPlan = pFlag->cmdPos[axes]; // get 1st RI for prepare
+               // jawControlByAxes[axes].posInPlan = pFlag->cmdPos[axes]; // get 1st RI for prepare
+                jawControlByAxes[axes].preparePos = pFlag->cmdPos[axes]; // get 1st RI for prepare
                 printf("Jaw%d prepare pos ok %d\r\n", axes, enc);
             }  
             else   printf("Jaw%d invalid prepare pos %d!\r\n", axes, pFlag->cmdPos[axes]);
@@ -493,7 +494,7 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axes)
         else if(pFlag->stateCmd[axes] > 0)    printf("Jaw%d state %d\r\n", axes, pFlag->stateCmd[axes]);
         break;
     case PARK_START:
-        checkRet = planPosCheck(jawParameterByAxes[axes].jawParkPos, rtFeedback.jawRTPos[axes], axes);
+        checkRet = planJawPosCheck(jawParameterByAxes[axes].jawParkPos, rtFeedback.jawRTPos[axes], axes);
         if(checkRet == 0)
         {
             printf("Jaw%d close to park pos %d - %d\r\n",axes,enc, rtFeedback.jawRTPos[axes]);
@@ -523,12 +524,13 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axes)
         }
     break;
     case PREPARE_START:
-        enc = jawControlByAxes[axes].posInPlan/2.5;
-        checkRet = planPosCheck(enc, rtFeedback.jawRTPos[axes], axes);
+       // enc = jawControlByAxes[axes].posInPlan/2.5;
+        enc = jawControlByAxes[axes].preparePos/2.5;
+        checkRet = planJawPosCheck(enc, rtFeedback.jawRTPos[axes], axes);
         if(checkRet > 0)//normal case
         {
             jawControlByAxes[axes].fSVG.StartPosition = (double)rtFeedback.jawRTPos[axes] / ENCODER_CNT_PER_MM; 
-            jawControlByAxes[axes].fSVG.TargetPosition = (double)jawControlByAxes[axes].posInPlan / (ENCODER_CNT_PER_MM*2.5); 
+            jawControlByAxes[axes].fSVG.TargetPosition = (double)jawControlByAxes[axes].preparePos / (ENCODER_CNT_PER_MM*2.5); 
             printf("Jaw%d prepare start %lf(%d) end %lf(%d)\r\n", 
                 axes, jawControlByAxes[axes].fSVG.StartPosition, rtFeedback.jawRTPos[axes],jawControlByAxes[axes].fSVG.TargetPosition,enc);
             jawControlByAxes[axes].fSVG.Start = 1;
@@ -564,7 +566,7 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axes)
         {
             jawControlByAxes[axes].posInPlan = pFlag->cmdPos[axes]; // get RI for servo
             enc = jawControlByAxes[axes].posInPlan/2.5;
-            checkRet = planPosCheck(enc, rtFeedback.jawRTPos[axes], axes);
+            checkRet = planJawPosCheck(enc, rtFeedback.jawRTPos[axes], axes);
             if(checkRet > 0)  //new pos
             { // get new plan cmd
            // printf("%c Jaw %d\r\n", axesType ? 'Y' : 'X', pFlag->masterCmd[axesType]);

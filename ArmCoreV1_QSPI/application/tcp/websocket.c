@@ -654,7 +654,7 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
     }
     else if (client[s].connectStatus > 0)
     {   // recv data after handshake
-       // for (i = 0; i < len; i++) printf("%x ", data[i]);
+      //  for (i = 0; i < len; i++) printf("%x ", data[i]);
        // printf("\r\n");
     
         ret = ws_recv(s, data, DATA_BUF_SIZE, &retPkgType, &retHeadLen);
@@ -697,8 +697,8 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
                 itemRecv.recvDataType = retPkgType;
                 itemRecv.clientType = client[s].clientType;
                 itemRecv.tcpData = data;
-            //    for(uint8_t i = 0; i < retS.retDataLen; i++) printf("%d ", data[retS.retHeadLen+i]);
-              //  printf("\r\n");
+               // for(uint8_t i = 0; i < itemRecv.length; i++) printf("%x ", data[i]);
+               // printf("\r\n");
                 nrtRecvDataProcess(&itemRecv);
             break;
             default:    break;

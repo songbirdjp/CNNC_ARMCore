@@ -14,6 +14,10 @@ extern "C" {
 #define MAX_CP_IN_BEAM 8//3601
 #define TCP_SEND_PERIOD 1000 //100*1 = 100ms
 
+#define RT_DOWNLOAD_PAYLOAD_LEN  184 //plan data from plc
+#define RT_SAVE_PAYLOAD_LEN  (RT_DOWNLOAD_PAYLOAD_LEN+2)    //+ RI
+#define RT_SDRAM_PAYLOAD_LEN  (RT_SAVE_PAYLOAD_LEN+4)       //+ 2 leaf pos, because get 80 leafs pos from PLC, but fpga need 82 leafs pos
+
 enum planCommand {NO_USE,SEND_PLAN,CLOSE_PLAN};
 typedef struct {
     uint16_t frmTag;
@@ -34,7 +38,7 @@ typedef struct {
     uint16_t fsmState;
     uint16_t planCmd;
     uint8_t totalBeam; // < 30
-    uint16_t totalRIInBeam[MAX_BEAM_NUM];   // total RI in one beam, < 4096
+    uint16_t totalRIInBeam[MAX_BEAM_NUM];   // total RI in one beam, < 10240
     uint32_t oneBeamSize[MAX_BEAM_NUM];
     uint16_t beamIndex;
     uint16_t radiationIndex;
@@ -71,6 +75,26 @@ typedef struct {
     uint16_t carrierSecondPos;   // total RI in one beam, < 2048
     uint16_t jawSecondPos[2];
 }__attribute__((aligned(1), packed))SECOND_POS_FEEDBACK;
+
+typedef struct {
+    uint16_t RI;
+    uint16_t bigLeafTarget1;
+    uint16_t leafTarget[80];
+    uint16_t bigLeafTarget2;
+    uint16_t carrierTarget;
+    uint16_t jawTarget[2];   // total RI in one beam, < 2048
+    uint16_t CPLimitPos[4];
+    uint16_t leafSpeed;
+    uint16_t carrierSpeed;
+    uint16_t jawSpeed[2];
+    uint16_t CPMotionTime;
+}SD_RI_DATA;
+
+typedef struct {
+    uint16_t totalRI;
+    uint16_t beamID;
+    SD_RI_DATA  riStruct;
+}__attribute__((aligned(1), packed))SD_BEAM_DATA;
 
 extern BEAM_DATA rtBeamData;
 extern REALTIME_FEEDBACK rtFeedback;

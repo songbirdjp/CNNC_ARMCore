@@ -43,6 +43,7 @@ bool powerManage(uint8_t ch, uint16_t value)
        // printf("channel %d power is too %s %fV\r\n", ch, Diff<1e-6?"high":"low", sampleVoltage);
         if(++powerErrorCnt[index] >= 3){//always error in 30s
             interlockFeedback.powerInterlock |= powerErrorBit[index];
+            rtFeedback.faultInfo1 |= 0x100;
             powerErrorCnt[index] = 0;
         }   
         return 0;

@@ -64,6 +64,7 @@ typedef struct
     int16_t encoderDelta32;
     uint32_t encoderTotalCnt;
     uint16_t homeEncodeValue;
+    uint16_t preparePos;
     uint16_t posInPlan;
     //uint16_t realPlanCmd;
     SVG_Type fSVG;
@@ -102,6 +103,7 @@ extern JAW_SET_PARAM jawParameterByAxes[2];
 
 void plcSetJawParam(uint8_t *pData);
 void messageToJawTask(struct JawFlagType source, uint16_t signalType, uint8_t axes, uint16_t* value);
+int8_t planJawPosCheck(uint16_t planPos, uint16_t actPos, uint8_t axes);
 
 #ifdef __cplusplus
 }

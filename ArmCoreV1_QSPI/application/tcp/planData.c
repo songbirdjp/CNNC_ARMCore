@@ -4,15 +4,13 @@
 #include <stdio.h>
 #include "main_app.h"
 #include "hw_crc.h"
+#include "carrierCal.h"			   
 
 #define PARAM_SETTING_TAG 1
 #define PLAN_DATA_SETTING_TAG 2
+#define PLAN_SETTING_FINISH_TAG 3
 
 #define	 CRC_TABLE_SIZE		256
-
-#define RT_DOWNLOAD_PAYLOAD_LEN  184 //plan data from plc
-#define RT_SAVE_PAYLOAD_LEN  (RT_DOWNLOAD_PAYLOAD_LEN+2)    //+ RI
-#define RT_SDRAM_PAYLOAD_LEN  (RT_SAVE_PAYLOAD_LEN+4)       //+ 2 leaf pos, because get 80 leafs pos from PLC, but fpga need 82 leafs pos
 
 static uint32_t CrcTable[CRC_TABLE_SIZE];
 static uint32_t crcCal = 0xffffffff;
@@ -26,6 +24,7 @@ INTERLOCK_FEEDBACK interlockFeedback;
 SECOND_POS_FEEDBACK secondPosFeedback;
 static FRAME_HEAD frameHead;
 static FRAME_END frameEnd;
+static bool carrierFollowFlag;
 
 static APP_DATA_SEND activeSendData[] = {
     {"tcpFeedback", 0, TCP_SEND_PERIOD, WDT_BINDATA, CONTROLLER, NULL, NULL},
@@ -63,35 +62,54 @@ uint32_t Crc32Buffer(uint32_t crc, uint8_t *buf, uint32_t size)
     return crc;
 }
 
- void planDataCheck(uint8_t *pSDBeamEnd)
+int8_t planDataCheck(uint8_t *pSDBeamStart)
  {
-    uint8_t *pBeamData = pSDBeamEnd - rtBeamData.oneBeamSize[rtBeamData.beamIndex];
-    uint16_t leafPos[80], max, xJawTarget, beamID,radiationID;
-    uint16_t totalRI = rtBeamData.totalRIInBeam[rtBeamData.beamIndex];
-
-    pBeamData += 2; //skip total RI 
-    memcpy(beamID, pBeamData, 2);
-    pBeamData += 2;//skip beam index
-    for(uint16_t ri = 1; ri <= totalRI; ri++)
+    uint8_t *pBeamData = pSDBeamStart, i;
+    uint16_t leafPos[80], max, min,jawTarget[2],totalRI,beamID,radiationID;
+    SD_BEAM_DATA beamStruct= {0};
+  
+    for(i = 0; i < rtBeamData.totalBeam; i++)
     {
-        memcpy(radiationID, pBeamData, 2);
-        pBeamData += 4; //skip (RI index + 1st big leaf)
-        memcpy(leafPos, pBeamData, 160); //copy out 80 leaf pos in RI
-        max = leafPos[0];//get max leaf pos
-        for (uint8_t i = 1; i < 80; i++) {
-            if (max < leafPos[i])   max = leafPos[i];
-        }
-        pBeamData += 160;//skip leaf pos * 80
-        pBeamData += 4; //skip (2th big leaf + carrier pos)
-        memcpy(xJawTarget, pBeamData, 2);
-        if((max/325/0.44*0.213 - xJawTarget/2.5/ENCODER_CNT_PER_MM) > 59)
+        totalRI = (pBeamData[1] << 8) + pBeamData[0];
+        pBeamData += sizeof(beamStruct.totalRI); //skip total RI 
+        beamID = (pBeamData[1] << 8) + pBeamData[0];
+        pBeamData += sizeof(beamStruct.beamID);//skip beam index
+        printf("totalRI %d,beamID %d\r\n", totalRI, beamID);
+        for(uint16_t ri = 1; ri <= totalRI; ri++)
         {
-            printf("Xjaw can't mask leaf end %d %d!\r\n",beamID,radiationID);
-            interlockFeedback.jawInterlock[X] |= 0x10;
+            radiationID = (pBeamData[1] << 8) + pBeamData[0];
+          //  printf("radiationID %d,", radiationID);
+            pBeamData += sizeof(beamStruct.riStruct.RI) + sizeof(beamStruct.riStruct.bigLeafTarget1); //skip (RI index + 1st big leaf)
+            for (i = 0; i < 80; i++) {
+                leafPos[i] = (pBeamData[2*i+1] << 8) + pBeamData[2*i];
+               // printf("leaf pos %d,", leafPos[i]);
+            }
+            max = leafPos[0];//get max leaf pos
+            for (i = 1; i < 80; i++) {
+                if (max < leafPos[i])   max = leafPos[i];
+            //  if (min > leafPos[i])   min = leafPos[i];
+            }
+            pBeamData += sizeof(beamStruct.riStruct.leafTarget);//skip leaf pos * 80
+            pBeamData += sizeof(beamStruct.riStruct.bigLeafTarget2) + sizeof(beamStruct.riStruct.carrierTarget); //skip (2th big leaf + carrier pos)
+            jawTarget[X] = (pBeamData[1] << 8) + pBeamData[0];
+            jawTarget[Y] = (pBeamData[3] << 8) + pBeamData[2];
+         //   printf("%d xJawTarget %d\r\n", ri, jawTarget[0]);
+            if((max/325/0.44*0.213 - jawTarget[X]/2.5/ENCODER_CNT_PER_MM) > 59)
+            {
+                printf("Xjaw can't mask leaf end %d %d!\r\n",beamID,radiationID);
+                interlockFeedback.jawInterlock[X] |= 0x10;
+                return -1;
+            }
+            for(uint8_t j = 0; j < XY; j++){
+                jawTarget[j] /= 2.5;
+                if(planJawPosCheck(jawTarget[j], 0, j) == -1)  return -1;
+            } 
+            pBeamData += (sizeof(SD_RI_DATA) - offsetof(SD_RI_DATA, jawTarget[X]));
         }
-        pBeamData += 20;
     }
- }
+
+    return 0;
+}
 
 void updateNRTFeedback(void)
 {
@@ -126,13 +144,13 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
     frameHead.frmType = (data[3] << 8) + data[2];
     frameHead.frmLength = (data[5] << 8) + data[4];
     frameHead.bankNo = (data[7] << 8) + data[6];
-   // printf("head1: %d %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength,frameHead.bankNo);
+    printf("head1: %d %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength,frameHead.bankNo);
 
     if(frameHead.frmTag == PLAN_DATA_SETTING_TAG)
     {
         frameHead.totalPackInOneBeam = (data[9] << 8) + data[8];
         frameHead.packIndexInOneBeam = (data[11] << 8) + data[10];
-      //  printf("head2: %d %d\r\n",frameHead.totalPackInOneBeam, frameHead.packIndexInOneBeam);
+        printf("head2: %d %d\r\n",frameHead.totalPackInOneBeam, frameHead.packIndexInOneBeam);
 
         if(frameHead.packIndexInOneBeam == 1)   lastPackIndex = 0;
         payloadLength = u8LenTotal - 20;
@@ -197,10 +215,12 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 
                // printf("%d ", info->gDATABUF[12+i]);
             }
-          //  for(i = 12; i < frameHead.frmLength; i++)  printf("%x ", data[i]);
-         //   crcCal = 0xffffffff;
+          //  for(i = 12; i < saveLength; i++)  printf("%x ", data[i]);
+          //  printf("\r\n");
+          //  crcCal = 0xffffffff;
           //  crcCal = Crc32Buffer(crcCal, &data[12], saveLength);//ok
             crcCal = hardware_crc_calculate(CRC32, &data[12], saveLength);
+          //  printf("%d crc %x\r\n", saveLength, (crcCal^0xffffffff));
         }
         else {
             saveLength = frameHead.frmLength;
@@ -238,7 +258,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
            // printf("recv crc: %u calculate crc: %u\r\n", crcInData, crcCal);
             if (crcInData != crcCal) {
                 secondPosFeedback.errorCode = 0xf4;
-                printf("recv error #4: crcInData: %u crcCal: %u!!! \r\n", crcInData, crcCal);
+                printf("recv error #4: crcInData: %x crcCal: %x!!! \r\n", crcInData, crcCal);
                 return -1;
             }
 
@@ -256,10 +276,8 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
                      4 + RT_SDRAM_PAYLOAD_LEN
                      * rtBeamData.totalRIInBeam[beamBufIndex];
             if (rtBeamData.totalBeam >= MAX_BEAM_NUM) printf("Warn: beam > 30, will not be sent to FPGA!\r\n");
-            printf("Beam %d transfer finish, size is %d, crc is %u\r\n",
+            printf("Beam %d transfer finish, size is %d, crc is %x\r\n",
                    rtBeamData.beamIndex, rtBeamData.oneBeamSize[beamBufIndex], crcInData);
-            
-            planDataCheck(pSDRAM);
         }
         secondPosFeedback.packIndexInOneBeam = frameHead.packIndexInOneBeam;
         secondPosFeedback.errorCode = 0xF0; //ok
@@ -296,7 +314,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         if (crcInData != crcCal)
         {
             secondPosFeedback.errorCode = 0xf4;
-            printf("recv error #4: crc error: %u %u!!! \r\n", crcInData, crcCal);
+            printf("recv error #4: crc error: %x %x!!! \r\n", crcInData, crcCal);
             return -1;
         }
         printf("crc:%u\r\n", crcInData);
@@ -304,7 +322,36 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 #ifndef TEST
         make_para_for_fpga(data);
         plcSetJawParam(data);
+		if(data[58] == 80)  carrierFollowFlag = 1;//enable carrier following function
+		else	carrierFollowFlag = 0;
 #endif
+    }
+    else if(frameHead.frmTag == PLAN_SETTING_FINISH_TAG)
+    {
+      //  for(i = 0; i<6; i++)    printf("%d ", data[i]);
+      //  printf("\r\n");
+        crcCal = hardware_crc_calculate(CRC32, data, 6);
+        crcCal ^= 0xffffffff;
+    
+        last = u8LenTotal - 1;
+        frameEnd.crcHigh = (data[last-2] << 8) + data[last - 3];
+        frameEnd.crcLow = (data[last] << 8) + data[last - 1];
+        crcInData = (frameEnd.crcHigh << 16) + frameEnd.crcLow;
+        if (crcInData != crcCal)
+        {
+            secondPosFeedback.errorCode = 0xf4;
+            printf("recv error #4: crc error: %x %x!!! \r\n", crcInData, crcCal);
+            return -1;
+        }
+
+        pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
+        if(planDataCheck(pSDRAM) < 0){
+            secondPosFeedback.errorCode = 0xf7;
+            printf("recv error #7: plan error!!!\r\n");
+        }
+	//	if(carrierFollowFlag) 
+            calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);
+        secondPosFeedback.errorCode = 0xF0; //ok
     }
     else{
         printf("error data pack:no valid tag!\r\n");
@@ -440,7 +487,7 @@ void clearPlan(void)
 
 void planDataInit(void)
 {
-    InitCrc32Table();
+   // InitCrc32Table();
     pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     pSDRAMCAL = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
 
