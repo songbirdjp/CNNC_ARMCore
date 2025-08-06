@@ -163,7 +163,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
             {
                 os_tool_mutex_holder_get(obj->control_data->mutex);
             }
-            uint32_t factor = obj->control_data->calibration.adc_factor[0];
+            uint32_t factor = obj->control_data->calibration.adc_factor[0][0] + obj->control_data->calibration.adc_factor[0][1];
             osMutexRelease(obj->control_data->mutex);
 
             stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
@@ -171,7 +171,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
             {
                 os_tool_mutex_holder_get(obj->beam_data->mutex);
             }
-            value = (uint64_t)(obj->beam_data->dose_meter * factor + 0.5f);
+            value = (uint64_t)((double)obj->beam_data->dose_meter * factor / 2.0f + 0.5f);
             osMutexRelease(obj->beam_data->mutex);
         }
         break;
@@ -219,7 +219,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
                 os_tool_mutex_holder_get(obj->control_data->mutex);
             }
             uint16_t idx = obj->control_data->radiation.index;
-            uint32_t factor = obj->control_data->calibration.adc_factor[0];
+            uint32_t factor = obj->control_data->calibration.adc_factor[0][0] + obj->control_data->calibration.adc_factor[0][1];
             osMutexRelease(obj->control_data->mutex);
 
             stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
@@ -229,7 +229,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
             }
             if (idx <= obj->beam_data->total_ri)
             {
-                value = (uint64_t)(obj->beam_data->radiation_data[idx < 1 ? 0 : idx - 1].dose_cumulative * factor + 0.5f);
+                value = (uint64_t)((double)obj->beam_data->radiation_data[idx < 1 ? 0 : idx - 1].dose_cumulative * factor / 2.0f + 0.5f);
             }
             else
             {
@@ -246,7 +246,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
                 os_tool_mutex_holder_get(obj->control_data->mutex);
             }
             uint16_t idx = obj->control_data->radiation.index;
-            uint32_t factor = obj->control_data->calibration.adc_factor[0];
+            uint32_t factor = obj->control_data->calibration.adc_factor[0][0] + obj->control_data->calibration.adc_factor[0][1];
             osMutexRelease(obj->control_data->mutex);
 
             stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
@@ -256,7 +256,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
             }
             if (idx <= obj->beam_data->total_ri)
             {
-                value = (uint64_t)(obj->beam_data->radiation_data[idx].dose_cumulative * factor + 0.5f);
+                value = (uint64_t)((double)obj->beam_data->radiation_data[idx].dose_cumulative * factor / 2.0f + 0.5f);
             }
             else
             {
@@ -273,7 +273,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
                 os_tool_mutex_holder_get(obj->control_data->mutex);
             }
             uint16_t idx = obj->control_data->radiation.index;
-            uint32_t factor = obj->control_data->calibration.adc_factor[0];
+            uint32_t factor = obj->control_data->calibration.adc_factor[0][0] + obj->control_data->calibration.adc_factor[0][1];
             osMutexRelease(obj->control_data->mutex);
 
             stat = osMutexAcquire(obj->beam_data->mutex, MUTEX_TIMEOUT_MS);
@@ -283,7 +283,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
             }
             if (idx <= obj->beam_data->total_ri)
             {
-                value = (uint64_t)(obj->beam_data->radiation_data[idx < 1 ? 0 : idx - 1].dose_rate * factor / 60.0f + 0.5f);
+                value = (uint64_t)((double)obj->beam_data->radiation_data[idx < 1 ? 0 : idx - 1].dose_rate * factor / 2.0f + 0.5f);
             }
             else
             {
@@ -342,7 +342,7 @@ static uint64_t radiation_data_value_get(enum radiation_data_state state)
         {
             os_tool_mutex_holder_get(obj->control_data->mutex);
         }
-        value = obj->control_data->calibration.adc_factor[0];
+        value = (uint64_t)obj->control_data->calibration.adc_factor[0][0] | (uint64_t)obj->control_data->calibration.adc_factor[0][1] << 32;
         osMutexRelease(obj->control_data->mutex);
         break;
     case DOSE_GENERATION_MODE:
@@ -620,8 +620,8 @@ static int8_t radiation_data_value_set(enum radiation_data_state state, uint64_t
 struct dose_value
 {
     uint16_t cnt_one_pulse;         /* indicate valid pulse count, here 1cnt = 1us */
-    uint32_t dose_one_pulse;
-    uint64_t dose_accumulated;
+    uint32_t dose_one_pulse[DOSE_CHANNEL_MAX];
+    uint64_t dose_accumulated[DOSE_CHANNEL_MAX];
     uint64_t dose_rate_current;
     uint16_t prf_current;
 
@@ -635,7 +635,7 @@ static struct dose_value *dose_value_obj_get(void)
 {
     return &dose_value_object;
 }
-static int8_t dose_value_status_update(enum pulse_state state, uint32_t pulse_cnt, uint32_t dose_value)
+static int8_t dose_value_status_update(enum pulse_state state, uint32_t pulse_cnt, uint32_t dose_value, uint32_t dose_value_1)
 {
     int8_t ret = 0;
     osStatus_t stat = osOK;
@@ -650,14 +650,17 @@ static int8_t dose_value_status_update(enum pulse_state state, uint32_t pulse_cn
     {
     case ONE_PULSE_START:
         obj->cnt_one_pulse = 0;
-        obj->dose_one_pulse = 0;
+        obj->dose_one_pulse[DOSE_CHANNEL_0] = 0;
+        obj->dose_one_pulse[DOSE_CHANNEL_1] = 0;
         obj->one_pulse_complete = 0;
         obj->one_beam_complete = 0;
         break;
     case ONE_PULSE_RUNNING:
         obj->cnt_one_pulse += pulse_cnt;
-        obj->dose_one_pulse += dose_value;
-        obj->dose_accumulated += dose_value;
+        obj->dose_one_pulse[DOSE_CHANNEL_0] += dose_value;
+        obj->dose_one_pulse[DOSE_CHANNEL_1] += dose_value_1;
+        obj->dose_accumulated[DOSE_CHANNEL_0] += dose_value;
+        obj->dose_accumulated[DOSE_CHANNEL_1] += dose_value_1;
         break;
     case ONE_PULSE_COMPLETE:
         obj->cnt_one_pulse = 0;
@@ -683,7 +686,7 @@ static int8_t dose_value_status_update(enum pulse_state state, uint32_t pulse_cn
 
     return ret;
 }
-int8_t dose_value_status_set(enum pulse_state state, uint64_t value)
+int8_t dose_value_status_set(enum pulse_state state, uint64_t value, uint64_t value_1)
 {
     int8_t ret = 0;
     osStatus_t stat = osOK;
@@ -703,10 +706,12 @@ int8_t dose_value_status_set(enum pulse_state state, uint64_t value)
         obj->cnt_one_pulse = value;
         break;
     case ONE_PULSE_DOSE:
-        obj->dose_one_pulse = value;
+        obj->dose_one_pulse[DOSE_CHANNEL_0] = value;
+        obj->dose_one_pulse[DOSE_CHANNEL_1] = value_1;
         break;
     case DOSE_ACCUMULATED:
-        obj->dose_accumulated = value;
+        obj->dose_accumulated[DOSE_CHANNEL_0] = value;
+        obj->dose_accumulated[DOSE_CHANNEL_1] = value_1;
         break;
     case DOSE_RATE_CURRENT:
         obj->dose_rate_current = value;
@@ -724,7 +729,7 @@ int8_t dose_value_status_set(enum pulse_state state, uint64_t value)
 
     return ret;
 }
-uint64_t dose_value_status_get(enum pulse_state state)
+uint64_t dose_value_status_get(enum pulse_state state, enum dose_channel channel)
 {
     uint64_t value = 0;
     osStatus_t stat = osOK;
@@ -747,10 +752,20 @@ uint64_t dose_value_status_get(enum pulse_state state)
         value = obj->cnt_one_pulse;
         break;
     case ONE_PULSE_DOSE:
-        value = obj->dose_one_pulse;
+        if (channel < DOSE_CHANNEL_0 || channel > DOSE_CHANNEL_1)
+        {
+            LOG_E("invalid dose channel: %d\r\n", channel);
+            break;
+        }
+        value = obj->dose_one_pulse[channel];
         break;
     case DOSE_ACCUMULATED:
-        value = obj->dose_accumulated;
+        if (channel < DOSE_CHANNEL_0 || channel > DOSE_CHANNEL_1)
+        {
+            LOG_E("invalid dose channel: %d\r\n", channel);
+            break;
+        }
+        value = obj->dose_accumulated[channel];
         break;
     case DOSE_RATE_CURRENT:
         value = obj->dose_rate_current;
@@ -1024,7 +1039,7 @@ static int8_t time_delay_entry(void *argument)
         {
             if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1 && trigger_out_enable == 1)
             {
-                ret = dose_value_status_update(ONE_PULSE_START, 0, 0);
+                ret = dose_value_status_update(ONE_PULSE_START, 0, 0, 0);
                 if (ret != 0)
                 {
                     LOG_E("dose value status update err: %d\r\n", ret);
@@ -1057,6 +1072,10 @@ static int8_t time_delay_entry(void *argument)
                 }
 
                 time_diff = trigger_timestamp_us_get() - timestamp_start;
+                if (NORMAL_PULSE_RESET_DELAY_TIME_US - time_diff < 0)
+                {
+                    LOG_E("pulse interval time diff err: %d\r\n", NORMAL_PULSE_RESET_DELAY_TIME_US - time_diff);
+                }
                 /* reset trigger out level */
                 ret = timer_delay_start(TIM_DELAY_PULSE_LEVEL_RESET, NORMAL_PULSE_RESET_DELAY_TIME_US - time_diff);
                 if (ret != 0)
@@ -1083,7 +1102,7 @@ static int8_t time_delay_entry(void *argument)
             if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1 && trigger_out_enable == 1)
             {
 #ifdef RADIATION_FIX_RATE_SIMULATE
-                // uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
+                // uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1);
                 // uint64_t dose_interpolated = radiation_data_value_get(DOSE_INTERPOLATED_RADIATION_IDX);
                 // LOG_I("dose_accumulated_cur: %llu, dose_interpolated: %llu\r\n", dose_accumulated_cur, dose_interpolated);
 #endif
@@ -1128,6 +1147,10 @@ static int8_t time_delay_entry(void *argument)
                 // }
 
                 // time_diff = trigger_timestamp_us_get() - timestamp_mid;
+                if (interval_us - NORMAL_PULSE_RESET_DELAY_TIME_US - time_diff < 0)
+                {
+                    LOG_E("pulse reset level time diff error: %d\r\n", interval_us - NORMAL_PULSE_RESET_DELAY_TIME_US - time_diff);
+                }
                 ret = timer_delay_start(type, interval_us - NORMAL_PULSE_RESET_DELAY_TIME_US - time_diff);
                 if (ret != 0)
                 {
@@ -1149,7 +1172,7 @@ static int8_t time_delay_entry(void *argument)
             if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1 && trigger_out_enable == 1)
             {
 #ifdef RADIATION_FIX_RATE_SIMULATE
-                // uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
+                // uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1);
                 // uint64_t dose_interpolated = radiation_data_value_get(DOSE_INTERPOLATED_RADIATION_IDX);
                 // LOG_I("dose_accumulated_cur: %llu, dose_interpolated: %llu\r\n", dose_accumulated_cur, dose_interpolated);
                 ret = dose_interpolation_check(&type, &interval_us, 0);
@@ -1271,9 +1294,9 @@ static int8_t lptim3_delay_entry(void *argument)
         event_flag = osEventFlagsWait(lptim3_delay_event, LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US, osFlagsWaitAny, osWaitForever);
         if (event_flag & LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US)
         {
-            if (dose_value_status_get(ONE_PULSE_COMPLETE) == 0)
+            if (dose_value_status_get(ONE_PULSE_COMPLETE, DOSE_CHANNEL_NONE) == 0)
             {
-                ret = dose_value_status_update(ONE_PULSE_TIMEOUT, 0, 0);
+                ret = dose_value_status_update(ONE_PULSE_TIMEOUT, 0, 0, 0);
                 if (ret != 0)
                 {
                     LOG_E("dose value status update err: %d\r\n", ret);
@@ -1437,7 +1460,7 @@ static int8_t adcs7476_value_dose(uint32_t value, uint32_t value_1, uint16_t pul
 
     if (fsm_stat != FSM_STATE_WORK && fsm_stat != FSM_STATE_PRELIMINARY_BEGIN)
     {
-        return dose_value_status_update(ONE_PULSE_CLEAR, 0, 0);
+        return dose_value_status_update(ONE_PULSE_CLEAR, 0, 0, 0);
     }
 
     /* check dose symmetry */
@@ -1448,7 +1471,7 @@ static int8_t adcs7476_value_dose(uint32_t value, uint32_t value_1, uint16_t pul
     if (value_diff > value_max * percentage / 100)
     {
         // LOG_I("dose symmetry fault, value_diff: %d, value_max: %d, percentage: %d\r\n", value_diff, value_max, percentage);
-        LOG_I("dose symmetry fault, ch1: %d, ch2: %d, percentage: %d\r\n", value, value_1, percentage);
+        // LOG_I("dose symmetry fault, ch1: %d, ch2: %d, percentage: %d\r\n", value, value_1, percentage);
         int8_t ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_SYMMETRY_FAULT, 1);
         if (ret != 0)
         {
@@ -1457,7 +1480,7 @@ static int8_t adcs7476_value_dose(uint32_t value, uint32_t value_1, uint16_t pul
     }
 
 
-    return dose_value_status_update(ONE_PULSE_RUNNING, pulse_cnt, value + value_1);
+    return dose_value_status_update(ONE_PULSE_RUNNING, pulse_cnt, value, value_1);
 }
 
 /* used for qam */
@@ -1465,7 +1488,7 @@ static uint32_t trigger_interval_calculate_ms(void)
 {
     int8_t ret = 0;
     int32_t trigger_interval = 0;
-    uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
+    uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1);
     uint64_t dose_radiation_index = radiation_data_value_get(DOSE_RADIATION_IDX);
 
     if (dose_accumulated_cur < dose_radiation_index)
@@ -1562,11 +1585,11 @@ static int8_t dose_data_upload(enum real_time_data_type type)
     case REAL_TIME_DATA_TYPE_QAM:
         {
             uint64_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
-            uint64_t dose_accumulated_target = radiation_data_value_get(DOSE_BEAM_METER);
-            uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
+            uint32_t factor_0 = factor, factor_1 = factor >> 32;
 
-            float dose_total = (double)dose_accumulated_target / factor;
-            float dose_cumulated = (double)dose_accumulated_cur / factor;
+            uint64_t dose_accumulated_target = radiation_data_value_get(DOSE_BEAM_METER);
+            float dose_total = (double)dose_accumulated_target * 2.0f / (factor_0 + factor_1);
+            float dose_cumulated = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / factor_0 + (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / factor_1;
             uint32_t trigger_interval_ms = trigger_interval_calculate_ms();
             uint64_t timestamp = timestamp_ns_get();
 
@@ -1633,7 +1656,7 @@ static int8_t dose_data_upload_once(enum fsm_state state)
         if (state_flag_cur == 1 || state_flag_cur == 2)
         {
             /* clear dose meter value */
-            ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
+            ret = dose_value_status_set(DOSE_ACCUMULATED, 0, 0);
             if (ret != 0)
             {
                 LOG_E("dose accumulated set err: %d\r\n", ret);
@@ -1650,7 +1673,7 @@ static int8_t dose_data_upload_once(enum fsm_state state)
         }
 
         /* clear dose rate */
-        ret = dose_value_status_set(DOSE_RATE_CURRENT, 0);
+        ret = dose_value_status_set(DOSE_RATE_CURRENT, 0, 0);
         if (ret != 0)
         {
             LOG_E("dose rate set err: %d\r\n", ret);
@@ -1658,7 +1681,7 @@ static int8_t dose_data_upload_once(enum fsm_state state)
         }
 
         /* clear prf */
-        ret = dose_value_status_set(PRF_CURRENT, 0);
+        ret = dose_value_status_set(PRF_CURRENT, 0, 0);
         if (ret != 0)
         {
             LOG_E("prf set err: %d\r\n", ret);
@@ -1687,7 +1710,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt, uint16_t len)
 {
     int8_t ret = 0;
     uint8_t dose_mode = radiation_data_value_get(DOSE_GENERATION_MODE);
-    uint16_t one_pulse_cnt = dose_value_status_get(ONE_PULSE_COUNT);
+    uint16_t one_pulse_cnt = dose_value_status_get(ONE_PULSE_COUNT, DOSE_CHANNEL_NONE);
 
     switch (dose_mode)
     {
@@ -1713,13 +1736,13 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt, uint16_t len)
         if (fsm_state_get() == FSM_STATE_WORK)
         {
             /* 1. update one pulse status */
-            ret = dose_value_status_update(ONE_PULSE_COMPLETE, 0, 0);
+            ret = dose_value_status_update(ONE_PULSE_COMPLETE, 0, 0, 0);
             if (ret != 0)
             {
                 LOG_E("dose value status update err: %d\r\n", ret);
                 return ret;
             }
-            // LOG_I("one pulse complete, pulse dose: %llu\r\n", dose_value_status_get(ONE_PULSE_DOSE));
+            // LOG_I("one pulse complete, pulse dose: %llu, %llu\r\n", dose_value_status_get(ONE_PULSE_DOSE, DOSE_CHANNEL_0), dose_value_status_get(ONE_PULSE_DOSE, DOSE_CHANNEL_1));
 
             /* 2. upload data -> arm io -> afc */
 #ifdef RADIATION_FIX_RATE_SIMULATE
@@ -1753,7 +1776,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt, uint16_t len)
     }
 
     /* 3. check total dose */
-    uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
+    uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1);
     uint64_t dose_accumulated_target = radiation_data_value_get(DOSE_BEAM_METER);
 
     uint64_t board_id = radiation_data_value_get(DOSE_BOARD_ID);
@@ -1786,7 +1809,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt, uint16_t len)
             return ret;
         }
 
-        ret = dose_value_status_update(ONE_BEAM_COMPLETE, 0, 0);
+        ret = dose_value_status_update(ONE_BEAM_COMPLETE, 0, 0, 0);
         if (ret != 0)
         {
             LOG_E("dose value status update err: %d\r\n", ret);
@@ -1828,14 +1851,16 @@ static int8_t control_point_limit_check(void)
 
     if (cp_prev + 1 == cp_cur)
     {
-        uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
-        uint64_t dose_prev_radiation_index = radiation_data_value_get(DOSE_PREV_RADIATION_IDX);
+        uint64_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
+        uint32_t factor_0 = factor, factor_1 = factor >> 32;
+        float dose_accumulated_cur = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / factor_0 + (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / factor_1;
+        float dose_prev_radiation_index = (double)radiation_data_value_get(DOSE_PREV_RADIATION_IDX) * 2.0f / (factor_0 + factor_1);
         uint16_t dose_limit = radiation_data_value_get(DOSE_LIMIT);
         uint8_t dose_low_percentage = dose_limit & 0xFF;
         uint8_t dose_high_percentage = dose_limit >> 8;
 
         /* 1. check dose limit */
-        if (dose_accumulated_cur > dose_prev_radiation_index * (1 + dose_high_percentage / 100.0))
+        if (dose_accumulated_cur - dose_prev_radiation_index * (1 + (float)dose_high_percentage / 100.0f) > 1e-6)
         {
             /* dose high limit reached */
             ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_CP_HIGH, 1);
@@ -1845,7 +1870,7 @@ static int8_t control_point_limit_check(void)
                 return ret;
             }
         }
-        else if (dose_accumulated_cur < dose_prev_radiation_index * (1 - dose_low_percentage / 100.0))
+        else if (dose_accumulated_cur - dose_prev_radiation_index * (1 - (float)dose_low_percentage / 100.0f) < -1e-6)
         {
             /* dose low limit reached */
             ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_CP_LOW, 1);
@@ -1874,12 +1899,12 @@ static int8_t dose_interpolation_calculate(void)
     int8_t ret = 0;
 
     uint64_t dose_radiation_index = radiation_data_value_get(DOSE_RADIATION_IDX);
-    uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
+    uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1);
     uint32_t time_radiation_index = radiation_data_value_get(DOSE_TIME_RADIATION_IDX);
-    uint32_t dose_rate_radiation_index = radiation_data_value_get(DOSE_RATE_RADIATION_IDX);
+    uint64_t dose_rate_radiation_index = radiation_data_value_get(DOSE_RATE_RADIATION_IDX);
     uint16_t pulse_interval_min = radiation_data_value_get(PULSE_INTERVAL_MIN);
 
-    uint32_t dose_rate_interpolated = 0;
+    float dose_rate_interpolated = 0;
     uint64_t dose_interpolated = 0;
 
     /* record timestamp */
@@ -1902,14 +1927,14 @@ static int8_t dose_interpolation_calculate(void)
     LOG_I("dose_radiation_index: %llu\r\n", dose_radiation_index);
     LOG_I("dose_accumulated_cur: %llu\r\n", dose_accumulated_cur);
     LOG_I("time_radiation_index: %u ms\r\n", time_radiation_index);
-    LOG_I("dose_rate_radiation_index: %u\r\n", dose_rate_radiation_index);
+    LOG_I("dose_rate_radiation_index: %llu\r\n", dose_rate_radiation_index);
     LOG_I("pulse_interval_min: %u us\r\n", pulse_interval_min);
 #endif
 
     time_radiation_index = time_radiation_index * 1000;   /* convert to us */
     if (dose_radiation_index == 0)  /* first radiation index */
     {
-        dose_rate_interpolated = dose_rate_radiation_index;
+        dose_rate_interpolated = (double)dose_rate_radiation_index / 1e6 / 60.0f;
         ret = radiation_data_value_set(DOSE_RATE_INTERPOLATED_RADIATION_IDX, dose_rate_interpolated);
         if (ret != 0)
         {
@@ -1950,7 +1975,7 @@ static int8_t dose_interpolation_calculate(void)
     }
 
 #if 0
-    LOG_I("dose_rate_interpolated: %u\r\n", dose_rate_interpolated);
+    LOG_I("dose_rate_interpolated: %f\r\n", dose_rate_interpolated);
     LOG_I("dose_interpolated: %llu\r\n", dose_interpolated);
 #endif
 
@@ -2028,30 +2053,59 @@ static int8_t dose_radiation_index_update(uint32_t time_excess_ms)
     return ret;
 }
 
+static float dose_rate_average_calculate(float dose_cur, uint32_t time_interval_ms)
+{
+    #define DOSE_RATE_AVERAGE_COUNT 10
+    static uint8_t count = 0;
+    static float dose_diff_array[DOSE_RATE_AVERAGE_COUNT + 1] = {0}, dose_pre = 0;
+
+    dose_pre = dose_cur < 1e-6 ? dose_cur : dose_pre;
+    dose_diff_array[count++] = dose_cur - dose_pre;
+    dose_pre = dose_cur;
+    count %= DOSE_RATE_AVERAGE_COUNT;
+    dose_diff_array[DOSE_RATE_AVERAGE_COUNT] = 0;
+    for (uint8_t i = 0; i < DOSE_RATE_AVERAGE_COUNT; i++)
+    {
+        dose_diff_array[DOSE_RATE_AVERAGE_COUNT] += dose_diff_array[i];
+    }
+    dose_diff_array[DOSE_RATE_AVERAGE_COUNT] /= DOSE_RATE_AVERAGE_COUNT;
+
+    return (dose_diff_array[DOSE_RATE_AVERAGE_COUNT] * 1000.0f * 60.0f / time_interval_ms);
+}
+
 static int8_t dose_rate_calculate_and_check(uint64_t *dose_accumulated, uint64_t *dose_target, uint32_t *time_expected_ms, uint32_t *time_elapse_ms)
 {
-    uint64_t dose_rate_cur = 0;
-    uint64_t dose_prev_radiation_index = radiation_data_value_get(DOSE_PREV_RADIATION_IDX);
-    uint64_t dose_rate_radiation_index = radiation_data_value_get(DOSE_RATE_RADIATION_IDX);
+    int8_t ret = 0;
+    uint64_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
+    uint32_t factor_0 = factor, factor_1 = factor >> 32;
+    float dose_prev_radiation_index = (double)radiation_data_value_get(DOSE_PREV_RADIATION_IDX) * 2.0f / (factor_0 + factor_1);
+    float dose_rate_radiation_index = (double)radiation_data_value_get(DOSE_RATE_RADIATION_IDX) * 2.0f / (factor_0 + factor_1);
+    float dose_cur = 0, dose_rate_cur = 0;
 
+#if 0
     /* 1. calculate dose rate */
     if (*dose_accumulated < *dose_target)
     {
-        dose_rate_cur = (*dose_accumulated - dose_prev_radiation_index) * 1000 * 60 / *time_elapse_ms;
+        dose_cur = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / factor_0 + (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / factor_1;
+        dose_rate_cur = (dose_cur - dose_prev_radiation_index) * 1000.0f * 60.0f / *time_elapse_ms;
     }
     else
     {
         if (*time_elapse_ms <= *time_expected_ms)
         {
-            dose_rate_cur = dose_rate_radiation_index * 60;
+            dose_rate_cur = dose_rate_radiation_index;
         }
         else
         {
-            dose_rate_cur = dose_rate_radiation_index * 60 * *time_expected_ms / *time_elapse_ms;
+            dose_rate_cur = dose_rate_radiation_index * *time_expected_ms / *time_elapse_ms;
         }
     }
+#else
+    dose_cur = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / factor_0 + (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / factor_1;
+    dose_rate_cur = dose_rate_average_calculate(dose_cur, *time_elapse_ms);
+#endif
 
-    int8_t ret = dose_value_status_set(DOSE_RATE_CURRENT, dose_rate_cur);
+    ret = dose_value_status_set(DOSE_RATE_CURRENT, dose_rate_cur * 100.0f, 0);
     if (ret != 0)
     {
         LOG_E("dose rate set err: %d\r\n", ret);
@@ -2062,8 +2116,9 @@ static int8_t dose_rate_calculate_and_check(uint64_t *dose_accumulated, uint64_t
     uint8_t dose_rate_low_percentage = dose_rate_limit & 0xFF;
     uint8_t dose_rate_high_percentage = dose_rate_limit >> 8;
 
-    if (dose_rate_cur < dose_rate_radiation_index * (1 - dose_rate_low_percentage / 100.0))
+    if (dose_rate_cur - dose_rate_radiation_index * (1 - (float)dose_rate_low_percentage / 100.0f) < -1e-6)
     {
+        // LOG_I("dose_rate_low: %f  %f\r\n", dose_rate_cur, dose_rate_radiation_index);
         ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_RATE_LOW, 1);
         if (ret != 0)
         {
@@ -2071,8 +2126,9 @@ static int8_t dose_rate_calculate_and_check(uint64_t *dose_accumulated, uint64_t
             return ret;
         }
     }
-    else if (dose_rate_cur > dose_rate_radiation_index * (1 + dose_rate_high_percentage / 100.0))
+    else if (dose_rate_cur - dose_rate_radiation_index * (1 + (float)dose_rate_high_percentage / 100.0f) > 1e-6)
     {
+        // LOG_I("dose_rate_high: %f  %f\r\n", dose_rate_cur, dose_rate_radiation_index);
         ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_RATE_HIGH, 1);
         if (ret != 0)
         {
@@ -2089,7 +2145,7 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *inter
     int8_t ret = 0;
     enum deliver_type deliver_type = plan_data_deliver_type_get();
 
-    uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
+    uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1);
     uint64_t dose_radiation_index = radiation_data_value_get(DOSE_RADIATION_IDX);
 
     *interval_us = trigger_out_info_get(TRIGGER_OUT_INTERVAL);
@@ -2164,8 +2220,12 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *inter
             // *interval_us = 1000;    /* TODO: if needed, delay 1ms to wait for next ri update */
         }
     }
-
+#if 0
     ret = dose_rate_calculate_and_check(&dose_accumulated_cur, &dose_radiation_index, &time_expected_ms, &time_elapse_ms);
+#else
+    time_elapse_ms = (*interval_us + time_compensation_us) / 1000;
+    ret = dose_rate_calculate_and_check(&dose_accumulated_cur, &dose_radiation_index, &time_expected_ms, &time_elapse_ms);
+#endif
     if (ret != 0)
     {
         LOG_E("dose rate calculate and check err: %d\r\n", ret);
@@ -2615,7 +2675,7 @@ int8_t adcs7476_value_process(uint16_t *buf, uint16_t *buf_1, uint16_t len)
     }
 #endif
 
-    uint16_t one_pulse_cnt = dose_value_status_get(ONE_PULSE_COUNT);
+    uint16_t one_pulse_cnt = dose_value_status_get(ONE_PULSE_COUNT, DOSE_CHANNEL_NONE);
 
 #ifdef DETECT_RADIATION_TIME_FROM_TRIGGER_OUT
     if (one_pulse_cnt == 0 && pulse_cnt != 0)
@@ -2721,12 +2781,9 @@ static int8_t dose_rate_calculate(void *argument)
 {
     int8_t ret = 0;
     uint32_t cnt = 0;
-
-    #define DOSE_RATE_SAMPLE_COUNT 10
-    uint8_t dose_diff_index= 0;
-    uint64_t dose_meter_cur = 0, dose_rate_cur = 0, dose_meter_pre = 0, dose_diff[DOSE_RATE_SAMPLE_COUNT + 1] = {0};
-
     uint32_t trigger_out_count_pre = 0, trigger_out_count = 0, prf_cur = 0;
+    uint64_t factor = 0;
+    float dose_cur = 0, dose_rate_cur = 0;
 
     for (;;)
     {
@@ -2745,7 +2802,7 @@ static int8_t dose_rate_calculate(void *argument)
             trigger_out_count = trigger_out_info_get(TRIGGER_OUT_COUNT);
             trigger_out_count_pre = trigger_out_count == 0 ? trigger_out_count : trigger_out_count_pre;
             prf_cur = (trigger_out_count - trigger_out_count_pre) * 2;  /* unit: hz/s */
-            ret = dose_value_status_set(PRF_CURRENT, prf_cur);
+            ret = dose_value_status_set(PRF_CURRENT, prf_cur, 0);
             if (ret != 0)
             {
                 LOG_E("prf set err: %d\r\n", ret);
@@ -2756,33 +2813,22 @@ static int8_t dose_rate_calculate(void *argument)
         /* 3. calculate dose rate */
         if (fsm_state_get() == FSM_STATE_WORK && radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
         {
-            dose_meter_cur = dose_value_status_get(DOSE_ACCUMULATED);
-            dose_meter_pre = dose_meter_cur == 0 ? dose_meter_cur : dose_meter_pre;
-            dose_diff[dose_diff_index++] = dose_meter_cur - dose_meter_pre;
-            dose_diff_index %= DOSE_RATE_SAMPLE_COUNT;
-            dose_diff[DOSE_RATE_SAMPLE_COUNT] = 0;
-            for (uint8_t i = 0; i < DOSE_RATE_SAMPLE_COUNT; i++)
-            {
-                dose_diff[DOSE_RATE_SAMPLE_COUNT] += dose_diff[i];
-            }
-            dose_diff[DOSE_RATE_SAMPLE_COUNT] /= DOSE_RATE_SAMPLE_COUNT;
+            factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
+            dose_cur = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / (factor & 0xffffffff) + (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / (factor >> 32);
+            dose_rate_cur = dose_rate_average_calculate(dose_cur, 100);
 
-            dose_rate_cur = dose_diff[DOSE_RATE_SAMPLE_COUNT] * 10 * 60;  /* calculate period is 100ms */
-
-            ret = dose_value_status_set(DOSE_RATE_CURRENT, dose_rate_cur);
+            ret = dose_value_status_set(DOSE_RATE_CURRENT, dose_rate_cur * 100.0f, 0);
             if (ret != 0)
             {
                 LOG_E("dose rate set err: %d\r\n", ret);
             }
-            dose_meter_pre = dose_meter_cur;
         }
-
     }
 
     return 0;
 }
 
-#define RADIATION_EFFICIENCY_TEST
+// #define RADIATION_EFFICIENCY_TEST
 #ifdef RADIATION_EFFICIENCY_TEST
 struct radiation_ri_data
 {
@@ -2797,7 +2843,7 @@ static int8_t dose_radiation_index_update_dump(uint32_t time_excess_ms)
     if (ri < ri_max)
     {
         ri_data_array[ri].timestamp = osKernelGetTickCount() * 1000 / osKernelGetTickFreq();
-        ri_data_array[ri].dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
+        ri_data_array[ri].dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1);   /* channel value is in proportion to the calibration factor */
     }
 
     return dose_radiation_index_update(time_excess_ms);
@@ -3052,7 +3098,7 @@ static int8_t dose_dummy_mode_test(uint8_t argc, char **argv)
     int8_t ret = 0;
 
     /* 1. clear dose meter value */
-    ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
+    ret = dose_value_status_set(DOSE_ACCUMULATED, 0, 0);
     if (ret != 0)
     {
         LOG_E("dose value status set err: %d\r\n", ret);
@@ -3080,7 +3126,7 @@ static int8_t dose_radiation_mode_test(uint8_t argc, char **argv)
     int8_t ret = 0;
 
     /* 1. clear dose meter value */
-    ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
+    ret = dose_value_status_set(DOSE_ACCUMULATED, 0, 0);
     if (ret != 0)
     {
         LOG_E("dose value status set err: %d\r\n", ret);
@@ -3121,7 +3167,7 @@ static int8_t dose_interpolation_init_test(uint8_t argc, char **argv)
     int8_t ret = 0;
 
     /* 1. clear dose meter value */
-    ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
+    ret = dose_value_status_set(DOSE_ACCUMULATED, 0, 0);
     if (ret != 0)
     {
         LOG_E("dose value status set err: %d\r\n", ret);
@@ -3253,11 +3299,9 @@ MSH_CMD_EXPORT_ALIAS(dose_interpolation_radiation_index_set, dose_interpolation_
 
 static int8_t dose_interpolation_index_data_get(uint8_t argc, char **argv)
 {
-    uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED);
-    uint64_t dose_radiation_index = radiation_data_value_get(DOSE_RADIATION_IDX);
-
-    LOG_I("dose_accumulated_cur: %llu\r\n", dose_accumulated_cur);
-    LOG_I("dose_radiation_index: %llu\r\n", dose_radiation_index);
+    LOG_I("dose_accumulated_cur[0]: %llu\r\n", dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0));
+    LOG_I("dose_accumulated_cur[1]: %llu\r\n", dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1));
+    LOG_I("dose_radiation_index: %llu\r\n", radiation_data_value_get(DOSE_RADIATION_IDX));
 
     return 0;
 }
@@ -3328,21 +3372,37 @@ MSH_CMD_EXPORT_ALIAS(trigger_out_stop, trigger_out_stop, trigger out stop);
 
 static int8_t beam_data_info_get(uint8_t argc, char **argv)
 {
+    LOG_I("------------------- control info ----------------\r\n");
     LOG_I("dose board id: %llu\r\n", radiation_data_value_get(DOSE_BOARD_ID));
-    LOG_I("dose meter target: %llu\r\n", radiation_data_value_get(DOSE_BEAM_METER));
-    LOG_I("dose radiation index: %llu\r\n", radiation_data_value_get(DOSE_RADIATION_IDX));
-    LOG_I("dose rate radiation index: %llu\r\n", radiation_data_value_get(DOSE_RATE_RADIATION_IDX));
-    LOG_I("dose time radiation index: %llu\r\n", radiation_data_value_get(DOSE_TIME_RADIATION_IDX));
-    LOG_I("dose interpolated radiation index: %llu\r\n", radiation_data_value_get(DOSE_INTERPOLATED_RADIATION_IDX));
-    LOG_I("dose rate interpolated radiation index: %llu\r\n", radiation_data_value_get(DOSE_RATE_INTERPOLATED_RADIATION_IDX));
     LOG_I("dose generation mode: %llu\r\n", radiation_data_value_get(DOSE_GENERATION_MODE));
     LOG_I("pulse generation mode: %llu\r\n", radiation_data_value_get(PULSE_GENERATION_MODE));
     LOG_I("pulse interval: %llu us\r\n", radiation_data_value_get(PULSE_INTERVAL));
     LOG_I("pulse interval min: %llu us\r\n", radiation_data_value_get(PULSE_INTERVAL_MIN));
     LOG_I("pulse symmetry: %llu\r\n", radiation_data_value_get(PULSE_SYMMETRY));
-    LOG_I("dose limit: %llu\r\n", radiation_data_value_get(DOSE_LIMIT));
-    LOG_I("dose rate limit: %llu\r\n", radiation_data_value_get(DOSE_RATE_LIMIT));
+    LOG_I("dose limit: (%llu, %llu)\r\n", radiation_data_value_get(DOSE_LIMIT) & 0xFF, radiation_data_value_get(DOSE_LIMIT) >> 8);
+    LOG_I("dose rate limit: (%llu, %llu)\r\n", radiation_data_value_get(DOSE_RATE_LIMIT) & 0xFF, radiation_data_value_get(DOSE_RATE_LIMIT) >> 8);
+
+    LOG_I("------------------- beam data info --------------\r\n");
+    uint64_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
+    uint32_t factor_0 = factor, factor_1 = factor >> 32;
     LOG_I("radiation index current: %llu\r\n", radiation_data_value_get(DOSE_RADIATION_IDX_CURRENT));
+    LOG_I("dose meter target: %llu, %lf\r\n", radiation_data_value_get(DOSE_BEAM_METER), (double)radiation_data_value_get(DOSE_BEAM_METER) * 2.0f / (factor_0 + factor_1));
+    LOG_I("dose radiation index: %llu, %lf\r\n", radiation_data_value_get(DOSE_RADIATION_IDX), (double)radiation_data_value_get(DOSE_RADIATION_IDX) * 2.0f / (factor_0 + factor_1));
+    LOG_I("dose rate radiation index: %llu, %lf\r\n", radiation_data_value_get(DOSE_RATE_RADIATION_IDX), (double)radiation_data_value_get(DOSE_RATE_RADIATION_IDX) * 2.0f / (factor_0 + factor_1));
+    LOG_I("dose time radiation index: %llu\r\n", radiation_data_value_get(DOSE_TIME_RADIATION_IDX));
+    LOG_I("dose interpolated radiation index: %llu\r\n", radiation_data_value_get(DOSE_INTERPOLATED_RADIATION_IDX));
+    LOG_I("dose rate interpolated radiation index: %llu\r\n", radiation_data_value_get(DOSE_RATE_INTERPOLATED_RADIATION_IDX));
+
+    LOG_I("------------------- realtime info ---------------\r\n");
+    double dose_cumulated = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / factor_0;
+    double dose_cumulated_1 = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / factor_1;
+    LOG_I("dose cumulated[0]: %llu, %lf\r\n",  dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0), dose_cumulated);
+    LOG_I("dose cumulated[1]: %llu, %lf\r\n",  dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1), dose_cumulated_1);
+    LOG_I("dose cumulated[0+1]: %llu, %lf, %f\r\n",  dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1), dose_cumulated + dose_cumulated_1, (float)(dose_cumulated + dose_cumulated_1));
+
+    LOG_I("prf current: %llu\r\n", dose_value_status_get(PRF_CURRENT, DOSE_CHANNEL_NONE));
+    LOG_I("dose rate: %f\r\n",  (float)dose_value_status_get(DOSE_RATE_CURRENT, DOSE_CHANNEL_NONE) / 100.0f);
+
     LOG_I("control point current: %llu\r\n", radiation_data_value_get(DOSE_CONTROL_POINT_CURRENT));
     LOG_I("control point prev radiation index: %llu\r\n", radiation_data_value_get(DOSE_CONTROL_POINT_PREV_RADIATION_IDX));
 
@@ -3352,14 +3412,10 @@ MSH_CMD_EXPORT_ALIAS(beam_data_info_get, beam_data_info_get, beam data info get)
 
 static int8_t one_pulse_dose_get(uint8_t argc, char **argv)
 {
-    LOG_I("one pulse timeout: %llu\r\n", dose_value_status_get(ONE_PULSE_COUNT));
-    LOG_I("one pulse flag: %llu\r\n", dose_value_status_get(ONE_PULSE_COMPLETE));
-    LOG_I("one pulse dose: %llu\r\n", dose_value_status_get(ONE_PULSE_DOSE));
-
-    uint32_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
-    LOG_I("dose cumulated: %f\r\n",  (float)((double)dose_value_status_get(DOSE_ACCUMULATED) / factor));
-    LOG_I("dose rate: %f\r\n",  (float)((double)dose_value_status_get(DOSE_RATE_CURRENT) / factor));
-    LOG_I("prf current: %llu\r\n", dose_value_status_get(PRF_CURRENT));
+    LOG_I("one pulse timeout: %llu\r\n", dose_value_status_get(ONE_PULSE_COUNT, DOSE_CHANNEL_NONE));
+    LOG_I("one pulse flag: %llu\r\n", dose_value_status_get(ONE_PULSE_COMPLETE, DOSE_CHANNEL_NONE));
+    LOG_I("one pulse dose[0]: %llu\r\n", dose_value_status_get(ONE_PULSE_DOSE, DOSE_CHANNEL_0));
+    LOG_I("one pulse dose[1]: %llu\r\n", dose_value_status_get(ONE_PULSE_DOSE, DOSE_CHANNEL_1));
 
     return 0;
 }
@@ -3437,13 +3493,13 @@ static int8_t radiation_efficiency_array_dump(uint8_t argc, char **argv)
 
             struct radiation_index_data *obj = radiation_data_get();
             float dose_expected = 0.0f, dose_actual = 0.0f;
-            uint32_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
+            uint64_t factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
 
             for (uint16_t i = 1; i < 4095/* obj->beam_data->total_ri */; i++)
             {
                 osMutexAcquire(obj->beam_data->mutex, osWaitForever);
                 dose_expected = obj->beam_data->radiation_data[i].dose_cumulative;
-                dose_actual = (float)(ri_data_array[i + 1].dose_cumulated / factor);
+                dose_actual = (float)(ri_data_array[i + 1].dose_cumulated / (factor & 0xffffffff));
                 osMutexRelease(obj->beam_data->mutex);
 
                 LOG_I("[ri: %4d]: dose_expected: %11.6f, dose_actual: %11.6f, diff: %11.6f\r\n", i, dose_expected, dose_actual, dose_expected - dose_actual);

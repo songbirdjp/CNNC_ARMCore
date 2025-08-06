@@ -49,8 +49,8 @@ struct calibration_para
         uint8_t byte;
     }status;
 
-    uint32_t adc_factor[5];     /* Kadc <=> 1MU */
-    uint32_t dac_factor;        /* dummy dose dac factor, Kdac <=> 1MU */
+    uint32_t adc_factor[5][2];     /* Kadc <=> 1MU */
+    uint32_t dac_factor[2];        /* dummy dose dac factor, Kdac <=> 1MU */
     uint32_t trig_interval_min; /* trigger interval minimal value */
 };
 

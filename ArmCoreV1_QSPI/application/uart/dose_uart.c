@@ -15,8 +15,8 @@
 static struct control_para control_data = 
 {
     .board_id = DOSE_BOARD_TRIGGER_OUT,
-    .calibration = {.adc_factor = {2376000, 2376000, 2376000, 2376000, 2376000}, 
-                    .dac_factor = 30,
+    .calibration = {.adc_factor = {{2376000, 2376000}, {2376000, 2376000}, {2376000, 2376000}, {2376000, 2376000}, {2376000, 2376000}}, 
+                    .dac_factor = {30, 30},
                     .trig_interval_min = 4000},
     .treatment = {.prf_hz = 1},
     .interlock = {.threshold_dose_rate = {.low = 10, .high = 10}, 
@@ -130,8 +130,9 @@ static int8_t dose_calibration_parse(struct dose_object *cmd)
     case 0x02:
         if (cmd->data[1] < sizeof(obj->calibration.adc_factor) / sizeof(obj->calibration.adc_factor[0]))
         {
-            obj->calibration.adc_factor[cmd->data[1]] = cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
-            LOG_I("set adc factor [%d]: %u\r\n", cmd->data[1], obj->calibration.adc_factor[cmd->data[1]]);
+            obj->calibration.adc_factor[cmd->data[1]][0] = cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
+            obj->calibration.adc_factor[cmd->data[1]][1] = cmd->data[7] << 16 | cmd->data[6] << 8 | cmd->data[5];
+            LOG_I("set adc factor [%d]: %u %u\r\n", cmd->data[1], obj->calibration.adc_factor[cmd->data[1]][0], obj->calibration.adc_factor[cmd->data[1]][1]);
         }
         else
         {
@@ -139,8 +140,9 @@ static int8_t dose_calibration_parse(struct dose_object *cmd)
         }
         break;
     case 0x03:
-        obj->calibration.dac_factor = cmd->data[3] << 8 | cmd->data[2];
-        LOG_I("set dac factor: %u\r\n", obj->calibration.dac_factor);
+        obj->calibration.dac_factor[0] = cmd->data[3] << 8 | cmd->data[2];
+        obj->calibration.dac_factor[1] = cmd->data[5] << 8 | cmd->data[4];
+        LOG_I("set dac factor: %u %u\r\n", obj->calibration.dac_factor[0], obj->calibration.dac_factor[1]);
         break;
     case 0x04:
         obj->calibration.trig_interval_min = cmd->data[3] << 8 | cmd->data[2];
@@ -652,15 +654,17 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             if (ret != 0)
             {
                 LOG_E("fsm state switch [%d] check err: %d\r\n", cmd->data[2], ret);
-                break;
+                cmd->data[3] = ret;
             }
-            cmd->data[2] = ret = fsm_state_switch(cmd->data[2]);
-            if (ret != 0)
+            else
             {
-                LOG_E("fsm state switch err: %d\r\n", ret);
-                break;
+                cmd->data[3] = ret = fsm_state_switch(cmd->data[2]);
+                if (ret != 0)
+                {
+                    LOG_E("fsm state switch err: %d\r\n", ret);
+                }
             }
-            *cmd->len = 3;
+            *cmd->len = 4;
             break;
         case 0x01:
             cmd->data[2] = fsm_state_get();
@@ -669,7 +673,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
         case 0x02:
             struct control_para *obj = control_data_get();
             osMutexAcquire(obj->mutex, osWaitForever);
-            obj->radiation_ctrl.radiation_enable = cmd->data[2] & 0x01;
+            // obj->radiation_ctrl.radiation_enable = cmd->data[2] & 0x01;
             osMutexRelease(obj->mutex);
             break;
         default:
@@ -704,10 +708,10 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             LOG_I("beam data cleanup\r\n");
             break;
         case 0x02:
-            ret = dose_value_status_set(DOSE_ACCUMULATED, 0);
-            ret |= dose_value_status_set(DOSE_RATE_CURRENT, 0);
-            ret |= dose_value_status_set(ONE_PULSE_DOSE, 0);
-            ret |= dose_value_status_set(ONE_PULSE_COUNT, 0);
+            ret = dose_value_status_set(DOSE_ACCUMULATED, 0, 0);
+            ret |= dose_value_status_set(DOSE_RATE_CURRENT, 0, 0);
+            ret |= dose_value_status_set(ONE_PULSE_DOSE, 0, 0);
+            ret |= dose_value_status_set(ONE_PULSE_COUNT, 0, 0);
             if (ret != 0)
             {
                 LOG_E("dose value status set err: %d\r\n", ret);
@@ -722,7 +726,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             }
             break;
         case 0x04:
-            ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0);
+            ret = dose_value_status_set(ONE_PULSE_COMPLETE, 0, 0);
             if (ret != 0)
             {
                 LOG_E("dose value status set err: %d\r\n", ret);
@@ -850,7 +854,7 @@ int8_t radiation_status_get(uint8_t *buf, uint16_t *len, uint32_t trigger_interv
 
     osMutexAcquire(data->mutex, osWaitForever);
     stat.interlock = (interlock == 0) ? 0 : 1;
-    stat.complete = dose_value_status_get(ONE_BEAM_COMPLETE);
+    stat.complete = dose_value_status_get(ONE_BEAM_COMPLETE, DOSE_CHANNEL_NONE);
     stat.radiation = fsm_state_get() == FSM_STATE_WORK;
     stat.ready = fsm_state_get() == FSM_STATE_READY;
     stat.local_ri = data->treatment.ri_src == 1;
@@ -865,17 +869,16 @@ int8_t radiation_status_get(uint8_t *buf, uint16_t *len, uint32_t trigger_interv
     memcpy(&buf[8], &data->radiation.index, sizeof(uint16_t));    /* radiation index */
     float dose_meter = beam_data_value_get(0, BEAM_DOSE_METER, 0);
     memcpy(&buf[10], (float *)&dose_meter, sizeof(float));  /* dose meter */
-    double dose_cumulated = dose_value_status_get(DOSE_ACCUMULATED);
-    float dose = (float)(dose_cumulated / control_data_get()->calibration.adc_factor[0]);
+    float dose = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / control_data_get()->calibration.adc_factor[0][0] + 
+                    (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / control_data_get()->calibration.adc_factor[0][1];
     memcpy(&buf[14], (float *)&dose, sizeof(float));   /* dose cumulated */
-    double dose_rate = dose_value_status_get(DOSE_RATE_CURRENT);
-    float dose_rate_f = (float)(dose_rate / control_data_get()->calibration.adc_factor[0]);
-    memcpy(&buf[18], (float *)&dose_rate_f, sizeof(float)); /* dose rate */
+    float dose_rate = (float)dose_value_status_get(DOSE_RATE_CURRENT, DOSE_CHANNEL_NONE) / 100.0f;
+    memcpy(&buf[18], (float *)&dose_rate, sizeof(float)); /* dose rate */
 
-    buf[22] = dose_value_status_get(PRF_CURRENT);//data->treatment.prf_hz; /* PRF */
+    buf[22] = dose_value_status_get(PRF_CURRENT, DOSE_CHANNEL_NONE);//data->treatment.prf_hz; /* PRF */
     memcpy(&buf[23], &data->interlock.one_pulse.count_abnormal, sizeof(uint16_t));    /* pulse abnormal */
-    uint8_t one_pulse_valid = dose_value_status_get(ONE_PULSE_COMPLETE);
-    uint32_t one_pulse_dose = dose_value_status_get(ONE_PULSE_DOSE);
+    uint8_t one_pulse_valid = dose_value_status_get(ONE_PULSE_COMPLETE, DOSE_CHANNEL_NONE);
+    uint32_t one_pulse_dose = dose_value_status_get(ONE_PULSE_DOSE, DOSE_CHANNEL_0) + dose_value_status_get(ONE_PULSE_DOSE, DOSE_CHANNEL_1);
     buf[25] = one_pulse_valid;    /* one pulse valid */
     memcpy(&buf[26], &one_pulse_dose, sizeof(uint32_t));  /* dose one pulse */
 
@@ -1169,13 +1172,13 @@ static int8_t dose_uart_recv_entry(void *argument)
     int8_t ret = 0;
     uint8_t buf[DOSE_UART_FRAME_SIZE_MAX] = {0};
 
-    // ret = uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID, uart_recv_heartbeat_timeout_callback, NULL);
+    ret = uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID, uart_recv_heartbeat_timeout_callback, NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_RX_CB_ID, uart_recv_heartbeat_cmd_callback,  NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_PNT_RX_CB_ID, uart_recv_time_sync_cmd_callback, NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_SET_RX_CB_ID, uart_recv_set_cmd_callback, NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_GET_RX_CB_ID, uart_recv_get_cmd_callback, NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_REBOOT_RX_CB_ID, uart_recv_reboot_cmd_callback, NULL);
-    // ret |= uart_protocol_tx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_TX_CB_ID, uart_send_heartbeat_cmd_callback, NULL);
+    ret |= uart_protocol_tx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_TX_CB_ID, uart_send_heartbeat_cmd_callback, NULL);
     if (ret != 0)
     {
         LOG_E("uart_protocol_rx_RegisterCallback err: %d\r\n", ret);

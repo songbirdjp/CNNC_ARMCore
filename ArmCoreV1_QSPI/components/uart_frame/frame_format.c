@@ -454,6 +454,10 @@ wait_recv:
                 return -10;
             }
         }
+        else
+        {
+            LOG_E("recv response without lock\r\n");
+        }
     }
     else
     {

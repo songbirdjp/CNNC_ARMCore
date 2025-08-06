@@ -236,6 +236,7 @@ static uint32_t interlock_override_get(void)
 
 static int8_t interlock_status_update(void)
 {
+    int8_t ret = 0;
     osStatus_t stat = osOK;
     struct interlock_status *obj = interlock_stat_get();
 
@@ -246,7 +247,7 @@ static int8_t interlock_status_update(void)
     }
 
     /* 1. check board power and hv status */
-    int8_t ret = board_power_limit_fault_get();
+    ret = board_power_limit_fault_get();
     if (ret > 0)
     {
         obj->value.bits.board_power_fault = (ret & ~(1 << 1)) ? 1 : 0;

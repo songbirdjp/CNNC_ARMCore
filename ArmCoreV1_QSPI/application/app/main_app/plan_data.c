@@ -326,4 +326,28 @@ static int8_t beam_data_clear(uint8_t argc, uint8_t *argv[])
     return beam_data_cleanup(0);
 }
 MSH_CMD_EXPORT_ALIAS(beam_data_clear, beam_data_clear, clear beam data);
+
+static int8_t beam_data_get_ri(uint8_t argc, uint8_t *argv[])
+{
+    struct beam_data *beam_data = beam_data_get(0);
+
+    if (beam_data == NULL)
+    {
+        LOG_E("invalid beam_id: %d\r\n", 0);
+        return -1;
+    }
+
+    osMutexAcquire(beam_data->mutex, osWaitForever);
+
+    uint16_t ri = atoi(argv[1]);
+
+    LOG_I("[%d].dose_rate: %f\r\n", ri, beam_data->radiation_data[ri].dose_rate);
+    LOG_I("[%d].dose_cumulative: %f\r\n", ri, beam_data->radiation_data[ri].dose_cumulative);
+    LOG_I("[%d].time_expected: %d\r\n", ri, beam_data->radiation_data[ri].time_expected);
+
+    osMutexRelease(beam_data->mutex);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(beam_data_get_ri, beam_data_get_ri, get beam data ri);
 #endif

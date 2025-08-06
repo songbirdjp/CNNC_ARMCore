@@ -348,6 +348,7 @@ int8_t adcs7476_sample_enable(uint8_t enable)
     return device_adcs7476_sample_enable(enable);
 }
 
+static uint64_t time_max = 0;
 static int8_t adcs7476_sample_data_recv_process(void)
 {
     int8_t ret = 0;
@@ -358,7 +359,7 @@ static int8_t adcs7476_sample_data_recv_process(void)
     struct adcs7476_object *obj_master = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_MASTER_NAME_DEFAULT);
     struct adcs7476_object *obj_slave = adcs7476_object_get(DEVICE_ADCS7476_MCU_IS_SLAVE_NAME_DEFAULT);
 
-    uint64_t start = 0, end = 0, count = 0;
+    // uint64_t start = 0, end = 0, count = 0;
 
     for (;;)
     {
@@ -391,9 +392,11 @@ data_process:
 
         // end = timestamp_ns_get();
 
+        // time_max = (time_max > end - start) ? time_max : end - start;    /* max time is 185us by test */
+
         // if (count++ % 1000 == 0)
         // {
-        //     LOG_I("time: %lld\r\n", (end - start) / 1000);
+        //     LOG_I("time: %lld us\r\n", (end - start) / 1000);
         // }
 
 #if 0
@@ -488,6 +491,9 @@ static int adcs7476_sample_test(int argc, char **argv)
         break;
     case 1:
         adcs7476_sample_enable(atoi(argv[2]));
+        break;
+    case 2:
+        LOG_I("time_max: %lld us\r\n", time_max / 1000);
         break;
     default:
         break;

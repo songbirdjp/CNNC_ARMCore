@@ -24,9 +24,16 @@ enum pulse_state
     PRF_CURRENT,
 };
 
-int8_t dose_value_status_set(enum pulse_state state, uint64_t value);
-uint64_t dose_value_status_get(enum pulse_state state);
+enum dose_channel
+{
+    DOSE_CHANNEL_NONE = -1,
+    DOSE_CHANNEL_0,
+    DOSE_CHANNEL_1,
+    DOSE_CHANNEL_MAX
+};
 
+int8_t dose_value_status_set(enum pulse_state state, uint64_t value, uint64_t value_1);
+uint64_t dose_value_status_get(enum pulse_state state, enum dose_channel channel);
 
 #ifdef __cplusplus
 }
