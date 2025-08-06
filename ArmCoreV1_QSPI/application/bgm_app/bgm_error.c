@@ -86,5 +86,5 @@ static int8_t bgm_error_test(uint8_t argc, uint8_t **argv)
 
     return 0;
 }
-MSH_CMD_EXPORT_ALIAS(bgm_error_test, bgm_error, bgm error test command);
+MSH_CMD_EXPORT_ALIAS(bgm_error_test, bgm_error_test, bgm error test command);
 #endif

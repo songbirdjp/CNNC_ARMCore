@@ -256,25 +256,17 @@ static int8_t cali_data_set(APP_DATA_RECV *info)
     struct calibration_para para = {0};
     memcpy(&para, &info->tcpData[6], sizeof(struct calibration_para));
 
-    if (para.dose1_dac_ch1 != para.dose1_dac_ch2 || para.dose1_adc_ch1 != para.dose1_adc_ch2)
-    {
-        LOG_E("dose1 cali data err\r\n");
-        return -2;
-    }
-
-    if (para.dose2_dac_ch1 != para.dose2_dac_ch2 || para.dose2_adc_ch1 != para.dose2_adc_ch2)
-    {
-        LOG_E("dose2 cali data err\r\n");
-        return -2;
-    }
-
     struct bgm_data_info *obj = bgm_data_info_get();
     osMutexAcquire(obj->mutex, osWaitForever);
 
-    obj->cali_dose1_dac = para.dose1_dac_ch1;
-    obj->cali_dose1_adc = para.dose1_adc_ch1;
-    obj->cali_dose2_dac = para.dose2_dac_ch1;
-    obj->cali_dose2_adc = para.dose2_adc_ch1;
+    obj->cali_dose1_dac[0] = para.dose1_dac_ch1;
+    obj->cali_dose1_dac[1] = para.dose1_dac_ch2;
+    obj->cali_dose1_adc[0] = para.dose1_adc_ch1;
+    obj->cali_dose1_adc[1] = para.dose1_adc_ch2;
+    obj->cali_dose2_dac[0] = para.dose2_dac_ch1;
+    obj->cali_dose2_dac[1] = para.dose2_dac_ch2;
+    obj->cali_dose2_adc[0] = para.dose2_adc_ch1;
+    obj->cali_dose2_adc[1] = para.dose2_adc_ch2;
 
     osMutexRelease(obj->mutex);
 

@@ -300,6 +300,15 @@ int32_t uart_protocol_send(uart_protocol_t *const self,
     int32_t ret = frame_format_send(&self->frame_format, data, len, timeout);
     if (ret != 0)
     {
+        LOG_E("frame_format_send err: %d\r\n", ret);
+#if 1
+        LOG_E("send: %s\r\n", self->uart_dev->name);
+        for (uint8_t i = 0; i < len; i++)
+        {
+            LOG_I("%.2x ", data[i]);
+        }
+        LOG_I("\r\n");
+#endif
         return -2;
     }
     return 0;

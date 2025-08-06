@@ -57,8 +57,8 @@ struct calibration_para
         uint8_t byte;
     }status;
 
-    uint32_t adc_factor[5];     /* Kadc <=> 1MU */
-    uint32_t dac_factor;        /* dummy dose dac factor, Kdac <=> 1MU */
+    uint32_t adc_factor[5][2];     /* Kadc <=> 1MU */
+    uint32_t dac_factor[2];        /* dummy dose dac factor, Kdac <=> 1MU */
     uint32_t trig_interval_min; /* trigger interval minimal value */
 };
 
@@ -232,8 +232,9 @@ static int8_t dose_calibration_parse(enum uart_id id, struct cmd_object *cmd)
         case 0x03:
         case 0x04:
             LOG_I("[%d]: dose adc factor set (1MU == %d code)\r\n", id, cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2]);
-            obj->calibration.adc_factor[cmd->data[1]] = cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
-            ret = dose_para_check(DOSE_PARA_ADC, id, cmd->data[1], &obj->calibration.adc_factor[cmd->data[1]]);
+            obj->calibration.adc_factor[cmd->data[1]][0] = cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
+            obj->calibration.adc_factor[cmd->data[1]][1] = cmd->data[7] << 16 | cmd->data[6] << 8 | cmd->data[5];
+            ret = dose_para_check(DOSE_PARA_ADC, id, cmd->data[1], &obj->calibration.adc_factor[cmd->data[1]][0]);
             if (ret != 0)
             {
                 LOG_E("[%d]: dose adc factor check err: %d\r\n", id, ret);
@@ -246,8 +247,9 @@ static int8_t dose_calibration_parse(enum uart_id id, struct cmd_object *cmd)
         break;
     case 0x03:
         LOG_I("[%d]: dose dac factor set : %d\r\n", id, cmd->data[3] << 8 | cmd->data[2]);
-        obj->calibration.dac_factor = cmd->data[3] << 8 | cmd->data[2];
-        ret = dose_para_check(DOSE_PARA_DAC, id, 0, &obj->calibration.dac_factor);
+        obj->calibration.dac_factor[0] = cmd->data[3] << 8 | cmd->data[2];
+        obj->calibration.dac_factor[1] = cmd->data[5] << 8 | cmd->data[4];
+        ret = dose_para_check(DOSE_PARA_DAC, id, 0, &obj->calibration.dac_factor[0]);
         if (ret != 0)
         {
             LOG_E("[%d]: dose dac factor check err: %d\r\n", id, ret);
@@ -363,10 +365,13 @@ static int8_t dose_treatment_parse(enum uart_id id, struct cmd_object *cmd)
             break;
         case 0x05:
             float value[3] = {0};
-            value[0] = (float)(cmd->data[2] | cmd->data[3] << 8 | cmd->data[4] << 16 | cmd->data[5]); // cumulative dose
-            value[1] = (float)(cmd->data[6] | cmd->data[7] << 8 | cmd->data[8] << 16 | cmd->data[9]); // dose rate
-            value[2] = (float)(cmd->data[10] | cmd->data[11] << 8 | cmd->data[12] << 16 | cmd->data[13]) / 1000.0f; // delivery time in ms
-            ret = dose_para_check(DOSE_PARA_RI_INFO, id, cmd->data[2] | cmd->data[3] << 8, &value);
+            uint32_t dose = cmd->data[4] | cmd->data[5] << 8 | cmd->data[6] << 16 | cmd->data[7] << 24;
+            uint32_t dose_rate = cmd->data[8] | cmd->data[9] << 8 | cmd->data[10] << 16 | cmd->data[11] << 24;
+            uint32_t delivery_time = cmd->data[12] | cmd->data[13] << 8 | cmd->data[14] << 16 | cmd->data[15] << 24;
+            value[0] = *(float *)&dose;
+            value[1] = *(float *)&dose_rate;
+            value[2] = *(float *)&delivery_time / 1000.0f;
+            ret = dose_para_check(DOSE_PARA_RI_INFO, id, cmd->data[2] | cmd->data[3] << 8, value);
             if (ret != 0)
             {
                 LOG_E("[%d]: dose ri info check err: %d\r\n", id, ret);
@@ -554,7 +559,7 @@ static int8_t dose_state_control_parse(enum uart_id id, struct cmd_object *cmd)
         switch (cmd->data[1])
         {
         case 0x00:  /* dose state switch result */
-            cmd->data[2] == 0 ? LOG_I("[%d]: dose state switch success\r\n", id) : LOG_I("[%d]: dose state switch fail\r\n", id);
+            cmd->data[3] == 0 ? LOG_I("[%d]: dose state switch [%d] success\r\n", id, cmd->data[2]) : LOG_I("[%d]: dose state switch [%d] fail\r\n", id, cmd->data[2]);
             break;
         case 0x01:  /* dose current state */
             // LOG_I("[%d]: dose current state: %d\r\n", id, cmd->data[2]);
@@ -1144,6 +1149,9 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = *(uint32_t *)data;
         buf[offset++] = *(uint32_t *)data >> 8;
         buf[offset++] = *(uint32_t *)data >> 16;
+        buf[offset++] = *((uint32_t *)data + 1);
+        buf[offset++] = *((uint32_t *)data + 1) >> 8;
+        buf[offset++] = *((uint32_t *)data + 1) >> 16;
         ret = dose_cmd_write(id, 0x02, buf, offset);
 
         offset = 0;
@@ -1163,6 +1171,8 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
         buf[offset++] = 0x00;
         buf[offset++] = *(uint16_t *)data;
         buf[offset++] = *(uint16_t *)data >> 8;
+        buf[offset++] = *((uint16_t *)data + 1);
+        buf[offset++] = *((uint16_t *)data + 1) >> 8;
         ret = dose_cmd_write(id, 0x02, buf, offset);
 
         offset = 0;
@@ -1251,6 +1261,8 @@ int8_t dose_data_info_set(enum uart_id id, enum dose_info_index index, void *dat
 
             ret |= dose_cmd_write(id, 0x02, buf, offset);
             offset = 2;
+
+            // LOG_I("[%d]: ri[%d]: cumulative dose: %f, dose rate: %f, expect time: %f ms\r\n", id, i, beam_info->ri_data[i].fCumulativeDose, beam_info->ri_data[i].fDoseRate, dose_expect_time);
         }
         /* 6. beam info */
         offset = 0;

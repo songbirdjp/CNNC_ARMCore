@@ -43,10 +43,10 @@ struct bgm_data_info
     uint8_t cali_prf;
     uint8_t cp_tolerate;
     uint16_t trigger_interval_min; /* unit: us */
-    uint16_t cali_dose1_dac;
-    uint16_t cali_dose2_dac;
-    uint32_t cali_dose1_adc;
-    uint32_t cali_dose2_adc;
+    uint16_t cali_dose1_dac[2];
+    uint16_t cali_dose2_dac[2];
+    uint32_t cali_dose1_adc[2];
+    uint32_t cali_dose2_adc[2];
     float dose_meter;   /* cali mode meter value */
     float dose_meter_dummy;
     uint8_t dose_fsm_state_flag;

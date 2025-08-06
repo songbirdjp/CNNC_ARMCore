@@ -99,11 +99,11 @@ static int8_t rtm_cmd_parse(enum uart_id id, struct cmd_object *cmd)
                 static uint16_t last_radiation_index = 0;
                 struct bgm_data_info *obj = bgm_data_info_get();
                 osMutexAcquire(obj->mutex, osWaitForever);
-                if (obj->fsm_state != BGM_STATE_WORK && obj->fsm_state != BGM_STATE_COMPLETE)
-                {
-                    obj->radiation_index = cmd->data[1] | cmd->data[2] << 8;
-                }
-                else
+                // if (obj->fsm_state != BGM_STATE_WORK && obj->fsm_state != BGM_STATE_COMPLETE)
+                // {
+                //     obj->radiation_index = cmd->data[1] | cmd->data[2] << 8;
+                // }
+                // else
                 {
                     switch (obj->deliver_type)
                     {

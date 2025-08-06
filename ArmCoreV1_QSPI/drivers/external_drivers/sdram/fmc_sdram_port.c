@@ -43,7 +43,7 @@ void SDRAM_Init(void)
     //配置模式寄存器,SDRAM的bit0~bit2为指定突发访问的长度，
     //bit3为指定突发访问的类型，bit4~bit6为CAS值，bit7和bit8为运行模式
     //bit9为指定的写突发模式，bit10和bit11位保留位
-
+    
     temp=(uint32_t)SDRAM_MODEREG_BURST_LENGTH_1          |	//设置突发长度:1(可以是1/2/4/8)
          SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL   |	//设置突发类型:连续(可以是连续/交错)
          SDRAM_MODEREG_CAS_LATENCY_3           |	//设置CAS值:3(可以是2/3)
@@ -55,17 +55,12 @@ void SDRAM_Init(void)
     //COUNT=SDRAM刷新周期/行数-20=SDRAM刷新周期(us)*SDCLK频率(Mhz)/行数
     //我们使用的SDRAM刷新周期为64ms,SDCLK=200/2=100Mhz,行数为8192(2^13).
     //所以,COUNT=64*1000*100/8192-20=761
-
-#ifdef SDRAM_ID_W9825G6KH
     HAL_SDRAM_ProgramRefreshRate(&hsdram1,967);
-#else
-    HAL_SDRAM_ProgramRefreshRate(&hsdram1,1054);
-#endif
 }
 
 
 /* ******************************************************************************************* */
-// private code
+// private code 
 #ifdef USING_MDMA_FOR_FMC
 #include "mdma.h"
 #endif
@@ -300,8 +295,8 @@ static int8_t sdram_write_read_test(uint8_t argc, uint8_t *argv[])
     // printf("test_num addr:%#x\r\n", (uint32_t) &test_num);
 
     /* 1. test 8 bit */
-    system_time_get(&begin);
-    for (uint32_t i = 0; i < 1024 * 1024; i++)
+    system_time_get(&begin);    
+    for (uint32_t i = 0; i < 1024 * 1024; i++) 
     {
         ptr_8[i] = i % 256;
         if (i%256 != ptr_8[i])
@@ -314,8 +309,8 @@ static int8_t sdram_write_read_test(uint8_t argc, uint8_t *argv[])
     printf("write 8bit use time:%lu us\r\n", time_diff_us(&begin, &end));
 
     /* 2. test 16 bit */
-    system_time_get(&begin);
-    for (uint32_t i = 0; i < 1024 * 1024 / 2; i++)
+    system_time_get(&begin);    
+    for (uint32_t i = 0; i < 1024 * 1024 / 2; i++) 
     {
         ptr_16[i] = (i + 1)%256;
         if ((i + 1)%256 != ptr_16[i])
@@ -328,8 +323,8 @@ static int8_t sdram_write_read_test(uint8_t argc, uint8_t *argv[])
     printf("write 16bit use time:%lu us\r\n", time_diff_us(&begin, &end));
 
     /* 3. test 32 bit */
-    system_time_get(&begin);
-    for (uint32_t i = 0; i < 1024 * 1024 / 4; i++)
+    system_time_get(&begin);    
+    for (uint32_t i = 0; i < 1024 * 1024 / 4; i++) 
     {
         ptr_32[i] = (i + 2)%256;
         if ((i + 2)%256 != ptr_32[i])
@@ -359,7 +354,7 @@ static int8_t sdram_read_test(uint8_t argc, uint8_t *argv[])
     }
 
     printf("-------------------------------------------\r\n");
-
+    
     dev->read(dev, 0, buf, 128);
     for (uint32_t i = 0; i < sizeof(buf)/sizeof(buf[0]); i++)
     {
@@ -387,83 +382,4 @@ static int8_t sdram_write_test(uint8_t argc, uint8_t *argv[])
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(sdram_write_test, sdram_write_test, test sdram_write);
-
-#include <stdlib.h>
-#include <stdio.h>
-#include "ulog.h"
-static int8_t sdram_test_entry(void *argument)
-{
-    osDelay(1000);
-
-    uint16_t write_buf[1024] = {0}, read_buf[1024] = {0};
-
-    struct dev_sdram *dev = bank1_sdram_get();
-    uint32_t offset = 0, succeed = 0, count = 0;
-
-    for (;;)
-    {
-        srand(osKernelGetTickCount());
-
-        /* 1. update buffer */
-        for (uint32_t i = 0; i < sizeof(write_buf) / sizeof(write_buf[0]); i++)
-        {
-            write_buf[i] = rand() % 0xFFFF;
-        }
-
-        offset = ALIGN(rand(), 4) % SDRAM_BANK1_SIZE;
-        offset = offset > (SDRAM_BANK1_SIZE - sizeof(write_buf)) ? SDRAM_BANK1_SIZE - sizeof(write_buf) : offset;
-
-        /* 2. write buffer to sdram */
-        dev->write(dev, offset, write_buf, sizeof(write_buf));
-        dev->read(dev, offset, read_buf, sizeof(read_buf));
-
-        /* 3. check buffer */
-        if (memcmp(write_buf, read_buf, sizeof(write_buf)) != 0)
-        {
-            LOG_I("sdram test failed\r\n");
-            goto err;
-        }
-
-        // offset += sizeof(write_buf);
-        // offset %= SDRAM_BANK1_SIZE;
-
-        // if (offset == 0)
-        succeed++;
-        if (++count % 10000 == 0)
-        {
-            LOG_I("sdram test succeed: %d\r\n", succeed);
-        }
-
-        osDelay(1);
-    }
-
-err:
-    for (;;)
-    {
-        LOG_I("sdram test failed, succeed: %d\r\n", succeed);
-        osDelay(1000);
-    }
-
-    return 0;
-}
-
-
-static int8_t sdram_test_init(void)
-{
-    osThreadAttr_t attr = {
-    .name = "sdram_64m_test",
-    .stack_size = 2048 * 4,
-    .priority = osPriorityNormal,
-    };
-
-    osThreadId_t tid = osThreadNew(sdram_test_entry, NULL, &attr);
-    if (tid == NULL)
-    {
-        printf("thread sdram_64m_test create failed\r\n");
-        return -1;
-    }
-
-    return 0;
-}
-// INIT_APP_EXPORT(sdram_test_init);
 #endif

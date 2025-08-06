@@ -45,10 +45,14 @@ ArmCoreV1_QSPI
 │  │  ├─ bgm_app.h
 │  │  ├─ bgm_def.c
 │  │  ├─ bgm_def.h
+│  │  ├─ bgm_error.c
+│  │  ├─ bgm_error.h
 │  │  ├─ CMakeLists.txt
 │  │  ├─ dose_app
 │  │  │  ├─ dose_app.c
-│  │  │  └─ dose_app.h
+│  │  │  ├─ dose_app.h
+│  │  │  ├─ dose_error.c
+│  │  │  └─ dose_error.h
 │  │  ├─ eps_app
 │  │  │  ├─ eps_app.c
 │  │  │  └─ eps_app.h

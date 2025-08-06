@@ -320,23 +320,6 @@ static int8_t ioe_read(struct extend_status *stat)
         return -1;
     }
 
-    uint16_t interrupt_flag = recv_buf[2] | recv_buf[3] << 8;
-    uint16_t interrupt_capture = recv_buf[4] | recv_buf[5] << 8;
-
-    /* here maintain the interrupt flag and capture value which latest changed */
-    if (interrupt_flag_prev != interrupt_flag)
-    {
-        interrupt_flag_prev = interrupt_flag;
-        stat->interrupt_flag = interrupt_flag;
-        stat->interrupt_capture = interrupt_capture;
-
-        LOG_I("interrupt_flag: %#.4x\r\n", stat->interrupt_flag);
-        LOG_I("interrupt_capture: %#.4x\r\n", stat->interrupt_capture);
-        LOG_I("current: %#.4x\r\n", stat->current.bytes);
-    }
-
-    stat->current.bytes = recv_buf[6] | recv_buf[7] << 8;
-
 #if 0
     LOG_I("read extend status: ");
     for (int i = 0; i < 8; i++)
@@ -345,6 +328,22 @@ static int8_t ioe_read(struct extend_status *stat)
     }
     LOG_I("\r\n");
 #endif
+
+    uint16_t interrupt_flag = recv_buf[2] | recv_buf[3] << 8;
+    uint16_t interrupt_capture = recv_buf[4] | recv_buf[5] << 8;
+    stat->current.bytes = recv_buf[6] | recv_buf[7] << 8;
+
+    /* here maintain the interrupt flag and capture value which latest changed */
+    if (interrupt_flag_prev != interrupt_flag)
+    {
+        interrupt_flag_prev = interrupt_flag;
+        stat->interrupt_flag = interrupt_flag;
+        stat->interrupt_capture = interrupt_capture;
+
+        // LOG_I("interrupt_flag: %#.4x\r\n", stat->interrupt_flag);
+        // LOG_I("interrupt_capture: %#.4x\r\n", stat->interrupt_capture);
+        // LOG_I("current: %#.4x\r\n", stat->current.bytes);
+    }
 
     return 0;
 }
