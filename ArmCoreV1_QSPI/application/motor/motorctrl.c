@@ -58,6 +58,7 @@ void Shell_AFTBrakeCtrl(uint8_t argc, char *argv[])
         printf("Usage: MAGPWM <duty cycle>\r\n");
     }
     uint8_t AFTBrakeStatus = strtol((char *)argv[1], NULL, 10);
+    printf("AFTBrakeStatus = %d\r\n",AFTBrakeStatus);
     AFTBrakeCtrl(AFTBrakeStatus);
 }
 MSH_CMD_EXPORT_ALIAS(Shell_AFTBrakeCtrl, AFTBRK,AFT brake ctrl);
@@ -389,6 +390,7 @@ void MagMotorInitFSM(void)
     static float AutoControl_pid_output;
     //MagMotorParameter.encoderValTarget = 20000;
     // MagMotorAutoTarget = getEncodeValue(MOTOR_MAG);
+    AFTBrakeCtrl(AFT_BRAKE_ON);
     switch (MagMotorState)
     {
         case MotorFSM_Init:
@@ -429,7 +431,7 @@ void MagMotorInitFSM(void)
             osDelay(1000);
             MagFindZeroCheckCounterPrev = getEncodeValue(MOTOR_MAG);
             // LOG_I("MagFindZeroCheckCounterPrev = %d\r\n", MagFindZeroCheckCounterPrev);
-            if((MagFindZeroCheckCounterPrev > 9995)&&(MagFindZeroCheckCounterPrev < 10005))
+            if((MagFindZeroCheckCounterPrev > 9995-70)&&(MagFindZeroCheckCounterPrev < 10005-20))
             {
                 motorCtrlByPWM(MOTOR_MAG, 50);
                 osDelay(8000);
@@ -465,6 +467,11 @@ void MagMotorInitFSM(void)
         case MotorFSM_ManualControl:
             motorCtrlByPWM(MOTOR_MAG, PositionPIDCtrl(getEncodeValue(MOTOR_MAG),MagMotorParameter.encoderValTarget, &MAGmotor_pid_para));
             MagMotorAutoTarget = MagMotorParameter.encoderValTarget;
+            if(MagMotorAutoControltimes % 500 == 0)
+            {
+                LOG_I("%d %d\r\n",MagMotorADCValue[0],MagMotorADCValue[1]);
+            }
+            MagMotorAutoControltimes++;
             osDelay(1);
             break;
         case MotorFSM_AutoControl:
@@ -473,14 +480,15 @@ void MagMotorInitFSM(void)
         {
             MagForwardEncCounter = getEncodeValue(MOTOR_MAG);
             MagMotorAutoTarget = MagForwardEncCounter;
-            if(MagMotorADCValue[0] > MagMotorADCValue[1] + 30)
+            if(MagMotorADCValue[0] > MagMotorADCValue[1] + 50)
             {
-                MagMotorAutoTarget = MagMotorAutoTarget + 30;
+                MagMotorAutoTarget = MagMotorAutoTarget + 20;
             }
             else if(MagMotorADCValue[0] < MagMotorADCValue[1] - 30)
             {
-                MagMotorAutoTarget = MagMotorAutoTarget - 30;
+                MagMotorAutoTarget = MagMotorAutoTarget - 20;
             }
+            LOG_I("%d %d\r\n",MagMotorADCValue[0],MagMotorADCValue[1]);
             MagMotorADCValue[0] = 0;
             MagMotorADCValue[1] = 0;
         }
@@ -630,14 +638,17 @@ MSH_CMD_EXPORT_ALIAS(Shell_GetAFTMotorPos, AFTPOSGET,AFT motor get position);
 static void MotorInitial_thread_entry(void *argument)
 {
     MX_TIM2_Init();
-    // MX_TIM3_Init();
-    // MX_TIM5_Init();
+    MX_TIM3_Init();
+    MX_TIM5_Init();
     MX_TIM24_Init();
     gpio_pin_irq_callback_register("GPIOA_6", MagMotor_nFault_callback);
-    // gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
-    MagMotorParameter.presetPos = 27419;// 25118;
+    gpio_pin_irq_callback_register("GPIOE_4", AFTMotor_nFault_callback);
+    MagMotorParameter.presetPos = 26262;// 27419;
     MagMotorParameter.encoderValTarget = MagMotorParameter.presetPos;
     AFCApplicationParam.positionCalculated = MagMotorParameter.presetPos;
+    motorEnable(MOTOR_AFT);
+    __HAL_TIM_SET_COUNTER(&htim3, 32767);
+    motorCtrlByPWM(MOTOR_AFT, 0);
     for (;;)
     {
         MagMotorInitFSM();
@@ -669,7 +680,10 @@ static void AFTMotorInitial_thread_entry(void *argument)
     AFTMotorParameter.encoderValTarget = AFTMotorParameter.presetPos;
     for (;;)
     {
-        AFTMotorInitFSM();
+        motorEnable(MOTOR_AFT);
+        __HAL_TIM_SET_COUNTER(&htim3, 32767);
+        motorCtrlByPWM(MOTOR_AFT, 0);
+        // AFTMotorInitFSM();
     }
 }
 
@@ -690,5 +704,19 @@ static int8_t AFTMotorInitial_thread_init(void)
     return 0;
 }
 
-// INIT_APP_EXPORT(MotorInitial_thread_init);
-INIT_APP_EXPORT(AFTMotorInitial_thread_init);
+INIT_APP_EXPORT(MotorInitial_thread_init);
+// INIT_APP_EXPORT(AFTMotorInitial_thread_init);
+void Shell_SetAFTMotorGoUp(uint8_t argc, char *argv[])
+{
+    motorCtrlByPWM(MOTOR_AFT, 40);
+    osDelay(500);
+    motorCtrlByPWM(MOTOR_AFT, 0);
+}
+MSH_CMD_EXPORT_ALIAS(Shell_SetAFTMotorGoUp, AFTGP,AFT motor go up);
+void Shell_SetAFTMotorGoDown(uint8_t argc, char *argv[])
+{
+    motorCtrlByPWM(MOTOR_AFT, -40);
+    osDelay(500);
+    motorCtrlByPWM(MOTOR_AFT, 0);
+}
+MSH_CMD_EXPORT_ALIAS(Shell_SetAFTMotorGoDown, AFTGD,AFT motor go down);
