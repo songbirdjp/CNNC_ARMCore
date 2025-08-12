@@ -117,6 +117,15 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     app_do_get(&(app_rtm->app_dido), &dido_structure);
     app_di_get(&(app_rtm->app_dido), &dido_structure);
 
+    app_rtm->app_state_table.rtm_main_state |= app_rtm->manage_info.status_word;
+    app_rtm->app_state_table.icm_state |= app_rtm->rtm_module_info[RTM_MODULE_ICM].manage_info.status_word;
+    app_rtm->app_state_table.bgm_state |= app_rtm->rtm_module_info[RTM_MODULE_BGM].manage_info.status_word;
+    app_rtm->app_state_table.qam_state |= app_rtm->rtm_module_info[RTM_MODULE_QAM].manage_info.status_word;
+    // app_rtm->app_state_table.bsm_state |= app_rtm->rtm_module_info[RTM_MODULE_BSM].manage_info.status_word;
+    app_rtm->app_state_table.plc_state |= app_rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word;
+    app_rtm->app_state_table.rtm_off_state |= app_rtm->rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word;
+    app_rtm->app_state_table.dido_state |= app_rtm->app_dido.manage_info.status_word;
+    app_rtm->app_state_table.data_record |= app_rtm->app_data_record.manage_info.status_word;
     // HvEn check
     if ((state == STATE_MACHINE_READY) ||
         (state == STATE_MACHINE_WORK) ||
@@ -179,9 +188,9 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     }
 
     // ethercat
-    if (bit_get(app_rtm->rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT))
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word, MODULE_LINK_STATE_BIT))
     {
-        bit_clean(app_rtm->rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word, MODULE_LINK_STATE_BIT);
         self->interlock_table.serious_interlock.ethercat_link = 1;
     }
     else
@@ -362,27 +371,41 @@ static State_t module_init(void *self, Event_t const *const e)
     case EXIT_SIG:
     {
         // LOG_I("module_init exit\r\n");
-        uint32_t ret = osThreadFlagsGet();
-        if(ret & APP_RTM_THREAD_FLAG_RTM_OFF_READY)
-        {
-            rtm->rtm_module_info[RTM_MODULE_RTM_OFF].tx_disable = MODULE_TX_ENABLE;
-        }
-        if(ret & APP_RTM_THREAD_FLAG_ICM_READY)
-        {
-            rtm->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_ENABLE;
-        }       
-        if(ret & APP_RTM_THREAD_FLAG_BGM_READY)
-        {
-            rtm->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_ENABLE;
-        }
-        if(ret & APP_RTM_THREAD_FLAG_QAM_READY)
-        {
-            rtm->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_ENABLE;
-        }       
-        // if(ret & APP_RTM_THREAD_FLAG_BSM_READY)
+        // uint32_t ret = osThreadFlagsGet();
+        // if(ret & APP_RTM_THREAD_FLAG_ETHERCAT_READY)
         // {
-        //     rtm->rtm_module_info[RTM_MODULE_BSM].tx_disable = MODULE_TX_ENABLE;
-        // } 
+            rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].tx_disable = MODULE_TX_ENABLE;
+        // }
+        // if(ret & APP_RTM_THREAD_FLAG_RTM_OFF_READY)
+        // {
+            rtm->rtm_module_info[RTM_MODULE_RTM_OFF].tx_disable = MODULE_TX_ENABLE;
+        // }
+        // if(ret & APP_RTM_THREAD_FLAG_ICM_READY)
+        // {
+            rtm->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_ENABLE;
+        // }       
+        // if(ret & APP_RTM_THREAD_FLAG_BGM_READY)
+        // {
+            rtm->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_ENABLE;
+        // }
+        // if(ret & APP_RTM_THREAD_FLAG_QAM_READY)
+        // {
+            rtm->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_ENABLE;
+        // }       
+        // // if(ret & APP_RTM_THREAD_FLAG_BSM_READY)
+        // // {
+        // //     rtm->rtm_module_info[RTM_MODULE_BSM].tx_disable = MODULE_TX_ENABLE;
+        // // } 
+        if((rtm->manage_info.status_word != 0) ||
+           (rtm->rtm_module_info[RTM_MODULE_ICM].manage_info.status_word != 0) ||
+           (rtm->rtm_module_info[RTM_MODULE_BGM].manage_info.status_word != 0) ||
+           (rtm->rtm_module_info[RTM_MODULE_QAM].manage_info.status_word != 0) ||
+           (rtm->rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word != 0) ||
+           (rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word != 0) ||
+           (rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].manage_info.status_word != 0))
+        {
+            bit_set(rtm->manage_info.status_word, RTM_MAIN_INIT_STATE_BIT);
+        }
         check_finish = -1;
         status = HANDLED();
         break;
@@ -400,12 +423,12 @@ static State_t module_init(void *self, Event_t const *const e)
             if ((cur_time - last_time) > RTM_INIT_WAIT_TIME)
             {
                 // 初始化失败
-                bit_set(rtm->manage_info.status_word, RTM_MAIN_INIT_BIT);
+                bit_set(rtm->manage_info.status_word, RTM_MAIN_INIT_STATE_BIT);
                 status = TRAN(&system_systemOn);
             }
             else
             {
-                if (app_rtm_thread_flag_get(1) == 0)
+                if (app_rtm_thread_flag_get(1) > 0)
                 {
                     status = TRAN(&system_systemOn);
                 }
@@ -1192,10 +1215,16 @@ static State_t module_mv_complete(void *self, Event_t const *const e)
     static int32_t check_finish = -1;
     static uint8_t fault_flag = 0;
     static int32_t error = 0;
+    dido_structure_t dido_structure = {0};
     switch (e->sig)
     {
     case ENTER_SIG:
     {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
         // LOG_I("module_mv_complete enter\r\n");
         status = HANDLED();
@@ -2364,10 +2393,16 @@ static State_t module_kv_complete(void *self, Event_t const *const e)
     rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     static int32_t check_finish = -1;
+    dido_structure_t dido_structure = {0};
     switch (e->sig)
     {
     case ENTER_SIG:
     {
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
         // LOG_I("module_kv_complete enter\r\n");
         status = HANDLED();

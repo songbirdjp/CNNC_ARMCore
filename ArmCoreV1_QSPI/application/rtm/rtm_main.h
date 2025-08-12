@@ -21,8 +21,8 @@ extern "C"
 #endif
 
     void app_rtm_event_output_set(void);
-    // void app_rtm_ethercat_state_op_set(void);
-    // void app_rtm_ethercat_state_op_clean(void);
+    void app_rtm_ethercat_state_op_set(void);
+    void app_rtm_ethercat_state_op_clean(void);
     enum
     {
         BROADCAST_ID = 0x00,
@@ -103,8 +103,13 @@ extern "C"
     } module_tx_state_t;
     typedef struct rtm_module_info
     {
-#define MODULE_INIT_BIT (0)
-#define MODULE_LINK_STATE_BIT (1)
+#define MODULE_PERIPHERAL_INIT_BIT (0)
+#define MODULE_TX_INIT_BIT (1)
+#define MODULE_RX_INIT_BIT (2)
+#define MODULE_LINK_STATE_BIT (3)
+#define MODULE_RX_STATE_BIT (4)
+#define MODULE_TX_STATE_BIT (5)
+#define MODULE_TX_QUEUE_STATE_BIT (6)
         manage_info_t manage_info;
         uint32_t module_thread_flags;
         app_data_record_t *app_data_record;
@@ -125,20 +130,29 @@ extern "C"
 
     typedef struct rtm_ethercat_info
     {
-#define ETHERCAT_SLAVE_INIT_BIT (0)
-#define ETHERCAT_LINK_STATE_BIT (1)
+#define ETHERCAT_OP_STATE_BIT (0)
         manage_info_t manage_info;
     } rtm_ethercat_info_t;
 
     typedef struct app_rtm_main
     {
-#define RTM_MAIN_INIT_BIT (0)
+#define RTM_MAIN_INIT_STATE_BIT (0) /* 初始化状态,下列任意一个状态置位，该位将被置位 */
+#define RTM_MAIN_PLC_STATE_BIT (1)
+#define RTM_MAIN_ICM_STATE_BIT (2)
+#define RTM_MAIN_BGM_STATE_BIT (3)
+#define RTM_MAIN_QAM_STATE_BIT (4)
+#define RTM_MAIN_BSM_STATE_BIT (5)
+#define RTM_MAIN_OFF_STATE_BIT (6)
+#define RTM_MAIN_DIDO_STATE_BIT (7)
+#define RTM_MAIN_RESET_STATE_BIT (8)
+#define RTM_MAIN_MEMORY_STATE_BIT (9)
+#define RTM_MAIN_RECORD_STATE_BIT (10)
         manage_info_t manage_info;
         app_data_record_t app_data_record;
 
         rtm_fault_check_t fault_check;
         interlock_table_t interlock_table;
-
+        app_state_table_t app_state_table;
         uint16_t PLC_info;
         uint32_t interlock_override;
         uint32_t unready_override;

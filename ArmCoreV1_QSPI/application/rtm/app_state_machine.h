@@ -127,23 +127,35 @@ typedef struct app_serious_interlock_table
     uint32_t rtm_off_link : 1;
     uint32_t reserved : 22;
     uint32_t RTC_WD_OK : 1;
-} app_serious_interlock_table_t;
-
+} app_interlock_table_t;
 
     typedef struct app_interlock_table
     {
         app_not_ready_event_table_t not_ready_event;
-        uint32_t warning_interlock;
-        uint32_t minor_interlock;
-        app_serious_interlock_table_t serious_interlock;
+        app_interlock_table_t warning_interlock;
+        app_interlock_table_t minor_interlock;
+        app_interlock_table_t serious_interlock;
     } interlock_table_t;
 
+    typedef struct app_state_table
+    {
+        uint32_t rtm_main_state;
+        uint32_t icm_state;
+        uint32_t bgm_state;
+        uint32_t qam_state;
+        uint32_t bsm_state;
+        uint32_t rtm_off_state;
+        uint32_t plc_state;
+        uint32_t dido_state;
+        uint32_t data_record;
+    }app_state_table_t;
     typedef struct rtm_fault_check
     {
         uint32_t cur_time;
         uint32_t last_time;
         uint8_t fault_clear_flag;
         interlock_table_t interlock_table;
+        app_state_table_t app_state_table;
     } rtm_fault_check_t;
 
     typedef enum RtmSignals rtm_state_t;

@@ -80,6 +80,20 @@ static int8_t rtm_state_get(int argc, char *argv[])
 MSH_CMD_EXPORT_ALIAS(rtm_state_get, rtm_state_get, rtm state get);
 #endif
 
+static void module_tx_queue_state_bit_set(osMessageQueueId_t queue_id)
+{
+    if (queue_id == NULL)
+    {
+        return;
+    }
+    for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
+    {
+        if (queue_id == app_rtm.rtm_module_info[i].module_queue)
+        {
+            bit_set(app_rtm.rtm_module_info[i].manage_info.status_word, MODULE_TX_QUEUE_STATE_BIT);
+        }
+    }
+}
 #define RTM_MAIN_THREAD_CYCLE_MS (1)
 static void app_rtm_main_thread(void *argument)
 {
@@ -135,6 +149,8 @@ static void app_rtm_main_thread(void *argument)
                     }
                     break;
                 }
+                default:
+                    break;
                 }
                 break;
             }
@@ -210,6 +226,8 @@ static int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID,
     osStatus_t status = osMessageQueuePut(queue_id, &queue_frame, 0, 0);
     if (status != osOK)
     {
+        module_tx_queue_state_bit_set(queue_id);
+        LOG_E("RTM module tx queue full, ID:%d, cmd:%d, len:%d\r\n", ID, cmd, len);
         return -2;
     }
     return 0;
@@ -239,6 +257,14 @@ int32_t app_data_record_from_ethercat(rtm_module_info_t *self, uint32_t ID, uint
 void app_rtm_event_output_set(void)
 {
     osEventFlagsSet(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT);
+}
+void app_rtm_ethercat_state_op_set(void)
+{
+    bit_set(app_rtm.rtm_ethercat_info.manage_info.status_word, ETHERCAT_OP_STATE_BIT);
+}
+void app_rtm_ethercat_state_op_clean(void)
+{
+    bit_clean(app_rtm.rtm_ethercat_info.manage_info.status_word, ETHERCAT_OP_STATE_BIT);
 }
 enum
 {
@@ -595,6 +621,10 @@ static void app_ethercat_rx_thread(void *argument)
     for (;;)
     {
         ret = osEventFlagsWait(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT, osFlagsWaitAny, 500);
+        if (self->tx_disable == MODULE_TX_DISABLE)
+        {
+            continue;
+        }
         if (ret & APP_RTM_EVENT_FLAG_OUTPUT)
         {
             ethercat_recv_data_get((uint16_t *)&output_data, sizeof(TOBJ7010));
@@ -610,11 +640,16 @@ static void app_ethercat_rx_thread(void *argument)
         current_time = osKernelGetTickCount();
         if (current_time - last_time > 1000)
         {
-            // LOG_I("%s unlink\r\n", self->module_name);
-            bit_set(app_rtm.rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
+            last_time = current_time;
+            if (bit_get(self->manage_info.status_word, MODULE_LINK_STATE_BIT) == 0)
+            {
+                bit_set(self->manage_info.status_word, MODULE_LINK_STATE_BIT);
+                LOG_E("%s ethercat unlink state\r\n", self->module_name);
+            }
         }
     }
 exit:
+    bit_set(self->manage_info.status_word, MODULE_RX_INIT_BIT);
     osThreadExit();
 }
 
@@ -631,7 +666,7 @@ static void app_ethercat_tx_thread(void *argument)
     TOBJ6000 input_data = {0};
     for (;;)
     {
-        status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 500);
+        status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 100);
         if (status == osOK)
         {
             app_data_record(self->app_data_record, self->ID, &queue_frame.payload, queue_frame.length);
@@ -647,6 +682,7 @@ static void app_ethercat_tx_thread(void *argument)
         }
     }
 exit:
+    bit_set(self->manage_info.status_word, MODULE_TX_INIT_BIT);
     osThreadExit();
 }
 
@@ -693,11 +729,11 @@ int32_t uart_protocol_heartbeat_rx_callback(struct uart_protocol *const self,
         LOG_E("%s heartbeat rx len err!\r\n", rtm_module_info->module_name);
     }
 
-    if (memcmp(&(rtm_module_info->heartbeat_info_rx), heartbeat, sizeof(heartbeat_t)) != 0)
-    {
-        LOG_E("%s heartbeat rx err!\r\n", rtm_module_info->module_name);
-    }
-    
+    // if (memcmp(&(rtm_module_info->heartbeat_info_rx), heartbeat, sizeof(heartbeat_t)) != 0)
+    // {
+    //     LOG_E("%s heartbeat rx err!\r\n", rtm_module_info->module_name);
+    // }
+
     app_rtm_thread_flag_set(rtm_module_info->module_thread_flags);
     return 0;
 }
@@ -739,6 +775,7 @@ static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                 status = osMessageQueuePut(self->queue_group[i], &queue_frame, 0, 0);
                 if (status != osOK)
                 {
+                    module_tx_queue_state_bit_set(self->queue_group[i]);
                     LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
                 }
             }
@@ -756,6 +793,7 @@ static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                     status = osMessageQueuePut(self->queue_group[i], &queue_frame, 0, 0);
                     if (status != osOK)
                     {
+                        module_tx_queue_state_bit_set(self->queue_group[i]);
                         LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
                     }
                 }
@@ -835,6 +873,7 @@ static void app_module_rx_thread(void *argument)
         ret = uart_protocol_recv(&self->uart_protocol, data, &len, 0xFFFFFFFF);
         if (ret != 0)
         {
+            bit_set(self->manage_info.status_word, MODULE_RX_STATE_BIT);
             LOG_E("%s recv error, ret = %d\r\n", self->module_name, ret);
             continue;
         }
@@ -851,6 +890,8 @@ static void app_module_rx_thread(void *argument)
         }
     }
 exit:
+    bit_set(self->manage_info.status_word, MODULE_RX_INIT_BIT);
+    LOG_E("%s rx thread exit\r\n", self->module_name);
     osThreadExit();
 }
 
@@ -917,10 +958,11 @@ static void app_module_tx_thread(void *argument)
         status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 0xFFFFFFFF);
         if (status != osOK)
         {
+            bit_set(self->manage_info.status_word, MODULE_TX_STATE_BIT);
             LOG_E("%s queue get error, status = %d\r\n", self->module_name, status);
             continue;
         }
-        if(self->tx_disable == MODULE_TX_DISABLE)
+        if (self->tx_disable == MODULE_TX_DISABLE)
         {
             continue;
         }
@@ -932,12 +974,14 @@ static void app_module_tx_thread(void *argument)
         ret = uart_protocol_send(&self->uart_protocol, (uint8_t *)&queue_frame, queue_frame.length, 100);
         if (ret != 0)
         {
-            bit_set(self->manage_info.status_word, MODULE_LINK_STATE_BIT);
+            bit_set(self->manage_info.status_word, MODULE_TX_STATE_BIT);
             LOG_E("%s send error, ret = %d\r\n", self->module_name, ret);
             continue;
         }
     }
 exit:
+    bit_set(self->manage_info.status_word, MODULE_TX_INIT_BIT);
+    LOG_E("%s tx thread exit\r\n", self->module_name);
     osThreadExit();
 }
 int app_rtm_data_handle_create(void)
@@ -999,7 +1043,7 @@ int app_rtm_data_handle_create(void)
     // self->rtm_module_info[RTM_MODULE_BSM].module_thread_flags = APP_RTM_THREAD_FLAG_BSM_READY;
     self->rtm_module_info[RTM_MODULE_RTM_OFF].module_thread_flags = APP_RTM_THREAD_FLAG_RTM_OFF_READY;
 
-        self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].tx_disable = MODULE_TX_DISABLE;
     self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].tx_disable = MODULE_TX_DISABLE;
     self->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_DISABLE;
     self->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_DISABLE;
@@ -1038,7 +1082,8 @@ int app_rtm_data_handle_create(void)
     ret = app_data_record_init(&self->app_data_record);
     if (ret != 0)
     {
-        return -2;
+        bit_set(self->app_data_record.manage_info.status_word, RECORD_PERIPHERAL_INIT_BIT);
+        LOG_E("app_data_record_init error, ret = %d\r\n", ret);
     }
     for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
     {
@@ -1047,8 +1092,8 @@ int app_rtm_data_handle_create(void)
     ret = ethercat_thread_init();
     if (ret != 0)
     {
-        bit_set(self->rtm_ethercat_info.manage_info.status_word, ETHERCAT_SLAVE_INIT_BIT);
-        return -1;
+        bit_set(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word, MODULE_PERIPHERAL_INIT_BIT);
+        LOG_E("ethercat_thread_init error, ret = %d\r\n", ret);
     }
     osEventFlagsAttr_t event_attributes = {
         .name = "output_event"};
@@ -1056,13 +1101,15 @@ int app_rtm_data_handle_create(void)
     self->ethercat_Event = osEventFlagsNew(&event_attributes);
     if (self->ethercat_Event == NULL)
     {
-        return -1;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("osEventFlagsNew error\r\n");
     }
 
     ret = app_dido_create(&self->app_dido);
     if (ret != 0)
     {
-        return -1;
+        bit_set(self->manage_info.status_word, RTM_MAIN_DIDO_STATE_BIT);
+        LOG_E("app_dido_create error, ret = %d\r\n", ret);
     }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_ICM].uart_protocol,
                              UART_DEV_NAME_UART5,
@@ -1071,7 +1118,8 @@ int app_rtm_data_handle_create(void)
                              10000);
     if (ret != 0)
     {
-        return -2;
+        bit_set(self->rtm_module_info[RTM_MODULE_ICM].manage_info.status_word, MODULE_PERIPHERAL_INIT_BIT);
+        LOG_E("icm uart_protocol_init error, ret = %d\r\n", ret);
     }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_BGM].uart_protocol,
                              UART_DEV_NAME_USART3,
@@ -1080,7 +1128,8 @@ int app_rtm_data_handle_create(void)
                              10000);
     if (ret != 0)
     {
-        return -3;
+        bit_set(self->rtm_module_info[RTM_MODULE_BGM].manage_info.status_word, MODULE_PERIPHERAL_INIT_BIT);
+        LOG_E("bgm uart_protocol_init error, ret = %d\r\n", ret);
     }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_QAM].uart_protocol,
                              UART_DEV_NAME_UART7,
@@ -1089,7 +1138,8 @@ int app_rtm_data_handle_create(void)
                              10000);
     if (ret != 0)
     {
-        return -4;
+        bit_set(self->rtm_module_info[RTM_MODULE_QAM].manage_info.status_word, MODULE_PERIPHERAL_INIT_BIT);
+        LOG_E("qam uart_protocol_init error, ret = %d\r\n", ret);
     }
     // ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_BSM].uart_protocol,
     //                          UART_DEV_NAME_UART4,
@@ -1098,7 +1148,8 @@ int app_rtm_data_handle_create(void)
     //                          10000);
     // if (ret != 0)
     // {
-    //     return -5;
+    //     bit_set(self->rtm_module_info[RTM_MODULE_BSM].manage_info.status_word, MODULE_PERIPHERAL_INIT_BIT);
+    //     LOG_E("bsm uart_protocol_init error, ret = %d\r\n", ret);
     // }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_RTM_OFF].uart_protocol,
                              UART_DEV_NAME_USART2,
@@ -1107,18 +1158,19 @@ int app_rtm_data_handle_create(void)
                              10000);
     if (ret != 0)
     {
-        printf("uart_protocol_init error, ret = %d", ret);
-        return -6;
+        bit_set(self->rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word, MODULE_PERIPHERAL_INIT_BIT);
+        LOG_E("rtm_off uart_protocol_init error, ret = %d\r\n", ret);
     }
     for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
     {
         osMessageQueueAttr_t queue_attributes = {
             .name = self->rtm_module_info[i].module_name,
         };
-        self->rtm_module_info[i].module_queue = osMessageQueueNew(5, sizeof(queue_frame_t), NULL);
+        self->rtm_module_info[i].module_queue = osMessageQueueNew(10, sizeof(queue_frame_t), NULL);
         if (self->rtm_module_info[i].module_queue == NULL)
         {
-            return -7;
+            bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+            LOG_E("osMessageQueueNew error, module_name = %s\r\n", self->rtm_module_info[i].module_name);
         }
         for (uint8_t j = 0; j < RTM_MODULE_MAX; j++)
         {
@@ -1132,7 +1184,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_ethercat_rx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -8;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_ethercat_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_ethercat_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1140,7 +1193,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_ethercat_tx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -9;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_ethercat_tx_thread create error\r\n");
     }
     thread_attributes.name = "app_rtm_main_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1148,7 +1202,8 @@ int app_rtm_data_handle_create(void)
     app_rtm_main_threadId = osThreadNew(app_rtm_main_thread, self, &thread_attributes);
     if (app_rtm_main_threadId == NULL)
     {
-        return -8;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_rtm_main_thread create error\r\n");
     }
     thread_attributes.name = "app_icm_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1156,15 +1211,17 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_ICM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -10;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_icm_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_icm_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
-    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_ICM].module_priority;
+    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_ICM].module_priority + 1;
     threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_ICM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -11;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_icm_tx_thread create error\r\n");
     }
     thread_attributes.name = "app_bgm_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1172,15 +1229,17 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_BGM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -12;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_bgm_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_bgm_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
-    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_BGM].module_priority;
+    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_BGM].module_priority + 1;
     threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_BGM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -13;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_bgm_tx_thread create error\r\n");
     }
     thread_attributes.name = "app_qam_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1188,15 +1247,17 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_QAM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -14;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_qam_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_qam_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
-    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_QAM].module_priority;
+    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_QAM].module_priority + 1;
     threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_QAM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -15;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_qam_tx_thread create error\r\n");
     }
     // thread_attributes.name = "app_bsm_rx_thread";
     // thread_attributes.stack_size = 1024 * 4;
@@ -1204,15 +1265,17 @@ int app_rtm_data_handle_create(void)
     // threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_BSM]), &thread_attributes);
     // if (threadHandle == NULL)
     // {
-    //     return -16;
+    // bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+    // LOG_E("app_bsm_rx_thread create error\r\n");
     // }
     // thread_attributes.name = "app_bsm_tx_thread";
     // thread_attributes.stack_size = 1024 * 4;
-    // thread_attributes.priority = self->rtm_module_info[RTM_MODULE_BSM].module_priority;
+    // thread_attributes.priority = self->rtm_module_info[RTM_MODULE_BSM].module_priority + 1;
     // threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_BSM]), &thread_attributes);
     // if (threadHandle == NULL)
     // {
-    //     return -17;
+    // bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+    // LOG_E("app_bsm_tx_thread create error\r\n");
     // }
     thread_attributes.name = "app_rtm_off_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1220,15 +1283,17 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_OFF]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -18;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_rtm_off_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_rtm_off_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
-    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_RTM_OFF].module_priority;
+    thread_attributes.priority = self->rtm_module_info[RTM_MODULE_RTM_OFF].module_priority + 1;
     threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_OFF]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -19;
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("app_rtm_off_tx_thread create error\r\n");
     }
     return 0;
 }
@@ -1316,4 +1381,25 @@ usage:
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(dido_test, dido_test, dido test);
+#endif
+
+#define RTM_STATUS_TEST
+#ifdef RTM_STATUS_TEST
+#include "shell.h"
+#include "ulog.h"
+
+int8_t rtm_status_test(uint8_t argc, uint8_t **argv)
+{
+    LOG_I("RTM_STATUS_TEST\r\n");
+    LOG_I("rtn_main:0x%x\r\n", app_rtm.manage_info.status_word);
+    LOG_I("RTM_MODULE_ICM:0x%x\r\n", app_rtm.rtm_module_info[RTM_MODULE_ICM].manage_info.status_word);
+    LOG_I("RTM_MODULE_BGM:0x%x\r\n", app_rtm.rtm_module_info[RTM_MODULE_BGM].manage_info.status_word);
+    LOG_I("RTM_MODULE_QAM:0x%x\r\n", app_rtm.rtm_module_info[RTM_MODULE_QAM].manage_info.status_word);
+    // LOG_I("RTM_MODULE_BSM:0x%x\r\n", app_rtm.rtm_module_info[RTM_MODULE_BSM].manage_info.status_word);
+    LOG_I("RTM_MODULE_RTM_OFF:0x%x\r\n", app_rtm.rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word);
+    LOG_I("RTM_MODULE_RTM_ON_PLC:0x%x\r\n", app_rtm.rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word);
+    LOG_I("RTM_MODULE_RTM_ON_ARM:0x%x\r\n", app_rtm.rtm_module_info[RTM_MODULE_RTM_ON_ARM].manage_info.status_word);
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(rtm_status_test, rtm_status_test, rtm status test);
 #endif

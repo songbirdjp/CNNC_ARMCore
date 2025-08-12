@@ -18,7 +18,7 @@
 #include "ulog.h"
 #include "rtm_main.h"
 
-static uint8_t data_record_buf[DATA_RECORD_DATA_ITEM][DATA_RECORD_DATA_SIZE] __attribute__((section(".sdram_ext"))) = {0};
+static uint8_t data_record_buf[DATA_RECORD_DATA_ITEM][DATA_RECORD_DATA_SIZE] __attribute__((section(".sdram_ext"), aligned(4))) = {0};
 
 static int32_t init_data_fifo(data_fifo_t *self, uint8_t *fifo)
 {
@@ -60,19 +60,29 @@ static int32_t data_fifo_put(data_fifo_t *self, uint8_t *data, uint32_t len)
     {
         return -1;
     }
+    // Ensure 4-byte aligned access
+    uint32_t aligned_len = (len + 3) & ~0x03; // Round up to nearest multiple of 4
+    uint8_t *dst = self->fifo + (self->fifo_in * DATA_RECORD_DATA_SIZE);
+
     osMutexAcquire(self->mutex, osWaitForever);
     if (data_fifo_is_full(self))
     {
         self->fifo_out = (self->fifo_out + 1) % DATA_RECORD_DATA_ITEM;
-        memcpy(self->fifo + (self->fifo_in * DATA_RECORD_DATA_SIZE), data, len);
     }
-    else
+
+    // Use word-aligned copy
+    uint32_t *dst32 = (uint32_t *)dst;
+    uint32_t *src32 = (uint32_t *)data;
+    for (uint32_t i = 0; i < aligned_len / 4; i++)
     {
-        memcpy(self->fifo + (self->fifo_in * DATA_RECORD_DATA_SIZE), data, len);
+        dst32[i] = src32[i];
     }
     self->fifo_item_size[self->fifo_in] = len;
     self->fifo_in = (self->fifo_in + 1) % DATA_RECORD_DATA_ITEM;
-    self->fifo_space--;
+    if (self->fifo_space > 0)
+    {
+        self->fifo_space--;
+    }
     osMutexRelease(self->mutex);
     return 0;
 }
@@ -315,11 +325,11 @@ int32_t app_data_record(app_data_record_t *self, uint32_t ID, void *data, uint32
     pbuf += sizeof(uint64_t);
     memcpy(pbuf, data, datalen);
 
-    ret = data_fifo_put(&self->data_fifo, self->txdata, totallen);
-    if (ret != 0)
-    {
-        return -3;
-    }
+    // ret = data_fifo_put(&self->data_fifo, self->txdata, totallen);
+    // if (ret != 0)
+    // {
+    //     return -3;
+    // }
     osThreadFlagsSet(tid, TID_FLAG);
     return 0;
 }

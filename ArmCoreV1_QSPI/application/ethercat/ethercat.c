@@ -96,7 +96,12 @@ int8_t ethercat_recv_data_update_with_block(uint32_t timeout)
 
     return 0;
 }
-
+int16_t ethercat_state_get(void)
+{
+    uint16_t WordValue = 0;
+    HW_EscReadWord(WordValue, 0x130);
+    return (int16_t)WordValue;
+}
 int8_t ethercat_send_data_update(uint16_t *buf, uint16_t len) /* slave to master */
 {
     if (buf == NULL)

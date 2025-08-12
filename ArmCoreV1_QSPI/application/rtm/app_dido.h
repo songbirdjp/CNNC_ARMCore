@@ -93,6 +93,9 @@ extern "C"
 
     typedef struct app_dido
     {
+#define DIDO_DI_INIT_BIT (0)
+#define DIDO_DO_INIT_BIT (1)
+#define DIDO_LINK_STATE_BIT (2)
         manage_info_t manage_info;
 
         osThreadId_t do_thread_id;
@@ -100,7 +103,6 @@ extern "C"
         dido_structure_t dido_structure_temp;
 
         dido_structure_t dido_structure;
-        dido_structure_t dido_enable_mask;
 
         device_t *di_mcp23017_0x00;
         device_t *di_mcp23017_INT0;

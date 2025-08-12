@@ -259,15 +259,11 @@ static void app_di_poll_entry(void *argument)
                                  1000);
         if (device_err != DEV_EOK)
         {
-            self->dido_enable_mask.mcp23017_0x00_u.mcp23017_0x00 = 0x00;
+            bit_set(self->manage_info.status_word, DIDO_LINK_STATE_BIT);
             LOG_I("read mcp23017 fail, errorCode:%d\r\n", device_err);
             device_ioctl(self->di_mcp23017_0x00,
                          I2C_CMD_INIT,
                          NULL);
-        }
-        else
-        {
-            self->dido_enable_mask.mcp23017_0x00_u.mcp23017_0x00 = 0xff;
         }
         /*读取gpio di*/
         device_err = device_read(self->di_gpio_gating,
@@ -342,6 +338,7 @@ static void app_di_poll_entry(void *argument)
         osDelay(10);
     }
 exit:
+    bit_set(self->manage_info.status_word, DIDO_DI_INIT_BIT);
     osThreadExit();
 }
 /**
@@ -539,6 +536,7 @@ static void app_do_entry(void *argument)
         }
     }
 exit:
+    bit_set(self->manage_info.status_word, DIDO_DO_INIT_BIT);
     osThreadExit();
 }
 /**
