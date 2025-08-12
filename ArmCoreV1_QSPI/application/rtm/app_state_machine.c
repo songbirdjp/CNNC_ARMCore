@@ -536,8 +536,8 @@ static State_t module_idle(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
@@ -1347,6 +1347,9 @@ static State_t module_mv_complete(void *self, Event_t const *const e)
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
         // LOG_I("module_mv_complete enter\r\n");
@@ -2573,6 +2576,9 @@ static State_t module_kv_complete(void *self, Event_t const *const e)
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.tca9535_0x04_u.tca9535_0x04_bit.DO_RadiationIndicator = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
         // LOG_I("module_kv_complete enter\r\n");
