@@ -673,7 +673,7 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
         case 0x02:
             struct control_para *obj = control_data_get();
             osMutexAcquire(obj->mutex, osWaitForever);
-            // obj->radiation_ctrl.radiation_enable = cmd->data[2] & 0x01;
+            obj->radiation_ctrl.radiation_enable = cmd->data[2] & 0x01;
             osMutexRelease(obj->mutex);
             break;
         default:
@@ -1118,7 +1118,8 @@ enum uart_cmd_type
     UART_CMD_PARA_GET_ACK = 0x80 | UART_CMD_PARA_GET,
     UART_CMD_DATA_SET_ACK = 0x80 | UART_CMD_DATA_SET,
     UART_CMD_DATA_GET_ACK = 0x80 | UART_CMD_DATA_GET,
-    UART_CMD_SYSTEM_RESRT = 0xEB,
+    UART_CMD_SYSTEM_RESET = 0xEB,
+    UART_CMD_FRAME_CRC_ERROR = 0xFF,
 };
 
 static osEventFlagsId_t uart_rx_event_id = NULL;
@@ -1217,11 +1218,11 @@ static int8_t link_status_entry(void *argument)
         {
             if (event_flags & UART_RX_HEARTBEAT_TIMEOUT_EVENT)
             {
-
+                LOG_E("recv heartbeat timeout\r\n");
             }
             else if (event_flags & UART_RX_HEARTBEAT_CMD_EVENT)
             {
-
+                // LOG_I("recv heartbeat cmd\r\n");
             }
             else if (event_flags & UART_RX_REBOOT_CMD_EVENT)
             {

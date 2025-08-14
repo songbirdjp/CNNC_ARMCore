@@ -607,6 +607,15 @@ static int8_t radiation_data_value_set(enum radiation_data_state state, uint64_t
         obj->ri_time.ri_elapse_time = value;
         osMutexRelease(obj->mutex);
         break;
+    case RADIATION_ENABLE:
+        stat = osMutexAcquire(obj->control_data->mutex, MUTEX_TIMEOUT_MS);
+        if (stat != osOK)
+        {
+            os_tool_mutex_holder_get(obj->control_data->mutex);
+        }
+        obj->control_data->radiation_ctrl.radiation_enable = value;
+        osMutexRelease(obj->control_data->mutex);
+        break;
     default:
         ret = -1;
         LOG_E("invalid radiation data state: %d\r\n", state);
@@ -1014,7 +1023,7 @@ static int8_t time_delay_entry(void *argument)
     uint8_t type = 0;
     uint32_t event_flag = 0, interval_us = 0, time_diff = 0;
     enum fsm_state fsm_state_cur = FSM_STATE_MAX;
-    uint8_t trigger_out_flag = 0, trigger_out_enable = 0;
+    uint8_t trigger_out_flag = 0;
     enum dose_board board_id = DOSE_BOARD_MAX;
 
     MX_TIM5_Init();
@@ -1033,11 +1042,10 @@ static int8_t time_delay_entry(void *argument)
         trigger_out_flag = trigger_out_info_get(TRIGGER_OUT_FLAG);
         board_id = radiation_data_value_get(DOSE_BOARD_ID);
         interval_us = trigger_out_info_get(TRIGGER_OUT_INTERVAL);
-        trigger_out_enable = radiation_data_value_get(RADIATION_ENABLE);
 
         if (event_flag & TIM_DELAY_PULSE_INTERVAL)
         {
-            if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1 && trigger_out_enable == 1)
+            if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1)
             {
                 ret = dose_value_status_update(ONE_PULSE_START, 0, 0, 0);
                 if (ret != 0)
@@ -1099,7 +1107,7 @@ static int8_t time_delay_entry(void *argument)
             ret = dose_interpolation_check(&type, &interval_us, NORMAL_PULSE_RESET_DELAY_TIME_US);
 #endif
             /* prepare for next pulse */
-            if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1 && trigger_out_enable == 1)
+            if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1)
             {
 #ifdef RADIATION_FIX_RATE_SIMULATE
                 // uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1);
@@ -1169,7 +1177,7 @@ static int8_t time_delay_entry(void *argument)
         else if (event_flag & TIM_DELAY_NO_PULSE_INTERVAL)
         {
             /* prepare for next pulse */
-            if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1 && trigger_out_enable == 1)
+            if (fsm_state_cur == FSM_STATE_WORK && trigger_out_flag == 1)
             {
 #ifdef RADIATION_FIX_RATE_SIMULATE
                 // uint64_t dose_accumulated_cur = dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) + dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1);
@@ -1825,7 +1833,7 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt, uint16_t len)
                 return ret;
             }
 
-            ret = fsm_state_switch(FSM_STATE_PRELIMINARY);
+            ret = fsm_state_get() == FSM_STATE_PRELIMINARY_BEGIN ? fsm_state_switch(FSM_STATE_PRELIMINARY) : fsm_state_switch(FSM_STATE_TERMINATE);
         }
         else
         {
@@ -2327,14 +2335,6 @@ static int8_t detect_whether_one_pulse_repeat(void)
     }
     else if (fsm_state_cur == FSM_STATE_WORK)
     {
-        if (deliver_type == DELIVER_TYPE_SWIMRT || deliver_type == DELIVER_TYPE_CRT)
-        {
-            if (radiation_data_value_get(RADIATION_ENABLE) != 1)
-            {
-                return 0;
-            }
-        }
-
         /* delay to prepare a new pulse */
         if (trigger_out_info_get(TRIGGER_OUT_FLAG) == 0)
         {
@@ -2350,6 +2350,10 @@ static int8_t detect_whether_one_pulse_repeat(void)
                 break;
             case DELIVER_TYPE_SWIMRT:
             case DELIVER_TYPE_CRT:
+                if (radiation_data_value_get(RADIATION_ENABLE) != 1)
+                {
+                    return 0;
+                }
                 // LOG_I("---start radiation index---\r\n");
                 ret = dose_radiation_index_update(0);
                 if (ret != 0)
@@ -2467,6 +2471,12 @@ static int8_t detect_whether_one_pulse_repeat(void)
             return ret;
         }
         ret = radiation_data_value_set(DOSE_CONTROL_POINT_PREV_RADIATION_IDX, 0);
+        if (ret != 0)
+        {
+            LOG_E("radiation data value set err: %d\r\n", ret);
+            return ret;
+        }
+        ret = radiation_data_value_set(RADIATION_ENABLE, 0);
         if (ret != 0)
         {
             LOG_E("radiation data value set err: %d\r\n", ret);
