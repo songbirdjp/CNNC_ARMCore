@@ -1,0 +1,43 @@
+set(current_path ${CMAKE_CURRENT_LIST_DIR})
+
+set(include_path ${include_path}
+    "${current_path}/adc" 
+    "${current_path}/bdma" 
+    "${current_path}/crc" 
+    "${current_path}/dma" 
+    # "${current_path}/fdcan" 
+    "${current_path}/flash" 
+    # "${current_path}/fmc" 
+    "${current_path}/gpio" 
+    # "${current_path}/i2c" 
+    "${current_path}/iwdg" 
+    "${current_path}/lptim" 
+    "${current_path}/mdma" 
+    # "${current_path}/octospi" 
+    "${current_path}/rtc" 
+    "${current_path}/spi" 
+    "${current_path}/tim" 
+    "${current_path}/usart" 
+    "${current_path}/wwdg" 
+    PARENT_SCOPE)
+
+set(src_path ${src_path}
+    "${current_path}/adc/*.*" 
+    "${current_path}/bdma/*.*" 
+    "${current_path}/crc/*.*" 
+    "${current_path}/dma/*.*" 
+    # "${current_path}/fdcan/*.*" 
+    "${current_path}/flash/*.*" 
+    # "${current_path}/fmc/*.*" 
+    "${current_path}/gpio/*.*" 
+    # "${current_path}/i2c/*.*" 
+    "${current_path}/iwdg/*.*" 
+    "${current_path}/lptim/*.*" 
+    "${current_path}/mdma/*.*" 
+    # "${current_path}/octospi/*.*" 
+    "${current_path}/rtc/*.*" 
+    "${current_path}/spi/*.*" 
+    "${current_path}/tim/*.*" 
+    "${current_path}/usart/*.*" 
+    "${current_path}/wwdg/*.*" 
+    PARENT_SCOPE)
