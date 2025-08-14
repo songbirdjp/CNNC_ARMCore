@@ -56,6 +56,7 @@ V5.01 : Start file change log
 #define ESC_SM_CHANNELS_SHIFT                   8                                    /**< \brief Bit shift based on ESC offset "ESC_COMM_INFO_OFFSET"*/
 #define ESC_DPRAM_SIZE_MASK                     0x00FF0000                          /**< \brief Mask based on ESC offset "ESC_COMM_INFO_OFFSET"*/
 #define ESC_DPRAM_SIZE_SHIFT                    16                                   /**< \brief Bit shift based on ESC offset "ESC_COMM_INFO_OFFSET"*/
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 59 to 68 deleted*/
 
 #define ESC_FEATURES_OFFSET                     0x0008                              /**< \brief Register indicating ESC features*/
 #define ESC_DC_32BIT_MASK                       0x00000008                          /**< \brief register 0x0008.3 indicates if the DC Unit supports 32Bit/64Bit DC*/
@@ -75,10 +76,12 @@ V5.01 : Start file change log
 
 #define ESC_PDI_CONTROL_OFFSET                  0x0140                              /**< \brief Register Description: Specifies the process data interface*/
 #define ESC_DEVICE_EMULATION                    0x00000100                          /**< \brief Device emulation bit*/
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 91 to 93 deleted*/
 
 #define ESC_PDI_CONFIGURATION					0x0150								/**< \brief Register Description: PDI configuration register (values defined by the ESC configuration data)*/
 #define ESC_SYNC0_MAPPED_TO_ALEVENT				0x0800								/**< \brief bit indicating if the Sync0 event is mapped to the AL Event register*/
 #define ESC_SYNC1_MAPPED_TO_ALEVENT				0x8000								/**< \brief bit indicating if the Sync1 event is mapped to the AL Event register*/
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS || ESC_16BIT_ACCESS #else) lines 99 to 103 deleted*/
 
 
 #define ESC_AL_EVENTMASK_OFFSET                 0x0204                              /**< \brief Register Description: AL Event masking of the AL Event Request register Events for mapping to PDI IRQ signal*/
@@ -89,6 +92,7 @@ V5.01 : Start file change log
 #define ESC_PD_WD_TIME                          0x0420                              /**< \brief Register Description: Number of basic watchdog increments (Default value with Watchdog divider 100us means 100ms Watchdog)*/
 #define ESC_PD_WD_STATE                         0x0440                              /**< \brief Register Description: Watchdog Status of Process Data (triggered by SyncManagers)*/
 #define ESC_PD_WD_TRIGGER_MASK                  0x00000001                          /**< \brief Trigger state of the process data watchdog*/
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 115 to 117 deleted*/
 
 #define ESC_EEPROM_CONFIG_OFFSET                0x0500                              /**< \brief Register Description: EEPROM Access Configuration*/
 #define ESC_EEPROM_CONFIG_MASK                  0x0000FFFF                          /**< \brief Mask to get EEPROM config value (based on 0x0500)*/
@@ -108,14 +112,18 @@ V5.01 : Start file change log
 #define ESC_EEPROM_ERROR_CMD_ACK                0x20000000                          /**< \brief Description (0x502.13): EEPROM Acknowledge/Command*/
 #define ESC_EEPROM_BUSY_MASK                    0x80000000                          /**< \brief Description (0x502.15): EEPROM Busy*/
 
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 138 to 157 deleted*/
 #define ESC_EEPROM_ADDRESS_OFFSET               0x0504
 #define ESC_EEPROM_DATA_OFFSET                  0x0508
 
 #define ESC_SYNCMAN_REG_OFFSET                  0x0800                              /**< \brief Register Description: Start address of the SyncManager Configuration/Staus registers*/
 #define ESC_SYNCMAN_CONTROL_OFFSET              0x0804                              /**< \brief Register Description: SyncManager Setting Register*/
 
+/*ET9300 Project Handler :(#if !ESC_32BIT_ACCESS && !ESC_16BIT_ACCESS) lines 164 to 166 deleted*/
 
+/*ET9300 Project Handler :(#if !ESC_32BIT_ACCESS) lines 168 to 170 deleted*/
 
+/*ET9300 Project Handler :(#if !ESC_32BIT_ACCESS && !ESC_16BIT_ACCESS) lines 172 to 174 deleted*/
 
 #define    ESC_SYSTEMTIME_OFFSET                0x0910                              /**< \brief Register Description: Local copy of the System Time*/
 
@@ -125,6 +133,7 @@ V5.01 : Start file change log
 #define ESC_DC_SYNC1_ACTIVE_MASK                0x00000400                          /**< \brief Description (0x980.10): Sync1 generation is activated*/
 #define ESC_DC_SYNC_UNIT_AUTO_ACTIVE_MASK       0x00000800                          /**< \brief Description (0x980.11): Sync Out Unit is activated automatic when System time was written*/
 #define ESC_DC_SYNC_ACTIVATION_MASK             0x0000FFFF
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 185 to 196 deleted*/
 
 #define    ESC_DC_SYNC_STATUS		            0x098C                              /**< \brief Register Description: register 0x98E and 0x98F reflecting the status of Sync0 and Sync1*/
 
@@ -132,6 +141,7 @@ V5.01 : Start file change log
 #define ESC_DC_SYNC1_CYCLETIME_OFFSET           0x09A4                              /**< \brief Register Description: 32Bit Time between two consecutive SYNC1 pulses in ns*/
 
 
+/*ET9300 Project Handler :(#if FC1100_HW) lines 205 to 207 deleted*/
 
 
 /*---------------------------------------------
@@ -181,10 +191,12 @@ typedef struct STRUCT_PACKED_START
 #define SM_SETTING_PDI_DISABLE              0x01000000            /**< \brief Bit0 of register 0x0807 (if 1 SM is disabled from PDI)*/
 #define SM_SETTING_REPEAT_ACK               0x02000000            /**< \brief Bit1 of register 0x0807*/
 
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 259 to 355 deleted*/
 }STRUCT_PACKED_END
 TSYNCMAN;
 
 
+/*ET9300 Project Handler :(#if FC1100_HW) lines 361 to 363 deleted*/
 
 #endif //_ESC_H_
 /** @}*/

@@ -870,7 +870,7 @@ static int8_t uart_protocol_timerout_init(void)
     osThreadAttr_t attr = {
         .name = "uart_protocol_timer",
         .stack_size = 1024 * 4,
-        .priority = osPriorityNormal,
+        .priority = osPriorityAboveNormal1,
     };
     osThreadId_t thread_id = osThreadNew(uart_protocol_thread_entry, NULL, &attr);
     if (thread_id == NULL)

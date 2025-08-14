@@ -100,12 +100,14 @@ typedef struct MBX_STRUCT_PACKED_START
     UINT16                          Address; /**< \brief Address*/
 
     UINT16                          Flags[1]; /**< \brief Flags*/
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 105 to 112 deleted*/
     #define    MBX_OFFS_TYPE        0 /**< \brief Protocol type offset*/
     #define    MBX_MASK_TYPE        0x0F00 /**< \brief Protocol type mask*/
     #define    MBX_SHIFT_TYPE       8 /**< \brief Protocol type shift*/
     #define    MBX_OFFS_COUNTER     0 /**< \brief Protocol counter offset*/
     #define    MBX_MASK_COUNTER     0xF000 /**< \brief Protocol counter mask*/
     #define    MBX_SHIFT_COUNTER    12 /**< \brief Protocol counter shift*/
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 120 to 133 deleted*/
 }MBX_STRUCT_PACKED_END
 TMBXHEADER;
 
@@ -163,11 +165,13 @@ PROTO UINT16                  u16EscAddrReceiveMbx; /**< \brief Receive mailbox 
 PROTO UINT16                  u16EscAddrSendMbx; /**< \brief Send mailbox address (default SM1)*/
 PROTO UINT8                   u8MbxWriteCounter; /**< \brief Write mailbox counter*/
 PROTO UINT8                   u8MbxReadCounter; /**< \brief Read mailbox counter*/
+/*ET9300 Project Handler :(#if !MAILBOX_QUEUE) lines 193 to 195 deleted*/
 PROTO UINT8                   u8MailboxSendReqStored; /**< \brief Mailbox send request stored*/
 PROTO TMBX MBXMEM *           psWriteMbx; /**< \brief Pointer to write mailbox buffer*/
 PROTO TMBX MBXMEM *           psReadMbx; /**< \brief Pointer to read mailbox buffer*/
 PROTO TMBX MBXMEM *           psRepeatMbx; /**< \brief Pointer to repeat mailbox buffer*/
 PROTO TMBX MBXMEM *           psStoreMbx; /**< \brief Pointer to store mailbox buffer*/
+/*ET9300 Project Handler :(#if !MAILBOX_QUEUE) lines 201 to 203 deleted*/
 PROTO TMBXQUEUE MBXMEM        sMbxSendQueue; /**< \brief Send mailbox queue*/
 PROTO TMBXQUEUE MBXMEM        sMbxReceiveQueue; /**< \brief Receive mailbox queue*/
 

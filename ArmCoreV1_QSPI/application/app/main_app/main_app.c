@@ -12,6 +12,9 @@
 #include "io_port.h"
 #include "plan_data.h"
 #include "event_override.h"
+#include "dose_error.h"
+#include "eps_app.h"
+#include "vps_app.h"
 
 #define DATA_PROCESS_LAN_EVENT      (1<<0)
 #define DATA_PROCESS_TCP_EVENT      (1<<1)
@@ -184,19 +187,53 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
 
 
     send->InF_BeamOnTime = 0;
-    send->InF_PrimaryDoseTotalActual = dose_meter_value_get(BGM_UART_DOSE1);
-    send->InF_SecondaryDoseTotalActual = dose_meter_value_get(BGM_UART_DOSE2);
-    send->InF_PrimaryDoseRateActual = dose_rate_value_get(BGM_UART_DOSE1);
-    send->InF_SecondaryDoseRateActual = dose_rate_value_get(BGM_UART_DOSE2);
 
+    if (send->InU8_FsmState > BGM_STATE_IDLE && send->InU8_FsmState < BGM_STATE_WORK)
+    {
+        send->InF_PrimaryDoseTotalActual = 0.0f;
+        send->InF_SecondaryDoseTotalActual = 0.0f;
+        send->InF_PrimaryDoseRateActual = 0.0f;
+        send->InF_SecondaryDoseRateActual = 0.0f;
+    }
+    else
+    {
+        send->InF_PrimaryDoseTotalActual = dose_meter_value_get(BGM_UART_DOSE1);
+        send->InF_SecondaryDoseTotalActual = dose_meter_value_get(BGM_UART_DOSE2);
+        send->InF_PrimaryDoseRateActual = dose_rate_value_get(BGM_UART_DOSE1);
+        send->InF_SecondaryDoseRateActual = dose_rate_value_get(BGM_UART_DOSE2);
+    }
 
     send->InU8_DoseAFsmState = (uint8_t)dose_fsm_state_get(BGM_UART_DOSE1);
     send->InU8_DoseBFsmState = (uint8_t)dose_fsm_state_get(BGM_UART_DOSE2);
     send->InU32_DoseAInterlock = dose_interlock_get(BGM_UART_DOSE1);
     send->InU32_DoseBInterlock = dose_interlock_get(BGM_UART_DOSE2);
+    send->InU32_DoseAErrorCode = dose_err_info_get(BGM_UART_DOSE1);
+    send->InU32_DoseBErrorCode = dose_err_info_get(BGM_UART_DOSE2);
 
     send->InU32_AfcState = 0;
     send->InF_AfcPositionCurrent = afc_info_get(AFC_INFO_MAG_POSITION, NULL);
+
+    struct eps_status *eps_ptr = NULL, eps_state = {0};
+    eps_ptr = eps_state_get(&eps_state);
+    send->InF_EpsVersion = eps_ptr->software_version / 1000.0;
+    send->InU8_EpsRunStatus = eps_ptr->run_status;
+    send->InU8_EpsFaultStop = eps_ptr->fault_stop;
+    send->InU32_EpsFaultCode = eps_ptr->fault_code;
+    send->InF_EpsVoltageOutput = eps_ptr->voltage_output;
+    send->InF_EpsCurrentOutput = eps_ptr->current_output;
+    send->InF_EpsPowerOutput = eps_ptr->power_output;
+
+    struct vps_status *vps_ptr = NULL, vps_state = {0};
+    vps_ptr = vps_state_get(&vps_state);
+    send->InF_VpsVersion = vps_ptr->software_version / 1000.0;
+    send->InU8_VpsRunStatus = vps_ptr->run_status;
+    send->InU8_VpsFaultStop = vps_ptr->fault_stop;
+    send->InU32_VpsFaultCode = vps_ptr->fault_code;
+    send->InF_VpsVoltageOutput = vps_ptr->voltage_output;
+    send->InF_VpsCurrentOutput = vps_ptr->current_output;
+    send->InF_VpsPowerVoltage = vps_ptr->power_voltage;
+
+    send->InF_SF6Pressure = SF6_analog_value_get();
 
     return ret;
 }

@@ -100,6 +100,7 @@ V5.01 : Start file change log
 typedef struct MBX_STRUCT_PACKED_START
 {
     UINT16 Sdo[2]; /**< \brief 32Bit SDO header buffer*/
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 103 to 115 deleted*/
             #define     SDOHEADER_COMMANDOFFSET             0 /**< \brief Memory offset for the command*/
             #define     SDOHEADER_INDEXLOOFFSET             0 /**< \brief Memory offset for the low Byte of the object index*/
             #define     SDOHEADER_INDEXHIOFFSET             1 /**< \brief Memory offset for the high Byte of the object index*/
@@ -111,6 +112,7 @@ typedef struct MBX_STRUCT_PACKED_START
             #define     SDOHEADER_INDEXHIMASK               0xFF /**< \brief Mask to get the high byte of the object index*/
             #define     SDOHEADER_SUBINDEXSHIFT             8 /**< \brief Shift to get the subindex*/
             #define     SDOHEADER_SUBINDEXMASK              0xFF /**< \brief Mask to get the subindex*/
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 128 to 145 deleted*/
 }MBX_STRUCT_PACKED_END
 TINITSDOHEADER;
 
@@ -149,6 +151,7 @@ TINITSDOMBX;
 typedef struct MBX_STRUCT_PACKED_START
 {
     UINT16      SegHeader; /**< \brief 8Bit header buffer and first 8Bit of the Data*/
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 185 to 196 deleted*/
 #define    SEGHEADER_MASK                    ((UINT16) 0xFF) /**< \brief SDO header mask*/
 #define    SEGHEADER_NOMOREFOLLOWS           ((UINT16) 0x01) /**< \brief More segments follow flag*/
 #define    SEGHEADER_SEGDATASIZE             ((UINT16) 0x0E) /**< \brief Segmented data size*/
@@ -160,6 +163,7 @@ typedef struct MBX_STRUCT_PACKED_START
 #define    SEGHDATA_MASK                     ((UINT16) 0xFF00) /**< \brief Data mask*/
 #define    SEGDATASHIFT                      ((UINT16) 8) /**< \brief Shift for first data Byte*/
     UINT16      Data[(((MAX_MBX_DATA_SIZE)-(SEGMENT_NORM_HEADER_SIZE) - 1 ) >> 1)];  /**< \brief Data buffer (second and following Bytes, the first byte is located in the header variable)*/
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 209 to 220 deleted*/
 }MBX_STRUCT_PACKED_END
 TSDOSEGHEADERDATA;
 
@@ -504,6 +508,7 @@ typedef struct MBX_STRUCT_PACKED_START
 {
     UINT16                Index; /**< \brief Index of the parent object*/
     UINT16                 Info; /**< \brief Info data including the subindex and identifier for the payload data*/
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 565 to 570 deleted*/
         #define     ENTRY_MASK_SUBINDEX     0x00FF /**< \brief Subindex mask*/
         #define     ENTRY_SUBINDEX_SHIFT    0 /**< \brief Subindex shift*/
         #define     ENTRY_MASK_VALUEINFO    0xFF00 /**< \brief Value info mask*/
@@ -533,6 +538,7 @@ TSDOINFOERROR;
 typedef struct MBX_STRUCT_PACKED_START
 {
     UINT16 InfoHead; /**< \brief Opcode, Incomplete flag and 8 reserved bits*/
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 601 to 606 deleted*/
         #define     INFOHEAD_OPCODE_MASK            0x007F /**< \brief Opcode mask*/
         #define     INFOHEAD_OPCODE_SHIFT           0 /**< \brief Opcode shift*/
         #define     INFOHEADER_INCOMPLETE_MASK      0x0080 /**< \brief Incomplete mask*/

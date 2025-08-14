@@ -47,6 +47,7 @@ struct eps_status
     osMutexId_t mutex;
 };
 
+struct eps_status *eps_state_get(struct eps_status *buf);
 
 #ifdef __cplusplus
 }

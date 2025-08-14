@@ -207,17 +207,22 @@ V4.00 ECAT 7: The return values for the AL-StatusCode were changed to UINT16
 #include "ecatappl.h"
 
 
+/*ET9300 Project Handler :(#if BOOTSTRAPMODE_SUPPORTED) lines 209 to 211 deleted*/
 
 
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 214 to 216 deleted*/
 
 #include "mailbox.h"
 
 #include "ecatcoe.h"
 #include "objdef.h"
 
+/*ET9300 Project Handler :(#if EMERGENCY_SUPPORTED) lines 227 to 229 deleted*/
 
+/*ET9300 Project Handler :(#if AOE_SUPPORTED) lines 231 to 233 deleted*/
 
 /*ECATCHANGE_START(V5.13) CIA402 3*/
+/*ET9300 Project Handler :(#if CiA402_SAMPLE_APPLICATION #elif TEST_APPLICATION #elif EL9800_APPLICATION #elif SAMPLE_APPLICATION_INTERFACE #elif SAMPLE_APPLICATION #elif BOOTLOADER_SAMPLE) lines 236 to 249 deleted*/
 #include "lan9252_app.h"
 
 /*--------------------------------------------------------------------------------------
@@ -239,9 +244,12 @@ UINT16	  u16IdValue;						   /**< \brief Explicit Device ID value of the latest 
 
 /*Dummy variable to trigger read or writes events in the ESC*/
     VARVOLATILE UINT32    u32dummy;
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 276 to 280 deleted*/
 
+/*ET9300 Project Handler :(#if !COE_SUPPORTED) lines 282 to 288 deleted*/
 
         VARVOLATILE UINT32 SMActivate = 0;
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 292 to 296 deleted*/
 
 TSYNCMAN		SyncManInfo;
 
@@ -268,13 +276,17 @@ void ResetALEventMask(UINT16 intMask)
 {
     UINT32 u32Mask = 0;
     HW_EscReadDWord(u32Mask, ESC_AL_EVENTMASK_OFFSET);
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 325 to 327 deleted*/
     u32Mask &= (UINT32)intMask;
 
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 330 to 338 deleted*/
 
 
     DISABLE_ESC_INT();
 
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 346 to 348 deleted*/
     HW_EscWriteDWord(u32Mask, ESC_AL_EVENTMASK_OFFSET);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 350 to 356 deleted*/
     ENABLE_ESC_INT();
 }
 
@@ -288,12 +300,16 @@ void SetALEventMask(UINT16 intMask)
 {
     UINT32 u32Mask = 0;
     HW_EscReadDWord(u32Mask, ESC_AL_EVENTMASK_OFFSET);
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 371 to 373 deleted*/
     u32Mask |= (UINT32)intMask;
 
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 376 to 385 deleted*/
 
     DISABLE_ESC_INT();
 
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 392 to 394 deleted*/
     HW_EscWriteDWord(u32Mask, ESC_AL_EVENTMASK_OFFSET);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 396 to 402 deleted*/
     ENABLE_ESC_INT();
 }
 
@@ -309,6 +325,7 @@ void UpdateEEPROMLoadedState(void)
    //read EEPROM loaded information
    HW_EscReadDWord(TmpVar, ESC_EEPROM_CONFIG_OFFSET);
    TmpVar = SWAPDWORD(TmpVar);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 420 to 425 deleted*/
 
 
     if (((TmpVar & ESC_EEPROM_ERROR_CRC) > 0)
@@ -345,6 +362,7 @@ TSYNCMAN ESCMEM * GetSyncMan( UINT8 channel )
     HW_EscRead((MEM_ADDR *)&SyncManInfo, ESC_SYNCMAN_REG_OFFSET + (channel * SIZEOF_SM_REGISTER), SIZEOF_SM_REGISTER );
 
 
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 462 to 474 deleted*/
 
     return &SyncManInfo;
 }
@@ -362,6 +380,7 @@ void DisableSyncManChannel(UINT8 channel)
     VARVOLATILE UINT32 smStatus = SM_SETTING_PDI_DISABLE;
     Offset = (ESC_SYNCMAN_CONTROL_OFFSET + (SIZEOF_SM_REGISTER*channel));
 
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 493 to 495 deleted*/
     HW_EscWriteDWord(smStatus,Offset);
 
 
@@ -369,7 +388,9 @@ void DisableSyncManChannel(UINT8 channel)
     do
     {
         HW_EscReadDWord(smStatus, Offset);
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 503 to 505 deleted*/
     }while(!(smStatus & SM_SETTING_PDI_DISABLE));
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 507 to 537 deleted*/
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -385,6 +406,7 @@ void EnableSyncManChannel(UINT8 channel)
     VARVOLATILE UINT32 smStatus = 0x00000000;
     Offset = (ESC_SYNCMAN_CONTROL_OFFSET + (SIZEOF_SM_REGISTER*channel));
 
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 554 to 556 deleted*/
 
 
     HW_EscWriteDWord(smStatus,Offset);
@@ -393,10 +415,14 @@ void EnableSyncManChannel(UINT8 channel)
     do
     {
         HW_EscReadDWord(smStatus,Offset);
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 565 to 567 deleted*/
     }while((smStatus & SM_SETTING_PDI_DISABLE));
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 569 to 600 deleted*/
 }
 
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 603 to 661 deleted*/
 
+/*ET9300 Project Handler :(#if EMERGENCY_SUPPORTED && (COE_SUPPORTED || SOE_SUPPORTED)) lines 663 to 820 deleted*/
 
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -436,6 +462,8 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
     SMLength = (UINT16)((pSyncMan->AddressLength & SM_LENGTH_MASK) >> SM_LENGTH_SHIFT);
     SMAddress = (UINT16)(pSyncMan->AddressLength & SM_ADDRESS_MASK);
 
+/*ET9300 Project Handler :(#if CHECK_SM_PARAM_ALIGNMENT) lines 862 to 873 deleted*/
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 874 to 893 deleted*/
 
     if (!(pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE))
     {
@@ -473,6 +501,7 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
         result = ALSTATUSCODE_INVALIDMBXCFGINPREOP;
     }
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && COE_SUPPORTED) lines 931 to 937 deleted*/
 
     if ( result == 0 )
     {
@@ -482,6 +511,8 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
     SMLength = (UINT16)((pSyncMan->AddressLength & SM_LENGTH_MASK) >> SM_LENGTH_SHIFT);
     SMAddress = (UINT16)(pSyncMan->AddressLength & SM_ADDRESS_MASK);
 
+/*ET9300 Project Handler :(#if CHECK_SM_PARAM_ALIGNMENT) lines 948 to 959 deleted*/
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 960 to 978 deleted*/
 
     if (!(pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE))
     {
@@ -530,6 +561,8 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
     SMLength = (UINT16)((pSyncMan->AddressLength & SM_LENGTH_MASK) >> SM_LENGTH_SHIFT);
     SMAddress = (UINT16)(pSyncMan->AddressLength & SM_ADDRESS_MASK);
 
+/*ET9300 Project Handler :(#if CHECK_SM_PARAM_ALIGNMENT) lines 1029 to 1040 deleted*/
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 1041 to 1060 deleted*/
 
     if ((pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE) != 0 && SMLength == 0)
     {
@@ -581,10 +614,13 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
             result = SYNCMANCHSIZE + 1;
         }
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && COE_SUPPORTED) lines 1113 to 1119 deleted*/
 
+/*ET9300 Project Handler :(#if MAX_PD_INPUT_SIZE > 0 #else) lines 1121 to 1127 deleted*/
 
         if ( result != 0 )
         {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED #elif EMERGENCY_SUPPORTED && (COE_SUPPORTED || SOE_SUPPORTED)) lines 1131 to 1136 deleted*/
             result = ALSTATUSCODE_INVALIDSMINCFG;
         }
     }
@@ -593,12 +629,15 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
 //    else
     if (result == 0 && maxChannel > PROCESS_DATA_OUT)
     {
+/*ET9300 Project Handler :(#if MAX_PD_INPUT_SIZE == 0) lines 1145 to 1148 deleted*/
         /* check the Sync Manager Parameter for the Outputs (Sync Manager Channel 2) */
         pSyncMan = GetSyncMan(PROCESS_DATA_OUT);
 
         SMLength = (UINT16)((pSyncMan->AddressLength & SM_LENGTH_MASK) >> SM_LENGTH_SHIFT);
         SMAddress = (UINT16)(pSyncMan->AddressLength & SM_ADDRESS_MASK);
 
+/*ET9300 Project Handler :(#if CHECK_SM_PARAM_ALIGNMENT) lines 1156 to 1167 deleted*/
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 1168 to 1187 deleted*/
 
     if ((pSyncMan->Settings[SM_SETTING_ACTIVATE_OFFSET] & SM_SETTING_ENABLE_VALUE) != 0 && SMLength == 0)
     {
@@ -660,9 +699,12 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
             /* output size is not zero although the SM2 channel is not enabled */
             result = SYNCMANCHSIZE + 1;
         }
+/*ET9300 Project Handler :(#if MAX_PD_OUTPUT_SIZE > 0 #else) lines 1250 to 1256 deleted*/
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && COE_SUPPORTED) lines 1258 to 1265 deleted*/
         if ( result != 0 )
         {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED #elif EMERGENCY_SUPPORTED && (COE_SUPPORTED || SOE_SUPPORTED)) lines 1268 to 1273 deleted*/
             result = ALSTATUSCODE_INVALIDSMOUTCFG;
         }
     }
@@ -675,6 +717,7 @@ UINT8    CheckSmSettings(UINT8 maxChannel)
         {
             pSyncMan = GetSyncMan(i);
             SMActivate = pSyncMan->Settings[0];
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 1287 to 1289 deleted*/
         }
     }
     return result;
@@ -697,6 +740,7 @@ UINT16 StartInputHandler(void)
     TSYNCMAN ESCMEM * pSyncMan;
 
      UINT32        dcControl;
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 1314 to 1318 deleted*/
 
     UINT16     wdiv = 0;
     UINT16     wd = 0;
@@ -713,6 +757,7 @@ UINT16 StartInputHandler(void)
 
     UINT16 u16MinSuppSyncType = 0xFFFF;  /* Minimum supported Sync Types */
 
+/*ET9300 Project Handler :(#if MAX_PD_OUTPUT_SIZE == 0 && MAX_PD_INPUT_SIZE == 0) lines 1346 to 1348 deleted*/
     u16MinSuppSyncType &= sSyncManOutPar.u16SyncTypesSupported;
     u16MinSuppSyncType &= sSyncManInPar.u16SyncTypesSupported;
 
@@ -728,6 +773,7 @@ UINT16 StartInputHandler(void)
     pSyncMan = GetSyncMan(PROCESS_DATA_OUT);
     /* store the address of the Sync Manager Channel 2 (Outputs) */
     nEscAddrOutputData = (UINT16) (pSyncMan->AddressLength & SM_ADDRESS_MASK);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 1372 to 1374 deleted*/
     /* get the number of output buffer used for calculating the address areas */
     if (pSyncMan->Settings[SM_SETTING_CONTROL_OFFSET] & SM_SETTING_MODE_ONE_BUFFER_VALUE)
     {
@@ -739,6 +785,7 @@ UINT16 StartInputHandler(void)
     pSyncMan = GetSyncMan(PROCESS_DATA_IN);
     /* store the address of the Sync Manager Channel 3 (Inputs)*/
     nEscAddrInputData = (UINT16) (pSyncMan->AddressLength & SM_ADDRESS_MASK);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 1389 to 1391 deleted*/
 
 
     /* get the number of input buffer used for calculating the address areas */
@@ -753,6 +800,7 @@ UINT16 StartInputHandler(void)
        || ((nEscAddrInputData + nPdInputSize * nPdInputBuffer) > u16EscAddrReceiveMbx && (nEscAddrInputData < (u16EscAddrReceiveMbx + u16ReceiveMbxSize)))
         )
     {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED #elif EMERGENCY_SUPPORTED && (COE_SUPPORTED || SOE_SUPPORTED)) lines 1407 to 1412 deleted*/
         return ALSTATUSCODE_INVALIDSMINCFG;
     }
 
@@ -766,6 +814,7 @@ UINT16 StartInputHandler(void)
 
         /* Sync Manager Channel 2 memory area (Outputs) overlaps the Sync Manager memory areas for the Mailbox
            or the Sync Manager Channel 3 memory area (Inputs) */
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED #elif EMERGENCY_SUPPORTED && (COE_SUPPORTED || SOE_SUPPORTED)) lines 1435 to 1440 deleted*/
         return ALSTATUSCODE_INVALIDSMOUTCFG;
     }
 
@@ -778,6 +827,7 @@ UINT16 StartInputHandler(void)
     HW_EscReadDWord(dcControl, ESC_DC_UNIT_CONTROL_OFFSET);
     dcControl = SWAPDWORD(dcControl);
     dcControl &=ESC_DC_SYNC_ACTIVATION_MASK;
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 1455 to 1462 deleted*/
 
     // Cycle time for Sync0
         HW_EscReadDWord(cycleTimeSync0, ESC_DC_SYNC0_CYCLETIME_OFFSET);
@@ -798,11 +848,13 @@ UINT16 StartInputHandler(void)
        - 0x9A0:0x9A3 Sync0 Cycle
        - 0x9A4:0x9A7 Sync1 Cycle
     */
+/*ET9300 Project Handler :(#if !DC_SUPPORTED) lines 1492 to 1502 deleted*/
     if((dcControl & (ESC_DC_SYNC_UNIT_ACTIVE_MASK | ESC_DC_SYNC_UNIT_AUTO_ACTIVE_MASK)) != 0)
     {
         /* DC unit is active at least one Sync signal shall be generated */
         if((dcControl & (ESC_DC_SYNC0_ACTIVE_MASK | ESC_DC_SYNC1_ACTIVE_MASK)) == 0)
         {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 1508 to 1510 deleted*/
             return ALSTATUSCODE_DCINVALIDSYNCCFG;
         }
 
@@ -810,6 +862,7 @@ UINT16 StartInputHandler(void)
         if(((dcControl & ESC_DC_SYNC0_ACTIVE_MASK) == 0)
             && ((dcControl & ESC_DC_SYNC1_ACTIVE_MASK) != 0))
         {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 1518 to 1520 deleted*/
             return ALSTATUSCODE_DCINVALIDSYNCCFG;
         }
 
@@ -819,6 +872,7 @@ UINT16 StartInputHandler(void)
                 ||(((u16MinSuppSyncType & SYNCTYPE_DCSYNC1SUPP) == 0) && ((dcControl & ESC_DC_SYNC1_ACTIVE_MASK) != 0)))
             {
                 /* Sync0 is not supported but will be generated*/
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 1531 to 1533 deleted*/
                 return ALSTATUSCODE_DCINVALIDSYNCCFG;                   
     }
         }
@@ -826,6 +880,7 @@ UINT16 StartInputHandler(void)
         {
             UINT32 curMinCycleTime = MIN_PD_CYCLE_TIME;
             curMinCycleTime = sSyncManOutPar.u32MinCycleTime;
+/*ET9300 Project Handler :(#elif MAX_PD_INPUT_SIZE > 0) lines 1544 to 1546 deleted*/
 
             /*Check if Sync0 cycle time is supported*/
             if (cycleTimeSync0 != 0 && (cycleTimeSync0 < curMinCycleTime || cycleTimeSync0 > MAX_PD_CYCLE_TIME))
@@ -848,6 +903,7 @@ UINT16 StartInputHandler(void)
         /* Dump an error if subordinated cycles are configured but not supported */
         if(bSubordinatedCycles && ((u16MinSuppSyncType & SYNCTYPE_SUBCYCLESUPP) == 0))
         {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 1571 to 1573 deleted*/
              return ALSTATUSCODE_DCINVALIDSYNCCFG;
         }
     }
@@ -864,6 +920,7 @@ UINT16 StartInputHandler(void)
             if((SyncType0x1C32 == SYNCTYPE_DCSYNC0) || (SyncType0x1C32 == SYNCTYPE_DCSYNC1)
                 ||(SyncType0x1C33 == SYNCTYPE_DCSYNC0) || (SyncType0x1C33 == SYNCTYPE_DCSYNC1))
             {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 1594 to 1596 deleted*/
                 return ALSTATUSCODE_DCINVALIDSYNCCFG;
             }
         } //if((dcControl & (ESC_DC_SYNC_UNIT_ACTIVE_MASK | ESC_DC_SYNC_UNIT_AUTO_ACTIVE_MASK)) == 0)
@@ -875,6 +932,7 @@ UINT16 StartInputHandler(void)
                 if((SyncType0x1C32 == (UINT16)SYNCTYPE_DCSYNC1)
                     ||(SyncType0x1C33 == (UINT16)SYNCTYPE_DCSYNC1))
                 {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 1611 to 1613 deleted*/
                     return ALSTATUSCODE_DCINVALIDSYNCCFG;
                 }
             } //if((dcControl & ESC_DC_SYNC1_ACTIVE_MASK) == 0)
@@ -885,10 +943,12 @@ UINT16 StartInputHandler(void)
                 if((SyncType0x1C32 == (UINT16)SYNCTYPE_DCSYNC0)
                     ||(SyncType0x1C33 == (UINT16)SYNCTYPE_DCSYNC0))
                 {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 1624 to 1626 deleted*/
                     return ALSTATUSCODE_DCINVALIDSYNCCFG;
                 }
             } //if((dcControl & ESC_DC_SYNC0_ACTIVE_MASK) == 0)
 
+/*ET9300 Project Handler :(#if !AL_EVENT_ENABLED) lines 1632 to 1654 deleted*/
         }
     } //if(bSyncSetByUser)
     else
@@ -922,6 +982,7 @@ UINT16 StartInputHandler(void)
                 SyncType0x1C32 = SYNCTYPE_FREERUN;
                 SyncType0x1C33 = SYNCTYPE_FREERUN;
             }
+/*ET9300 Project Handler :(#if AL_EVENT_ENABLED #else) lines 1691 to 1696 deleted*/
 
         }
         else
@@ -1011,6 +1072,7 @@ UINT16 StartInputHandler(void)
                 u16ALEventMask = PROCESS_INPUT_EVENT;
             }
 
+/*ET9300 Project Handler :(#elif MAX_PD_INPUT_SIZE > 0) lines 1803 to 1808 deleted*/
         }
 
         if ((SyncType0x1C32 == SYNCTYPE_DCSYNC0) || (SyncType0x1C32 == SYNCTYPE_DCSYNC1)
@@ -1101,6 +1163,7 @@ UINT16 StartInputHandler(void)
 
     wd = (UINT16)(SWAPDWORD(tmpValue) & 0x0000FFFF);
     }
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 1916 to 1919 deleted*/
 
     if (nPdOutputSize > 0 &&  wd != 0 )
     {
@@ -1112,6 +1175,7 @@ UINT16 StartInputHandler(void)
 
     wdiv = (UINT16)(tmpValue & 0x0000FFFF);
     }
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 1932 to 1935 deleted*/
         if ( wdiv != 0 )
         {
             /* the ESC subtracts 2 in register 0x400 so it has to be added here */
@@ -1131,6 +1195,7 @@ UINT16 StartInputHandler(void)
             /* wd value has to be set to zero, if the wd is 0 */
             EcatWdValue = 0;
         }
+/*ET9300 Project Handler :(#if !ESC_SM_WD_SUPPORTED) lines 1955 to 1958 deleted*/
     }
     else
     {
@@ -1176,6 +1241,7 @@ UINT16 StartInputHandler(void)
         {
             u16ALEventMask |= SYNC1_EVENT;
         }
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS || ESC_16BIT_ACCESS #else) lines 2009 to 2021 deleted*/
     }
 /*ECATCHANGE_END(V5.13) ECAT1*/
     sSyncManInPar.u16SmEventMissedCounter = 0;
@@ -1186,6 +1252,7 @@ UINT16 StartInputHandler(void)
     sSyncManOutPar.u16SmEventMissedCounter = 0;
     sSyncManOutPar.u16CycleExceededCounter = 0;
     sSyncManOutPar.u8SyncError = 0;
+/*ET9300 Project Handler :(#if COE_SUPPORTED #else) lines 2037 to 2039 deleted*/
 
     /* calculate the Sync0/Sync1 watchdog timeouts */
     if ( (dcControl & ESC_DC_SYNC0_ACTIVE_MASK) != 0 )
@@ -1249,6 +1316,7 @@ UINT16 StartInputHandler(void)
         EnableSyncManChannel(PROCESS_DATA_IN);
     }
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && COE_SUPPORTED) lines 2109 to 2119 deleted*/
     /*write initial input data*/
     PDO_InputMapping();
 
@@ -1298,6 +1366,7 @@ UINT16 StartOutputHandler(void)
     sSyncManInPar.u16SmEventMissedCounter = 0;
     sSyncManInPar.u8SyncError = 0;
 
+/*ET9300 Project Handler :(#if COE_SUPPORTED #else) lines 2178 to 2180 deleted*/
 
     return result;
 }
@@ -1374,6 +1443,7 @@ void StopInputHandler(void)
     sSyncManInPar.u16SmEventMissedCounter = 0;
     sSyncManInPar.u16CycleExceededCounter = 0;
     sSyncManInPar.u8SyncError = 0;
+/*ET9300 Project Handler :(#if COE_SUPPORTED #else) lines 2279 to 2281 deleted*/
 
     i16WaitForPllRunningTimeout = 0;
 
@@ -1432,12 +1502,14 @@ void SetALStatus(UINT8 alStatus, UINT16 alStatusCode)
         tmpValue = SWAPDWORD((UINT32) Value);
 
         HW_EscWriteDWord(tmpValue,ESC_AL_STATUS_CODE_OFFSET);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 2349 to 2353 deleted*/
     }
 
     tmpValue = (UINT32) nAlStatus;
     tmpValue = SWAPDWORD(tmpValue);
 
     HW_EscWriteDWord(tmpValue,ESC_AL_STATUS_OFFSET);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 2361 to 2365 deleted*/
 
     /*The Run LED state is set in Set LED Indication, only the Error LED blink code is set here*/
 
@@ -1463,6 +1535,7 @@ void SetALStatus(UINT8 alStatus, UINT16 alStatusCode)
     {
         u8EcatErrorLed = LED_BLINKING;
     }
+/*ET9300 Project Handler :(#if ESC_SUPPORT_ECAT_LED) lines 2392 to 2435 deleted*/
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -1550,6 +1623,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
             {
                 break;
             }
+/*ET9300 Project Handler :(#if (MAX_PD_OUTPUT_SIZE == 0) || (MAX_PD_INPUT_SIZE == 0)) lines 2527 to 2543 deleted*/
         }
     case SAFEOP_2_OP:
     case OP_2_SAFEOP:
@@ -1570,6 +1644,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
         switch ( stateTrans )
         {
         case INIT_2_BOOT    :
+/*ET9300 Project Handler :(#if BOOTSTRAPMODE_SUPPORTED) lines 2565 to 2624 deleted*/
             result = ALSTATUSCODE_BOOTNOTSUPP;
 
 
@@ -1577,6 +1652,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
             break;
 
         case BOOT_2_INIT    :
+/*ET9300 Project Handler :(#if BOOTSTRAPMODE_SUPPORTED) lines 2633 to 2650 deleted*/
             result = ALSTATUSCODE_BOOTNOTSUPP;
 
             BackToInitTransition();
@@ -1626,6 +1702,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
             }
 
             }
+/*ET9300 Project Handler :(#if MAILBOX_SUPPORTED #else) lines 2702 to 2704 deleted*/
             break;
 
         case PREOP_2_SAFEOP:
@@ -1775,6 +1852,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
 
             BackToInitTransition();
             break;
+/*ET9300 Project Handler :(#if !BOOTLOADER_SAMPLE #else) lines 2865 to 2872 deleted*/
         case INIT_2_INIT:
             BackToInitTransition();
         case PREOP_2_PREOP:
@@ -1847,6 +1925,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
 
                 /*Disable SM1 (MBX In)*/
                 DisableSyncManChannel(MAILBOX_READ);
+/*ET9300 Project Handler :(#if MAILBOX_SUPPORTED #else) lines 2956 to 2958 deleted*/
 
                 nAlStatus = STATE_INIT;
             }
@@ -2223,6 +2302,7 @@ void AL_ControlRes(void)
     }// Pending state transition (bEcatWaitForAlControlRes == true)
 }
 
+/*ET9300 Project Handler :(#if !ESC_SM_WD_SUPPORTED) lines 3363 to 3410 deleted*/
 
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -2273,7 +2353,9 @@ void DC_CheckWatchdog(void)
         {
 /*ECATCHANGE_START(V5.13) ESM4*/
            if((sErrorSettings.u16SyncErrorCounterLimit == 0) || (sSyncManOutPar.u16SmEventMissedCounter < sErrorSettings.u16SyncErrorCounterLimit))
+/*ET9300 Project Handler :(#elif(MAX_PD_INPUT_SIZE > 0)) lines 3467 to 3469 deleted*/
 /*ECATCHANGE_END(V5.13) ESM4*/
+/*ET9300 Project Handler :(#if COE_SUPPORTED && !_PIC18 #else) lines 3471 to 3473 deleted*/
             {
                 bSmSyncSequenceValid = TRUE;
 
@@ -2320,12 +2402,14 @@ void CheckIfEcatError(void)
       HW_EscReadDWord(WdStatusOK, ESC_PD_WD_STATE);
 
       WdStatusOK = SWAPDWORD(WdStatusOK);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 3526 to 3531 deleted*/
 
       if (!(WdStatusOK & ESC_PD_WD_TRIGGER_MASK) && (nPdOutputSize > 0))
       {
          /*The device is in OP state*/
 
          if (bEcatOutputUpdateRunning
+/*ET9300 Project Handler :(#if !OP_PD_REQUIRED) lines 3539 to 3541 deleted*/
             )
          {
             AL_ControlInd(STATE_SAFEOP, ALSTATUSCODE_SMWATCHDOG);
@@ -2537,6 +2621,7 @@ void ECAT_Init(void)
     //get max address (register + DPRAM size in Byte (in the register it is stored in KB))
     nMaxEscAddress = (UINT16)(((TmpVar & ESC_DPRAM_SIZE_MASK) >> ESC_DPRAM_SIZE_SHIFT) << 10) + 0xFFF;
     }
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 3768 to 3789 deleted*/
 
 /*ECATCHANGE_START(V5.13) ECAT2*/
     u16IdValue = 0;
@@ -2555,6 +2640,7 @@ void ECAT_Init(void)
     MBX_Init();
 
     /* initialize variables */
+/*ET9300 Project Handler :(#if BOOTSTRAPMODE_SUPPORTED) lines 3812 to 3814 deleted*/
     bApplEsmPending = FALSE;
     bEcatWaitForAlControlRes = FALSE;
     bEcatFirstOutputsReceived = FALSE;
@@ -2563,6 +2649,7 @@ void ECAT_Init(void)
      bExplicitDevIdRequested = FALSE;
     bWdTrigger = FALSE;
     EcatWdValue = 0;
+/*ET9300 Project Handler :(#if !ESC_SM_WD_SUPPORTED) lines 3829 to 3831 deleted*/
     Sync0WdCounter = 0;
     Sync0WdValue = 0;
     Sync1WdCounter = 0;
@@ -2586,8 +2673,10 @@ void ECAT_Init(void)
 
     bEscIntEnabled = FALSE;
 
+/*ET9300 Project Handler :(#if EMERGENCY_SUPPORTED && (COE_SUPPORTED || SOE_SUPPORTED)) lines 3859 to 3862 deleted*/
     /* initialize the COE part */
     COE_Init();
+/*ET9300 Project Handler :(#if AOE_SUPPORTED) lines 3867 to 3870 deleted*/
 
 /*ECATCHANGE_START(V5.13) ECAT1*/
 /*ECATCHANGE_END(V5.13) ECAT1*/
@@ -2607,12 +2696,14 @@ void ECAT_Main(void)
 /*ECATCHANGE_START(V5.13) MBX1*/
      UINT32 sm1Activate = SM_SETTING_ENABLE_VALUE;
      UINT32 sm1Status = 0; /*SM1 status need to be read (not MBX_READ_EVENT) to handle readframes with invalid CRCs*/
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 3894 to 3900 deleted*/
 /*ECATCHANGE_END(V5.13) MBX1*/
 
 
     /* check if services are stored in the mailbox */
     MBX_Main();
 
+/*ET9300 Project Handler :(#if COE_SUPPORTED && TEST_APPLICATION) lines 3909 to 3949 deleted*/
 
     if ( bMbxRunning )
     {
@@ -2623,6 +2714,7 @@ void ECAT_Main(void)
         HW_EscReadDWord(sm1Activate,(ESC_SYNCMAN_CONTROL_OFFSET + SIZEOF_SM_REGISTER));
         sm1Activate = SWAPDWORD(sm1Activate);
         sm1Status = sm1Activate;
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 3961 to 3973 deleted*/
 /*ECATCHANGE_END(V5.13) MBX1*/
     }
 
@@ -2630,6 +2722,7 @@ void ECAT_Main(void)
     ALEventReg = HW_GetALEventRegister();
     ALEventReg = SWAPWORD(ALEventReg);
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 3982 to 3987 deleted*/
 
     if ((ALEventReg & AL_CONTROL_EVENT) && !bEcatWaitForAlControlRes)
     {
@@ -2639,7 +2732,9 @@ void ECAT_Main(void)
 
         HW_EscReadDWord( tmpVal, ESC_AL_CONTROL_OFFSET);
         EscAlControl = (UINT16) SWAPDWORD(tmpVal);
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 3998 to 4006 deleted*/
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 4008 to 4023 deleted*/
 
             /*ECATCHANGE_START(V5.13) ECAT2*/
                 /*Evaluate if register 0x120 Bit5 (Request Explicit DeviceID) is set*/
@@ -2666,6 +2761,7 @@ void ECAT_Main(void)
 
             /* SM-Change-Event was handled too */
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 4052 to 4054 deleted*/
     }
 
     if ( (ALEventReg & SM_CHANGE_EVENT) && !bEcatWaitForAlControlRes && (nAlStatus & STATE_CHANGE) == 0 && (nAlStatus & ~STATE_CHANGE) != STATE_INIT )
@@ -2707,6 +2803,7 @@ void ECAT_Main(void)
                by writing the first byte the mailbox is locked, too */
             u32dummy = 0;
             HW_EscWriteDWord(u32dummy,u16EscAddrSendMbx);
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 4098 to 4104 deleted*/
 
             /* the Mailbox Read event in the variable ALEventReg shall be reset before calling
                MBX_MailboxReadInd, where a new mailbox datagram (if available) could be stored in the send mailbox */
@@ -2714,6 +2811,7 @@ void ECAT_Main(void)
             MBX_MailboxReadInd();
         }
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 4112 to 4115 deleted*/
             /* bMbxRepeatToggle holds the last state of the Repeat Bit (Bit 1) */
 
             if (((sm1Activate & SM_SETTING_REPAET_REQ_MASK) && !bMbxRepeatToggle)
@@ -2735,8 +2833,10 @@ void ECAT_Main(void)
 
                 sm1Activate = SWAPDWORD(sm1Activate);
                 HW_EscWriteDWord(sm1Activate, (ESC_SYNCMAN_CONTROL_OFFSET + SIZEOF_SM_REGISTER));
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 4138 to 4153 deleted*/
             }
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 4156 to 4162 deleted*/
 
         /* Reload the AlEvent because it may be changed due to a SM disable, enable in case of an repeat request */
         ALEventReg = HW_GetALEventRegister();
@@ -2752,6 +2852,7 @@ void ECAT_Main(void)
             ALEventReg &= ~(MAILBOX_WRITE_EVENT);
             MBX_CheckAndCopyMailbox();
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && !MAILBOX_QUEUE) lines 4178 to 4183 deleted*/
         }
     }
 }

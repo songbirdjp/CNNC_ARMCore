@@ -792,8 +792,8 @@ static int8_t dose_realtime_data_parse(enum uart_id id, struct cmd_object *cmd)
                 {
                     /* to fkp and qam */
                     uint8_t buf[32] = {0};
-                    memcpy(&buf[0], &cmd->data[13], 8); /* dose meter、dose cumulated */
-                    memcpy(&buf[8], &cmd->data[33], 12);/* trigger interval、timestamp */
+                    cmd->data[4] == DOSE_FSM_STATE_WORK ? memcpy(&buf[0], &cmd->data[13], 8) : NULL;    /* dose meter、dose cumulated */
+                    cmd->data[4] == DOSE_FSM_STATE_WORK ? memcpy(&buf[8], &cmd->data[33], 12) : NULL;   /* trigger interval、timestamp */
 
                     ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_QAM | RS422_BUS_MODULE_ID_FKP, UART_DATA_CMD_SEND_DOSE_INFO, buf, 20);
                     if (ret != 0)
@@ -1459,4 +1459,49 @@ static int8_t dose_cmd_send(uint8_t argc, uint8_t **argv)
     return dose_cmd_write(id, 0x05, buf, offset);
 }
 MSH_CMD_EXPORT_ALIAS(dose_cmd_send, dose_cmd_send, dose cmd send);
+
+#ifdef DOSE_DATA_SIMULATION
+#define MAX_RI_IN_BEAM 10240
+static SDRAM_DATA plan_data_info  __attribute__((section(".sdram_ext"))) = {0};
+static uint16_t plan_data_cp_ri_map[MAX_CP_IN_BEAM]  __attribute__((section(".sdram_ext")));
+static RADIATION_POINT_DATA plan_data_ri_data[MAX_RI_IN_BEAM]  __attribute__((section(".sdram_ext")));
+static struct one_beam_order beam_info = {0};
+static int8_t plan_data_generate(void)
+{
+    /* 1. fill plan data info */
+    plan_data_info.beamID = 1;
+    plan_data_info.radiationType = 1;
+    plan_data_info.deliveryType = 1;
+    plan_data_info.doseRateSet = 100.0f;
+    plan_data_info.beamMeterSet = 10240.0f;
+    plan_data_info.CPQuantityInBeam = 1024;
+    plan_data_info.RIQuantityInBeam = MAX_RI_IN_BEAM;
+
+    /* 2. fill plan data cp ri map */
+    for (uint16_t i = 0; i < plan_data_info.CPQuantityInBeam; i++)
+    {
+        plan_data_cp_ri_map[i] = 10 * i;
+    }
+
+    /* 3. fill plan data ri data */
+    for (uint16_t i = 0; i < plan_data_info.RIQuantityInBeam; i++)
+    {
+        plan_data_ri_data[i].DeliveryTime = 0.033f;
+        plan_data_ri_data[i].fCumulativeDose = i;
+        plan_data_ri_data[i].fDoseRate = 100.0f;
+    }
+
+    beam_info.info = &plan_data_info;
+    beam_info.cp_ri_map = plan_data_cp_ri_map;
+    beam_info.ri_data = plan_data_ri_data;
+
+    return 0;
+}
+static int8_t plan_data_simulation(uint8_t argc, uint8_t **argv)
+{
+    plan_data_generate();
+    return dose_data_info_set(BGM_UART_DOSE1, DOSE_INFO_BEAM_SET, &beam_info, 0);
+}
+MSH_CMD_EXPORT_ALIAS(plan_data_simulation, plan_data_simulation, plan data simulation);
+#endif
 #endif

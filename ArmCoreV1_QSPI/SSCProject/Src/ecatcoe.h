@@ -62,6 +62,7 @@ V5.01 : Start file change log
 /*---------------------------------------------
 -    COE Structures
 -----------------------------------------------*/
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 64 to 67 deleted*/
 #define     COEHEADER_COESERVICESHIFT   12 /**< \brief CoE service shift (within CoE header)*/
 #define     COEHEADER_COESERVICEMASK    0xF000 /**< \brief CoE service mask (within CoE header)*/
 

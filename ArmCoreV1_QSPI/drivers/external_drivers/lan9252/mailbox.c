@@ -140,6 +140,7 @@ V4.07 ECAT 1: The sources for SPI and MCI were merged (in ecat_def.h<br>
 
 #include "ecatslv.h"
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 143 to 145 deleted*/
 
 
 #define    _MAILBOX_    1
@@ -147,8 +148,13 @@ V4.07 ECAT 1: The sources for SPI and MCI were merged (in ecat_def.h<br>
 #undef _MAILBOX_
 /*remove definition of _MAILBOX_ (#ifdef is used in mailbox.h)*/
 
+/*ET9300 Project Handler :(#if SOE_SUPPORTED) lines 153 to 155 deleted*/
+/*ET9300 Project Handler :(#if AOE_SUPPORTED) lines 156 to 158 deleted*/
 #include "ecatcoe.h"
 #include "sdoserv.h"
+/*ET9300 Project Handler :(#if EOE_SUPPORTED) lines 165 to 167 deleted*/
+/*ET9300 Project Handler :(#if FOE_SUPPORTED) lines 168 to 170 deleted*/
+/*ET9300 Project Handler :(#if EMERGENCY_SUPPORTED) lines 171 to 173 deleted*/
 
 
 /*--------------------------------------------------------------------------------------
@@ -164,6 +170,7 @@ V4.07 ECAT 1: The sources for SPI and MCI were merged (in ecat_def.h<br>
 --------------------------------------------------------------------------------------*/
 /*variables are declared in ecatslv.c*/
     extern VARVOLATILE UINT32    u32dummy;
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 190 to 194 deleted*/
 
     BOOL bNoMbxMemoryAvailable; /**< \brief Indicates if enough dynamic memory is available to handle at least one mailbox datagram */
 
@@ -268,7 +275,9 @@ void MBX_Init(void)
     sMbxSendQueue.lastInQueue         = 0;
     sMbxSendQueue.maxQueueSize     = MAX_MBX_QUEUE_SIZE;
     psWriteMbx  = NULL;
+/*ET9300 Project Handler :(#if MAILBOX_QUEUE #else) lines 304 to 306 deleted*/
 
+/*ET9300 Project Handler :(#if EOE_SUPPORTED) lines 308 to 310 deleted*/
 
     psRepeatMbx = NULL;
     psReadMbx    = NULL;
@@ -282,12 +291,14 @@ void MBX_Init(void)
         sm1Activate &= SWAPDWORD(~0x02000000);
         HW_EscWriteDWord(sm1Activate,(ESC_SYNCMAN_CONTROL_OFFSET + SIZEOF_SM_REGISTER));
     }
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 325 to 339 deleted*/
     bMbxRunning = FALSE;
     bSendMbxIsFull = FALSE;
     bReceiveMbxIsLocked = FALSE;
     u8MailboxSendReqStored    = 0;
     u8MbxWriteCounter = 0;
     u8MbxReadCounter    = 0;
+/*ET9300 Project Handler :(#if !MAILBOX_QUEUE) lines 346 to 348 deleted*/
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -311,6 +322,7 @@ UINT16 MBX_StartMailboxHandler(void)
     u16ReceiveMbxSize     = (UINT16) ((pSyncMan->AddressLength & SM_LENGTH_MASK) >>SM_LENGTH_SHIFT);
     /* store the address of the receive mailbox */
     u16EscAddrReceiveMbx = (UINT16) (pSyncMan->AddressLength & SM_ADDRESS_MASK);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 373 to 378 deleted*/
 
     /* get address of the send mailbox sync manager (SM1) */
     pSyncMan =(TSYNCMAN ESCMEM *) GetSyncMan(MAILBOX_READ);
@@ -319,13 +331,16 @@ UINT16 MBX_StartMailboxHandler(void)
     u16SendMbxSize = (UINT16) ((pSyncMan->AddressLength & SM_LENGTH_MASK) >>SM_LENGTH_SHIFT);
     /* store the address of the send mailbox */
     u16EscAddrSendMbx = (UINT16) (pSyncMan->AddressLength & SM_ADDRESS_MASK);
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 388 to 393 deleted*/
 
     // HBu 02.05.06: it should be checked if there are overlaps in the sync manager areas
     if ((u16EscAddrReceiveMbx + u16ReceiveMbxSize) > u16EscAddrSendMbx && (u16EscAddrReceiveMbx < (u16EscAddrSendMbx + u16SendMbxSize)))
     {
         return ALSTATUSCODE_INVALIDMBXCFGINPREOP;
     }
+/*ET9300 Project Handler :(#if AOE_SUPPORTED) lines 400 to 408 deleted*/
 
+/*ET9300 Project Handler :(#if FOE_SUPPORTED) lines 410 to 412 deleted*/
 
     /* enable the receive mailbox sync manager channel */
     EnableSyncManChannel(MAILBOX_WRITE);
@@ -394,10 +409,13 @@ void MBX_StopMailboxHandler(void)
         APPL_FreeMailboxBuffer(psReadMbx);
     }
 
+/*ET9300 Project Handler :(#if MAILBOX_QUEUE #else) lines 486 to 488 deleted*/
 
     SDOS_ClearPendingResponse();
 
+/*ET9300 Project Handler :(#if EOE_SUPPORTED) lines 494 to 496 deleted*/
 
+/*ET9300 Project Handler :(#if FOE_SUPPORTED) lines 498 to 500 deleted*/
 
     psWriteMbx = NULL;
     psRepeatMbx = NULL;
@@ -412,6 +430,7 @@ void MBX_StopMailboxHandler(void)
         sm1Activate &= SWAPDWORD(~0x02000000);
         HW_EscWriteDWord(sm1Activate,(ESC_SYNCMAN_CONTROL_OFFSET + SIZEOF_SM_REGISTER));
     }
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 518 to 532 deleted*/
     bSendMbxIsFull         = FALSE;
     bReceiveMbxIsLocked = FALSE;
     u8MailboxSendReqStored    = 0;
@@ -435,7 +454,9 @@ void MBX_StopMailboxHandler(void)
             APPL_FreeMailboxBuffer(pMbx);
         }
     } while (pMbx != NULL);
+/*ET9300 Project Handler :(#if MAILBOX_QUEUE #else) lines 557 to 559 deleted*/
 
+/*ET9300 Project Handler :(#if EMERGENCY_SUPPORTED) lines 561 to 563 deleted*/
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -450,16 +471,23 @@ UINT8 MailboxServiceInd(TMBX MBXMEM *pMbx)
 {
     UINT8 result;
 
+/*ET9300 Project Handler :(#if BOOTSTRAPMODE_SUPPORTED) lines 578 to 584 deleted*/
 
     switch ( (pMbx->MbxHeader.Flags[MBX_OFFS_TYPE] & MBX_MASK_TYPE) >> MBX_SHIFT_TYPE )
     {
+/*ET9300 Project Handler :(#if AOE_SUPPORTED) lines 588 to 594 deleted*/
     case MBX_TYPE_COE:
         /* CoE datagram received */
         result = COE_ServiceInd((TCOEMBX MBXMEM *) pMbx);
         break;
 
+/*ET9300 Project Handler :(#if SOE_SUPPORTED) lines 602 to 608 deleted*/
+/*ET9300 Project Handler :(#if EOE_SUPPORTED) lines 609 to 619 deleted*/
+/*ET9300 Project Handler :(#if FOE_SUPPORTED) lines 620 to 626 deleted*/
+/*ET9300 Project Handler :(#if VOE_SUPPORTED) lines 627 to 633 deleted*/
     default:
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && EOE_SUPPORTED) lines 636 to 704 deleted*/
         result = MBXERR_UNSUPPORTEDPROTOCOL;
         break;
     }
@@ -500,6 +528,7 @@ void MBX_MailboxWriteInd(TMBX MBXMEM *pMbx)
         and unchanged */
     if ( mbxCounter == 0 || mbxCounter != u8MbxWriteCounter )
     {
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 745 to 769 deleted*/
         /* new mailbox service received */
         /* mbxCounter = 0: old EtherCAT master */
         /* new MBX service received, store the new mailbox counter */
@@ -509,6 +538,7 @@ void MBX_MailboxWriteInd(TMBX MBXMEM *pMbx)
             /* check the protocol type and call the XXXX_ServiceInd-function */
 
             result = PutInMbxQueue(pMbx, &sMbxReceiveQueue);
+/*ET9300 Project Handler :(#if MAILBOX_QUEUE #else) lines 780 to 782 deleted*/
         }
 
         if ( result != 0 )
@@ -527,6 +557,7 @@ void MBX_MailboxWriteInd(TMBX MBXMEM *pMbx)
         APPL_FreeMailboxBuffer(pMbx);
         pMbx = NULL;
 
+/*ET9300 Project Handler :(#if MAILBOX_QUEUE #else) lines 802 to 805 deleted*/
     }
 }
 
@@ -539,6 +570,7 @@ void MBX_MailboxReadInd(void)
 {
     bSendMbxIsFull = FALSE;
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && EOE_SUPPORTED) lines 818 to 823 deleted*/
     // HBu 02.05.06: the pointer psRepeatMbx is only free if there is no stored
     //               mailbox service from the last repeat
     if (psRepeatMbx && psStoreMbx == NULL)
@@ -552,6 +584,7 @@ void MBX_MailboxReadInd(void)
         }
 /*ECATCHANGE_END(V5.13) MBX3*/
 
+/*ET9300 Project Handler :(#if MAILBOX_QUEUE #else) lines 838 to 840 deleted*/
     }
 
     /* the actual sent service has to be stored for repeat */
@@ -578,6 +611,7 @@ void MBX_MailboxReadInd(void)
       if ( u8MailboxSendReqStored )
     {
         /* there are mailbox services stored to be sent */
+/*ET9300 Project Handler :(#if EMERGENCY_SUPPORTED) lines 869 to 880 deleted*/
         if ( u8MailboxSendReqStored & COE_SERVICE )
         {
            UINT8 result = 0;
@@ -594,10 +628,14 @@ void MBX_MailboxReadInd(void)
             }
         }
         else
+/*ET9300 Project Handler :(#if SOE_SUPPORTED) lines 899 to 908 deleted*/
+/*ET9300 Project Handler :(#if FOE_SUPPORTED) lines 909 to 918 deleted*/
+/*ET9300 Project Handler :(#if VOE_SUPPORTED) lines 919 to 928 deleted*/
 /*ECATCHANGE_START(V5.13) EOE1*/
 /*pending EoE commands are handled from the MBX_Main function*/
 /*ECATCHANGE_END(V5.13) EOE1*/
 
+/*ET9300 Project Handler :(#if MAILBOX_QUEUE #else) lines 934 to 944 deleted*/
         {
         }
     }
@@ -636,6 +674,7 @@ void MBX_MailboxRepeatReq(void)
             bSendMbxIsFull = FALSE;
         }
 
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 983 to 987 deleted*/
 
         MBX_CopyToSendMailbox(pMbx);
         // HBu 17.06.06: psRepeatMbx has to be set to 0, when it was repeated, otherwise it would be returned twice
@@ -712,6 +751,7 @@ UINT8 MBX_MailboxSendReq( TMBX MBXMEM * pMbx, UINT8 flags )
         {
             u8MbxReadCounter++;
         }
+/*ET9300 Project Handler :(#if MAILBOX_QUEUE #else) lines 1067 to 1070 deleted*/
     }
     /* HBu 13.02.06: Repeat-Counter was incremented too much if the mailbox service could not be sent */
     else
@@ -719,6 +759,7 @@ UINT8 MBX_MailboxSendReq( TMBX MBXMEM * pMbx, UINT8 flags )
         u8MbxReadCounter++;
     }
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1078 to 1104 deleted*/
     if ( flags & FRAGMENTS_FOLLOW )
     {
         /* store the mailbox service that the corresponding XXX_ContinueInd function will
@@ -750,6 +791,7 @@ void MBX_CheckAndCopyMailbox( void )
     /* the size has to be swapped here, all other bytes of the mailbox service will be swapped later */
     tmpValue = (SWAPDWORD(tmpValue) & 0x0000FFFF);
     mbxLen = (UINT16) tmpValue;
+/*ET9300 Project Handler :(#if ESC_32BIT_ACCESS #else) lines 1137 to 1143 deleted*/
 
     if(bNoMbxMemoryAvailable == TRUE)
     {
@@ -783,6 +825,7 @@ void MBX_CheckAndCopyMailbox( void )
         ||( u8MailboxSendReqStored )    /* a mailbox service to be sent is still stored
                                                     so the received mailbox service will not be processed
                                                     until all stored mailbox services are sent */
+/*ET9300 Project Handler :(#if !MAILBOX_QUEUE) lines 1179 to 1181 deleted*/
         )
     {
         /* set flag that the processing of the mailbox service will be checked in the
@@ -816,18 +859,21 @@ void MBX_CheckAndCopyMailbox( void )
         /* copy the mailbox header and data*/
         HW_EscReadMbxMem((MEM_ADDR MBXMEM *) psWriteMbx,u16EscAddrReceiveMbx,mbxLen);
 
+/*ET9300 Project Handler :(#if !MAILBOX_QUEUE) lines 1217 to 1219 deleted*/
 
         {
         /*Read Control and Status of SyncManager 0 to check if the buffer is unlocked*/
         VARVOLATILE UINT32 smstate = 0x00;
         HW_EscReadDWord(smstate,ESC_SYNCMAN_CONTROL_OFFSET);
         smstate = SWAPDWORD(smstate);
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 1227 to 1234 deleted*/
 
         if(smstate & SM_STATUS_MBX_BUFFER_FULL)
         {
             /*Unlock the mailbox SyncManger buffer*/
             u32dummy = 0;
             HW_EscReadDWord(u32dummy,(u16EscAddrReceiveMbx + u16ReceiveMbxSize - 4));
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 1242 to 1248 deleted*/
 
         }
 
@@ -871,6 +917,7 @@ UINT8 MBX_CopyToSendMailbox( TMBX MBXMEM *pMbx )
     {
         /* the variable mbxSize contains the size of the mailbox data to be sent */
         UINT16 mbxSize = pMbx->MbxHeader.Length;
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 1292 to 1295 deleted*/
 /*ECATCHANGE_START(V5.13) MBX2*/
         /*Reset the not used mailbox memory*/
         {
@@ -888,6 +935,7 @@ UINT8 MBX_CopyToSendMailbox( TMBX MBXMEM *pMbx )
                 LastUsedAddr = LastUsedAddr + 4;
             }
 
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 1314 to 1336 deleted*/
         }
 /*ECATCHANGE_END(V5.13) MBX2*/
 
@@ -899,6 +947,7 @@ UINT8 MBX_CopyToSendMailbox( TMBX MBXMEM *pMbx )
         VARVOLATILE UINT32 smstate = 0x00;
         HW_EscReadDWord(smstate,(ESC_SYNCMAN_CONTROL_OFFSET + SIZEOF_SM_REGISTER));
         smstate = SWAPDWORD(smstate);
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 1349 to 1356 deleted*/
 
         if(!(smstate & SM_STATUS_MBX_BUFFER_FULL))
         {
@@ -923,11 +972,13 @@ UINT8 MBX_CopyToSendMailbox( TMBX MBXMEM *pMbx )
             }
 
             HW_EscWriteDWord(u32dummy, (u16EscAddrSendMbx + u16SendMbxSize - 4));
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 1382 to 1400 deleted*/
         }
 
         }
         }
 
+/*ET9300 Project Handler :(#if !MAILBOX_QUEUE) lines 1406 to 1415 deleted*/
         /* store last send mailbox service for a possible repeat
             one buffer includes the last send service (psRepeatMbx),
             the other one the actual service to be sent (psReadMbx),
@@ -939,11 +990,13 @@ UINT8 MBX_CopyToSendMailbox( TMBX MBXMEM *pMbx )
         {
             psWriteMbx = NULL;
         }
+/*ET9300 Project Handler :(#if !MAILBOX_QUEUE) lines 1427 to 1433 deleted*/
         psReadMbx = pMbx;
 
         /* set flag that send mailbox is full now */
         bSendMbxIsFull = TRUE;
 
+/*ET9300 Project Handler :(#if !MAILBOX_QUEUE) lines 1439 to 1442 deleted*/
 
         return 0;
     }
@@ -980,7 +1033,9 @@ void MBX_Main(void)
         }
     }
     while ( pMbx != NULL );
+/*ET9300 Project Handler :(#if MAILBOX_QUEUE #else) lines 1480 to 1482 deleted*/
 
+/*ET9300 Project Handler :(#if EMERGENCY_SUPPORTED) lines 1484 to 1491 deleted*/
 
     if (bReceiveMbxIsLocked)
     {
@@ -995,6 +1050,7 @@ void MBX_Main(void)
     if (u8MailboxSendReqStored)
     {
         /* there are mailbox services stored to be sent */
+/*ET9300 Project Handler :(#if EOE_SUPPORTED) lines 1507 to 1515 deleted*/
     }
 /*ECATCHANGE_END(V5.13) EOE1*/
 }

@@ -28,7 +28,8 @@ enum uart_cmd_type
     UART_CMD_PARA_GET_ACK = 0x80 | UART_CMD_PARA_GET,
     UART_CMD_DATA_SET_ACK = 0x80 | UART_CMD_DATA_SET,
     UART_CMD_DATA_GET_ACK = 0x80 | UART_CMD_DATA_GET,
-    UART_CMD_SYSTEM_RESRT = 0xEB,
+    UART_CMD_SYSTEM_RESET = 0xEB,
+    UART_CMD_FRAME_CRC_ERROR = 0xFF,
 };
 
 static int8_t rtm_cmd_write(struct uart_cmd_set_get *obj)

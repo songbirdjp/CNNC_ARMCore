@@ -127,10 +127,12 @@ V4.00 ECAT 1: The handling of the Sync Manager Parameter was included according 
 /*remove definition of _COEAPPL_ (#ifdef is used in coeappl.h)*/
 
 #define _OBJD_
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED && !TEST_APPLICATION) lines 130 to 133 deleted*/
 
 
 /*Add Application specific Objects*/
 /*ECATCHANGE_START(V5.13) CIA402 3*/
+/*ET9300 Project Handler :(#if CiA402_SAMPLE_APPLICATION #elif EL9800_APPLICATION #elif SAMPLE_APPLICATION #elif TEST_APPLICATION #elif SAMPLE_APPLICATION_INTERFACE) lines 138 to 149 deleted*/
 #include "lan9252_app.h"
 
 
@@ -140,6 +142,7 @@ V4.00 ECAT 1: The handling of the Sync Manager Parameter was included according 
 ------    Backup Parameter
 ------
 -----------------------------------------------------------------------------------------*/
+/*ET9300 Project Handler :(#if BACKUP_PARAMETER_SUPPORTED) lines 161 to 168 deleted*/
 
 /*-----------------------------------------------------------------------------------------
 ------
@@ -242,6 +245,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM sEntryDesc0x100A = {DEFTYPE_VISIBLESTRING,B
 OBJCONST UCHAR OBJMEM aName0x100A[] = "Manufacturer Software version";
 
 
+/*ET9300 Project Handler :(#if BACKUP_PARAMETER_SUPPORTED) lines 271 to 397 deleted*/
 
 
 /*---------------------------------------------
@@ -275,6 +279,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1018[] = {
 OBJCONST UCHAR OBJMEM aName0x1018[] = "Identity Object\000Vendor ID\000Product Code\000Revision Number\000Serial Number\000\377";
 
 
+/*ET9300 Project Handler :(#if BACKUP_PARAMETER_SUPPORTED) lines 431 to 456 deleted*/
 
 /*---------------------------------------------
 -    0x10F1
@@ -445,6 +450,7 @@ OBJCONST UCHAR OBJMEM aName0x1C00[] = "Sync manager type";
  */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1C3x[] = {
    {DEFTYPE_UNSIGNED8, 0x8, ACCESS_READ }, /* Subindex 000 */
+/*ET9300 Project Handler :(#if !AL_EVENT_ENABLED && !DC_SUPPORTED) lines 635 to 637 deleted*/
    {DEFTYPE_UNSIGNED16, 0x10, (ACCESS_READ | ACCESS_WRITE_PREOP)}, /* SubIndex 001: Synchronization Type */
    {DEFTYPE_UNSIGNED32, 0x20, ACCESS_READ}, /* SubIndex 002: Cycle Time */
    {0x0000, 0x20, 0}, /* SubIndex 003: Shift Time (not supported)*/
@@ -512,12 +518,15 @@ TOBJECT    OBJMEM GenObjDic[] = {
    {NULL,NULL,  0x1009, {DEFTYPE_VISIBLESTRING, 0 | (OBJCODE_VAR << 8)}, &sEntryDesc0x1009, aName0x1009, acHardwareversion, NULL, NULL, 0x0000 },
    /* Object 0x100A */
    {NULL,NULL,  0x100A, {DEFTYPE_VISIBLESTRING, 0 | (OBJCODE_VAR << 8)}, &sEntryDesc0x100A, aName0x100A, acSoftwareversion, NULL, NULL, 0x0000 },
+/*ET9300 Project Handler :(#if BACKUP_PARAMETER_SUPPORTED) lines 711 to 716 deleted*/
    /* Object 0x1018 */
    {NULL,NULL,  0x1018, {DEFTYPE_IDENTITY, 4 | (OBJCODE_REC << 8)}, asEntryDesc0x1018, aName0x1018, &sIdentity, NULL, NULL, 0x0000 },
+/*ET9300 Project Handler :(#if BACKUP_PARAMETER_SUPPORTED) lines 719 to 724 deleted*/
     /* Object 0x10F1 */
    {NULL,NULL,  0x10F1, {DEFTYPE_RECORD, 2 | (OBJCODE_REC << 8)}, asEntryDesc0x10F1, aName0x10F1, &sErrorSettings, NULL, NULL, 0x0000 },
     /* Object 0x10F8 */
    { NULL,NULL,  0x10F8,{ DEFTYPE_UNSIGNED64, 0 | (OBJCODE_VAR << 8) }, &sEntryDesc0x10F8, aName0x10F8, &u64Timestamp, Read0x10F8, NULL , 0x0000 },
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 730 to 733 deleted*/
    /* Object 0x1C00 */
    {NULL,NULL, 0x1C00, {DEFTYPE_UNSIGNED8, 4 | (OBJCODE_ARR << 8)}, asEntryDesc0x1C00, aName0x1C00, &sSyncmanagertype, NULL, NULL, 0x0000 },
    /* Object 0x1C32 */
@@ -528,6 +537,7 @@ TOBJECT    OBJMEM GenObjDic[] = {
   /*end of entries*/
   {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL, NULL, 0x000}};
 
+/*ET9300 Project Handler :(#if !STATIC_OBJECT_DIC #else) lines 749 to 820 deleted*/
 
 /*-----------------------------------------------------------------------------------------
 ------
@@ -545,6 +555,7 @@ OBJCONST TOBJECT OBJMEM * COE_GetObjectDictionary(void)
     return (OBJCONST TOBJECT OBJMEM *) ObjDicList;
 }
 
+/*ET9300 Project Handler :(#if BACKUP_PARAMETER_SUPPORTED) lines 838 to 1048 deleted*/
 
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -553,6 +564,7 @@ OBJCONST TOBJECT OBJMEM * COE_GetObjectDictionary(void)
 void COE_UpdateSyncErrorStatus(void)
 {
     if (sSyncManOutPar.u16CycleExceededCounter > 0 || sSyncManOutPar.u16SmEventMissedCounter > sErrorSettings.u16SyncErrorCounterLimit)
+/*ET9300 Project Handler :(#if !_PIC18 #else) lines 1059 to 1061 deleted*/
     {
         sSyncManOutPar.u8SyncError = 1;
     }
@@ -563,6 +575,7 @@ void COE_UpdateSyncErrorStatus(void)
 
 
     if (sSyncManInPar.u16CycleExceededCounter > 0 || sSyncManInPar.u16SmEventMissedCounter > sErrorSettings.u16SyncErrorCounterLimit)
+/*ET9300 Project Handler :(#if !_PIC18 #else) lines 1075 to 1077 deleted*/
     {
         sSyncManInPar.u8SyncError = 1;
     }
@@ -647,9 +660,11 @@ void COE_ObjInit(void)
     
     /* subindex 2: same as 0x1C32:02 */
     sSyncManInPar.u32CycleTime     = sSyncManOutPar.u32CycleTime;
+/*ET9300 Project Handler :(#if MAX_PD_OUTPUT_SIZE > 0 #else) lines 1173 to 1175 deleted*/
 
     /* subindex 4: same as 0x1C32:04 */
     sSyncManInPar.u16SyncTypesSupported    = sSyncManOutPar.u16SyncTypesSupported;
+/*ET9300 Project Handler :(#elif MAX_PD_INPUT_SIZE > 0) lines 1180 to 1198 deleted*/
 
     /* subindex 5: same as 0x1C32:05 */
     sSyncManInPar.u32MinCycleTime = MIN_PD_CYCLE_TIME;
@@ -691,6 +706,7 @@ void COE_ObjInit(void)
 
     pSdoSegData = NULL;
 
+/*ET9300 Project Handler :(#if BACKUP_PARAMETER_SUPPORTED) lines 1247 to 1259 deleted*/
 
     {
         UINT32 EscFeature = 0;

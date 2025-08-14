@@ -301,6 +301,7 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         ret |= beam_deliver_type_get(info.beam_id, &deliver_type);
         osMutexAcquire(obj->mutex, osWaitForever);
         obj->deliver_type = deliver_type;
+        obj->dose_mode = info.dose_mode;
         osMutexRelease(obj->mutex);
         break;
     case BGM_STATE_PREPARE:
@@ -325,6 +326,9 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         // ret |= dose_radiation_data_get(BGM_UART_DOSE2);
         /* 2. set generate mode to 1 */
         info.dose_mode = 1;
+        osMutexAcquire(obj->mutex, osWaitForever);
+        obj->dose_mode = info.dose_mode;
+        osMutexRelease(obj->mutex);
         ret |= dose_generate_mode_set(BGM_UART_DOSE1, &info.dose_mode);
         ret |= dose_generate_mode_set(BGM_UART_DOSE2, &info.dose_mode);
         /* 3. set pulse mode */
@@ -917,14 +921,15 @@ static int8_t fsm_thread_init(void)
 }
 INIT_APP_EXPORT(fsm_thread_init);
 
-static int8_t SF6_analog_value_get(float *value)
+float SF6_analog_value_get(void)
 {
 #define SF6_FACTOR  0.25f
 #define SF6_OFFSET  -0.25f
+#define SF6_COMPENSATE_VALUE  0.33f
 
-    *value = mcu_adc_value_get(MCU_ADC_CHANNEL_SF6) / 1000 * SF6_FACTOR + SF6_OFFSET;
+    float value = (mcu_adc_value_get(MCU_ADC_CHANNEL_SF6) / 1000 * SF6_FACTOR + SF6_OFFSET) / SF6_COMPENSATE_VALUE;
 
-    return 0;
+    return value;
 }
 
 #ifdef BGM_FSM_STATE_SIMULATION
@@ -1030,17 +1035,7 @@ MSH_CMD_EXPORT_ALIAS(bgm_fsm_state_current_set, bgm_fsm_state_current_set, set b
 
 static int8_t bgm_sf6_analog_value_get(uint8_t argc, char **argv)
 {
-    float value = 0;
-    int8_t ret = 0;
-
-    ret = SF6_analog_value_get(&value);
-    if (ret != 0)
-    {
-        LOG_E("SF6 analog value get err: %d\r\n", ret);
-        return -1;
-    }
-
-    LOG_I("SF6 analog value: %f\r\n", value);
+    LOG_I("SF6 analog value: %f\r\n", SF6_analog_value_get());
 
     return 0;
 }

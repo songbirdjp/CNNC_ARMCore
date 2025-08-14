@@ -140,7 +140,9 @@ V4.00 COEAPPL 2: The handling of backup parameters was included according to<br>
 
 #include "applInterface.h"
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 143 to 145 deleted*/
 
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 147 to 149 deleted*/
 
 
 
@@ -191,6 +193,7 @@ OBJCONST TOBJECT OBJMEM *  OBJ_GetObjectHandle( UINT16 index )
     OBJCONST TOBJECT OBJMEM * pObjEntry = (OBJCONST TOBJECT OBJMEM *) COE_GetObjectDictionary();
 
     while (pObjEntry!= NULL)
+/*ET9300 Project Handler :(#if !STATIC_OBJECT_DIC #else) lines 201 to 203 deleted*/
     {
         
         if (pObjEntry->Index == index)
@@ -198,6 +201,7 @@ OBJCONST TOBJECT OBJMEM *  OBJ_GetObjectHandle( UINT16 index )
             return pObjEntry;
         }
         pObjEntry = (TOBJECT OBJMEM *) pObjEntry->pNext;
+/*ET9300 Project Handler :(#if !STATIC_OBJECT_DIC #else) lines 212 to 214 deleted*/
     }
     return 0;
 }
@@ -231,8 +235,11 @@ UINT32 OBJ_GetObjectLength( UINT16 index, UINT8 subindex, OBJCONST TOBJECT OBJME
             return 0;
         }
         else if ((objCode == OBJCODE_ARR)
+/*ET9300 Project Handler :(#if USE_SINGLE_PDO_MAPPING_ENTRY_DESCR) lines 249 to 251 deleted*/
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 252 to 255 deleted*/
             )
         {
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 258 to 270 deleted*/
 
             /* we have to get the maxSubindex from the actual value of subindex 0,
                 which is stored as UINT16 at the beginning of the object's variable */
@@ -279,6 +286,7 @@ UINT32 OBJ_GetObjectLength( UINT16 index, UINT8 subindex, OBJCONST TOBJECT OBJME
     {
         if ( objCode == OBJCODE_VAR )
         {
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 318 to 326 deleted*/
 
             return (BIT2BYTE(pObjEntry->pEntryDesc->BitLength));
 
@@ -289,12 +297,15 @@ UINT32 OBJ_GetObjectLength( UINT16 index, UINT8 subindex, OBJCONST TOBJECT OBJME
             return 1;
         }
         else if((objCode == OBJCODE_ARR)
+/*ET9300 Project Handler :(#if USE_SINGLE_PDO_MAPPING_ENTRY_DESCR) lines 337 to 339 deleted*/
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 340 to 343 deleted*/
             )
         {
             return (BIT2BYTE(pObjEntry->pEntryDesc[1].BitLength));
         }
         else
         {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 350 to 356 deleted*/
             {
                 if (maxSubindex < subindex)
                 {
@@ -354,8 +365,10 @@ UINT16    OBJ_GetNoOfObjects(UINT8 listType)
     OBJCONST TOBJECT OBJMEM * pObjEntry = (OBJCONST TOBJECT OBJMEM *) COE_GetObjectDictionary();
     UINT16 n = 0;
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 416 to 422 deleted*/
 
     while (pObjEntry != NULL)
+/*ET9300 Project Handler :(#if !STATIC_OBJECT_DIC #else) lines 426 to 428 deleted*/
     {
         /* count the objects of the requested list type */
         if ( pObjEntry->Index >= 0x1000 )
@@ -383,6 +396,7 @@ UINT16    OBJ_GetNoOfObjects(UINT8 listType)
         }
         /* next object in object dictionary */
         pObjEntry = (TOBJECT OBJMEM *) pObjEntry->pNext;
+/*ET9300 Project Handler :(#if !STATIC_OBJECT_DIC #else) lines 457 to 459 deleted*/
     }
 
     return n;
@@ -411,6 +425,7 @@ UINT16    OBJ_GetObjectList(UINT16 listType, UINT16 *pIndex, UINT16 size, UINT16
     UINT16 listFlags = 0x0020 << listType;
     OBJCONST TOBJECT OBJMEM * pObjEntry;
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 488 to 500 deleted*/
 
     if ( pIndex[0] == 0x1000 )
     {
@@ -431,6 +446,7 @@ UINT16    OBJ_GetObjectList(UINT16 listType, UINT16 *pIndex, UINT16 size, UINT16
     if ( pObjEntry != NULL )
     {
         while (pObjEntry != NULL && size > 1 )
+/*ET9300 Project Handler :(#if !STATIC_OBJECT_DIC #else) lines 522 to 524 deleted*/
         {
             /* get the next index of the requested object list if there is enough space in the mailbox buffer */
             if ( pObjEntry->Index >= 0x1000 )
@@ -462,6 +478,7 @@ UINT16    OBJ_GetObjectList(UINT16 listType, UINT16 *pIndex, UINT16 size, UINT16
                 }
             }
         pObjEntry = (TOBJECT OBJMEM *) pObjEntry->pNext;
+/*ET9300 Project Handler :(#if !STATIC_OBJECT_DIC #else) lines 557 to 559 deleted*/
         }
     }
 
@@ -534,18 +551,21 @@ UINT16 OBJ_GetDesc( UINT16 index, UINT8 subindex, OBJCONST TOBJECT OBJMEM * pObj
     {
         if ( objCode == OBJCODE_REC )
         {
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 632 to 653 deleted*/
             {
             // get pointer to description of subindex 1 :
             // 16bit variable to avoid overflow if subindex 0xFF is read
             UINT16 i = 1;
             UINT16 tmpSubindex = subindex;
 
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 660 to 666 deleted*/
             {
 
             OBJCONST UCHAR OBJMEM * pSubDesc = (OBJCONST UCHAR OBJMEM *) OBJGETNEXTSTR( pDesc );
             while (( i <= tmpSubindex )
                 &&( pSubDesc[0] != 0xFF && pSubDesc[0] != 0xFE 
 /* ECATCHANGE_START(V5.13) COE9*/
+/*ET9300 Project Handler :(#if MEMORY_UNIT_16BIT) lines 673 to 676 deleted*/
 /* ECATCHANGE_END(V5.13) COE9*/
                     ))
             {
@@ -608,6 +628,8 @@ OBJCONST TSDOINFOENTRYDESC OBJMEM * OBJ_GetEntryDesc(OBJCONST TOBJECT OBJMEM * p
     UINT8 objCode = (pObjEntry->ObjDesc.ObjFlags & OBJFLAGS_OBJCODEMASK) >> OBJFLAGS_OBJCODESHIFT;
 
     if ((objCode == OBJCODE_ARR)
+/*ET9300 Project Handler :(#if USE_SINGLE_PDO_MAPPING_ENTRY_DESCR) lines 739 to 741 deleted*/
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 742 to 746 deleted*/
         )
     {
         /* object is an array */
@@ -624,6 +646,7 @@ OBJCONST TSDOINFOENTRYDESC OBJMEM * OBJ_GetEntryDesc(OBJCONST TOBJECT OBJMEM * p
     }
     else
     {
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 763 to 771 deleted*/
         {
             /* object is a variable or a record return the corresponding entry */
             pEntry = &pObjEntry->pEntryDesc[Subindex];
@@ -685,6 +708,7 @@ UINT16 OBJ_GetEntryOffset(UINT8 subindex, OBJCONST TOBJECT OBJMEM * pObjEntry)
     {
         /* get the entry description */
         if ((objCode == OBJCODE_ARR)
+/*ET9300 Project Handler :(#if USE_SINGLE_PDO_MAPPING_ENTRY_DESCR) lines 833 to 835 deleted*/
            )
            {
             pEntry = &pObjEntry->pEntryDesc[1];
@@ -896,6 +920,7 @@ UINT8 OBJ_Read( UINT16 index, UINT8 subindex, UINT32 objSize, OBJCONST TOBJECT O
         object's variable */
         maxSubindex = (*((UINT16 *) (pObjEntry->pVarPtr))) & 0x00FF;
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1067 to 1080 deleted*/
     }
 
     if ( bCompleteAccess )
@@ -946,6 +971,7 @@ UINT8 OBJ_Read( UINT16 index, UINT8 subindex, UINT32 objSize, OBJCONST TOBJECT O
                 return ABORTIDX_UNSUPPORTED_ACCESS;
             }
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1133 to 1140 deleted*/
         }
 
     /* ECATCHANGE_START(V5.13) COE4*/
@@ -990,6 +1016,7 @@ UINT8 OBJ_Read( UINT16 index, UINT8 subindex, UINT32 objSize, OBJCONST TOBJECT O
                     pData[0] = (pVarPtr[0] & 0xFF00) >> 8;
                     pData[0] |= (pVarPtr[1] & 0xFF) << 8;
 
+/*ET9300 Project Handler :(#if (BIG_ENDIAN_16BIT || BIG_ENDIAN_FORMAT)) lines 1186 to 1188 deleted*/
                     pData++;
                     pVarPtr++;
                 }
@@ -1004,7 +1031,9 @@ UINT8 OBJ_Read( UINT16 index, UINT8 subindex, UINT32 objSize, OBJCONST TOBJECT O
             {
             // Get enum value (first 32Bit)
 /*ECATCHANGE_START(V5.13) */
+/*ET9300 Project Handler :(#if MEMORY_UNIT_16BIT) lines 1204 to 1210 deleted*/
 
+/*ET9300 Project Handler :(#if (BIG_ENDIAN_16BIT || BIG_ENDIAN_FORMAT)) lines 1212 to 1215 deleted*/
             pData[0] = pVarPtr[0];
             pData[1] = pVarPtr[1];
             pData += 2;
@@ -1055,6 +1084,7 @@ UINT8 OBJ_Read( UINT16 index, UINT8 subindex, UINT32 objSize, OBJCONST TOBJECT O
                         if ( i == 0 && objCode != OBJCODE_VAR )
                         {
                             /* we read subindex 0 of an array or record */
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1270 to 1276 deleted*/
                             {
                                 pData[0] = SWAPWORD((UINT16)maxSubindex);
                             }
@@ -1115,6 +1145,7 @@ UINT8 OBJ_Read( UINT16 index, UINT8 subindex, UINT32 objSize, OBJCONST TOBJECT O
                             case     DEFTYPE_BIT6:
                             case     DEFTYPE_BIT7:
                             case     DEFTYPE_BIT8:
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1337 to 1348 deleted*/
                             case     DEFTYPE_BITARR8:
                                 /* in this example the objects are defined in that way,
                                 that the bit types are always inside a 16-bit field,
@@ -1188,6 +1219,7 @@ UINT8 OBJ_Read( UINT16 index, UINT8 subindex, UINT32 objSize, OBJCONST TOBJECT O
 
                                 /* in this example the objects are defined in that way,
                                 that the 32 bit type are always starting at an exact WORD offset */
+/*ET9300 Project Handler :(#if BIG_ENDIAN_16BIT || BIG_ENDIAN_FORMAT) lines 1422 to 1425 deleted*/
                                 pData[0] = pVarPtr[0];
                                 pData[1] = pVarPtr[1];
                                 pData += 2;
@@ -1203,6 +1235,7 @@ UINT8 OBJ_Read( UINT16 index, UINT8 subindex, UINT32 objSize, OBJCONST TOBJECT O
 
                                 /* in this example the objects are defined in that way,
                                 that the 64 bit type are always starting at an exact WORD offset */
+/*ET9300 Project Handler :(#if BIG_ENDIAN_16BIT || BIG_ENDIAN_FORMAT) lines 1442 to 1447 deleted*/
                                 pData[0] = pVarPtr[0];
                                 pData[1] = pVarPtr[1];
                                 pData[2] = pVarPtr[2];
@@ -1424,6 +1457,7 @@ UINT8 OBJ_Write( UINT16 index, UINT8 subindex, UINT32 dataSize, OBJCONST TOBJECT
             }
         }
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1674 to 1681 deleted*/
 
     }
 
@@ -1467,6 +1501,7 @@ UINT8 OBJ_Write( UINT16 index, UINT8 subindex, UINT32 dataSize, OBJCONST TOBJECT
            return 0; //no error
         }
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1725 to 1731 deleted*/
         /* we use the standard write function */
         for (i = subindex; i <= lastSubindex; i++)
         {
@@ -1565,6 +1600,7 @@ UINT8 OBJ_Write( UINT16 index, UINT8 subindex, UINT32 dataSize, OBJCONST TOBJECT
                         case     DEFTYPE_BIT6:
                         case     DEFTYPE_BIT7:
                         case     DEFTYPE_BIT8:
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1832 to 1843 deleted*/
                         case     DEFTYPE_BITARR8:
                             /* in this example the objects are defined in that way,
                                that the bit types are always inside a 16-bit field,
@@ -1705,6 +1741,7 @@ UINT8 OBJ_Write( UINT16 index, UINT8 subindex, UINT32 dataSize, OBJCONST TOBJECT
 
                             /* in this example the objects are defined in that way,
                                that the 32 bit type are always starting at an exact WORD offset */
+/*ET9300 Project Handler :(#if BIG_ENDIAN_16BIT || BIG_ENDIAN_FORMAT) lines 1992 to 2003 deleted*/
                             if(bClearSubindex0Required && 
                                 ((pVarPtr[0] != pData[0])
                                 || (pVarPtr[1] != pData[1])))
@@ -1717,6 +1754,7 @@ UINT8 OBJ_Write( UINT16 index, UINT8 subindex, UINT32 dataSize, OBJCONST TOBJECT
                             pVarPtr[1] = pData[1];
                             pData += 2;
                             }
+/*ET9300 Project Handler :(#if TEST_APPLICATION && DIAGNOSIS_SUPPORTED) lines 2017 to 2028 deleted*/
                             break;
                         case    DEFTYPE_REAL64:
                         case 	DEFTYPE_INTEGER64:
@@ -1728,6 +1766,7 @@ UINT8 OBJ_Write( UINT16 index, UINT8 subindex, UINT32 dataSize, OBJCONST TOBJECT
                             }
                             /* in this example the objects are defined in that way,
                                that the 64 bit type are always starting at an exact WORD offset */
+/*ET9300 Project Handler :(#if BIG_ENDIAN_16BIT || BIG_ENDIAN_FORMAT) lines 2040 to 2045 deleted*/
                             pVarPtr[0] = pData[0];
                             pVarPtr[1] = pData[1];
                             pVarPtr[2] = pData[2];
@@ -1772,6 +1811,7 @@ UINT8 OBJ_Write( UINT16 index, UINT8 subindex, UINT32 dataSize, OBJCONST TOBJECT
                     /* set flag */
                     bWritten = 1;
 
+/*ET9300 Project Handler :(#if STORE_BACKUP_PARAMETER_IMMEDIATELY && BACKUP_PARAMETER_SUPPORTED) lines 2091 to 2098 deleted*/
                 }
             }
             else

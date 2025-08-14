@@ -55,6 +55,8 @@ struct vps_status
     osMutexId_t mutex;
 };
 
+struct vps_status *vps_state_get(struct vps_status *buf);
+
 #ifdef __cplusplus
 }
 #endif

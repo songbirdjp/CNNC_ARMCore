@@ -54,6 +54,7 @@ struct bgm_data_info
 };
 
 struct bgm_data_info *bgm_data_info_get(void);
+float SF6_analog_value_get(void);
 
 #ifdef __cplusplus
 }

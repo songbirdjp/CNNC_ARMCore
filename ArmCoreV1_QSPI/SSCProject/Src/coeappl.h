@@ -42,6 +42,7 @@ V5.01 : Start file change log
 ------    Defines and Types
 ------
 -----------------------------------------------------------------------------------------*/
+/*ET9300 Project Handler :(#if BACKUP_PARAMETER_SUPPORTED) lines 44 to 69 deleted*/
 
 
 /*---------------------------------------------
@@ -61,6 +62,7 @@ TOBJ1018;
 
 
 
+/*ET9300 Project Handler :(#if BACKUP_PARAMETER_SUPPORTED) lines 89 to 105 deleted*/
 
 
 /*---------------------------------------------

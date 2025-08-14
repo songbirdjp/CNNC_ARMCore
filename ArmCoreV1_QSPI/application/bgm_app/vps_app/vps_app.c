@@ -657,6 +657,20 @@ static int8_t vps_thread_init(void)
 }
 INIT_APP_EXPORT(vps_thread_init);
 
+struct vps_status *vps_state_get(struct vps_status *buf)
+{
+    if (buf == NULL)
+    {
+        return NULL;
+    }
+
+    struct vps_status *obj = vps_status_get();
+    osMutexAcquire(obj->mutex, osWaitForever);
+    memcpy(buf, obj, sizeof(struct vps_status));
+    osMutexRelease(obj->mutex);
+
+    return buf;
+}
 
 #ifndef VPS_TEST
 #include "shell.h"

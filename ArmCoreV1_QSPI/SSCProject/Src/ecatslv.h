@@ -45,6 +45,7 @@ V5.01 : Start file change log
 
 #include "ecat_def.h"
 
+/*ET9300 Project Handler :(#if EL9800_HW #elif FC1100_HW #elif MCI_HW) lines 47 to 53 deleted*/
 #include  "esc.h"
 #include"9252_HW.h"
 
@@ -64,6 +65,7 @@ V5.01 : Start file change log
     #define    OBJGETNEXTSTR(p)    ( (OBJCONST CHAR OBJMEM * )(  &((p)[OBJSTRLEN( (OBJCONST CHAR OBJMEM *) (p) ) + 1]) ) ) /**< \brief Macro to get next name within the objetc name string*/
 #endif
 
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 75 to 115 deleted*/
 #ifndef LO_BYTE
     #define    LO_BYTE                            0 /**< \brief LowByte within an WORD*/
 #endif
@@ -326,11 +328,13 @@ V5.01 : Start file change log
 #define     MAILBOX_READ_EVENT                  ((UINT16) 0x0200) /**< \brief MBoxIn read event*/
 #define     PROCESS_OUTPUT_EVENT                ((UINT16) 0x0400) /**< \brief Output process data write event*/
 #define     PROCESS_INPUT_EVENT                 ((UINT16) 0x0800) /**< \brief Input process data read event*/
+/*ET9300 Project Handler :(#if MAILBOX_SUPPORTED #else) lines 380 to 383 deleted*/
 
 #define    MAILBOX_WRITE                        0 /**< \brief SyncManager ID for MBoxOut (master to slave)*/
 #define    MAILBOX_READ                         1 /**< \brief SyncManager ID for MBoxIn (slave to master)*/
 #define    PROCESS_DATA_OUT                     2 /**< \brief SyncManager ID for output process data (master to slave)*/
 #define    PROCESS_DATA_IN                      3 /**< \brief SyncManager ID for input process data (slave to master)*/
+/*ET9300 Project Handler :(#if MAILBOX_SUPPORTED #else) lines 390 to 393 deleted*/
 
 
 
@@ -350,6 +354,7 @@ V5.01 : Start file change log
 #define    LED_INVERT_DOUBLEFLASH       0xC2 /**< \brief LED invert double flash*/
 #define    LED_ON                       0x01 /**< \brief LED on*/
 
+/*ET9300 Project Handler :(#elif ESC_SUPPORT_ECAT_LED) lines 414 to 422 deleted*/
 
 
 #define    MEMORY_START_ADDRESS            0x1000 /**< \brief ESC DPRAM start address*/
@@ -360,6 +365,7 @@ V5.01 : Start file change log
 #endif
 #ifndef    DC_EVENT_MASK
     #define    DC_EVENT_MASK                PROCESS_OUTPUT_EVENT /**< \brief AL Event mask (value of register 0x204) in case of DC synchronisation*/
+/*ET9300 Project Handler :(#if MAX_PD_OUTPUT_SIZE > 0 #else) lines 434 to 436 deleted*/
 #endif
 
 
@@ -375,6 +381,7 @@ V5.01 : Start file change log
 ------    Global Variables
 ------
 -----------------------------------------------------------------------------------------*/
+/*ET9300 Project Handler :(#if BOOTSTRAPMODE_SUPPORTED) lines 452 to 454 deleted*/
 PROTO    BOOL                           bEcatOutputUpdateRunning;  /**< \brief Indicates the OP state, will be set in StartOutputHandler
                                                                                 and reset in StopOutputHandler*/
 
@@ -416,6 +423,7 @@ PROTO UINT16                            LatchInputSync0Counter; /**< \brief Sync
 
 PROTO BOOL b32BitDc;
 
+/*ET9300 Project Handler :(#if !COE_SUPPORTED) lines 500 to 502 deleted*/
 
 
 PROTO BOOL                              bEscIntEnabled; /**< \brief Indicates that the ESC interrupt is enabled (SM2/3 or SYNC0/1-event),
@@ -451,6 +459,7 @@ PROTO BOOL                              bExplicitDevIdRequested; /**< \brief Ind
 
 PROTO UINT16                            EcatWdValue; /**< \brief Contains the value of the watchdog in ms, will be written in StartInputHandler. 
                                                                     In case that the ESC watchdog feature is used this variable just indicates if the watchdog is enabled or disabled*/
+/*ET9300 Project Handler :(#if !ESC_SM_WD_SUPPORTED) lines 542 to 546 deleted*/
 PROTO    UINT16                         nEscAddrOutputData; /**< \brief Contains the SM address for the output process data*/
 PROTO    UINT16                         nEscAddrInputData; /**< \brief Contains the SM address for the input process data*/
 
@@ -465,6 +474,7 @@ PROTO void DisableSyncManChannel(UINT8 channel);
 PROTO TSYNCMAN ESCMEM *GetSyncMan(UINT8 channel);
 PROTO void SetALStatus(UINT8 alStatus, UINT16 alStatusCode);
 PROTO void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode);
+/*ET9300 Project Handler :(#if !ESC_SM_WD_SUPPORTED) lines 565 to 569 deleted*/
 PROTO void DC_CheckWatchdog(void);
 PROTO    void CheckIfEcatError(void);
 PROTO void ECAT_Init(void);

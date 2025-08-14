@@ -144,12 +144,14 @@ V4.00 APPL 6: The main function was split in MainInit and MainLoop
 #include "coeappl.h"
 
 
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 148 to 150 deleted*/
 
 #define _APPL_INTERFACE_ 1
 #include "applInterface.h"
 #undef _APPL_INTERFACE_
 
 /*ECATCHANGE_START(V5.13) CIA402 3*/
+/*ET9300 Project Handler :(#if CiA402_SAMPLE_APPLICATION #elif EL9800_APPLICATION #elif SAMPLE_APPLICATION #elif TEST_APPLICATION #elif SAMPLE_APPLICATION_INTERFACE #elif BOOTLOADER_SAMPLE) lines 157 to 170 deleted*/
 #include "lan9252_app.h"
 
 
@@ -160,6 +162,7 @@ V4.00 APPL 6: The main function was split in MainInit and MainLoop
 ------
 --------------------------------------------------------------------------------------*/
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_ACCESS_SUPPORT) lines 185 to 187 deleted*/
 
 #ifndef ECAT_TIMER_INC_P_MS
 /**
@@ -171,6 +174,7 @@ V4.00 APPL 6: The main function was split in MainInit and MainLoop
 
 
 #define    MEASUREMENT_ACTIVE (((sSyncManOutPar.u16GetCycleTime & 0x1) == 0x1) || ((sSyncManInPar.u16GetCycleTime & 0x1) == 0x1))
+/*ET9300 Project Handler :(#elif MAX_PD_OUTPUT_SIZE > 0) lines 204 to 210 deleted*/
 
 /*-----------------------------------------------------------------------------------------
 ------
@@ -191,6 +195,7 @@ UINT32 u32MinCycleTimeValue; /** <\brief tmp value of the min cycle time during 
 
 
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 237 to 241 deleted*/
 
 
 UINT16             aPdOutputData[(MAX_PD_OUTPUT_SIZE>>1)];
@@ -198,6 +203,7 @@ UINT16           aPdInputData[(MAX_PD_INPUT_SIZE>>1)];
 
 /*variables are declared in ecatslv.c*/
     extern VARVOLATILE UINT32    u32dummy;
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 254 to 258 deleted*/
 
 BOOL bInitFinished = FALSE; /** < \brief indicates if the initialization is finished*/
 
@@ -218,6 +224,7 @@ void HandleCycleTimeMeasurement(void);
 /**
 \brief      This function will copies the inputs from the local memory to the ESC memory
 *////////////////////////////////////////////////////////////////////////////////////////
+/*ET9300 Project Handler :(#if _PIC18 && AL_EVENT_ENABLED) lines 284 to 288 deleted*/
 void PDO_InputMapping(void)
 {
 
@@ -288,6 +295,7 @@ void PDO_InputMapping(void)
 \brief    This function will copies the outputs from the ESC memory to the local memory.
         This function is only called in case of an SM2 (output process data) event.
 *////////////////////////////////////////////////////////////////////////////////////////
+/*ET9300 Project Handler :(#if _PIC18 && AL_EVENT_ENABLED) lines 371 to 375 deleted*/
 void PDO_OutputMapping(void)
 {
    UINT32 u32TimeValue = 0;
@@ -347,11 +355,13 @@ void ECAT_CheckTimer(void)
         EsmTimeoutCounter--;
     }
 
+/*ET9300 Project Handler :(#if !ESC_SM_WD_SUPPORTED) lines 444 to 449 deleted*/
 
     ECAT_SetLedIndication();
 
     DC_CheckWatchdog();
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 459 to 478 deleted*/
 
 
 /*ECATCHANGE_START(V5.13) */
@@ -373,6 +383,7 @@ void ECAT_CheckTimer(void)
     u32CheckForDcOverrunCnt++;
 
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && COE_SUPPORTED) lines 508 to 512 deleted*/
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -454,6 +465,7 @@ UINT32 GetSystemTimeDelay(UINT32 u32StartTime)
 
 /*ECATCHANGE_START(V5.13) ECAT1*/
 /*ECATCHANGE_END(V5.13) ECAT1*/
+/*ET9300 Project Handler :(#if _PIC18) lines 603 to 607 deleted*/
 void PDI_Isr(void)
 {
     /*ECATCHANGE_START(V5.13) ECAT1*/
@@ -491,11 +503,13 @@ void PDI_Isr(void)
 
             sSyncManInPar.u16SmEventMissedCounter = sSyncManOutPar.u16SmEventMissedCounter;
 
+/*ET9300 Project Handler :(#if COE_SUPPORTED #else) lines 654 to 659 deleted*/
 
 
         /* Outputs were updated, set flag for watchdog monitoring */
         bEcatFirstOutputsReceived = TRUE;
 
+/*ET9300 Project Handler :(#if !ESC_SM_WD_SUPPORTED) lines 666 to 669 deleted*/
 
         /*
             handle output process data event
@@ -510,8 +524,10 @@ void PDI_Isr(void)
             /* Just acknowledge the process data event in the INIT,PreOP and SafeOP state */
             HW_EscReadDWordIsr(u32dummy,nEscAddrOutputData);
             HW_EscReadDWordIsr(u32dummy,(nEscAddrOutputData+nPdOutputSize-4));
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 685 to 691 deleted*/
         }
         }
+/*ET9300 Project Handler :(#elif MAX_PD_INPUT_SIZE > 0) lines 694 to 718 deleted*/
 
         /*
             Call ECAT_Application() in SM Sync mode
@@ -521,11 +537,14 @@ void PDI_Isr(void)
             /* The Application is synchronized to process data Sync Manager event*/
             ECAT_Application();
         }
+/*ET9300 Project Handler :(#elif MAX_PD_INPUT_SIZE > 0) lines 730 to 736 deleted*/
+/*ET9300 Project Handler :(#if COE_SUPPORTED #else) lines 737 to 744 deleted*/
 
 /*ECATCHANGE_START(V5.13) ECAT 5*/
     if ( (bEcatInputUpdateRunning == TRUE) && (nPdInputSize > 0)
 /*ECATCHANGE_END(V5.13) ECAT 5*/
        && ((sSyncManInPar.u16SyncType == SYNCTYPE_SM_SYNCHRON) || (sSyncManInPar.u16SyncType == SYNCTYPE_SM2_SYNCHRON))
+/*ET9300 Project Handler :(#if COE_SUPPORTED #else) lines 752 to 754 deleted*/
         )
     {
         /* EtherCAT slave is at least in SAFE-OPERATIONAL, update inputs */
@@ -547,7 +566,9 @@ void PDI_Isr(void)
       /* Acknowledge the process data event*/
             HW_EscReadDWordIsr(u32dummy,nEscAddrOutputData);
             HW_EscReadDWordIsr(u32dummy,(nEscAddrOutputData+nPdOutputSize-4));
+/*ET9300 Project Handler :(#elif ESC_16BIT_ACCESS) lines 783 to 789 deleted*/
     }
+/*ET9300 Project Handler :(#elif MAX_PD_INPUT_SIZE > 0) lines 791 to 811 deleted*/
     } //if(bEscIntEnabled)
 
       /*ECATCHANGE_START(V5.13) ECAT1*/
@@ -580,6 +601,7 @@ void Sync0_Isr(void)
 /*ECATCHANGE_START(V5.13) ECAT 6*/
         BOOL bCallInputMapping = FALSE;
 /*ECATCHANGE_END(V5.13) ECAT 6*/
+/*ET9300 Project Handler :(#if !AL_EVENT_ENABLED) lines 853 to 896 deleted*/
 
 /*ECATCHANGE_START(V5.13) ECAT 6*/
         if ((bEcatInputUpdateRunning == TRUE) && (LatchInputSync0Value > 0) && (nPdInputSize > 0))
@@ -611,6 +633,7 @@ void Sync0_Isr(void)
                    sSyncManInPar.u16SmEventMissedCounter = sSyncManInPar.u16SmEventMissedCounter + 3;
                }
 
+/*ET9300 Project Handler :(#if COE_SUPPORTED #else) lines 937 to 942 deleted*/
            } // if (u16SmSync0Counter > u16SmSync0Value)
 
            
@@ -635,6 +658,7 @@ void Sync0_Isr(void)
                  u16SmSync0Counter = 0;
 
                  sSyncManInPar.u16SmEventMissedCounter = 0;
+/*ET9300 Project Handler :(#if COE_SUPPORTED #else) lines 970 to 972 deleted*/
 
               }
            }
@@ -890,9 +914,12 @@ UINT16 MainInit(void)
 
 
 /* Reset application function pointer*/
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 1240 to 1245 deleted*/
 
 
+/*ET9300 Project Handler :(#if EOE_SUPPORTED) lines 1248 to 1251 deleted*/
 
+/*ET9300 Project Handler :(#if FOE_SUPPORTED) lines 1253 to 1259 deleted*/
 
     /* ECATCHANGE_START(V5.13) COE4*/
     pAPPL_CoeReadInd = NULL;
@@ -906,7 +933,9 @@ UINT16 MainInit(void)
     /* initialize the objects */
     COE_ObjInit();
 
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 1277 to 1280 deleted*/
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_ACCESS_SUPPORT) lines 1282 to 1315 deleted*/
     /*indicate that the slave stack initialization finished*/
     bInitFinished = TRUE;
 
@@ -955,6 +984,7 @@ UINT16 MainInit(void)
 
 
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 1368 to 1391 deleted*/
 
 /*Application Init need to be called from the application layer*/
      return Error;
@@ -984,6 +1014,7 @@ void MainLoop(void)
            DC-Mode:       bEscIntEnabled = TRUE, bDcSyncActive = TRUE */
         if (
             (!bEscIntEnabled || !bEcatFirstOutputsReceived)     /* SM-Synchronous, but not SM-event received */
+/*ET9300 Project Handler :(#if MAX_PD_OUTPUT_SIZE > 0 #else) lines 1422 to 1424 deleted*/
           && !bDcSyncActive                                               /* DC-Synchronous */
             )
         {
@@ -1004,6 +1035,7 @@ void MainLoop(void)
                 {
                     /* set the flag for the state machine behavior */
                     bEcatFirstOutputsReceived = TRUE;
+/*ET9300 Project Handler :(#if !ESC_SM_WD_SUPPORTED) lines 1448 to 1451 deleted*/
                     if ( bEcatOutputUpdateRunning )
                     {
                         /* update the outputs */
@@ -1017,6 +1049,7 @@ void MainLoop(void)
                     {
                         /* Outputs were updated, set flag for watchdog monitoring */
                         bEcatFirstOutputsReceived = TRUE;
+/*ET9300 Project Handler :(#if !ESC_SM_WD_SUPPORTED) lines 1466 to 1469 deleted*/
                     }
                 }
             }
@@ -1058,6 +1091,7 @@ void MainLoop(void)
        COE_Main();
        CheckIfEcatError();
 
+/*ET9300 Project Handler :(#if CiA402_SAMPLE_APPLICATION) lines 1527 to 1532 deleted*/
 
     if (pAPPL_MainLoop != NULL)
     {
@@ -1071,6 +1105,7 @@ void MainLoop(void)
  \brief    ECAT_Application (prev. SSC versions "COE_Application")
  this function calculates and the physical process signals and triggers the input mapping
 *////////////////////////////////////////////////////////////////////////////////////////
+/*ET9300 Project Handler :(#if _PIC18 && AL_EVENT_ENABLED) lines 1546 to 1550 deleted*/
 void ECAT_Application(void)
 {
 #if (MIN_PD_CYCLE_TIME == 0)
@@ -1146,7 +1181,9 @@ void ECAT_Application(void)
 #endif /* #if MIN_PD_CYCLE_TIME == 0 */
 }
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_ACCESS_SUPPORT) lines 1644 to 2002 deleted*/
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 2004 to 2224 deleted*/
 
 
 /** @} */

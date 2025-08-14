@@ -477,9 +477,9 @@ int8_t lan9252_app_ops_init(void)
         printf("create fail\r\n");
         return -2;
     }
-    
+
     lan9252_app_ops.appl_output_update = appl_output_update;
-    
+
     return 0;
 }
 

@@ -49,6 +49,7 @@ V4.08 MBX 1: If the switch MAILBOX_QUEUE was set, we have to put all SDO Info Re
 /*remove definition of _ECATCOE_ (#ifdef is used in ecatcoe.h)*/
 
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 52 to 60 deleted*/
 
 
 /*---------------------------------------------------------------------------------------
@@ -111,6 +112,7 @@ UINT8 COE_ServiceInd(TCOEMBX MBXMEM *pCoeMbx)
         /* SDO-Request received, call SDOS_SdoInd to process the SDO-Request
            if an existing SDO-Stack shall be used, the corresponding function
             should be called */
+/*ET9300 Project Handler :(#if TEST_APPLICATION && EMERGENCY_SUPPORTED) lines 125 to 152 deleted*/
         result = SDOS_SdoInd( (TINITSDOMBX MBXMEM *) pCoeMbx );
         break;
 
@@ -122,6 +124,7 @@ UINT8 COE_ServiceInd(TCOEMBX MBXMEM *pCoeMbx)
 
 
     case COESERVICE_SDORESPONSE:
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 164 to 178 deleted*/
     case COESERVICE_EMERGENCY:
     case COESERVICE_TXPDO:
     case COESERVICE_RXPDO:

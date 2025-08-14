@@ -46,9 +46,12 @@ V5.10.1 : Start file change log
 #include "coeappl.h"
 #include "ecatappl.h"
 
+/*ET9300 Project Handler :(#if DIAGNOSIS_SUPPORTED) lines 50 to 52 deleted*/
 
 
+/*ET9300 Project Handler :(#if EOE_SUPPORTED) lines 55 to 57 deleted*/
 
+/*ET9300 Project Handler :(#if FOE_SUPPORTED) lines 59 to 61 deleted*/
 
 #endif /*#ifndef _APPL_INTERFACE_H_*/
 
@@ -64,10 +67,13 @@ V5.10.1 : Start file change log
 ------
 -----------------------------------------------------------------------------------------*/
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 77 to 123 deleted*/
 
 
+/*ET9300 Project Handler :(#if EOE_SUPPORTED) lines 126 to 153 deleted*/
 
 
+/*ET9300 Project Handler :(#if FOE_SUPPORTED) lines 156 to 275 deleted*/
 
 /* ECATCHANGE_START(V5.13) COE4*/
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -139,5 +145,6 @@ PROTO void MainLoop(void);
 PROTO void ECAT_StateChange(UINT8 alStatus, UINT16 alStatusCode);
 
 
+/*ET9300 Project Handler :(#if EOE_SUPPORTED) lines 349 to 362 deleted*/
 
 #undef PROTO

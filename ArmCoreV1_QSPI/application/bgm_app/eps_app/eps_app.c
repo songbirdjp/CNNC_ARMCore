@@ -621,6 +621,21 @@ static int8_t eps_thread_init(void)
 }
 INIT_APP_EXPORT(eps_thread_init);
 
+struct eps_status *eps_state_get(struct eps_status *buf)
+{
+    if (buf == NULL)
+    {
+        return NULL;
+    }
+
+    struct eps_status *obj = eps_status_get();
+    osMutexAcquire(obj->mutex, osWaitForever);
+    memcpy(buf, obj, sizeof(struct eps_status));
+    osMutexRelease(obj->mutex);
+
+    return buf;
+}
+
 #ifndef EPS_TEST
 #include "shell.h"
 static int8_t eps_read_test(uint8_t argc, char **argv)

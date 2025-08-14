@@ -121,6 +121,23 @@ PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 * SubIndex 16 - Reference to 0x6000.16<br>
 * SubIndex 17 - Reference to 0x6000.17<br>
 * SubIndex 18 - Reference to 0x6000.18<br>
+* SubIndex 19 - Reference to 0x6000.19<br>
+* SubIndex 20 - Reference to 0x6000.20<br>
+* SubIndex 21 - Reference to 0x6000.21<br>
+* SubIndex 22 - Reference to 0x6000.22<br>
+* SubIndex 23 - Reference to 0x6000.23<br>
+* SubIndex 24 - Reference to 0x6000.24<br>
+* SubIndex 25 - Reference to 0x6000.25<br>
+* SubIndex 26 - Reference to 0x6000.26<br>
+* SubIndex 27 - Reference to 0x6000.27<br>
+* SubIndex 28 - Reference to 0x6000.28<br>
+* SubIndex 29 - Reference to 0x6000.29<br>
+* SubIndex 30 - Reference to 0x6000.30<br>
+* SubIndex 31 - Reference to 0x6000.31<br>
+* SubIndex 32 - Reference to 0x6000.32<br>
+* SubIndex 33 - Reference to 0x6000.33<br>
+* SubIndex 34 - Reference to 0x6000.34<br>
+* SubIndex 35 - Reference to 0x6000.35<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -141,7 +158,24 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - Reference to 0x6000.15 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex16 - Reference to 0x6000.16 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex17 - Reference to 0x6000.17 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex18 - Reference to 0x6000.18 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex18 - Reference to 0x6000.18 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex19 - Reference to 0x6000.19 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex20 - Reference to 0x6000.20 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex21 - Reference to 0x6000.21 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex22 - Reference to 0x6000.22 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex23 - Reference to 0x6000.23 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex24 - Reference to 0x6000.24 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex25 - Reference to 0x6000.25 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex26 - Reference to 0x6000.26 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex27 - Reference to 0x6000.27 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex28 - Reference to 0x6000.28 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex29 - Reference to 0x6000.29 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex30 - Reference to 0x6000.30 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex31 - Reference to 0x6000.31 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex32 - Reference to 0x6000.32 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex33 - Reference to 0x6000.33 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex34 - Reference to 0x6000.34 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex35 - Reference to 0x6000.35 */
 
 /**
 * \brief Object/Entry names
@@ -164,7 +198,24 @@ OBJCONST UCHAR OBJMEM aName0x1A00[] = "InputData process data mapping\000"
 "SubIndex 015\000"
 "SubIndex 016\000"
 "SubIndex 017\000"
-"SubIndex 018\000\377";
+"SubIndex 018\000"
+"SubIndex 019\000"
+"SubIndex 020\000"
+"SubIndex 021\000"
+"SubIndex 022\000"
+"SubIndex 023\000"
+"SubIndex 024\000"
+"SubIndex 025\000"
+"SubIndex 026\000"
+"SubIndex 027\000"
+"SubIndex 028\000"
+"SubIndex 029\000"
+"SubIndex 030\000"
+"SubIndex 031\000"
+"SubIndex 032\000"
+"SubIndex 033\000"
+"SubIndex 034\000"
+"SubIndex 035\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -191,6 +242,23 @@ UINT32 SI15; /* Subindex15 - Reference to 0x6000.15 */
 UINT32 SI16; /* Subindex16 - Reference to 0x6000.16 */
 UINT32 SI17; /* Subindex17 - Reference to 0x6000.17 */
 UINT32 SI18; /* Subindex18 - Reference to 0x6000.18 */
+UINT32 SI19; /* Subindex19 - Reference to 0x6000.19 */
+UINT32 SI20; /* Subindex20 - Reference to 0x6000.20 */
+UINT32 SI21; /* Subindex21 - Reference to 0x6000.21 */
+UINT32 SI22; /* Subindex22 - Reference to 0x6000.22 */
+UINT32 SI23; /* Subindex23 - Reference to 0x6000.23 */
+UINT32 SI24; /* Subindex24 - Reference to 0x6000.24 */
+UINT32 SI25; /* Subindex25 - Reference to 0x6000.25 */
+UINT32 SI26; /* Subindex26 - Reference to 0x6000.26 */
+UINT32 SI27; /* Subindex27 - Reference to 0x6000.27 */
+UINT32 SI28; /* Subindex28 - Reference to 0x6000.28 */
+UINT32 SI29; /* Subindex29 - Reference to 0x6000.29 */
+UINT32 SI30; /* Subindex30 - Reference to 0x6000.30 */
+UINT32 SI31; /* Subindex31 - Reference to 0x6000.31 */
+UINT32 SI32; /* Subindex32 - Reference to 0x6000.32 */
+UINT32 SI33; /* Subindex33 - Reference to 0x6000.33 */
+UINT32 SI34; /* Subindex34 - Reference to 0x6000.34 */
+UINT32 SI35; /* Subindex35 - Reference to 0x6000.35 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1A00;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -200,7 +268,7 @@ TOBJ1A00;
 */
 PROTO TOBJ1A00 InputDataProcessDataMapping0x1A00
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={18,0x60000108,0x60000208,0x60000310,0x60000410,0x60000520,0x60000620,0x60000720,0x60000820,0x60000920,0x60000A20,0x60000B20,0x60000C20,0x60000D08,0x60000E08,0x60000F20,0x60001020,0x60001120,0x60001220}
+={35,0x60000108,0x60000208,0x60000310,0x60000410,0x60000520,0x60000620,0x60000720,0x60000820,0x60000920,0x60000A20,0x60000B20,0x60000C20,0x60000D08,0x60000E08,0x60000F20,0x60001020,0x60001120,0x60001220,0x60001320,0x60001420,0x60001520,0x60001608,0x60001708,0x60001820,0x60001920,0x60001A20,0x60001B20,0x60001C20,0x60001D08,0x60001E08,0x60001F20,0x60002020,0x60002120,0x60002220,0x60002320}
 #endif
 ;
 /** @}*/
@@ -334,8 +402,25 @@ PROTO TOBJ1C13 sTxPDOassign
 * SubIndex 14 - InU8_DoseBFsmState<br>
 * SubIndex 15 - InU32_DoseAInterlock<br>
 * SubIndex 16 - InU32_DoseBInterlock<br>
-* SubIndex 17 - InU32_AfcState<br>
-* SubIndex 18 - InF_AfcPositionCurrent<br>
+* SubIndex 17 - InU32_DoseAErrorCode<br>
+* SubIndex 18 - InU32_DoseBErrorCode<br>
+* SubIndex 19 - InU32_AfcState<br>
+* SubIndex 20 - InF_AfcPositionCurrent<br>
+* SubIndex 21 - InF_EpsVersion<br>
+* SubIndex 22 - InU8_EpsRunStatus<br>
+* SubIndex 23 - InU8_EpsFaultStop<br>
+* SubIndex 24 - InU32_EpsFaultCode<br>
+* SubIndex 25 - InF_EpsVoltageOutput<br>
+* SubIndex 26 - InF_EpsCurrentOutput<br>
+* SubIndex 27 - InF_EpsPowerOutput<br>
+* SubIndex 28 - InF_VpsVersion<br>
+* SubIndex 29 - InU8_VpsRunStatus<br>
+* SubIndex 30 - InU8_VpsFaultStop<br>
+* SubIndex 31 - InU32_VpsFaultCode<br>
+* SubIndex 32 - InF_VpsVoltageOutput<br>
+* SubIndex 33 - InF_VpsCurrentOutput<br>
+* SubIndex 34 - InF_VpsPowerVoltage<br>
+* SubIndex 35 - InF_SF6Pressure<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -355,8 +440,25 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex14 - InU8_DoseBFsmState */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - InU32_DoseAInterlock */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex16 - InU32_DoseBInterlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex17 - InU32_AfcState */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }}; /* Subindex18 - InF_AfcPositionCurrent */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex17 - InU32_DoseAErrorCode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex18 - InU32_DoseBErrorCode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex19 - InU32_AfcState */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex20 - InF_AfcPositionCurrent */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex21 - InF_EpsVersion */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex22 - InU8_EpsRunStatus */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex23 - InU8_EpsFaultStop */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex24 - InU32_EpsFaultCode */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex25 - InF_EpsVoltageOutput */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex26 - InF_EpsCurrentOutput */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex27 - InF_EpsPowerOutput */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex28 - InF_VpsVersion */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex29 - InU8_VpsRunStatus */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex30 - InU8_VpsFaultStop */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex31 - InU32_VpsFaultCode */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex32 - InF_VpsVoltageOutput */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex33 - InF_VpsCurrentOutput */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex34 - InF_VpsPowerVoltage */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }}; /* Subindex35 - InF_SF6Pressure */
 
 /**
 * \brief Object/Entry names
@@ -378,8 +480,25 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 "InU8_DoseBFsmState\000"
 "InU32_DoseAInterlock\000"
 "InU32_DoseBInterlock\000"
+"InU32_DoseAErrorCode\000"
+"InU32_DoseBErrorCode\000"
 "InU32_AfcState\000"
-"InF_AfcPositionCurrent\000\377";
+"InF_AfcPositionCurrent\000"
+"InF_EpsVersion\000"
+"InU8_EpsRunStatus\000"
+"InU8_EpsFaultStop\000"
+"InU32_EpsFaultCode\000"
+"InF_EpsVoltageOutput\000"
+"InF_EpsCurrentOutput\000"
+"InF_EpsPowerOutput\000"
+"InF_VpsVersion\000"
+"InU8_VpsRunStatus\000"
+"InU8_VpsFaultStop\000"
+"InU32_VpsFaultCode\000"
+"InF_VpsVoltageOutput\000"
+"InF_VpsCurrentOutput\000"
+"InF_VpsPowerVoltage\000"
+"InF_SF6Pressure\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -404,8 +523,25 @@ UINT8 InU8_DoseAFsmState; /* Subindex13 - InU8_DoseAFsmState */
 UINT8 InU8_DoseBFsmState; /* Subindex14 - InU8_DoseBFsmState */
 UINT32 InU32_DoseAInterlock; /* Subindex15 - InU32_DoseAInterlock */
 UINT32 InU32_DoseBInterlock; /* Subindex16 - InU32_DoseBInterlock */
-UINT32 InU32_AfcState; /* Subindex17 - InU32_AfcState */
-REAL32 InF_AfcPositionCurrent; /* Subindex18 - InF_AfcPositionCurrent */
+UINT32 InU32_DoseAErrorCode; /* Subindex17 - InU32_DoseAErrorCode */
+UINT32 InU32_DoseBErrorCode; /* Subindex18 - InU32_DoseBErrorCode */
+UINT32 InU32_AfcState; /* Subindex19 - InU32_AfcState */
+REAL32 InF_AfcPositionCurrent; /* Subindex20 - InF_AfcPositionCurrent */
+REAL32 InF_EpsVersion; /* Subindex21 - InF_EpsVersion */
+UINT8 InU8_EpsRunStatus; /* Subindex22 - InU8_EpsRunStatus */
+UINT8 InU8_EpsFaultStop; /* Subindex23 - InU8_EpsFaultStop */
+UINT32 InU32_EpsFaultCode; /* Subindex24 - InU32_EpsFaultCode */
+REAL32 InF_EpsVoltageOutput; /* Subindex25 - InF_EpsVoltageOutput */
+REAL32 InF_EpsCurrentOutput; /* Subindex26 - InF_EpsCurrentOutput */
+REAL32 InF_EpsPowerOutput; /* Subindex27 - InF_EpsPowerOutput */
+REAL32 InF_VpsVersion; /* Subindex28 - InF_VpsVersion */
+UINT8 InU8_VpsRunStatus; /* Subindex29 - InU8_VpsRunStatus */
+UINT8 InU8_VpsFaultStop; /* Subindex30 - InU8_VpsFaultStop */
+UINT32 InU32_VpsFaultCode; /* Subindex31 - InU32_VpsFaultCode */
+REAL32 InF_VpsVoltageOutput; /* Subindex32 - InF_VpsVoltageOutput */
+REAL32 InF_VpsCurrentOutput; /* Subindex33 - InF_VpsCurrentOutput */
+REAL32 InF_VpsPowerVoltage; /* Subindex34 - InF_VpsPowerVoltage */
+REAL32 InF_SF6Pressure; /* Subindex35 - InF_SF6Pressure */
 } OBJ_STRUCT_PACKED_END
 __attribute__((aligned(1), packed))TOBJ6000;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -415,7 +551,7 @@ __attribute__((aligned(1), packed))TOBJ6000;
 */
 PROTO TOBJ6000 InputData0x6000
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={18,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+={35,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -500,13 +636,13 @@ TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1601 */
 {NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 6 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
 /* Object 0x1A00 */
-{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 18 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 35 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
 /* Object 0x1C12 */
 {NULL , NULL ,  0x1C12 , {DEFTYPE_UNSIGNED16 , 1 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C12 , aName0x1C12 , &sRxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x1C13 */
 {NULL , NULL ,  0x1C13 , {DEFTYPE_UNSIGNED16 , 1 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C13 , aName0x1C13 , &sTxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x6000 */
-{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 18 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 35 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
 /* Object 0x7010 */
 {NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 6 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
 {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL}};

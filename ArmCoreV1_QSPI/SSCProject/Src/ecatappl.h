@@ -82,6 +82,7 @@ V5.01 : Start file change log
 #define     ALIGN13(x)                 UINT16 x:13; /**< \brief Macro to define ALIGN13 object entry*/
 #define     ALIGN14(x)                 UINT16 x:14; /**< \brief Macro to define ALIGN14 object entry*/
 #define     ALIGN15(x)                 UINT16 x:15; /**< \brief Macro to define ALIGN15 object entry*/
+/*ET9300 Project Handler :(#if CONTROLLER_16BIT || CONTROLLER_32BIT #else) lines 85 to 121 deleted*/
 #endif //_ECATAPPL_H_
 
 #if defined(_ECATAPPL_) && (_ECATAPPL_ == 1)
@@ -98,6 +99,7 @@ V5.01 : Start file change log
 -----------------------------------------------------------------------------------------*/
 
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 138 to 140 deleted*/
 
 PROTO BOOL bEcatWaitForInputUpdate; /**< \brief Wait for input update*/
 PROTO BOOL bEtherCATRunLed; /**< \brief Current run LED value*/
@@ -106,6 +108,7 @@ PROTO BOOL bRunApplication; /**< \brief Indicates if the stack shall be running 
 
 
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 149 to 151 deleted*/
 /*-----------------------------------------------------------------------------------------
 ------
 ------    Global Functions
@@ -126,7 +129,9 @@ PROTO    void       PDO_InputMapping(void);
 
 PROTO    void       ECAT_SetLedIndication(void);
 PROTO    void       CalcSMCycleTime(void);
+/*ET9300 Project Handler :(#if ESC_EEPROM_ACCESS_SUPPORT) lines 178 to 181 deleted*/
 
+/*ET9300 Project Handler :(#if ESC_EEPROM_EMULATION) lines 183 to 185 deleted*/
 
 
 

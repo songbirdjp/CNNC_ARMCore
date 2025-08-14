@@ -119,7 +119,9 @@ V4.00 SDO 4: SDOs with size greater than 65535 were not handled correctly, that 
 /*remove definition of _SDOSERV_ (#ifdef is used in objdef.h)*/
 
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 122 to 124 deleted*/
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && EOE_SUPPORTED) lines 126 to 128 deleted*/
 
 
 extern OBJCONST TOBJECT OBJMEM asObjDef[];
@@ -183,6 +185,7 @@ UINT8 VARMEM                            bSdoSegLastToggle;
 UINT32 VARMEM                           nSdoSegCompleteSize;
 OBJCONST TOBJECT OBJMEM * VARMEM        pSdoSegObjEntry;
 
+/*ET9300 Project Handler :(#if _PIC18) lines 195 to 202 deleted*/
 /*---------------------------------------------------------------------------------------
 ------
 ------    module internal function declarations
@@ -309,6 +312,7 @@ static UINT8 SdoDownloadSegmentInd(TDOWNLOADSDOSEGREQMBX MBXMEM * pSdoInd)
 						// (If bytesToSave is odd, one byte too much is copied. But, that is not a problem.)
 					}
 				}
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 334 to 336 deleted*/
 
 				if (bSdoSegFollows == FALSE)
 				{
@@ -425,6 +429,7 @@ static UINT8 SdoUploadSegmentInd(TUPLOADSDOSEGREQMBX MBXMEM * pSdoInd)
 		UINT32 size = 0;
 		UINT16 maxData;
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 455 to 462 deleted*/
 		{
 			maxData = u16SendMbxSize - MBX_HEADER_SIZE - SEGMENT_NORM_HEADER_SIZE;
 		}
@@ -473,6 +478,7 @@ static UINT8 SdoUploadSegmentInd(TUPLOADSDOSEGREQMBX MBXMEM * pSdoInd)
 				// (If size is even, one byte too much is copied. But, that is not a problem.)
 			}
 		}
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 512 to 514 deleted*/
 
 		/* the SDO Upload Segment header depends if there is still data to be sent */
 		pSdoSegRes->CoeHeader &= ~COEHEADER_COESERVICEMASK;
@@ -537,7 +543,9 @@ void SdoRes(UINT8 abort, UINT8 command, UINT8 completeAccess, UINT16 dataSize, U
 	/* for an upload segment response the toggle bit was overwritten */
 	if ((command != SDOSERVICE_UPLOADSEGMENTREQ) && (command != SDOSERVICE_DOWNLOADSEGMENTREQ))
 	{
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 581 to 583 deleted*/
 		pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] &= 0xFF00;
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 586 to 588 deleted*/
 	}
 	if (abort == 0)
 	{
@@ -556,6 +564,7 @@ void SdoRes(UINT8 abort, UINT8 command, UINT8 completeAccess, UINT16 dataSize, U
 					completeAccess |
 					((MAX_EXPEDITED_DATA - ((UINT8)objLength)) << SDOHEADERSHIFT_DATASETSIZE) |
 					SDOSERVICE_INITIATEUPLOADRES);
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 608 to 614 deleted*/
 			}
 			else
 			{
@@ -573,6 +582,7 @@ void SdoRes(UINT8 abort, UINT8 command, UINT8 completeAccess, UINT16 dataSize, U
 				pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SWAPWORD(SDOHEADER_SIZEINDICATOR |
 					completeAccess |
 					SDOSERVICE_INITIATEUPLOADRES);
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 635 to 639 deleted*/
 
 			}
 		}
@@ -582,12 +592,14 @@ void SdoRes(UINT8 abort, UINT8 command, UINT8 completeAccess, UINT16 dataSize, U
 			/* Download segmented response */
 			pSdoRes->MbxHeader.Length = DOWNLOAD_NORM_RES_SIZE;
 			pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SWAPWORD(SDOSERVICE_DOWNLOADSEGMENTRES);
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 650 to 652 deleted*/
 		}
 		else if (command != SDOSERVICE_UPLOADSEGMENTREQ)
 		{
 			/* Download response */
 			pSdoRes->MbxHeader.Length = DOWNLOAD_NORM_RES_SIZE;
 			pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SWAPWORD(SDOSERVICE_INITIATEDOWNLOADRES);
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 660 to 662 deleted*/
 		}
 	}
 	else
@@ -597,7 +609,9 @@ void SdoRes(UINT8 abort, UINT8 command, UINT8 completeAccess, UINT16 dataSize, U
 		pSdoRes->CoeHeader &= ~COEHEADER_COESERVICEMASK;
 		pSdoRes->CoeHeader |= ((UINT16)COESERVICE_SDOREQUEST) << COEHEADER_COESERVICESHIFT;
 		pSdoRes->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] |= SWAPWORD(SDOSERVICE_ABORTTRANSFER);
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 673 to 675 deleted*/
 
+/*ET9300 Project Handler :(#if BIG_ENDIAN_16BIT) lines 677 to 680 deleted*/
 		((TABORTSDOTRANSFERREQMBX MBXMEM *) pSdoRes)->AbortCode = SWAPDWORD(cAbortCode[abort]);
 	}
 
@@ -625,6 +639,7 @@ UINT8 SDOS_SdoInd(TINITSDOMBX MBXMEM *pSdoInd)
 {
 	UINT8 abort = 0;
 	UINT8 sdoHeader = (pSdoInd->SdoHeader.Sdo[SDOHEADER_COMMANDOFFSET] & SDOHEADER_COMMANDMASK) >> SDOHEADER_COMMANDSHIFT;
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 710 to 712 deleted*/
 	/* the SDO-command is in bit 5-7 of the first SDO-Byte */
 	UINT8 command = (sdoHeader & SDOHEADER_COMMAND);
 	/* mbxSize contains the size of the mailbox (CoE-Header (2 Bytes) + SDO-Header (8 Bytes) + SDO-Data (if the data length is greater than 4)) */
@@ -656,14 +671,18 @@ UINT8 SDOS_SdoInd(TINITSDOMBX MBXMEM *pSdoInd)
 	case SDOSERVICE_INITIATEUPLOADREQ:
 		/* the variable index contains the requested index of the SDO service */
 		index = pSdoInd->SdoHeader.Sdo[SDOHEADER_INDEXHIOFFSET] & SDOHEADER_INDEXHIMASK;
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 747 to 749 deleted*/
 		index <<= 8;
 		index += (pSdoInd->SdoHeader.Sdo[SDOHEADER_INDEXLOOFFSET] >> SDOHEADER_INDEXLOSHIFT) & SDOHEADER_INDEXLOMASK;
 		/* the variable subindex contains the requested subindex of the SDO service */
 		subindex = (pSdoInd->SdoHeader.Sdo[SDOHEADER_SUBINDEXOFFSET] >> SDOHEADER_SUBINDEXSHIFT) & SDOHEADER_SUBINDEXMASK;
+/*ET9300 Project Handler :(#if MBX_16BIT_ACCESS #else) lines 757 to 761 deleted*/
 
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && EOE_SUPPORTED) lines 764 to 834 deleted*/
 
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 837 to 855 deleted*/
 
 		/* OBJ_GetObjectHandle checks if the requested index is defined in the object dictionary */
 		pObjEntry = OBJ_GetObjectHandle(index);
@@ -715,6 +734,7 @@ UINT8 SDOS_SdoInd(TINITSDOMBX MBXMEM *pSdoInd)
 						else
 						{
 							/* HBu 06.02.06: the variable dataSize has to be set to the available size in one mailbox */
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 910 to 920 deleted*/
 							dataSize = u16SendMbxSize - MBX_HEADER_SIZE - UPLOAD_NORM_RES_SIZE;
 							if (dataSize < objLength)
 							{
@@ -723,6 +743,7 @@ UINT8 SDOS_SdoInd(TINITSDOMBX MBXMEM *pSdoInd)
 							}
 
 
+/*ET9300 Project Handler :(#if SEGMENTED_SDO_SUPPORTED #else) lines 930 to 946 deleted*/
 							else
 							{
 								/* Normal Upload */
@@ -790,6 +811,7 @@ UINT8 SDOS_SdoInd(TINITSDOMBX MBXMEM *pSdoInd)
 					{
 						/* Segmented Download */
 						segTransfer = 1;
+/*ET9300 Project Handler :(#if SEGMENTED_SDO_SUPPORTED #else) lines 1015 to 1017 deleted*/
 					}
 				}
 			}
@@ -804,6 +826,7 @@ UINT8 SDOS_SdoInd(TINITSDOMBX MBXMEM *pSdoInd)
 					abort = ABORTIDX_UNSUPPORTED_ACCESS;
 				}
 			}
+/*ET9300 Project Handler :(#if COMPLETE_ACCESS_SUPPORTED #else) lines 1033 to 1037 deleted*/
 
 			if (abort == 0)
 			{
@@ -1167,6 +1190,7 @@ UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
 				{
 					/* the next fragment of the SDO Information response shall be sent */
 					/* initialize size with the maximum size fits into one mailbox service */
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1436 to 1443 deleted*/
 					{
 						size = u16SendMbxSize - SIZEOF_SDOINFO - MBX_HEADER_SIZE;
 					}
@@ -1185,6 +1209,7 @@ UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
 					/* we start with index 0x1000 */
 					index = 0x1000;
 					/* initialize size with the maximum size fits into one mailbox service */
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1463 to 1470 deleted*/
 					{
 						size = u16SendMbxSize - SIZEOF_SDOINFOLISTSTRUCT - MBX_HEADER_SIZE;
 					}
@@ -1206,6 +1231,7 @@ UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
 					{
 						nSdoInfoFragmentsLeft = 0;
 					}
+/*ET9300 Project Handler :(#if SEGMENTED_SDO_SUPPORTED #else) lines 1493 to 1497 deleted*/
 				}
 
 				/* get the next part of the requested object list */
@@ -1215,6 +1241,7 @@ UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
 				nSdoInfoIndex = index;
 				/* size contains before the instruction the size still available in the mailbox buffer
 					and shall contain the size of the mailbox response data after the next instruction */
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1507 to 1514 deleted*/
 				{
 					size = u16SendMbxSize - size - MBX_HEADER_SIZE;
 				}
@@ -1227,6 +1254,7 @@ UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
 			{
 				pSdoInfoInd->SdoHeader.InfoHead &= ~INFOHEAD_OPCODE_MASK;
 				pSdoInfoInd->SdoHeader.InfoHead |= (UINT16)(SDOINFOSERVICE_OBJDICTIONARYLIST_S << INFOHEAD_OPCODE_SHIFT);
+/*ET9300 Project Handler :(#if !SEGMENTED_SDO_SUPPORTED) lines 1527 to 1529 deleted*/
 				/* number of fragments still has to be sent */
 				pSdoInfoInd->SdoHeader.FragmentsLeft = SWAPWORD(nSdoInfoFragmentsLeft);
 
@@ -1251,7 +1279,9 @@ UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
 		/* get the requested index */
 		index = SWAPWORD(pSdoInfoInd->SdoHeader.Data.Obj.Index);
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION && EOE_SUPPORTED) lines 1555 to 1623 deleted*/
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1625 to 1642 deleted*/
 
 		if (index < 0x1000)
 		{
@@ -1271,9 +1301,11 @@ UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
 				if (opCode == SDOINFOSERVICE_OBJDESCRIPTION_Q)
 				{
 					/* object description is requested */
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 1662 to 1666 deleted*/
 					OBJTOMBXMEMCPY(&pSdoInfoInd->SdoHeader.Data.Obj.Res, OBJ_GetObjDesc(pObjEntry), SDO_INFO_OBJ_DESC_SIZE);
 
 
+/*ET9300 Project Handler :(#if TEST_APPLICATION) lines 1671 to 1683 deleted*/
 					/* the mailbox should be big enough that the maximum object description
 					fits in the mailbox (the fragmentation is not done in the sample code),
 					so it will be checked only if the object description fits */
@@ -1305,6 +1337,7 @@ UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
 						UINT16 ObjectFlags;
 						/* requested subindex is not too great */
 						/* get the entry description of the requested entry */
+/*ET9300 Project Handler :(#if BIG_ENDIAN_FORMAT) lines 1715 to 1720 deleted*/
 						OBJTOMBXMEMCPY(&pSdoInfoInd->SdoHeader.Data.Entry.Res, OBJ_GetEntryDesc(pObjEntry, subindex), SIZEOF(TSDOINFOENTRYDESC));
 
 						/* the transmission of the value info is not supported yet of the sample code */
@@ -1375,6 +1408,7 @@ UINT8 SDOS_SdoInfoInd(TSDOINFORMATION MBXMEM *pSdoInfoInd)
 		pSdoInfoInd->SdoHeader.InfoHead |= (UINT16)((SDOINFOSERVICE_ERROR_Q) << INFOHEAD_OPCODE_SHIFT);
 
 		pSdoInfoInd->SdoHeader.FragmentsLeft = 0;
+/*ET9300 Project Handler :(#if BIG_ENDIAN_16BIT) lines 1792 to 1795 deleted*/
 		pSdoInfoInd->SdoHeader.Data.Error.ErrorCode = SWAPDWORD(cAbortCode[abort]);
 
 		nSdoInfoFragmentsLeft = 0;

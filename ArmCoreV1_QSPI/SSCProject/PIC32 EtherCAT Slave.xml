@@ -237,7 +237,7 @@
 							</DataType>
 							<DataType>
 								<Name>DT1A00</Name>
-								<BitSize>592</BitSize>
+								<BitSize>1136</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -442,6 +442,193 @@
 									<Comment>Reference to 0x6000.18</Comment>
 									<BitSize>32</BitSize>
 									<BitOffs>560</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>19</SubIdx>
+									<Name>SubIndex 019</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.19</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>592</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>20</SubIdx>
+									<Name>SubIndex 020</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.20</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>624</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>21</SubIdx>
+									<Name>SubIndex 021</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.21</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>656</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>22</SubIdx>
+									<Name>SubIndex 022</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.22</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>688</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>23</SubIdx>
+									<Name>SubIndex 023</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.23</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>720</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>24</SubIdx>
+									<Name>SubIndex 024</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.24</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>752</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>25</SubIdx>
+									<Name>SubIndex 025</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.25</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>784</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>26</SubIdx>
+									<Name>SubIndex 026</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.26</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>816</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>27</SubIdx>
+									<Name>SubIndex 027</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.27</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>848</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>28</SubIdx>
+									<Name>SubIndex 028</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.28</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>880</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>29</SubIdx>
+									<Name>SubIndex 029</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.29</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>912</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>30</SubIdx>
+									<Name>SubIndex 030</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.30</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>944</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>31</SubIdx>
+									<Name>SubIndex 031</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.31</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>976</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>32</SubIdx>
+									<Name>SubIndex 032</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.32</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>1008</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>33</SubIdx>
+									<Name>SubIndex 033</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.33</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>1040</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>34</SubIdx>
+									<Name>SubIndex 034</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.34</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>1072</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>35</SubIdx>
+									<Name>SubIndex 035</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x6000.35</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>1104</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -813,7 +1000,7 @@
 							</DataType>
 							<DataType>
 								<Name>DT6000</Name>
-								<BitSize>464</BitSize>
+								<BitSize>912</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -993,7 +1180,7 @@
 								</SubItem>
 								<SubItem>
 									<SubIdx>17</SubIdx>
-									<Name>InU32_AfcState</Name>
+									<Name>InU32_DoseAErrorCode</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
 									<BitOffs>400</BitOffs>
@@ -1003,10 +1190,182 @@
 								</SubItem>
 								<SubItem>
 									<SubIdx>18</SubIdx>
+									<Name>InU32_DoseBErrorCode</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>432</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>19</SubIdx>
+									<Name>InU32_AfcState</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>464</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>20</SubIdx>
 									<Name>InF_AfcPositionCurrent</Name>
 									<Type>REAL</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>432</BitOffs>
+									<BitOffs>496</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>21</SubIdx>
+									<Name>InF_EpsVersion</Name>
+									<Type>REAL</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>528</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>22</SubIdx>
+									<Name>InU8_EpsRunStatus</Name>
+									<Type>USINT</Type>
+									<Comment>0: stop  1: run</Comment>
+									<BitSize>8</BitSize>
+									<BitOffs>560</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>23</SubIdx>
+									<Name>InU8_EpsFaultStop</Name>
+									<Type>USINT</Type>
+									<Comment>0: no fault  1: fault</Comment>
+									<BitSize>8</BitSize>
+									<BitOffs>568</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>24</SubIdx>
+									<Name>InU32_EpsFaultCode</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>576</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>25</SubIdx>
+									<Name>InF_EpsVoltageOutput</Name>
+									<Type>REAL</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>608</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>26</SubIdx>
+									<Name>InF_EpsCurrentOutput</Name>
+									<Type>REAL</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>640</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>27</SubIdx>
+									<Name>InF_EpsPowerOutput</Name>
+									<Type>REAL</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>672</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>28</SubIdx>
+									<Name>InF_VpsVersion</Name>
+									<Type>REAL</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>704</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>29</SubIdx>
+									<Name>InU8_VpsRunStatus</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>736</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>30</SubIdx>
+									<Name>InU8_VpsFaultStop</Name>
+									<Type>USINT</Type>
+									<BitSize>8</BitSize>
+									<BitOffs>744</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>31</SubIdx>
+									<Name>InU32_VpsFaultCode</Name>
+									<Type>UDINT</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>752</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>32</SubIdx>
+									<Name>InF_VpsVoltageOutput</Name>
+									<Type>REAL</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>784</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>33</SubIdx>
+									<Name>InF_VpsCurrentOutput</Name>
+									<Type>REAL</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>816</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>34</SubIdx>
+									<Name>InF_VpsPowerVoltage</Name>
+									<Type>REAL</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>848</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>35</SubIdx>
+									<Name>InF_SF6Pressure</Name>
+									<Type>REAL</Type>
+									<BitSize>32</BitSize>
+									<BitOffs>880</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -1276,12 +1635,12 @@
 								<Index>#x1A00</Index>
 								<Name>InputData process data mapping</Name>
 								<Type>DT1A00</Type>
-								<BitSize>592</BitSize>
+								<BitSize>1136</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
 										<Info>
-											<DefaultData>12</DefaultData>
+											<DefaultData>23</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -1390,6 +1749,108 @@
 										<Name>SubIndex 018</Name>
 										<Info>
 											<DefaultData>20120060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 019</Name>
+										<Info>
+											<DefaultData>20130060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 020</Name>
+										<Info>
+											<DefaultData>20140060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 021</Name>
+										<Info>
+											<DefaultData>20150060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 022</Name>
+										<Info>
+											<DefaultData>08160060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 023</Name>
+										<Info>
+											<DefaultData>08170060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 024</Name>
+										<Info>
+											<DefaultData>20180060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 025</Name>
+										<Info>
+											<DefaultData>20190060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 026</Name>
+										<Info>
+											<DefaultData>201A0060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 027</Name>
+										<Info>
+											<DefaultData>201B0060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 028</Name>
+										<Info>
+											<DefaultData>201C0060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 029</Name>
+										<Info>
+											<DefaultData>081D0060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 030</Name>
+										<Info>
+											<DefaultData>081E0060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 031</Name>
+										<Info>
+											<DefaultData>201F0060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 032</Name>
+										<Info>
+											<DefaultData>20200060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 033</Name>
+										<Info>
+											<DefaultData>20210060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 034</Name>
+										<Info>
+											<DefaultData>20220060</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 035</Name>
+										<Info>
+											<DefaultData>20230060</DefaultData>
 										</Info>
 									</SubItem>
 								</Info>
@@ -1540,12 +2001,12 @@
 								<Index>#x6000</Index>
 								<Name>InputData</Name>
 								<Type>DT6000</Type>
-								<BitSize>464</BitSize>
+								<BitSize>912</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
 										<Info>
-											<DefaultData>12</DefaultData>
+											<DefaultData>23</DefaultData>
 										</Info>
 									</SubItem>
 								</Info>
@@ -1573,7 +2034,7 @@
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1000" ControlByte="#x26" Enable="1">MBoxOut</Sm>
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1080" ControlByte="#x22" Enable="1">MBoxIn</Sm>
 				<Sm DefaultSize="16" StartAddress="#x1100" ControlByte="#x64" Enable="1">Outputs</Sm>
-				<Sm DefaultSize="56" StartAddress="#x1400" ControlByte="#x20" Enable="1">Inputs</Sm>
+				<Sm DefaultSize="112" StartAddress="#x1400" ControlByte="#x20" Enable="1">Inputs</Sm>
 				<RxPdo Fixed="true" Mandatory="true" Sm="2">
 					<Index>#x1601</Index>
 					<Name>OutputData process data mapping</Name>
@@ -1739,14 +2200,133 @@
 						<Index>#x6000</Index>
 						<SubIndex>17</SubIndex>
 						<BitLen>32</BitLen>
-						<Name>InU32_AfcState</Name>
+						<Name>InU32_DoseAErrorCode</Name>
 						<DataType>UDINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x6000</Index>
 						<SubIndex>18</SubIndex>
 						<BitLen>32</BitLen>
+						<Name>InU32_DoseBErrorCode</Name>
+						<DataType>UDINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>19</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InU32_AfcState</Name>
+						<DataType>UDINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>20</SubIndex>
+						<BitLen>32</BitLen>
 						<Name>InF_AfcPositionCurrent</Name>
+						<DataType>REAL</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>21</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InF_EpsVersion</Name>
+						<DataType>REAL</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>22</SubIndex>
+						<BitLen>8</BitLen>
+						<Name>InU8_EpsRunStatus</Name>
+						<DataType>USINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>23</SubIndex>
+						<BitLen>8</BitLen>
+						<Name>InU8_EpsFaultStop</Name>
+						<DataType>USINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>24</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InU32_EpsFaultCode</Name>
+						<DataType>UDINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>25</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InF_EpsVoltageOutput</Name>
+						<DataType>REAL</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>26</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InF_EpsCurrentOutput</Name>
+						<DataType>REAL</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>27</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InF_EpsPowerOutput</Name>
+						<DataType>REAL</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>28</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InF_VpsVersion</Name>
+						<DataType>REAL</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>29</SubIndex>
+						<BitLen>8</BitLen>
+						<Name>InU8_VpsRunStatus</Name>
+						<DataType>USINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>30</SubIndex>
+						<BitLen>8</BitLen>
+						<Name>InU8_VpsFaultStop</Name>
+						<DataType>USINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>31</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InU32_VpsFaultCode</Name>
+						<DataType>UDINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>32</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InF_VpsVoltageOutput</Name>
+						<DataType>REAL</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>33</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InF_VpsCurrentOutput</Name>
+						<DataType>REAL</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>34</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InF_VpsPowerVoltage</Name>
+						<DataType>REAL</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x6000</Index>
+						<SubIndex>35</SubIndex>
+						<BitLen>32</BitLen>
+						<Name>InF_SF6Pressure</Name>
 						<DataType>REAL</DataType>
 					</Entry>
 				</TxPdo>
