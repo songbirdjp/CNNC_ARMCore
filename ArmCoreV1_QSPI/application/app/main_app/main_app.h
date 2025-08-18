@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-//#define BANKA
+#define BANKA
 //#define TEST
 #ifdef BANKA
 #define BANK_NO 1 //A=1 B=2

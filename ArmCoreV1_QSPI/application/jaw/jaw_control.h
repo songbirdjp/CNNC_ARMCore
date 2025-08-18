@@ -18,6 +18,7 @@ typedef enum {
     PARK_START,
     PARK_END,
     PREPARE_START,
+   // PREPARE_SET_FLAG,
     PREPARE_END,
     SERVO,
     POWER_SAVE,
@@ -63,15 +64,12 @@ typedef struct
     uint32_t encoderLast32;
     int16_t encoderDelta32;
     uint32_t encoderTotalCnt;
-    uint16_t homeEncodeValue;
     uint16_t preparePos;
     uint16_t posInPlan;
     //uint16_t realPlanCmd;
     SVG_Type fSVG;
     PIDAdjType uartPIDCmd;
     uint32_t location_timer;
-    uint16_t limitPos;
-    uint16_t limitNeg;
    // uint16_t LastEncoderFindZero;
 }JawControlInfo;
 
@@ -96,6 +94,15 @@ typedef struct
     uint16_t jaw2ndEncCalibrationPK;
     uint16_t jaw2ndEncCalibrationPB;
     uint16_t jawDualChTolerance;
+    uint16_t limitPos;
+    uint16_t limitNeg;
+    uint16_t homeEncodeValue;
+    uint16_t pkp;
+    uint16_t pki;
+    uint16_t pkd;
+    uint16_t skp;
+    uint16_t ski;
+    uint16_t skd;
 } JAW_SET_PARAM;
 
 extern osMessageQueueId_t motor_signal_queueHandle;

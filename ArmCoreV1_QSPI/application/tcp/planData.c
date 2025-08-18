@@ -138,19 +138,19 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 
     if (info->length > 0) u8LenTotal = info->length;
     else return -1;
-
+  //  printf("recv plan length = %d\r\n", u8LenTotal);
     //head
     frameHead.frmTag = (data[1] << 8) + data[0];
     frameHead.frmType = (data[3] << 8) + data[2];
     frameHead.frmLength = (data[5] << 8) + data[4];
     frameHead.bankNo = (data[7] << 8) + data[6];
-    printf("head1: %d %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength,frameHead.bankNo);
+   // printf("head1: %d %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength,frameHead.bankNo);
 
     if(frameHead.frmTag == PLAN_DATA_SETTING_TAG)
     {
         frameHead.totalPackInOneBeam = (data[9] << 8) + data[8];
         frameHead.packIndexInOneBeam = (data[11] << 8) + data[10];
-        printf("head2: %d %d\r\n",frameHead.totalPackInOneBeam, frameHead.packIndexInOneBeam);
+      //  printf("head2: %d %d\r\n",frameHead.totalPackInOneBeam, frameHead.packIndexInOneBeam);
 
         if(frameHead.packIndexInOneBeam == 1)   lastPackIndex = 0;
         payloadLength = u8LenTotal - 20;
@@ -217,9 +217,9 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             }
           //  for(i = 12; i < saveLength; i++)  printf("%x ", data[i]);
           //  printf("\r\n");
-          //  crcCal = 0xffffffff;
-          //  crcCal = Crc32Buffer(crcCal, &data[12], saveLength);//ok
-            crcCal = hardware_crc_calculate(CRC32, &data[12], saveLength);
+            crcCal = 0xffffffff;
+            crcCal = Crc32Buffer(crcCal, &data[12], saveLength);//ok
+          //  crcCal = hardware_crc_calculate(CRC32, &data[12], saveLength);
           //  printf("%d crc %x\r\n", saveLength, (crcCal^0xffffffff));
         }
         else {
@@ -240,8 +240,8 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
                 }
             }
 
-          //  crcCal = Crc32Buffer(crcCal, &data[16], saveLength);//ok
-            crcCal = hardware_crc_calculate_continue(&data[16], saveLength);
+           crcCal = Crc32Buffer(crcCal, &data[16], saveLength);//ok
+           // crcCal = hardware_crc_calculate_continue(&data[16], saveLength);
         }
         pSDRAM += sdramLength;
 
@@ -302,9 +302,9 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         // printf("data:");
         // for(uint16_t n = 0; n < frameHead.frmLength; n++)   printf("%d ", data[6+n]);
         // printf("\r\n");
-      //  crcCal = 0xffffffff;
-      //  crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
-        crcCal = hardware_crc_calculate(CRC32, &data[6], frameHead.frmLength);
+        crcCal = 0xffffffff;
+        crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
+    //    crcCal = hardware_crc_calculate(CRC32, &data[6], frameHead.frmLength);
         crcCal ^= 0xffffffff;
     
         last = u8LenTotal - 1;
@@ -330,7 +330,8 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
     {
       //  for(i = 0; i<6; i++)    printf("%d ", data[i]);
       //  printf("\r\n");
-        crcCal = hardware_crc_calculate(CRC32, data, 6);
+        crcCal = 0xffffffff;
+        crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
         crcCal ^= 0xffffffff;
     
         last = u8LenTotal - 1;
@@ -349,8 +350,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             secondPosFeedback.errorCode = 0xf7;
             printf("recv error #7: plan error!!!\r\n");
         }
-	//	if(carrierFollowFlag) 
-            calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);
+		if(carrierFollowFlag)   calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);
         secondPosFeedback.errorCode = 0xF0; //ok
     }
     else{
@@ -487,7 +487,7 @@ void clearPlan(void)
 
 void planDataInit(void)
 {
-   // InitCrc32Table();
+    InitCrc32Table();
     pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     pSDRAMCAL = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
 
