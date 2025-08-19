@@ -374,8 +374,8 @@ static State_t module_idle(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
@@ -796,8 +796,8 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
@@ -836,25 +836,43 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    STATE_MACHINE_PREPARE,
                                    rtm);
-        status = HANDLED();
-        break;
-    }
-    case MANUAL_ENTER_SIG:
-    {
-        app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
-        app_do_set(&(rtm->app_dido), &dido_structure);
-        status = HANDLED();
-        break;
-    }
-    case MANUAL_EXIT_SIG:
-    {
-        app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
-        app_do_set(&(rtm->app_dido), &dido_structure);
-        status = HANDLED();
+        if (check_finish == 0)
+        {
+            int32_t fault_flag = fault_override(&(rtm->fault_check));
+
+            if (((fault_flag & SERIOUS_INTERLOCK) != 0) || ((fault_flag & MINOR_INTERLOCK) != 0))
+            {
+                app_do_get(&(rtm->app_dido), &dido_structure);
+                dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
+                app_do_set(&(rtm->app_dido), &dido_structure);
+                status = HANDLED();
+            }
+            else if (((fault_flag & WARNING_INTERLOCK) != 0) ||
+                     ((fault_flag & NOT_READY_EVENT) != 0) ||
+                     (fault_flag == NO_FAULT))
+            {
+                app_do_get(&(rtm->app_dido), &dido_structure);
+                dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
+                app_do_set(&(rtm->app_dido), &dido_structure);
+                status = HANDLED();
+            }
+            else
+            {
+                status = HANDLED();
+            }
+        }
+        else
+        {
+            status = HANDLED();
+        }
         break;
     }
     case ERROR_SIG:
