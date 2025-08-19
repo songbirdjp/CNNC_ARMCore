@@ -64,45 +64,42 @@ osThreadId_t app_rtm_main_threadId;
 
 #if 1
 #include "shell.h"
-typedef struct
-{
-    uint8_t state_require;
-    uint8_t state_current;
-    uint32_t not_ready;
-    uint32_t warning_interlock;
-    uint32_t minor_interlock;
-    uint32_t serious_interlock;
-    uint32_t run_cnt;
-    uint32_t fault_clear_cnt;
-    uint32_t state_require_cnt;
-} rtm_state_record_t;
-uint8_t state_index = 0;
-rtm_state_record_t rtm_state[100] = {0};
-rtm_state_record_t rtm_state_old = {0};
-rtm_state_record_t rtm_state_temp = {0};
+static uint8_t state_require = 0;
+static uint8_t state_current = 0;
+static uint32_t not_ready = 0;
+static uint32_t warning_interlock = 0;
+static uint32_t minor_interlock = 0;
+static uint32_t serious_interlock = 0;
+static uint32_t run_cnt = 0;
 static int8_t rtm_state_get(int argc, char *argv[])
 {
-    LOG_I("state_index: %d\r\n", state_index);
-    for (uint8_t i = 0; i < state_index; i++)
-    {
-        LOG_I("state require[%d]: %d\r\n", i, rtm_state[i].state_require);
-        LOG_I("state current[%d]: %d\r\n", i, rtm_state[i].state_current);
-        LOG_I("not_ready[%d]: 0x%x\r\n", i, rtm_state[i].not_ready);
-        LOG_I("warning_interlock[%d]: 0x%x\r\n", i, rtm_state[i].warning_interlock);
-        LOG_I("minor_interlock[%d]: 0x%x\r\n", i, rtm_state[i].minor_interlock);
-        LOG_I("serious_interlock[%d]: 0x%x\r\n", i, rtm_state[i].serious_interlock);
-        LOG_I("run_cnt[%d]: %d\r\n", i, rtm_state[i].run_cnt);
-        LOG_I("fault_clear_cnt[%d]: %d\r\n", i, rtm_state[i].fault_clear_cnt);
-        LOG_I("state_require_cnt[%d]: %d\r\n", i, rtm_state[i].state_require_cnt);
-        LOG_I("\r\n");
-        osDelay(50);
-    }
-
+    LOG_I("RTM state require: %d\r\n", state_require);
+    LOG_I("RTM state current: %d\r\n", state_current);
+    LOG_I("RTM not_ready: 0x%x\r\n", not_ready);
+    LOG_I("RTM warning_interlock: 0x%x\r\n", warning_interlock);
+    LOG_I("RTM minor_interlock: 0x%x\r\n", minor_interlock);
+    LOG_I("RTM serious_interlock: 0x%x\r\n", serious_interlock);
+    LOG_I("RTM run_cnt: %d\r\n", run_cnt);
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(rtm_state_get, rtm_state_get, rtm state get);
 #endif
 
+static void module_tx_queue_state_bit_set(osMessageQueueId_t queue_id)
+{
+    if (queue_id == NULL)
+    {
+        return;
+    }
+    for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
+    {
+        if (queue_id == app_rtm.rtm_module_info[i].module_queue)
+        {
+            manage_info_status_word_set(&app_rtm.rtm_module_info[i].manage_info, MODULE_TX_QUEUE_STATE_BIT, 1);
+            return;
+        }
+    }
+}
 #define RTM_MAIN_THREAD_CYCLE_MS (1)
 static void app_rtm_main_thread(void *argument)
 {
@@ -121,6 +118,7 @@ static void app_rtm_main_thread(void *argument)
 
     uint8_t system_state_require = 0;
     Event_t rtm_event = {0};
+    fault_table_init(&(self->fault_check));
     rtm_state_machine_ctor(&(self->state_machine), self);
     for (;;)
     {
@@ -144,9 +142,11 @@ static void app_rtm_main_thread(void *argument)
                     system_state_require = queue_frame.payload.data[1];
 
                     self->PLC_info = *(uint16_t *)&(queue_frame.payload.data[3]);
-                    self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[5]);
-                    self->unready_override = *(uint32_t *)&(queue_frame.payload.data[9]);
+                    uint32_t interlock_override = *(uint32_t *)&(queue_frame.payload.data[5]);
+                    uint32_t unready_override = *(uint32_t *)&(queue_frame.payload.data[9]);
                     self->led_belt = *(uint16_t *)&(queue_frame.payload.data[13]);
+                    fault_override_set(&(self->fault_check), unready_override, interlock_override);
+                    // search_timeout_set(*(uint16_t *)&(queue_frame.payload.data[15]));
                 }
                 break;
                 case RECEIVE_FAULT_CLEAR_CMD: /*故障清除*/
@@ -155,9 +155,6 @@ static void app_rtm_main_thread(void *argument)
                     {
                         rtm_event.sig = ERROR_SIG;
                         rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
-#if 1
-                        rtm_state_temp.fault_clear_cnt++;
-#endif
                     }
                 }
                 break;
@@ -199,12 +196,12 @@ static void app_rtm_main_thread(void *argument)
                 break;
                 case SEND_GMM_CURRENT_STATE_CMD: /*GMM状态*/
                 {
-                    self->gmm_state = *(uint8_t *)&(queue_frame.payload.data[1]);
+                    self->gmm_current_state = *(uint8_t *)&(queue_frame.payload.data[1]);
                 }
                 break;
                 case SEND_PSM_CURRENT_STATE_CMD: /*PAM状态*/
                 {
-                    self->psm_state = *(uint8_t *)&(queue_frame.payload.data[1]);
+                    self->psm_current_state = *(uint8_t *)&(queue_frame.payload.data[1]);
                 }
                 break;
                 case SEND_GMM_PLC_INFO_CMD: /*GMM PLC信息*/
@@ -242,10 +239,7 @@ static void app_rtm_main_thread(void *argument)
         rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
 
         rtm_status.fsm_state_current = rtm_get_state(&(self->state_machine));
-        rtm_status.not_ready_event = *(uint32_t *)&(self->interlock_table.not_ready_event);
-        rtm_status.warning_interlock = *(uint32_t *)&(self->interlock_table.warning_interlock);
-        rtm_status.minor_interlock = *(uint32_t *)&(self->interlock_table.minor_interlock);
-        rtm_status.serious_interlock = *(uint32_t *)&(self->interlock_table.serious_interlock);
+        fault_interlock_table_get(&self->fault_check, &rtm_status.not_ready_event);
 
         if (memcmp(&rtm_status_old, &rtm_status, sizeof(rtm_status_t)) != 0)
         {
@@ -272,24 +266,14 @@ static void app_rtm_main_thread(void *argument)
         }
 
 #if 1
-        rtm_state_temp.state_require = system_state_require;
-        rtm_state_temp.state_current = rtm_status.fsm_state_current;
+        state_require = system_state_require;
+        state_current = rtm_status.fsm_state_current;
 
-        rtm_state_temp.not_ready = rtm_status.not_ready_event;
-        rtm_state_temp.warning_interlock = rtm_status.warning_interlock;
-        rtm_state_temp.minor_interlock = rtm_status.minor_interlock;
-        rtm_state_temp.serious_interlock = rtm_status.serious_interlock;
-        // rtm_state_temp.run_cnt++;
-        if (state_index > 100)
-        {
-            state_index = 0;
-        }
-        if (memcmp(&rtm_state_old, &rtm_state_temp, sizeof(rtm_state_record_t)) != 0)
-        {
-            memcpy(&rtm_state[state_index], &rtm_state_temp, sizeof(rtm_state_record_t));
-            memcpy(&rtm_state_old, &rtm_state_temp, sizeof(rtm_state_record_t));
-            state_index++;
-        }
+        not_ready = rtm_status.not_ready_event;
+        warning_interlock = rtm_status.warning_interlock;
+        minor_interlock = rtm_status.minor_interlock;
+        serious_interlock = rtm_status.serious_interlock;
+        run_cnt++;
 #endif
 
         osDelay(RTM_MAIN_THREAD_CYCLE_MS);
@@ -314,6 +298,8 @@ int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_
     osStatus_t status = osMessageQueuePut(queue_id, &queue_frame, 0, 0);
     if (status != osOK)
     {
+        module_tx_queue_state_bit_set(queue_id);
+        LOG_E("RTM module tx queue full, ID:%d, cmd:%d, len:%d\r\n", ID, cmd, len);
         return -2;
     }
     return 0;
@@ -343,6 +329,14 @@ int32_t app_data_record_from_ethercat(rtm_module_info_t *self, uint32_t ID, uint
 void app_rtm_event_output_set(void)
 {
     osEventFlagsSet(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT);
+}
+void app_rtm_ethercat_state_op_set(void)
+{
+    manage_info_status_word_set(&app_rtm.rtm_ethercat_info.manage_info, ETHERCAT_OP_STATE_BIT, 1);
+}
+void app_rtm_ethercat_state_op_clean(void)
+{
+    manage_info_status_word_set(&app_rtm.rtm_ethercat_info.manage_info, ETHERCAT_OP_STATE_BIT, 0);
 }
 enum
 {
@@ -497,6 +491,10 @@ static void app_ethercat_rx_thread(void *argument)
     for (;;)
     {
         ret = osEventFlagsWait(app_rtm.ethercat_Event, APP_RTM_EVENT_FLAG_OUTPUT, osFlagsWaitAny, 500);
+        if (self->tx_disable == MODULE_TX_DISABLE)
+        {
+            continue;
+        }
         if (ret & APP_RTM_EVENT_FLAG_OUTPUT)
         {
             ethercat_recv_data_get((uint16_t *)&output_data, sizeof(TOBJ7010));
@@ -505,6 +503,7 @@ static void app_ethercat_rx_thread(void *argument)
             {
                 ethercat_Link_state = output_data.OutU8_ethercat_Link_state;
                 last_time = osKernelGetTickCount();
+                manage_info_status_word_set(&self->manage_info, MODULE_LINK_STATE_BIT, 0);
             }
             // TODO: 处理输出数据
             ethercat_output_data_distribute(self, &output_data);
@@ -512,11 +511,12 @@ static void app_ethercat_rx_thread(void *argument)
         current_time = osKernelGetTickCount();
         if (current_time - last_time > 1000)
         {
-            // LOG_I("%s unlink, time:%d\r\n", self->module_name, current_time - last_time);
-            bit_set(app_rtm.rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
+            last_time = current_time;
+            manage_info_status_word_set(&self->manage_info, MODULE_LINK_STATE_BIT, 1);
         }
     }
 exit:
+    manage_info_status_word_set(&self->manage_info, MODULE_RX_INIT_BIT, 1);
     osThreadExit();
 }
 
@@ -549,6 +549,7 @@ static void app_ethercat_tx_thread(void *argument)
         }
     }
 exit:
+    manage_info_status_word_set(&self->manage_info, MODULE_TX_INIT_BIT, 1);
     osThreadExit();
 }
 
@@ -604,10 +605,12 @@ int32_t uart_protocol_heartbeat_rx_callback(struct uart_protocol *const self,
         LOG_E("%s heartbeat rx len err!\r\n", rtm_module_info->module_name);
     }
 
-    if (memcmp(&(rtm_module_info->heartbeat_info_rx), heartbeat, sizeof(heartbeat_t)) != 0)
-    {
-        // LOG_E("%s heartbeat rx err!\r\n", rtm_module_info->module_name);
-    }
+    // if (memcmp(&(rtm_module_info->heartbeat_info_rx), heartbeat, sizeof(heartbeat_t)) != 0)
+    // {
+    //     LOG_E("%s heartbeat rx err!\r\n", rtm_module_info->module_name);
+    // }
+    manage_info_status_word_set(&rtm_module_info->manage_info, MODULE_LINK_STATE_BIT, 0);
+    app_rtm_thread_flag_set(rtm_module_info->module_thread_flags);
     return 0;
 }
 int32_t uart_protocol_heartbeat_rx_timeout_callback(struct uart_protocol *const self,
@@ -617,7 +620,7 @@ int32_t uart_protocol_heartbeat_rx_timeout_callback(struct uart_protocol *const 
                                                     void *arg)
 {
     rtm_module_info_t *rtm_module_info = (rtm_module_info_t *)arg;
-    bit_set(rtm_module_info->manage_info.status_word, MODULE_LINK_STATE_BIT);
+    manage_info_status_word_set(&rtm_module_info->manage_info, MODULE_LINK_STATE_BIT, 1);
     return 0;
 }
 static int32_t module_data_recv_handle(rtm_module_info_t *const self,
@@ -648,6 +651,7 @@ static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                 status = osMessageQueuePut(self->queue_group[i], &queue_frame, 0, 0);
                 if (status != osOK)
                 {
+                    module_tx_queue_state_bit_set(self->queue_group[i]);
                     LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
                 }
             }
@@ -665,6 +669,7 @@ static int32_t module_data_recv_handle(rtm_module_info_t *const self,
                     status = osMessageQueuePut(self->queue_group[i], &queue_frame, 0, 0);
                     if (status != osOK)
                     {
+                        module_tx_queue_state_bit_set(self->queue_group[i]);
                         LOG_E("id %x queue put error, status = %d\r\n", self->id_group[i], status);
                     }
                 }
@@ -744,9 +749,11 @@ static void app_module_rx_thread(void *argument)
         ret = uart_protocol_recv(&self->uart_protocol, data, &len, 0xFFFFFFFF);
         if (ret != 0)
         {
+            manage_info_status_word_set(&self->manage_info, MODULE_RX_STATE_BIT, 1);
             LOG_E("%s recv error, ret = %d\r\n", self->module_name, ret);
             continue;
         }
+        manage_info_status_word_set(&self->manage_info, MODULE_RX_STATE_BIT, 0);
         ret = module_data_recv_handle(self, data, len);
         if (ret != 0)
         {
@@ -760,6 +767,8 @@ static void app_module_rx_thread(void *argument)
         }
     }
 exit:
+    manage_info_status_word_set(&self->manage_info, MODULE_RX_INIT_BIT, 1);
+    LOG_E("%s rx thread exit\r\n", self->module_name);
     osThreadExit();
 }
 
@@ -841,12 +850,14 @@ static void app_module_tx_thread(void *argument)
         ret = uart_protocol_send(&self->uart_protocol, (uint8_t *)&queue_frame, queue_frame.length, 100);
         if (ret != 0)
         {
-            bit_set(self->manage_info.status_word, MODULE_LINK_STATE_BIT);
+            manage_info_status_word_set(&self->manage_info, MODULE_TX_STATE_BIT, 1);
             LOG_E("%s send error, ret = %d\r\n", self->module_name, ret);
             continue;
         }
+        manage_info_status_word_set(&self->manage_info, MODULE_TX_STATE_BIT, 0);
     }
 exit:
+    manage_info_status_word_set(&self->manage_info, MODULE_TX_INIT_BIT, 1);
     osThreadExit();
 }
 static void app_fkp_rx_thread(void *argument)
@@ -1213,6 +1224,21 @@ int app_rtm_data_handle_create(void)
     self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].module_priority = osPriorityAboveNormal;
     self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].module_priority = osPriorityAboveNormal;
 
+    self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].module_thread_flags = APP_RTM_THREAD_FLAG_ETHERCAT_READY;
+    self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].module_thread_flags = 0;
+    self->rtm_module_info[RTM_MODULE_PSM].module_thread_flags = APP_RTM_THREAD_FLAG_PSM_READY;
+    // self->rtm_module_info[RTM_MODULE_GMM].module_thread_flags = APP_RTM_THREAD_FLAG_GMM_READY;
+    self->rtm_module_info[RTM_MODULE_FKP].module_thread_flags = APP_RTM_THREAD_FLAG_FKP_READY;
+    self->rtm_module_info[RTM_MODULE_CPG].module_thread_flags = APP_RTM_THREAD_FLAG_CPG_READY;
+    self->rtm_module_info[RTM_MODULE_RTM_ON].module_thread_flags = APP_RTM_THREAD_FLAG_RTM_ON_READY;
+
+    self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].tx_disable = MODULE_TX_ENABLE;
+    self->rtm_module_info[RTM_MODULE_RTM_OFF_ARM].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_PSM].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_FKP].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_CPG].tx_disable = MODULE_TX_DISABLE;
+    // self->rtm_module_info[RTM_MODULE_GMM].tx_disable = MODULE_TX_DISABLE;
+    self->rtm_module_info[RTM_MODULE_RTM_ON].tx_disable = MODULE_TX_ENABLE;
     // 远程模块信息赋值
     self->rtm_module_info[RTM_MODULE_RTM_ON].heartbeat_info_rx.board_id = 0;
     self->rtm_module_info[RTM_MODULE_RTM_ON].heartbeat_info_rx.HardwareVersion = 0;
@@ -1242,20 +1268,41 @@ int app_rtm_data_handle_create(void)
         self->rtm_module_info[i].heartbeat_info_tx.HardwareVersion = 0;
         self->rtm_module_info[i].heartbeat_info_tx.FirmWareVersion = 0;
     }
+
+    ret = manage_info_init(&self->manage_info, 0x70);
+    if (ret != 0)
+    {
+        bit_set(self->manage_info.status_word, RTM_MAIN_MEMORY_STATE_BIT);
+        LOG_E("rtm main manage_info_init error, ret = %d\r\n", ret);
+    }
+    ret = manage_info_init(&self->app_data_record.manage_info, 0x00);
+    if (ret != 0)
+    {
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_data_record manage_info_init error, ret = %d\r\n", ret);
+    }
     ret = app_data_record_init(&self->app_data_record);
     if (ret != 0)
     {
-        return -2;
+        manage_info_status_word_set(&self->app_data_record.manage_info, RECORD_PERIPHERAL_INIT_BIT, 1);
+        LOG_E("app_data_record_init error, ret = %d\r\n", ret);
     }
     for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
     {
         self->rtm_module_info[i].app_data_record = &self->app_data_record;
     }
+
+    ret = manage_info_init(&self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].manage_info, 0xC0);
+    if (ret != 0)
+    {
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("rtm_off_plc manage_info_init error, ret = %d\r\n", ret);
+    }
     ret = ethercat_thread_init();
     if (ret != 0)
     {
-        bit_set(self->rtm_ethercat_info.manage_info.status_word, ETHERCAT_SLAVE_INIT_BIT);
-        return -3;
+        manage_info_status_word_set(&self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].manage_info, MODULE_PERIPHERAL_INIT_BIT, 1);
+        LOG_E("ethercat_thread_init error, ret = %d\r\n", ret);
     }
     osEventFlagsAttr_t event_attributes = {
         .name = "output_event"};
@@ -1263,13 +1310,27 @@ int app_rtm_data_handle_create(void)
     self->ethercat_Event = osEventFlagsNew(&event_attributes);
     if (self->ethercat_Event == NULL)
     {
-        return -4;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("osEventFlagsNew error\r\n");
     }
-
+    ret = manage_info_init(&self->app_dido.manage_info, 0x00);
+    if (ret != 0)
+    {
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_dido manage_info_init error, ret = %d\r\n", ret);
+    }
     ret = app_dido_create(&self->app_dido);
     if (ret != 0)
     {
-        return -5;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_dido_create error, ret = %d\r\n", ret);
+    }
+
+    ret = manage_info_init(&self->rtm_module_info[RTM_MODULE_PSM].manage_info, 0xC0);
+    if (ret != 0)
+    {
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("icm manage_info_init error, ret = %d\r\n", ret);
     }
     ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_PSM].uart_protocol,
                              UART_DEV_NAME_USART2,
@@ -1278,8 +1339,16 @@ int app_rtm_data_handle_create(void)
                              10000);
     if (ret != 0)
     {
-        return -6;
+        manage_info_status_word_set(&self->rtm_module_info[RTM_MODULE_PSM].manage_info, MODULE_PERIPHERAL_INIT_BIT, 1);
+        LOG_E("icm uart_protocol_init error, ret = %d\r\n", ret);
     }
+
+    // ret = manage_info_init(&self->rtm_module_info[RTM_MODULE_GMM].manage_info, 0xC0);
+    // if (ret != 0)
+    // {
+    //     manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+    //     LOG_E("gmm manage_info_init error, ret = %d\r\n", ret);
+    // }
     // ret = uart_protocol_init(&self->rtm_module_info[RTM_MODULE_GMM].uart_protocol,
     //                          UART_DEV_NAME_USART3,
     //                          1000,
@@ -1313,8 +1382,8 @@ int app_rtm_data_handle_create(void)
                              10000);
     if (ret != 0)
     {
-        printf("uart_protocol_init error, ret = %d", ret);
-        return -11;
+        manage_info_status_word_set(&self->rtm_module_info[RTM_MODULE_RTM_ON].manage_info, MODULE_PERIPHERAL_INIT_BIT, 1);
+        LOG_E("rtm_on uart_protocol_init error, ret = %d\r\n", ret);
     }
     for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
     {
@@ -1324,7 +1393,8 @@ int app_rtm_data_handle_create(void)
         self->rtm_module_info[i].module_queue = osMessageQueueNew(10, sizeof(queue_frame_t), NULL);
         if (self->rtm_module_info[i].module_queue == NULL)
         {
-            return -12;
+            manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+            LOG_E("osMessageQueueNew error, module_name = %s\r\n", self->rtm_module_info[i].module_name);
         }
         for (uint8_t j = 0; j < RTM_MODULE_MAX; j++)
         {
@@ -1338,7 +1408,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_ethercat_rx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -13;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_ethercat_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_ethercat_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1346,7 +1417,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_ethercat_tx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_OFF_PLC]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -14;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_ethercat_tx_thread create error\r\n");
     }
     thread_attributes.name = "app_rtm_main_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1354,7 +1426,8 @@ int app_rtm_data_handle_create(void)
     app_rtm_main_threadId = osThreadNew(app_rtm_main_thread, self, &thread_attributes);
     if (app_rtm_main_threadId == NULL)
     {
-        return -15;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_rtm_main_thread create error\r\n");
     }
     // thread_attributes.name = "app_gmm_rx_thread";
     // thread_attributes.stack_size = 1024 * 4;
@@ -1378,7 +1451,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_PSM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -18;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_psm_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_psm_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1386,7 +1460,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_PSM]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -19;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_psm_tx_thread create error\r\n");
     }
     thread_attributes.name = "app_fkp_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1394,7 +1469,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_fkp_rx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -20;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_fkp_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_fkp_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1402,7 +1478,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_fkp_tx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -21;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_fkp_tx_thread create error\r\n");
     }
     thread_attributes.name = "app_cpg_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1410,7 +1487,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_cpg_rx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -22;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_cpg_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_cpg_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1418,7 +1496,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_cpg_tx_thread, self, &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -23;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_cpg_tx_thread create error\r\n");
     }
     thread_attributes.name = "app_rtm_on_rx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1426,7 +1505,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_rx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_ON]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -24;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_rtm_on_rx_thread create error\r\n");
     }
     thread_attributes.name = "app_rtm_on_tx_thread";
     thread_attributes.stack_size = 1024 * 4;
@@ -1434,7 +1514,8 @@ int app_rtm_data_handle_create(void)
     threadHandle = osThreadNew(app_module_tx_thread, &(self->rtm_module_info[RTM_MODULE_RTM_ON]), &thread_attributes);
     if (threadHandle == NULL)
     {
-        return -25;
+        manage_info_status_word_set(&self->manage_info, RTM_MAIN_MEMORY_STATE_BIT, 1);
+        LOG_E("app_rtm_on_tx_thread create error\r\n");
     }
     return 0;
 }
@@ -1836,10 +1917,77 @@ int8_t dido_test(uint8_t argc, uint8_t **argv)
         if (strcmp(argv[2], "read") == 0)
         {
             app_di_get(&app_rtm.app_dido, &dido_value);
-            LOG_I("DI tca9535_0x01 value: %d\r\n", dido_value.tca9535_0x01_u.tca9535_0x01);
-            LOG_I("DI TCA9535_0x02 value: %d\r\n", dido_value.tca9535_0x02_u.tca9535_0x02);
-            LOG_I("DI TCA9535_0x03 value: %d\r\n", dido_value.tca9535_0x03_u.tca9535_0x03);
-            LOG_I("DI gpio_di value: %d\r\n", dido_value.gpio_di_u.gpio_di);
+            app_do_get(&app_rtm.app_dido, &dido_value);
+            LOG_I("DI mcp23017_0x00 value: 0x%x\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00);
+            LOG_I("DI_CITB_EMERGENCY2:%d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_CITB_EMERGENCY2);
+            LOG_I("DI_UPS_LOAD_PORT:%d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_UPS_LOAD_PORT);
+            LOG_I("DI_STAND_BREAKER1:%d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_STAND_BREAKER1);
+            LOG_I("DI_STAND_EMERGENCY:%d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_STAND_EMERGENCY);
+            LOG_I("DI_TouchGuard:%d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_TouchGuard);
+            LOG_I("DI_HvEn:%d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_HvEn);
+            LOG_I("DI_MV_TreatmentEN:%d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_MV_TreatmentEN);
+            LOG_I("DI_KV_TreatmentEN:%d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_KV_TreatmentEN);
+            LOG_I("\r\n");
+            osDelay(100);
+            LOG_I("DI mcp23017_0x01 value: 0x%x\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01);
+            LOG_I("DI_STAND_BREAKER7:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_STAND_BREAKER7);
+            LOG_I("DI_STAND_BREAKER3:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_STAND_BREAKER3);
+            LOG_I("DI_UPS_ON_BYPASS:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_UPS_ON_BYPASS);
+            LOG_I("DI_STAND_BREAKER5:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_STAND_BREAKER5);
+            LOG_I("DI_CITB_EMERGENCY3:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_EMERGENCY3);
+            LOG_I("DI_COVER3:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_COVER3);
+            LOG_I("DI_POWER_CUT:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_POWER_CUT);
+            LOG_I("DI_STAND_BREAKER4:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_STAND_BREAKER4);
+            osDelay(100);
+            LOG_I("DI_CITB_TREATMENT_ROOM_DOOR1:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR1);
+            LOG_I("DI_CITB_TREATMENT_ROOM_DOOR2:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2);
+            LOG_I("DI_CITB_EMERGENCY1:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_EMERGENCY1);
+            LOG_I("DI_CITB_SEARCH_TREATMENT_ROOM:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_SEARCH_TREATMENT_ROOM);
+            LOG_I("DI_CONTROL_ROOM_BREAKER1:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CONTROL_ROOM_BREAKER1);
+            LOG_I("DI_UPS_ON_BATT:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_UPS_ON_BATT);
+            LOG_I("DI_CONTROL_ROOM_BREAKER5:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CONTROL_ROOM_BREAKER5);
+            LOG_I("DI_STAND_BREAKER6:%d\r\n", dido_value.mcp23017_0x01_u.mcp23017_0x01_bit.DI_STAND_BREAKER6);
+            LOG_I("\r\n");
+            osDelay(100);
+            LOG_I("DI mcp23017_0x02 value: 0x%x\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02);
+            LOG_I("DI_CITB_EMERGENCY5:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_CITB_EMERGENCY5);
+            LOG_I("DI_COVER1:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_COVER1);
+            LOG_I("DI_STAND_RESERVE:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_STAND_RESERVE);
+            LOG_I("DI_TREATMENT_ROOM_DOOR_READY:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_TREATMENT_ROOM_DOOR_READY);
+            LOG_I("DI_COVER2:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_COVER2);
+            LOG_I("DI_CONTROL_ROOM_BREAKER2:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_CONTROL_ROOM_BREAKER2);
+            LOG_I("DI_CONTROL_ROOM_BREAKER4:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_CONTROL_ROOM_BREAKER4);
+            LOG_I("DI_STAND_CONTACTOR2:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_STAND_CONTACTOR2);
+            osDelay(100);
+            LOG_I("DI_STAND_CONTACTOR1:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_STAND_CONTACTOR1);
+            LOG_I("DI_UPS_LOW_BATT:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_UPS_LOW_BATT);
+            LOG_I("DI_HvKey:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_HvKey);
+            LOG_I("DI_COVER4:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_COVER4);
+            LOG_I("DI_CITB_EMERGENCY4:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_CITB_EMERGENCY4);
+            LOG_I("DI_CONTROL_ROOM_BREAKER3:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_CONTROL_ROOM_BREAKER3);
+            LOG_I("DI_STAND_BREAKER2:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.DI_STAND_BREAKER2);
+            LOG_I("RTC_WD_OK_IN:%d\r\n", dido_value.mcp23017_0x02_u.mcp23017_0x02_bit.RTC_WD_OK_IN);
+            LOG_I("\r\n");
+            LOG_I("DI gpio_di value: 0x%x\r\n", dido_value.gpio_di_u.gpio_di);
+            LOG_I("\r\n");
+            osDelay(100);
+            LOG_I("DO_RTM_AutoPowerUp value: 0x%x\r\n", dido_value.mcp23017_0x03_u.mcp23017_0x03_bit.DO_RTM_AutoPowerUp);
+            LOG_I("DO_SearchTreatmentRoomRelay value: 0x%x\r\n", dido_value.mcp23017_0x03_u.mcp23017_0x03_bit.DO_SearchTreatmentRoomRelay);
+            LOG_I("DO_Laser value: 0x%x\r\n", dido_value.mcp23017_0x03_u.mcp23017_0x03_bit.DO_Laser);
+            LOG_I("DO_Power_CUT value: 0x%x\r\n", dido_value.mcp23017_0x03_u.mcp23017_0x03_bit.DO_Power_CUT);
+            LOG_I("DO_STAND_RESERVE value: 0x%x\r\n", dido_value.mcp23017_0x03_u.mcp23017_0x03_bit.DO_STAND_RESERVE);
+            LOG_I("DO_TreatmentRoomLight value: 0x%x\r\n", dido_value.mcp23017_0x03_u.mcp23017_0x03_bit.DO_TreatmentRoomLight);
+            LOG_I("DO_RadiationIndicator value: 0x%x\r\n", dido_value.mcp23017_0x03_u.mcp23017_0x03_bit.DO_RadiationIndicator);
+            LOG_I("DO_ReadyIndicator value: 0x%x\r\n", dido_value.mcp23017_0x03_u.mcp23017_0x03_bit.DO_ReadyIndicator);
+            LOG_I("DO_RTM_SystemShutDown value: 0x%x\r\n", dido_value.mcp23017_0x03_u.mcp23017_0x03_bit.DO_RTM_SystemShutDown);
+            osDelay(100);
+            LOG_I("DO_SoftwareHvEn value: 0x%x\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn);
+            LOG_I("DO_SoftwareKVTreatmentEn value: 0x%x\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn);
+            LOG_I("DO_SoftwareMVTreatmentEn value: 0x%x\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn);
+            LOG_I("DO_ThreePhasePowerOn value: 0x%x\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn);
+            LOG_I("DO_softwareMoveEN value: 0x%x\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_softwareMoveEN);
+            LOG_I("DO_TreatmentMotionEnable value: 0x%x\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable);
+            LOG_I("DO_AsuMotionEnable value: 0x%x\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_AsuMotionEnable);
         }
         else
         {
@@ -1858,9 +2006,9 @@ int8_t dido_test(uint8_t argc, uint8_t **argv)
 
             uint32_t value = atoi(argv[3]);
             dido_value.gpio_do_u.gpio_do = value & 0xFFFF;
-            dido_value.tca9535_0x04_u.tca9535_0x04 = (value >> 16) & 0xFFFF;
+            dido_value.mcp23017_0x03_u.mcp23017_0x03 = (value >> 16) & 0xFFFF;
             app_do_set(&app_rtm.app_dido, &dido_value);
-            LOG_I("DO GPIO_DO value: %d\r\n", dido_value.gpio_do_u.gpio_do);
+            LOG_I("DO GPIO_DO value: 0x%x\r\n", dido_value.gpio_do_u.gpio_do);
         }
         else
         {
@@ -1877,4 +2025,30 @@ usage:
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(dido_test, dido_test, dido test);
+#endif
+
+#define RTM_STATUS_TEST
+#ifdef RTM_STATUS_TEST
+#include "shell.h"
+#include "ulog.h"
+
+int8_t rtm_status_test(uint8_t argc, uint8_t **argv)
+{
+    LOG_I("NOT_READY:0x%x\r\n", app_rtm.fault_check.fixed_interlock_table.not_ready_event);
+    LOG_I("WARNING:0x%x\r\n", app_rtm.fault_check.fixed_interlock_table.warning_interlock);
+    LOG_I("MINOR:0x%x\r\n", app_rtm.fault_check.fixed_interlock_table.minor_interlock);
+    LOG_I("SERIOUS:0x%x\r\n", app_rtm.fault_check.fixed_interlock_table.serious_interlock);
+
+    LOG_I("RTM_MODULE_RTM_MAIN:0x%x\r\n", app_rtm.fault_check.fixed_app_state_table.rtm_main_state);
+    LOG_I("RTM_MODULE_PSM:0x%x\r\n", app_rtm.fault_check.fixed_app_state_table.psm_state);
+    LOG_I("RTM_MODULE_GMM:0x%x\r\n", app_rtm.fault_check.fixed_app_state_table.gmm_state);
+    LOG_I("RTM_MODULE_FKP:0x%x\r\n", app_rtm.fault_check.fixed_app_state_table.fkp_state);
+    LOG_I("RTM_MODULE_CPG:0x%x\r\n", app_rtm.fault_check.fixed_app_state_table.cpg_state);
+    LOG_I("RTM_MODULE_RTM_ON:0x%x\r\n", app_rtm.fault_check.fixed_app_state_table.rtm_on_state);
+    LOG_I("RTM_MODULE_RTM_ON_PLC:0x%x\r\n", app_rtm.fault_check.fixed_app_state_table.plc_state);
+    LOG_I("RTM_MODULE_RTM_DIDO:0x%x\r\n", app_rtm.fault_check.fixed_app_state_table.dido_state);
+    LOG_I("RTM_MODULE_RTM_RECORD:0x%x\r\n", app_rtm.fault_check.fixed_app_state_table.data_record);
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(rtm_status_test, rtm_status_test, rtm status test);
 #endif

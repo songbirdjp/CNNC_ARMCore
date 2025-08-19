@@ -20,6 +20,11 @@ extern "C"
     /*****************************ioctl cmd:public*****************************/
     typedef void (*irq_handle_callback_t)(void *);
 
+    typedef struct pin_cmd_arg
+    {
+        irq_handle_callback_t callback;
+        void *arg;
+    } pin_cmd_arg_t;
     typedef enum pin_cmd
     {
         PIN_CMD_MIN = 0,
@@ -51,7 +56,7 @@ extern "C"
         device_t super;
 
         pin_state_t pin_state;
-        irq_handle_callback_t irq_handle_callback[CALLBACK_TIRE_LIMIT];
+        pin_cmd_arg_t irq_handle_arg[CALLBACK_TIRE_LIMIT];
 
         struct device_pin_ops *device_pin_ops;
     } device_pin_t;
@@ -76,6 +81,10 @@ extern "C"
                              char const *name,
                              device_pin_ops_t *const device_pin_ops,
                              void *const user_data);
+
+    void device_pin_rising_irq_handel(device_pin_t *const self);
+
+    void device_pin_falling_irq_handel(device_pin_t *const self);
 #ifdef __cplusplus
 }
 #endif

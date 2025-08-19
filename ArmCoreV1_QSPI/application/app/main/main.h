@@ -67,14 +67,14 @@ void Error_Handler(void);
 #define CHIP_RUN_LED_GPIO_Port GPIOC
 #define SYSTEM_STATE_Pin GPIO_PIN_2
 #define SYSTEM_STATE_GPIO_Port GPIOC
-#define DO_ThreePhasePowerOn_Pin GPIO_PIN_2
-#define DO_ThreePhasePowerOn_GPIO_Port GPIOA
-#define DO_softwareMoveEN_Pin GPIO_PIN_5
-#define DO_softwareMoveEN_GPIO_Port GPIOC
-#define DO_SoftwareHvEn_Pin GPIO_PIN_0
-#define DO_SoftwareHvEn_GPIO_Port GPIOB
-#define DO_TreatmentMotionEnable_Pin GPIO_PIN_1
-#define DO_TreatmentMotionEnable_GPIO_Port GPIOB
+#define DO_TreatmentMotionEnable_Pin GPIO_PIN_2
+#define DO_TreatmentMotionEnable_GPIO_Port GPIOA
+#define DO_SoftwareMVTreatmentEn_Pin GPIO_PIN_5
+#define DO_SoftwareMVTreatmentEn_GPIO_Port GPIOC
+#define DO_ThreePhasePowerOn_Pin GPIO_PIN_0
+#define DO_ThreePhasePowerOn_GPIO_Port GPIOB
+#define DO_softwareMoveEN_Pin GPIO_PIN_1
+#define DO_softwareMoveEN_GPIO_Port GPIOB
 #define LAN9252_SYNC0_Pin GPIO_PIN_2
 #define LAN9252_SYNC0_GPIO_Port GPIOB
 #define LAN9252_SYNC0_EXTI_IRQn EXTI2_IRQn
@@ -82,14 +82,16 @@ void Error_Handler(void);
 #define DO_AsuMotionEnable_GPIO_Port GPIOB
 #define DO_SoftwareKVTreatmentEn_Pin GPIO_PIN_14
 #define DO_SoftwareKVTreatmentEn_GPIO_Port GPIOB
-#define DO_SoftwareMVTreatmentEn_Pin GPIO_PIN_15
-#define DO_SoftwareMVTreatmentEn_GPIO_Port GPIOB
+#define DO_SoftwareHvEn_Pin GPIO_PIN_15
+#define DO_SoftwareHvEn_GPIO_Port GPIOB
 #define RUN_LED6_Pin GPIO_PIN_11
 #define RUN_LED6_GPIO_Port GPIOD
 #define RUN_LED5_Pin GPIO_PIN_12
 #define RUN_LED5_GPIO_Port GPIOD
-#define DI_GATING_Pin GPIO_PIN_6
-#define DI_GATING_GPIO_Port GPIOC
+#define DI_GATING_Pin GPIO_PIN_3
+#define DI_GATING_GPIO_Port GPIOG
+#define RUN_LED4_Pin GPIO_PIN_7
+#define RUN_LED4_GPIO_Port GPIOC
 #define RUN_LED1_Pin GPIO_PIN_15
 #define RUN_LED1_GPIO_Port GPIOA
 #define W5500_RSTn_Pin GPIO_PIN_3
@@ -109,8 +111,6 @@ void Error_Handler(void);
 #define RUN_LED2_GPIO_Port GPIOG
 #define RUN_LED3_Pin GPIO_PIN_3
 #define RUN_LED3_GPIO_Port GPIOB
-#define RUN_LED4_Pin GPIO_PIN_4
-#define RUN_LED4_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

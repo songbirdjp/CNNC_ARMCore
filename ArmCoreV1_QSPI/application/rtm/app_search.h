@@ -17,8 +17,8 @@
 extern "C"
 {
 #endif
-
-
+#define SEARCH_MIN_TIMEOUT_MS (60000)
+int32_t search_timeout_set(uint32_t timeout_tick);
 int32_t search_state_machine(app_dido_t *app_dido);
 
 #ifdef __cplusplus

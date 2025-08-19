@@ -5,27 +5,26 @@
 #include "tcp_tasks.h"
 #include "websocket_console.h"
 #include "lan9252_app.h"
-
-#define DATA_PROCESS_LAN_EVENT      (1<<0)
-#define DATA_PROCESS_TCP_EVENT      (1<<1)
-#define DATA_PROCESS_FPGA_EVENT     (1<<2)
+#include "app_manage.h"
+#define DATA_PROCESS_LAN_EVENT (1 << 0)
+#define DATA_PROCESS_TCP_EVENT (1 << 1)
+#define DATA_PROCESS_FPGA_EVENT (1 << 2)
 static osEventFlagsId_t data_process_eventHandle = NULL;
 
 static int8_t realtime_ethercat_data_process(void)
 {
-    app_rtm_event_output_set();
-    // TOBJ7010 recv_data = {0};
-    // TOBJ6000 send_data = {0};
-
-    // TOBJ7010 *recv = (TOBJ7010 *)ethercat_recv_data_get((uint16_t *)&recv_data, sizeof(recv_data));
-    // TOBJ6000 *send = (TOBJ6000 *)ethercat_send_data_get((uint16_t *)&send_data, sizeof(send_data));
-    // if (recv == NULL || send == NULL)
-    // {
-    //     printf("ethercat data get failed\r\n");
-    //     return -1;
-    // }
-
-    // return ethercat_send_data_update(send, sizeof(send_data));
+#define ETHERCAT_STATE_OP (0x08)
+    if (ethercat_state_get() == ETHERCAT_STATE_OP)
+    {
+        app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_ETHERCAT_READY);
+        app_rtm_ethercat_state_op_set();
+        app_rtm_event_output_set();
+    }
+    else
+    {
+        app_rtm_ethercat_state_op_clean();
+    }
+    return 0;
 }
 
 static int8_t non_realtime_tcp_callback(uint8_t sn)

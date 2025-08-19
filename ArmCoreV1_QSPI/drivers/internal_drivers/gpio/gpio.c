@@ -55,14 +55,14 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin|DO_softwareMoveEN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin|DO_SoftwareMVTreatmentEn_Pin|RUN_LED4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(DO_ThreePhasePowerOn_GPIO_Port, DO_ThreePhasePowerOn_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(DO_TreatmentMotionEnable_GPIO_Port, DO_TreatmentMotionEnable_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, DO_SoftwareHvEn_Pin|DO_TreatmentMotionEnable_Pin|DO_AsuMotionEnable_Pin|DO_SoftwareKVTreatmentEn_Pin
-                          |DO_SoftwareMVTreatmentEn_Pin|RUN_LED3_Pin|RUN_LED4_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, DO_ThreePhasePowerOn_Pin|DO_softwareMoveEN_Pin|DO_AsuMotionEnable_Pin|DO_SoftwareKVTreatmentEn_Pin
+                          |DO_SoftwareHvEn_Pin|RUN_LED3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, RUN_LED6_Pin|RUN_LED5_Pin|WATCHDOG2_Pin, GPIO_PIN_RESET);
@@ -91,24 +91,24 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(LAN9252_SYNC1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : CHIP_RUN_LED_Pin SYSTEM_STATE_Pin DO_softwareMoveEN_Pin */
-  GPIO_InitStruct.Pin = CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin|DO_softwareMoveEN_Pin;
+  /*Configure GPIO pins : CHIP_RUN_LED_Pin SYSTEM_STATE_Pin DO_SoftwareMVTreatmentEn_Pin RUN_LED4_Pin */
+  GPIO_InitStruct.Pin = CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin|DO_SoftwareMVTreatmentEn_Pin|RUN_LED4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : DO_ThreePhasePowerOn_Pin RUN_LED1_Pin */
-  GPIO_InitStruct.Pin = DO_ThreePhasePowerOn_Pin|RUN_LED1_Pin;
+  /*Configure GPIO pins : DO_TreatmentMotionEnable_Pin RUN_LED1_Pin */
+  GPIO_InitStruct.Pin = DO_TreatmentMotionEnable_Pin|RUN_LED1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : DO_SoftwareHvEn_Pin DO_TreatmentMotionEnable_Pin DO_AsuMotionEnable_Pin DO_SoftwareKVTreatmentEn_Pin
-                           DO_SoftwareMVTreatmentEn_Pin RUN_LED3_Pin RUN_LED4_Pin */
-  GPIO_InitStruct.Pin = DO_SoftwareHvEn_Pin|DO_TreatmentMotionEnable_Pin|DO_AsuMotionEnable_Pin|DO_SoftwareKVTreatmentEn_Pin
-                          |DO_SoftwareMVTreatmentEn_Pin|RUN_LED3_Pin|RUN_LED4_Pin;
+  /*Configure GPIO pins : DO_ThreePhasePowerOn_Pin DO_softwareMoveEN_Pin DO_AsuMotionEnable_Pin DO_SoftwareKVTreatmentEn_Pin
+                           DO_SoftwareHvEn_Pin RUN_LED3_Pin */
+  GPIO_InitStruct.Pin = DO_ThreePhasePowerOn_Pin|DO_softwareMoveEN_Pin|DO_AsuMotionEnable_Pin|DO_SoftwareKVTreatmentEn_Pin
+                          |DO_SoftwareHvEn_Pin|RUN_LED3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -145,6 +145,9 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*AnalogSwitch Config */
+  HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PC2, SYSCFG_SWITCH_PC2_CLOSE);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI2_IRQn, 5, 0);

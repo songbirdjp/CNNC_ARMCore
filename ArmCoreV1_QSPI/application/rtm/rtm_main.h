@@ -15,14 +15,15 @@
 #include "uart_protocol.h"
 #include "app_state_machine.h"
 #include "app_data_record.h"
+#include "app_fault_check.h"
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
     void app_rtm_event_output_set(void);
-    // void app_rtm_ethercat_state_op_set(void);
-    // void app_rtm_ethercat_state_op_clean(void);
+    void app_rtm_ethercat_state_op_set(void);
+    void app_rtm_ethercat_state_op_clean(void);
     enum
     {
         BROADCAST_ID = 0x00,
@@ -101,9 +102,17 @@ extern "C"
     } module_tx_state_t;
     typedef struct rtm_module_info
     {
-#define MODULE_INIT_BIT (0)
-#define MODULE_LINK_STATE_BIT (1)
+#define MODULE_PERIPHERAL_INIT_BIT (0)
+#define MODULE_TX_INIT_BIT (1)
+#define MODULE_RX_INIT_BIT (2)
+#define MODULE_LINK_STATE_BIT (3)
+#define MODULE_RX_STATE_BIT (4)
+#define MODULE_TX_STATE_BIT (5)
+#define MODULE_RX_QUEUE_STATE_BIT (6)
+#define MODULE_TX_QUEUE_STATE_BIT (7)
+#define MODULE_STATE_MACHINE_STATE_BIT (8)
         manage_info_t manage_info;
+        uint32_t module_thread_flags;
         app_data_record_t *app_data_record;
         const char *module_name;
         const char *module_type;
@@ -122,25 +131,33 @@ extern "C"
 
     typedef struct rtm_ethercat_info
     {
-#define ETHERCAT_SLAVE_INIT_BIT (0)
-#define ETHERCAT_LINK_STATE_BIT (1)
+#define ETHERCAT_OP_STATE_BIT (0)
         manage_info_t manage_info;
     } rtm_ethercat_info_t;
 
     typedef struct app_rtm_main
     {
-#define RTM_MAIN_INIT_BIT (0)
+#define RTM_MAIN_INIT_STATE_BIT (0) 
+#define RTM_MAIN_RESET_STATE_BIT (1)
+#define RTM_MAIN_MEMORY_STATE_BIT (2)
+#define RTM_MAIN_RECORD_STATE_BIT (3)
+#define RTM_MAIN_HV_EN_STATE_BIT (4)
+#define RTM_MAIN_KV_TREATMENT_EN_STATE_BIT (5)
+#define RTM_MAIN_MV_TREATMENT_EN_STATE_BIT (6)
+#define RTM_MAIN_EMERGENCY_STOP_STATE_BIT (7)
+#define RTM_MAIN_DOOR_STATE_BIT (8)
+#define RTM_MAIN_RTC_OK_STATE_BIT (9)
+#define RTM_MAIN_WAIT_GMM_SYSTEM_ON_STATE_BIT (10)
         manage_info_t manage_info;
         app_data_record_t app_data_record;
 
         rtm_fault_check_t fault_check;
-        interlock_table_t interlock_table;
 
-        uint8_t gmm_state;
-        uint8_t psm_state;
         uint16_t PLC_info;
-        uint32_t interlock_override;
-        uint32_t unready_override;
+
+        uint8_t gmm_current_state;
+        uint8_t psm_current_state;
+
         uint16_t led_belt;
 
         rtm_StateMachine_t state_machine;

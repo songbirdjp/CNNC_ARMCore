@@ -12,7 +12,7 @@
 #define __APP_DATA_RECORD_H__
 
 #include "websocket.h"
-
+#include "app_fault_check.h"
 #define DATA_RECORD_DATA_ITEM 1024
 #define DATA_RECORD_DATA_SIZE (UART_PROTOCOL_DATA_MAX_LENGTH + sizeof(uint64_t) + sizeof(uint32_t))
 typedef struct {
@@ -25,6 +25,8 @@ typedef struct {
 }data_fifo_t;
 
 typedef struct {
+#define RECORD_PERIPHERAL_INIT_BIT (0)
+    manage_info_t manage_info;
     data_fifo_t data_fifo;
     uint8_t *txdata;
     uint8_t sn;

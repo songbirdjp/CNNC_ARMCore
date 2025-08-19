@@ -4,6 +4,7 @@
 #include "init_call.h"
 #include "shell.h"
 #include "ulog.h"
+#include "app_manage.h"
 enum
 {
     DIDO_STATE_STABLE = 0,
@@ -14,34 +15,33 @@ static int32_t do_device_init(app_dido_t *self)
 {
     device_err_t device_err = DEV_EIO;
     uint16_t pca9557_cfg;
-    tca9535_msg_t tca9535_msg = {
-        .driver_tca9535_reg = DRIVER_TCA9535_REG_OUTPUT_PORT_0,
-        .dataLen = 1};
     uint8_t output_value = 0x00;
-    /**********************************DEVICE_NAME_TCA9535_4*******************/
-    self->do_tca9535_0x04 = device_find(DEVICE_NAME_TCA9535_4);
-    if (self->do_tca9535_0x04 == NULL)
+    /**********************************DEVICE_NAME_MCP23017_3*******************/
+    self->do_mcp23017_0x03 = device_find(DEVICE_NAME_MCP23017_3);
+    if (self->do_mcp23017_0x03 == NULL)
     {
         return -1;
     }
-    device_err = device_open(self->do_tca9535_0x04);
+    device_err = device_open(self->do_mcp23017_0x03);
     if (device_err != DEV_EOK)
     {
         return -2;
     }
-    pca9557_cfg = 0xff00;
-    device_err = device_ioctl(self->do_tca9535_0x04,
-                              DRIVER_TCA9535_CMD_CONFIGURATION_PORT,
-                              &pca9557_cfg);
+    mcp23017_cmd_config_t mcp23017_3_cmd_config = {
+        .io_dir = 0x0000,
+        .input_polarity = 0x0000,
+        .int_enable = 0x0000,
+        .default_value = 0x0000,
+        .interrupt_control = 0x0000,
+        .io_config = 0x44,
+        .pull_up_resistors = 0x0000,
+    };
+    device_err = device_ioctl(self->do_mcp23017_0x03,
+                              DRIVER_MCP23017_CMD_CONFIG,
+                              &mcp23017_3_cmd_config);
     if (device_err != DEV_EOK)
     {
         return -3;
-    }
-    tca9535_msg.data = &output_value;
-    device_err = device_write(self->do_tca9535_0x04, &tca9535_msg, 0, 1000);
-    if (device_err != DEV_EOK)
-    {
-        return -4;
     }
     /********************DEVICE_NAME_PIN_DO_SOFTWARE_MV_TREATMENT_EN***********/
     self->do_gpio_SoftwareMVTreatmentEn = device_find(DEVICE_NAME_PIN_DO_SOFTWARE_MV_TREATMENT_EN);
@@ -191,131 +191,98 @@ static int32_t do_device_init(app_dido_t *self)
 static int32_t di_device_init(app_dido_t *self)
 {
     device_err_t device_err = DEV_EIO;
-    uint16_t pca9557_cfg;
-    /**********************************DEVICE_NAME_TCA9535_1*******************/
-    self->di_tca9535_0x01 = device_find(DEVICE_NAME_TCA9535_1);
-    if (self->di_tca9535_0x01 == NULL)
+
+    /**********************************DEVICE_NAME_MCP23017_0*******************/
+    self->di_mcp23017_0x00 = device_find(DEVICE_NAME_MCP23017_0);
+    if (self->di_mcp23017_0x00 == NULL)
     {
         return -1;
     }
-    device_err = device_open(self->di_tca9535_0x01);
+    device_err = device_open(self->di_mcp23017_0x00);
     if (device_err != DEV_EOK)
     {
         return -2;
     }
-    pca9557_cfg = 0xffff;
-    device_err = device_ioctl(self->di_tca9535_0x01,
-                              DRIVER_TCA9535_CMD_CONFIGURATION_PORT,
-                              &pca9557_cfg);
+    mcp23017_cmd_config_t mcp23017_0_cmd_config = {
+        .io_dir = 0xFFFF,
+        .input_polarity = 0xFF00,
+        .int_enable = 0x0000,
+        .default_value = 0x0000,
+        .interrupt_control = 0x0000,
+        .io_config = 0x44,
+        .pull_up_resistors = 0x0000,
+    };
+    device_err = device_ioctl(self->di_mcp23017_0x00,
+                              DRIVER_MCP23017_CMD_CONFIG,
+                              &mcp23017_0_cmd_config);
     if (device_err != DEV_EOK)
     {
         return -3;
     }
-    pca9557_cfg = 0xf0ff;
-    device_err = device_ioctl(self->di_tca9535_0x01,
-                              DRIVER_TCA9535_CMD_POLARITY_INVERSION_PORT,
-                              &pca9557_cfg);
-    if (device_err != DEV_EOK)
+    /**********************************DEVICE_NAME_MCP23017_1*******************/
+    self->di_mcp23017_0x01 = device_find(DEVICE_NAME_MCP23017_1);
+    if (self->di_mcp23017_0x01 == NULL)
     {
         return -4;
     }
-    /**********************************DEVICE_NAME_TCA9535_2*******************/
-    self->di_tca9535_0x02 = device_find(DEVICE_NAME_TCA9535_2);
-    if (self->di_tca9535_0x02 == NULL)
+    device_err = device_open(self->di_mcp23017_0x01);
+    if (device_err != DEV_EOK)
     {
         return -5;
     }
-    device_err = device_open(self->di_tca9535_0x02);
+    mcp23017_cmd_config_t mcp23017_1_cmd_config = {
+        .io_dir = 0xFFFF,
+        .input_polarity = 0xFFFF,
+        .int_enable = 0x0000,
+        .default_value = 0x0000,
+        .interrupt_control = 0x0000,
+        .io_config = 0x44,
+        .pull_up_resistors = 0x0000,
+    };
+    device_err = device_ioctl(self->di_mcp23017_0x01,
+                              DRIVER_MCP23017_CMD_CONFIG,
+                              &mcp23017_1_cmd_config);
     if (device_err != DEV_EOK)
     {
         return -6;
     }
-    pca9557_cfg = 0xffff;
-    device_err = device_ioctl(self->di_tca9535_0x02,
-                              DRIVER_TCA9535_CMD_CONFIGURATION_PORT,
-                              &pca9557_cfg);
-    if (device_err != DEV_EOK)
+    /**********************************DEVICE_NAME_MCP23017_2*******************/
+    self->di_mcp23017_0x02 = device_find(DEVICE_NAME_MCP23017_2);
+    if (self->di_mcp23017_0x02 == NULL)
     {
         return -7;
     }
-    pca9557_cfg = 0xffff;
-    device_err = device_ioctl(self->di_tca9535_0x02,
-                              DRIVER_TCA9535_CMD_POLARITY_INVERSION_PORT,
-                              &pca9557_cfg);
+    device_err = device_open(self->di_mcp23017_0x02);
     if (device_err != DEV_EOK)
     {
         return -8;
     }
-    /**********************************DEVICE_NAME_TCA9535_3*******************/
-    self->di_tca9535_0x03 = device_find(DEVICE_NAME_TCA9535_3);
-    if (self->di_tca9535_0x03 == NULL)
+    mcp23017_cmd_config_t mcp23017_2_cmd_config = {
+        .io_dir = 0xFFFF,
+        .input_polarity = 0x7FFF,
+        .int_enable = 0x0000,
+        .default_value = 0x0000,
+        .interrupt_control = 0x0000,
+        .io_config = 0x44,
+        .pull_up_resistors = 0x0000,
+    };
+    device_err = device_ioctl(self->di_mcp23017_0x02,
+                              DRIVER_MCP23017_CMD_CONFIG,
+                              &mcp23017_2_cmd_config);
+    if (device_err != DEV_EOK)
     {
         return -9;
-    }
-    device_err = device_open(self->di_tca9535_0x03);
-    if (device_err != DEV_EOK)
-    {
-        return -10;
-    }
-    pca9557_cfg = 0xffff;
-    device_err = device_ioctl(self->di_tca9535_0x03,
-                              DRIVER_TCA9535_CMD_CONFIGURATION_PORT,
-                              &pca9557_cfg);
-    if (device_err != DEV_EOK)
-    {
-        return -11;
-    }
-    pca9557_cfg = 0xffff;
-    device_err = device_ioctl(self->di_tca9535_0x03,
-                              DRIVER_TCA9535_CMD_POLARITY_INVERSION_PORT,
-                              &pca9557_cfg);
-    if (device_err != DEV_EOK)
-    {
-        return -12;
     }
     /******************************DEVICE_NAME_PIN_DI_GATING*******************/
     self->di_gpio_gating = device_find(DEVICE_NAME_PIN_DI_GATING);
     if (self->di_gpio_gating == NULL)
     {
-        return -13;
+        return -10;
     }
     device_err = device_open(self->di_gpio_gating);
     if (device_err != DEV_EOK)
     {
-        return -14;
-    }
-    /******************************DEVICE_NAME_PIN_DI_INT1*********************/
-    self->di_tca9535_INT1 = device_find(DEVICE_NAME_PIN_DI_INT1);
-    if (self->di_tca9535_INT1 == NULL)
-    {
-        return -15;
-    }
-    device_err = device_open(self->di_tca9535_INT1);
-    if (device_err != DEV_EOK)
-    {
-        return -16;
-    }
-    /******************************DEVICE_NAME_PIN_DI_INT2*********************/
-    self->di_tca9535_INT2 = device_find(DEVICE_NAME_PIN_DI_INT2);
-    if (self->di_tca9535_INT2 == NULL)
-    {
-        return -17;
-    }
-    device_err = device_open(self->di_tca9535_INT2);
-    if (device_err != DEV_EOK)
-    {
-        return -18;
-    }
-    /******************************DEVICE_NAME_PIN_DI_INT3*********************/
-    self->di_tca9535_INT3 = device_find(DEVICE_NAME_PIN_DI_INT3);
-    if (self->di_tca9535_INT3 == NULL)
-    {
-        return -19;
-    }
-    device_err = device_open(self->di_tca9535_INT3);
-    if (device_err != DEV_EOK)
-    {
-        return -20;
+        return -11;
     }
 }
 /**
@@ -336,74 +303,73 @@ static void app_di_poll_entry(void *argument)
     memset(&dido_value_last, 0, sizeof(dido_structure_t));
     memset(&dido_state, 0, sizeof(dido_structure_t));
 
-    tca9535_msg_t tca9535_msg = {
-        .driver_tca9535_reg = DRIVER_TCA9535_REG_INPUT_PORT_0,
+    mcp23017_msg_t mcp23017_msg = {
+        .gpio_port = DRIVER_MCP23017_GPA,
         .dataLen = 2};
     pin_msg_t pin_msg = PIN_STATE_NONE;
 
     int32_t retVal = di_device_init(self);
     if (retVal != 0)
     {
+        manage_info_status_word_set(&self->manage_info, DIDO_PERIPHERAL_INIT_BIT, 1);
         LOG_I("di device init fail, errorCode:%d.\r\n", retVal);
         goto exit;
     }
-    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DI);
+    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DI_READY);
     for (;;)
     {
-        /*读取9535_1di*/
-        tca9535_msg.data = (uint8_t *)(&(dido_value_cur.tca9535_0x01_u.tca9535_0x01));
-        device_err = device_read(self->di_tca9535_0x01,
-                                 &tca9535_msg,
+        mcp23017_msg.data = (uint8_t *)(&(dido_value_cur.mcp23017_0x00_u.mcp23017_0x00));
+        device_err = device_read(self->di_mcp23017_0x00,
+                                 &mcp23017_msg,
                                  0,
                                  1000);
         if (device_err != DEV_EOK)
         {
+            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 1);
+            LOG_I("read mcp23017_0 fail, errorCode:%d\r\n", device_err);
+            device_ioctl(self->di_mcp23017_0x00,
+                         I2C_CMD_INIT,
+                         NULL);
+        }
+        else
+        {
+            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 0);
+        }
 
-            self->dido_enable_mask.tca9535_0x01_u.tca9535_0x01 = 0x00;
-            LOG_I("read tca9535_1 fail, errorCode:%d\r\n", device_err);
-            device_ioctl(self->di_tca9535_0x01,
-                         I2C_CMD_INIT,
-                         NULL);
-        }
-        else
-        {
-            self->dido_enable_mask.tca9535_0x01_u.tca9535_0x01 = 0xff;
-        }
-        /*读取9535_2di*/
-        tca9535_msg.data = (uint8_t *)(&(dido_value_cur.tca9535_0x02_u.tca9535_0x02));
-        device_err = device_read(self->di_tca9535_0x02,
-                                 &tca9535_msg,
+        mcp23017_msg.data = (uint8_t *)(&(dido_value_cur.mcp23017_0x01_u.mcp23017_0x01));
+        device_err = device_read(self->di_mcp23017_0x01,
+                                 &mcp23017_msg,
                                  0,
                                  1000);
         if (device_err != DEV_EOK)
         {
-            self->dido_enable_mask.tca9535_0x02_u.tca9535_0x02 = 0x00;
-            LOG_I("read tca9535_2 fail, errorCode:%d\r\n", device_err);
-            device_ioctl(self->di_tca9535_0x02,
+            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 1);
+            LOG_I("read mcp23017_1 fail, errorCode:%d\r\n", device_err);
+            device_ioctl(self->di_mcp23017_0x01,
                          I2C_CMD_INIT,
                          NULL);
         }
         else
         {
-            self->dido_enable_mask.tca9535_0x02_u.tca9535_0x02 = 0xff;
+            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 0);
         }
-        /*读取9535_3di*/
-        tca9535_msg.data = (uint8_t *)(&(dido_value_cur.tca9535_0x03_u.tca9535_0x03));
-        device_err = device_read(self->di_tca9535_0x03,
-                                 &tca9535_msg,
+
+        mcp23017_msg.data = (uint8_t *)(&(dido_value_cur.mcp23017_0x02_u.mcp23017_0x02));
+        device_err = device_read(self->di_mcp23017_0x02,
+                                 &mcp23017_msg,
                                  0,
                                  1000);
         if (device_err != DEV_EOK)
         {
-            self->dido_enable_mask.tca9535_0x03_u.tca9535_0x03 = 0x00;
-            LOG_I("read tca9535_3 fail, errorCode:%d\r\n", device_err);
-            device_ioctl(self->di_tca9535_0x03,
+            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 1);
+            LOG_I("read mcp23017_2 fail, errorCode:%d\r\n", device_err);
+            device_ioctl(self->di_mcp23017_0x02,
                          I2C_CMD_INIT,
                          NULL);
         }
         else
         {
-            self->dido_enable_mask.tca9535_0x03_u.tca9535_0x03 = 0xff;
+            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 0);
         }
         /*读取gpio di*/
         device_err = device_read(self->di_gpio_gating,
@@ -412,31 +378,26 @@ static void app_di_poll_entry(void *argument)
                                  1000);
         if (device_err != DEV_EOK)
         {
-            self->dido_enable_mask.gpio_di_u.gpio_di = 0x00;
             LOG_I("read gating fail!\r\n");
-        }
-        else
-        {
-            self->dido_enable_mask.gpio_di_u.gpio_di = 0xff;
         }
 
         dido_value_cur.gpio_di_u.gpio_di_bit.DI_GATING = pin_msg;
 
         /*判断当前9535di状态，异或，与上次不同则为不确定状态1*/
-        dido_state.tca9535_0x01_u.tca9535_0x01 = ((dido_value_cur.tca9535_0x01_u.tca9535_0x01) ^
-                                                  (dido_value_last.tca9535_0x01_u.tca9535_0x01));
-        dido_value_last.tca9535_0x01_u.tca9535_0x01 =
-            dido_value_cur.tca9535_0x01_u.tca9535_0x01;
+        dido_state.mcp23017_0x00_u.mcp23017_0x00 = ((dido_value_cur.mcp23017_0x00_u.mcp23017_0x00) ^
+                                                  (dido_value_last.mcp23017_0x00_u.mcp23017_0x00));
+        dido_value_last.mcp23017_0x00_u.mcp23017_0x00 =
+            dido_value_cur.mcp23017_0x00_u.mcp23017_0x00;
 
-        dido_state.tca9535_0x02_u.tca9535_0x02 = ((dido_value_cur.tca9535_0x02_u.tca9535_0x02) ^
-                                                  (dido_value_last.tca9535_0x02_u.tca9535_0x02));
-        dido_value_last.tca9535_0x02_u.tca9535_0x02 =
-            dido_value_cur.tca9535_0x02_u.tca9535_0x02;
+        dido_state.mcp23017_0x01_u.mcp23017_0x01 = ((dido_value_cur.mcp23017_0x01_u.mcp23017_0x01) ^
+                                                  (dido_value_last.mcp23017_0x01_u.mcp23017_0x01));
+        dido_value_last.mcp23017_0x01_u.mcp23017_0x01 =
+            dido_value_cur.mcp23017_0x01_u.mcp23017_0x01;
 
-        dido_state.tca9535_0x03_u.tca9535_0x03 = ((dido_value_cur.tca9535_0x03_u.tca9535_0x03) ^
-                                                  (dido_value_last.tca9535_0x03_u.tca9535_0x03));
-        dido_value_last.tca9535_0x03_u.tca9535_0x03 =
-            dido_value_cur.tca9535_0x03_u.tca9535_0x03;
+        dido_state.mcp23017_0x02_u.mcp23017_0x02 = ((dido_value_cur.mcp23017_0x02_u.mcp23017_0x02) ^
+                                                  (dido_value_last.mcp23017_0x02_u.mcp23017_0x02));
+        dido_value_last.mcp23017_0x02_u.mcp23017_0x02 =
+            dido_value_cur.mcp23017_0x02_u.mcp23017_0x02;
         /*判断当前gpio di状态，异或，与上次不同则为不确定状态1*/
         dido_state.gpio_di_u.gpio_di = ((dido_value_cur.gpio_di_u.gpio_di) ^
                                         (dido_value_last.gpio_di_u.gpio_di));
@@ -447,12 +408,12 @@ static void app_di_poll_entry(void *argument)
                          (uint8_t *)(&dido_value_cur) + DI_DATA_OFFSET_START,
                          DI_DATA_OFFSET_END - DI_DATA_OFFSET_START)))
         {
-            self->dido_structure.tca9535_0x01_u.tca9535_0x01 = (self->dido_structure.tca9535_0x01_u.tca9535_0x01 & dido_state.tca9535_0x01_u.tca9535_0x01) |
-                                                               (dido_value_cur.tca9535_0x01_u.tca9535_0x01 & ~dido_state.tca9535_0x01_u.tca9535_0x01);
-            self->dido_structure.tca9535_0x02_u.tca9535_0x02 = (self->dido_structure.tca9535_0x02_u.tca9535_0x02 & dido_state.tca9535_0x02_u.tca9535_0x02) |
-                                                               (dido_value_cur.tca9535_0x02_u.tca9535_0x02 & ~dido_state.tca9535_0x02_u.tca9535_0x02);
-            self->dido_structure.tca9535_0x03_u.tca9535_0x03 = (self->dido_structure.tca9535_0x03_u.tca9535_0x03 & dido_state.tca9535_0x03_u.tca9535_0x03) |
-                                                               (dido_value_cur.tca9535_0x03_u.tca9535_0x03 & ~dido_state.tca9535_0x03_u.tca9535_0x03);
+            self->dido_structure.mcp23017_0x00_u.mcp23017_0x00 = (self->dido_structure.mcp23017_0x00_u.mcp23017_0x00 & dido_state.mcp23017_0x00_u.mcp23017_0x00) |
+                                                               (dido_value_cur.mcp23017_0x00_u.mcp23017_0x00 & ~dido_state.mcp23017_0x00_u.mcp23017_0x00);
+            self->dido_structure.mcp23017_0x01_u.mcp23017_0x01 = (self->dido_structure.mcp23017_0x01_u.mcp23017_0x01 & dido_state.mcp23017_0x01_u.mcp23017_0x01) |
+                                                               (dido_value_cur.mcp23017_0x01_u.mcp23017_0x01 & ~dido_state.mcp23017_0x01_u.mcp23017_0x01);
+            self->dido_structure.mcp23017_0x02_u.mcp23017_0x02 = (self->dido_structure.mcp23017_0x02_u.mcp23017_0x02 & dido_state.mcp23017_0x02_u.mcp23017_0x02) |
+                                                               (dido_value_cur.mcp23017_0x02_u.mcp23017_0x02 & ~dido_state.mcp23017_0x02_u.mcp23017_0x02);
             self->dido_structure.gpio_di_u.gpio_di = (self->dido_structure.gpio_di_u.gpio_di & dido_state.gpio_di_u.gpio_di) |
                                                      (dido_value_cur.gpio_di_u.gpio_di & ~dido_state.gpio_di_u.gpio_di);
 
@@ -476,9 +437,10 @@ static void app_do_entry(void *argument)
     device_err_t device_err = DEV_EIO;
     dido_structure_t dido_value;
     memset(&dido_value, 0, sizeof(dido_structure_t));
-    tca9535_msg_t tca9535_msg = {
-        .driver_tca9535_reg = DRIVER_TCA9535_REG_OUTPUT_PORT_0,
-        .dataLen = 1};
+
+    mcp23017_msg_t mcp23017_msg = {
+        .gpio_port = DRIVER_MCP23017_GPA,
+        .dataLen = 2};
     pin_msg_t gpio_msg = PIN_STATE_NONE;
     uint32_t ret = 0;
 
@@ -488,7 +450,7 @@ static void app_do_entry(void *argument)
         LOG_I("do device init fail, errorCode:%d.\r\n", retVal);
         goto exit;
     }
-    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DO);
+    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DO_READY);
     for (;;)
     {
         ret = osThreadFlagsWait(APP_RTM_THREAD_FLAG_DO_UPDATE, osFlagsWaitAll, 0xFFFFFFFF);
@@ -504,17 +466,17 @@ static void app_do_entry(void *argument)
                         (uint8_t *)(&(dido_value)) + DO_DATA_OFFSET_START,
                         DO_DATA_OFFSET_END - DO_DATA_OFFSET_START))
         {
-            /*changed DO tca9535_0x04*/
-            if (self->dido_structure.tca9535_0x04_u.tca9535_0x04 !=
-                dido_value.tca9535_0x04_u.tca9535_0x04)
+            /*changed DO mcp23017_0x03*/
+            if (self->dido_structure.mcp23017_0x03_u.mcp23017_0x03 !=
+                dido_value.mcp23017_0x03_u.mcp23017_0x03)
             {
-                self->dido_structure.tca9535_0x04_u.tca9535_0x04 =
-                    dido_value.tca9535_0x04_u.tca9535_0x04;
-                tca9535_msg.data = (uint8_t *)&(self->dido_structure.tca9535_0x04_u.tca9535_0x04);
-                device_err = device_write(self->do_tca9535_0x04, &tca9535_msg, 0, 1000);
+                self->dido_structure.mcp23017_0x03_u.mcp23017_0x03 =
+                    dido_value.mcp23017_0x03_u.mcp23017_0x03;
+                mcp23017_msg.data = (uint8_t *)&(self->dido_structure.mcp23017_0x03_u.mcp23017_0x03);
+                device_err = device_write(self->do_mcp23017_0x03, &mcp23017_msg, 0, 1000);
                 if (device_err != DEV_EOK)
                 {
-                    LOG_I("write tca9535_0x04 fail!\r\n");
+                    LOG_I("write mcp23017_0x03 fail!\r\n");
                 }
             }
             /*changed DO SoftwareMVTreatmentEn*/
