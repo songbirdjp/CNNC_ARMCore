@@ -31,6 +31,8 @@ ArmCoreV1_QSPI
 │  │  │  ├─ main.c
 │  │  │  └─ main.h
 │  │  ├─ main_app
+│  │  │  ├─ error.c
+│  │  │  ├─ error.h
 │  │  │  ├─ fsm_app.c
 │  │  │  ├─ fsm_app.h
 │  │  │  ├─ gpio_app.c
@@ -140,6 +142,9 @@ ArmCoreV1_QSPI
 │  ├─ gpio_imitate
 │  │  ├─ gpio_imitate.c
 │  │  └─ gpio_imitate.h
+│  ├─ hw_bkp_reg
+│  │  ├─ hw_bkp_reg.c
+│  │  └─ hw_bkp_reg.h
 │  ├─ hw_crc
 │  │  ├─ hw_crc.c
 │  │  └─ hw_crc.h
@@ -149,6 +154,9 @@ ArmCoreV1_QSPI
 │  ├─ hw_semaphore
 │  │  ├─ hw_semaphore.c
 │  │  └─ hw_semaphore.h
+│  ├─ hw_sys_state
+│  │  ├─ hw_sys_state.c
+│  │  └─ hw_sys_state.h
 │  ├─ hw_wwdg
 │  │  ├─ hw_wwdg.c
 │  │  └─ hw_wwdg.h
@@ -324,9 +332,7 @@ ArmCoreV1_QSPI
 │  │  │        │  ├─ stm32h723xx.h
 │  │  │        │  ├─ stm32h7xx.h
 │  │  │        │  └─ system_stm32h7xx.h
-│  │  │        ├─ LICENSE.txt
-│  │  │        └─ Source
-│  │  │           └─ Templates
+│  │  │        └─ LICENSE.txt
 │  │  ├─ Include
 │  │  │  ├─ cmsis_armcc.h
 │  │  │  ├─ cmsis_armclang.h

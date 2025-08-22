@@ -665,16 +665,27 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
                 }
             }
             *cmd->len = 4;
+
+            {
+                struct control_para *obj = control_data_get();
+                osMutexAcquire(obj->mutex, osWaitForever);
+                obj->fsm.state_prev = obj->fsm.state_cur;
+                obj->fsm.state_cur = fsm_state_get();
+                obj->fsm.state_request = cmd->data[2];
+                osMutexRelease(obj->mutex);
+            }
             break;
         case 0x01:
             cmd->data[2] = fsm_state_get();
             *cmd->len = 3;
             break;
         case 0x02:
-            struct control_para *obj = control_data_get();
-            osMutexAcquire(obj->mutex, osWaitForever);
-            obj->radiation_ctrl.radiation_enable = cmd->data[2] & 0x01;
-            osMutexRelease(obj->mutex);
+            {
+                struct control_para *obj = control_data_get();
+                osMutexAcquire(obj->mutex, osWaitForever);
+                obj->radiation_ctrl.radiation_enable = cmd->data[2] & 0x01;
+                osMutexRelease(obj->mutex);
+            }
             break;
         default:
             ret = -1;
@@ -695,17 +706,19 @@ static int8_t dose_state_control_parse(struct dose_object *cmd)
             }
             break;
         case 0x01:
-            struct control_para *obj = control_data_get();
-            osMutexAcquire(obj->mutex, osWaitForever);
-            obj->treatment.status.bits.beam_valid = 0;
-            osMutexRelease(obj->mutex);
-
-            ret = beam_data_cleanup(0);
-            if (ret != 0)
             {
-                LOG_E("beam data clean err: %d\r\n", ret);
+                struct control_para *obj = control_data_get();
+                osMutexAcquire(obj->mutex, osWaitForever);
+                obj->treatment.status.bits.beam_valid = 0;
+                osMutexRelease(obj->mutex);
+
+                ret = beam_data_cleanup(0);
+                if (ret != 0)
+                {
+                    LOG_E("beam data clean err: %d\r\n", ret);
+                }
+                LOG_I("beam data cleanup\r\n");
             }
-            LOG_I("beam data cleanup\r\n");
             break;
         case 0x02:
             ret = dose_value_status_set(DOSE_ACCUMULATED, 0, 0);

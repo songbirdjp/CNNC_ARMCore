@@ -291,15 +291,8 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
             goto error;
         }
         *(uint32_t *)&(self->tx_buffer[FRAME_DATA_OFFSET + data_len]) = crc;
-
         self->recv_response_count = *(uint16_t *)&(self->tx_buffer[FRAME_COUNT_OFFSET]);
-        ret = self->send_func(self->tx_buffer, data_len + FRAME_EXTRA_LEN, timeout, self->send_arg);
-        if (ret != 0)
-        {
-            ret = -7;
-            goto error;
-        }
-
+        
         if (data[0] & 0x01) // send a request frame
         {
             if (self->retry_count > 0)
@@ -308,35 +301,39 @@ int32_t frame_format_send(frame_format_t *self, uint8_t *data, uint16_t data_len
                 status = osTimerStart(self->osTimerId, self->timeout_ms / portTICK_RATE_MS);
                 if (status != osOK)
                 {
-                    ret = -8;
+                    ret = -7;
                     goto error;
                 }
             }
+        }
+        ret = self->send_func(self->tx_buffer, data_len + FRAME_EXTRA_LEN, timeout, self->send_arg);
+        if (ret != 0)
+        {
+            ret = -8;
+            goto error;
+        }
+
+        if (data[0] & 0x01) // send a request frame
+        {
             self->semaphore_lock++;
             status = osSemaphoreAcquire(self->osSemaphoreId, timeout); /* TODO: 此处未接收到反馈包，则一直阻塞等待直至超时，在等待超时的过程中是可以重发的。可以使用队列将返回状态给到应用层 */
             self->semaphore_lock--;
             if (status != osOK)
             {
-                self->send_count++;
                 ret = -9;
                 goto error;
             }
             /* TODO： 收到应答帧后，此处可以返回应答状态给到应用层，在应用层可以选择是否等待该状态 */
-            if (osTimerIsRunning(self->osTimerId) != 0)
+            status = osTimerStop(self->osTimerId);
+            if (status != osOK)
             {
-                status = osTimerStop(self->osTimerId);
-                if (status != osOK)
-                {
-                    self->send_count++;
-                    ret = -10;
-                    goto error;
-                }
+                ret = -10;
+                goto error;
             }
         }
 
-        self->send_count++;
-
     error:
+        self->send_count++;
         osMutexRelease(self->tx_mutex);
     }
     return ret;
@@ -431,7 +428,6 @@ wait_recv:
     memcpy(data, self->rx_buffer + FRAME_DATA_OFFSET, recv_len - FRAME_EXTRA_LEN);
 
 #if 0
-#include "ulog.h"
     LOG_I("recv: ");
     for (int i = 0; i < recv_len; i++)
     {

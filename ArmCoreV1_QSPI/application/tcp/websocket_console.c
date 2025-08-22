@@ -19,9 +19,11 @@ int8_t websocket_shell_cmd_parse(uint8_t sn, uint8_t *buf, uint16_t len)
     {
         websocket_console_sn = sn;
         shell_cmd_parse_entry(buf + strlen(header), len - strlen(header));
+
+        return 0;
     }
 
-    return 0;
+    return -1;
 }
 
 static int8_t websocket_log_init(void)

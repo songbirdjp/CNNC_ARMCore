@@ -273,7 +273,7 @@ void HAL_RAMECC_DetectErrorCallback(RAMECC_HandleTypeDef *hramecc)
         }
 
         uint32_t err_addr = hw_ram_ecc_failing_address_abs_get(ram_ecc);
-        printf("err addr: %#.8x\r\n", err_addr);
+        printf("ram ecc err addr: %#.8x\r\n", err_addr);
 
         if (err_code & HAL_RAMECC_SINGLEERROR_DETECTED != 0)
         {

@@ -32,6 +32,8 @@ struct ltc2632_object
 
     uint16_t out_a_value;
     uint16_t out_b_value;
+    uint8_t a_servo_state;  /* 0: servo ok, 1: servo fail */
+    uint8_t b_servo_state;
 };
 
 struct ltc2632_object *ltc2632_object_data_get(void);

@@ -1138,13 +1138,13 @@ static int8_t time_delay_entry(void *argument)
                         {
                             LOG_E("dose interpolation check err: %d\r\n", ret);
                         }
-#ifdef RADIATION_SIMULATION_MODE
-                        enum deliver_type deliver_type = plan_data_deliver_type_get();
-                        if (deliver_type == DELIVER_TYPE_SWIMRT || deliver_type == DELIVER_TYPE_CRT)
-                        {
-                            type = TIM_DELAY_PULSE_INTERVAL;
-                        }
-#endif
+// #ifdef RADIATION_SIMULATION_MODE
+//                         enum deliver_type deliver_type = plan_data_deliver_type_get();
+//                         if (deliver_type == DELIVER_TYPE_SWIMRT || deliver_type == DELIVER_TYPE_CRT)
+//                         {
+//                             type = TIM_DELAY_PULSE_INTERVAL;
+//                         }
+// #endif
                     }
                 }
                 // type == 1 ? LOG_I("next: trigger a new pulse\r\n") : LOG_I("next: trigger no pulse\r\n");
@@ -1322,21 +1322,22 @@ static int8_t lptim3_delay_entry(void *argument)
 #define ADCS7476_SERVO_VALUE    50
 #define ADCS7476_VALUE_ACCUMULATE_LIMIT 100
 #define ADCS7476_VALUE_MAX_LIMIT    4096
-static uint16_t adcs7476_value_check(uint16_t *buf, uint16_t len, uint64_t *pulse_val, uint32_t *servo_val)
+static uint16_t adcs7476_value_check(uint16_t *buf, uint16_t len, uint32_t *pulse_val, uint32_t *servo_val)
 {
     uint16_t valid_cnt = 0;
     int8_t ret = 0;
 
     for (uint16_t i = 0; i < len; i++)
     {
+        if(buf[i] >= ADCS7476_VALUE_MAX_LIMIT)
+        {
+            LOG_E("adcs7476 value exceed max limit: %d (max: %d)\r\n", buf[i], ADCS7476_VALUE_MAX_LIMIT);
+            continue;
+        }
+
         if (buf[i] >= ADCS7476_VALUE_ACCUMULATE_LIMIT)
         {
             *pulse_val += buf[i] - ADCS7476_SERVO_VALUE;
-
-            if(buf[i] >= ADCS7476_VALUE_MAX_LIMIT)
-            {
-                LOG_E("adcs7476 value err: %d\r\n", buf[i]);
-            }
 
 // #ifdef LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US
 //             ret = lptim3_delay_start(LPTIM3_DELAY_ONE_PULSE_TIMEOUT_US, ONE_PULSE_TIMEOUT_US);
@@ -1415,9 +1416,52 @@ static int8_t adcs7476_value_restore(void)
     return 0;
 }
 
+static int8_t adcs7476_servo_state_set(uint8_t channel, uint8_t value)
+{
+    struct ltc2632_object *ltc2632 = ltc2632_object_data_get();
+
+    switch (channel)
+    {
+    case LTC2632_CHANNEL_OUTA:
+        ltc2632->a_servo_state = value;
+        break;
+    case LTC2632_CHANNEL_OUTB:
+        ltc2632->b_servo_state = value;
+        break;
+    case LTC2632_CHANNEL_ALL:
+        break;
+    default:
+        LOG_E("channel invalid: %d\r\n", channel);
+        return -1;
+        break;
+    }
+
+    return 0;
+}
+static int8_t adcs7476_servo_state_get(uint8_t channel)
+{
+    struct ltc2632_object *ltc2632 = ltc2632_object_data_get();
+
+    switch (channel)
+    {
+    case LTC2632_CHANNEL_OUTA:
+        return ltc2632->a_servo_state;
+    case LTC2632_CHANNEL_OUTB:
+        return ltc2632->b_servo_state;
+    case LTC2632_CHANNEL_ALL:
+        return ltc2632->a_servo_state | ltc2632->b_servo_state << 1;
+    default:
+        LOG_E("channel invalid: %d\r\n", channel);
+        return -1;
+        break;
+    }
+
+    return 0;
+}
+
 static int8_t adcs7476_value_servo(uint32_t value, uint16_t len, uint8_t channel)
 {
-    int8_t ret = 0;
+    int8_t ret = 0, flag = 0;
     uint16_t avg = value / len;
     uint16_t pre_val = 0;
     struct ltc2632_object *ltc2632 = ltc2632_object_data_get();
@@ -1459,7 +1503,9 @@ static int8_t adcs7476_value_servo(uint32_t value, uint16_t len, uint8_t channel
         }
     }
 
-    return 0;
+    flag = abs(pre_val - ltc2632->value.bits.data) > 2 ? 1 : 0;
+
+    return adcs7476_servo_state_set(channel, flag);
 }
 
 static int8_t adcs7476_value_dose(uint32_t value, uint32_t value_1, uint16_t pulse_cnt)
@@ -1479,7 +1525,7 @@ static int8_t adcs7476_value_dose(uint32_t value, uint32_t value_1, uint16_t pul
     if (value_diff > value_max * percentage / 100)
     {
         // LOG_I("dose symmetry fault, value_diff: %d, value_max: %d, percentage: %d\r\n", value_diff, value_max, percentage);
-        // LOG_I("dose symmetry fault, ch1: %d, ch2: %d, percentage: %d\r\n", value, value_1, percentage);
+        // LOG_E("dose symmetry fault, ch1: %d, ch2: %d, percentage: %d\r\n", value, value_1, percentage);
         int8_t ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_SYMMETRY_FAULT, 1);
         if (ret != 0)
         {
@@ -1707,12 +1753,6 @@ static int8_t dose_data_upload_once(enum fsm_state state)
 
     return 0;
 }
-#include "shell.h"
-static int8_t dose_upload_test(uint8_t argc, char **argv)
-{
-    return dose_data_upload(atoi(argv[1]));
-}
-MSH_CMD_EXPORT_ALIAS(dose_upload_test, dose_upload_test, dose upload test);
 
 static int8_t dose_accumulated_check(uint16_t pulse_cnt, uint16_t len)
 {
@@ -1837,7 +1877,16 @@ static int8_t dose_accumulated_check(uint16_t pulse_cnt, uint16_t len)
         }
         else
         {
-            ret = (board_id == DOSE_BOARD_NO_TRIGGER_OUT) ? LOG_E("detected dose reached upper limit\r\n"), LOG_I("dose_mode: %llu\r\n", radiation_data_value_get(DOSE_GENERATION_MODE)), fsm_state_switch(FSM_STATE_TERMINATE) : fsm_state_switch(FSM_STATE_COMPLETE);
+            if (board_id == DOSE_BOARD_NO_TRIGGER_OUT)
+            {
+                // LOG_E("detected dose reached upper limit\r\n");
+                ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_REACH_UPPER_LIMIT, 1);
+                ret |= fsm_state_switch(FSM_STATE_TERMINATE);
+            }
+            else
+            {
+                ret = fsm_state_switch(FSM_STATE_COMPLETE);
+            }
         }
     }
 
@@ -1871,6 +1920,7 @@ static int8_t control_point_limit_check(void)
         if (dose_accumulated_cur - dose_prev_radiation_index * (1 + (float)dose_high_percentage / 100.0f) > 1e-6)
         {
             /* dose high limit reached */
+            // LOG_E("dose accumulated reached upper limit, dose_accumulated_cur: %f, dose_prev_radiation_index: %f\r\n", dose_accumulated_cur, dose_prev_radiation_index);
             ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_CP_HIGH, 1);
             if (ret != 0)
             {
@@ -1881,6 +1931,7 @@ static int8_t control_point_limit_check(void)
         else if (dose_accumulated_cur - dose_prev_radiation_index * (1 - (float)dose_low_percentage / 100.0f) < -1e-6)
         {
             /* dose low limit reached */
+            // LOG_E("dose accumulated reached lower limit, dose_accumulated_cur: %f, dose_prev_radiation_index: %f\r\n", dose_accumulated_cur, dose_prev_radiation_index);
             ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_CP_LOW, 1);
             if (ret != 0)
             {
@@ -2109,15 +2160,17 @@ static int8_t dose_rate_calculate_and_check(uint64_t *dose_accumulated, uint64_t
         }
     }
 #else
-    dose_cur = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / factor_0 + (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / factor_1;
-    dose_rate_cur = dose_rate_average_calculate(dose_cur, *time_elapse_ms);
+    // dose_cur = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / factor_0 + (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / factor_1;
+    // dose_rate_cur = dose_rate_average_calculate(dose_cur, *time_elapse_ms);
 #endif
 
-    ret = dose_value_status_set(DOSE_RATE_CURRENT, dose_rate_cur * 100.0f, 0);
-    if (ret != 0)
-    {
-        LOG_E("dose rate set err: %d\r\n", ret);
-    }
+    // ret = dose_value_status_set(DOSE_RATE_CURRENT, dose_rate_cur * 100.0f, 0);
+    // if (ret != 0)
+    // {
+    //     LOG_E("dose rate set err: %d\r\n", ret);
+    // }
+
+    dose_rate_cur = dose_value_status_get(DOSE_RATE_CURRENT, DOSE_CHANNEL_NONE) / 100.0f;
 
     /* 2. check dose rate limit */
     uint16_t dose_rate_limit = radiation_data_value_get(DOSE_RATE_LIMIT);
@@ -2126,7 +2179,7 @@ static int8_t dose_rate_calculate_and_check(uint64_t *dose_accumulated, uint64_t
 
     if (dose_rate_cur - dose_rate_radiation_index * (1 - (float)dose_rate_low_percentage / 100.0f) < -1e-6)
     {
-        // LOG_I("dose_rate_low: %f  %f\r\n", dose_rate_cur, dose_rate_radiation_index);
+        // LOG_E("dose rate low, current: %f  target: %f\r\n", dose_rate_cur, dose_rate_radiation_index);
         ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_RATE_LOW, 1);
         if (ret != 0)
         {
@@ -2136,7 +2189,7 @@ static int8_t dose_rate_calculate_and_check(uint64_t *dose_accumulated, uint64_t
     }
     else if (dose_rate_cur - dose_rate_radiation_index * (1 + (float)dose_rate_high_percentage / 100.0f) > 1e-6)
     {
-        // LOG_I("dose_rate_high: %f  %f\r\n", dose_rate_cur, dose_rate_radiation_index);
+        // LOG_E("dose rate high, current: %f  target: %f\r\n", dose_rate_cur, dose_rate_radiation_index);
         ret = interlock_fault_info_set(INTERLOCK_FAULT_DOSE_RATE_HIGH, 1);
         if (ret != 0)
         {
@@ -2177,7 +2230,15 @@ static int8_t dose_interpolation_check(uint8_t *time_delay_type, uint32_t *inter
 
         if (dose_accumulated_cur < dose_interpolated)
         {
-            *time_delay_type = TIM_DELAY_PULSE_INTERVAL;
+            if (adcs7476_servo_state_get(LTC2632_CHANNEL_ALL) == 0)
+            {
+                *time_delay_type = TIM_DELAY_PULSE_INTERVAL;
+            }
+            else
+            {
+                *time_delay_type = TIM_DELAY_NO_PULSE_INTERVAL;
+                LOG_E("[work]: wait for adcs7476 servo ok: %d\r\n", adcs7476_servo_state_get(LTC2632_CHANNEL_ALL));
+            }
         }
         else
         {
@@ -2338,6 +2399,12 @@ static int8_t detect_whether_one_pulse_repeat(void)
         /* delay to prepare a new pulse */
         if (trigger_out_info_get(TRIGGER_OUT_FLAG) == 0)
         {
+            /* 0. check adcs7476 servo state */
+            if (adcs7476_servo_state_get(LTC2632_CHANNEL_ALL) != 0)
+            {
+                return 0;
+            }
+
             /* 1. check beam deliver type */
             switch (deliver_type)
             {
@@ -2697,7 +2764,7 @@ int8_t adcs7476_value_process(uint16_t *buf, uint16_t *buf_1, uint16_t len)
 
 #if 0
     static uint32_t cnt = 0;
-    if (cnt++ % 10000 == 0)
+    if (cnt++ % 1000 == 0)
     {
         // LOG_I("buf: %d  buf_1: %d\r\n", buf[0], buf_1[0]);
         LOG_I("one_pulse_cnt: %d\r\n", one_pulse_cnt);
@@ -2821,7 +2888,7 @@ static int8_t dose_rate_calculate(void *argument)
         }
 
         /* 3. calculate dose rate */
-        if (fsm_state_get() == FSM_STATE_WORK && radiation_data_value_get(PULSE_GENERATION_MODE) == 0)    /* PRF */
+        if (fsm_state_get() == FSM_STATE_WORK/*  && radiation_data_value_get(PULSE_GENERATION_MODE) == 0 */)    /* PRF */
         {
             factor = radiation_data_value_get(DOSE_CALIBRATION_FACTOR);
             dose_cur = (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_0) / (factor & 0xffffffff) + (double)dose_value_status_get(DOSE_ACCUMULATED, DOSE_CHANNEL_1) / (factor >> 32);
@@ -2884,11 +2951,18 @@ static int8_t interlock_fault_callback(uint32_t interlock)
     case FSM_STATE_PRELIMINARY_BEGIN:
     case FSM_STATE_PRELIMINARY:
     case FSM_STATE_PREPARE:
+        break;
     case FSM_STATE_READY:
+        ret = interlock_status_value_locked_set(interlock);
+        // ret |= fsm_state_switch(FSM_STATE_INTERRUPT);
+        LOG_I("set fsm state to interrupt: %#.8x\r\n", interlock);
+        break;
     case FSM_STATE_WORK:
+        ret = interlock_status_value_locked_set(interlock);
+        // ret |= fsm_state_switch(FSM_STATE_TERMINATE);
+        LOG_I("set fsm state to terminate: %#.8x\r\n", interlock);
+        break;
     case FSM_STATE_INTERRUPT:
-        // ret = fsm_state_switch(FSM_STATE_TERMINATE);
-        ret |= interlock_status_value_locked_set(interlock);
         break;
     case FSM_STATE_COMPLETE:
         break;
@@ -3267,16 +3341,15 @@ static int8_t dose_interpolation_data_get(uint8_t argc, char **argv)
     LOG_I("beam total cp: %d\r\n", (uint16_t)beam_data_value_get(0, BEAM_TOTAL_CP, 0));
     LOG_I("beam total ri: %d\r\n", (uint16_t)beam_data_value_get(0, BEAM_TOTAL_RI, 0));
 
-    for (uint8_t i = 0; i < beam_data_value_get(0, BEAM_TOTAL_CP, 0); i++)
+    for (uint16_t i = 1; i <= beam_data_value_get(0, BEAM_TOTAL_CP, 0); i++)
     {
         LOG_I("beam cp[%d]: %d\r\n", i, (uint16_t)beam_data_value_get(0, BEAM_CP_RI_MAP, i));
     }
 
-    for (uint8_t i = 0; i < beam_data_value_get(0, BEAM_TOTAL_RI, 0); i++)
+    for (uint16_t i = 1; i <= beam_data_value_get(0, BEAM_TOTAL_RI, 0); i++)
     {
-        LOG_I("beam ri[%d] dose rate: %f\r\n", i, beam_data_value_get(0, BEAM_RI_DOSE_RATE, i));
-        LOG_I("beam ri[%d] dose cumulative: %f\r\n", i, beam_data_value_get(0, BEAM_RI_CUMULATIVE, i));
-        LOG_I("beam ri[%d] time expected: %f\r\n", i, beam_data_value_get(0, BEAM_RI_TIME_EXPECTED, i));
+        LOG_I("ri[%d]: dose cumulative: %f, dose rate: %f, time expected: %f\r\n", 
+                i, beam_data_value_get(0, BEAM_RI_CUMULATIVE, i), beam_data_value_get(0, BEAM_RI_DOSE_RATE, i), beam_data_value_get(0, BEAM_RI_TIME_EXPECTED, i));
     }
 
     return 0;
@@ -3317,10 +3390,20 @@ static int8_t dose_interpolation_index_data_get(uint8_t argc, char **argv)
 }
 MSH_CMD_EXPORT_ALIAS(dose_interpolation_index_data_get, dose_interpolation_index_data_get, dose interpolation index data get);
 
+static int8_t dose_radiation_enable_set(uint8_t argc, char **argv)
+{
+    return radiation_data_value_set(RADIATION_ENABLE, atoi(argv[1]));
+}
+MSH_CMD_EXPORT_ALIAS(dose_radiation_enable_set, dose_radiation_enable_set, dose radiation enable set);
 
 static int8_t fsm_state_current_get(uint8_t argc, char **argv)
 {
-    LOG_I("fsm state current: %d\r\n", fsm_state_get());
+    struct radiation_index_data *obj = radiation_data_get();
+    osMutexAcquire(obj->control_data->mutex, osWaitForever);
+    LOG_I("fsm state request: %d\r\n", obj->control_data->fsm.state_request);
+    LOG_I("fsm state cur: %d, realtime state: %d\r\n", obj->control_data->fsm.state_cur, fsm_state_get());
+    LOG_I("fsm state prev: %d\r\n", obj->control_data->fsm.state_prev);
+    osMutexRelease(obj->control_data->mutex);
 
     return 0;
 }

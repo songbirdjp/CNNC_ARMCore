@@ -125,6 +125,13 @@ struct radiation_point_para
 
 };
 
+struct fsm_para
+{
+    uint8_t state_cur;
+    uint8_t state_prev;
+    uint8_t state_request;
+};
+
 struct control_para
 {
     enum dose_board board_id;
@@ -133,6 +140,7 @@ struct control_para
     struct interlock_para interlock;
     struct radiation_control_para radiation_ctrl;
     struct radiation_point_para radiation;
+    struct fsm_para fsm;
 
     osMutexId_t mutex;
 };

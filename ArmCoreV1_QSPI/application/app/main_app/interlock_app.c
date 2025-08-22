@@ -6,6 +6,7 @@
 #include "gpio_port.h"
 #include "os_tool.h"
 #include "dose_uart.h"
+#include "ltc2632.h"
 
 struct fault_info
 {
@@ -20,6 +21,9 @@ struct fault_info
     uint16_t dose_cp_high_cnt;
     uint16_t dose_symmetry_fault_cnt;
     uint32_t dose_dummy_end_time;
+    uint16_t adcs7476_1_servo_cnt;
+    uint16_t adcs7476_2_servo_cnt;
+    uint16_t dose_reach_upper_limit_cnt;
 
 #define COM_TIMEOUT_THRESHOLD_CNT   10
 #define ADCS7476_1_OFFSET_LIMIT_THRESHOLD_CNT   1000
@@ -28,6 +32,7 @@ struct fault_info
 #define DOSE_CP_THRESHOLD_CNT   1
 #define DOSE_SYMMETRY_FAULT_THRESHOLD_CNT   1000
 #define DOSE_DUMMY_TIMEOUT_THRESHOLD_MS 1000
+#define ADCS7476_SERVO_THRESHOLD_CNT    10
 };
 
 struct interlock_status
@@ -52,12 +57,16 @@ struct interlock_status
             uint32_t dose_cp_high : 1;
             uint32_t dose_symmetry_fault : 1;
             uint32_t dose_dummy_timeout : 1;
-            uint32_t reserved : 17;
+            uint32_t adcs7476_1_servo : 1;
+            uint32_t adcs7476_2_servo : 1;
+            uint32_t dose_reach_upper_limit : 1;
+            uint32_t reserved : 14;
         } bits;
     }value;
 
     struct fault_info fault_info;
 
+    uint8_t value_locked_flag;    /* record interlock flag when fsm terminate */
     uint32_t value_locked;  /* record interlock status when fsm entry terminate */
 
     osMutexId_t mutex;
@@ -67,7 +76,7 @@ static struct control_para *control_data = NULL;
 
 static struct interlock_status interlock_stat = {0};
 
-static struct interlock_status *interlock_stat_get(void)
+static struct interlock_status *interlock_obj_get(void)
 {
     return &interlock_stat;
 }
@@ -75,14 +84,18 @@ static struct interlock_status *interlock_stat_get(void)
 int8_t interlock_status_value_locked_set(uint32_t value)
 {
     osStatus_t stat = osOK;
-    struct interlock_status *obj = interlock_stat_get();
+    struct interlock_status *obj = interlock_obj_get();
     stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
     if (stat != osOK)
     {
         os_tool_mutex_holder_get(obj->mutex);
     }
 
-    obj->value_locked = value;
+    if (obj->value_locked_flag == 0)
+    {
+        obj->value_locked_flag = 1;
+        obj->value_locked = value;
+    }
 
     osMutexRelease(obj->mutex);
 
@@ -92,14 +105,14 @@ int8_t interlock_status_value_locked_set(uint32_t value)
 uint32_t interlock_status_get(void)
 {
     osStatus_t stat = osOK;
-    struct interlock_status *obj = interlock_stat_get();
+    struct interlock_status *obj = interlock_obj_get();
 
     stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
     if (stat != osOK)
     {
         os_tool_mutex_holder_get(obj->mutex);
     }
-    uint32_t value = obj->value_locked == 0 ? obj->value.bytes : obj->value_locked;
+    uint32_t value = obj->value_locked_flag == 0 ? obj->value.bytes : obj->value_locked;
     osMutexRelease(obj->mutex);
 
     return value;
@@ -115,7 +128,7 @@ int8_t interlock_status_cleanup(void)
     }
 
     osStatus_t stat = osOK;
-    struct interlock_status *obj = interlock_stat_get();
+    struct interlock_status *obj = interlock_obj_get();
 
     stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
     if (stat != osOK)
@@ -123,8 +136,9 @@ int8_t interlock_status_cleanup(void)
         os_tool_mutex_holder_get(obj->mutex);
     }
     uint8_t wdt_fault = obj->value.bits.wdt_fault;
-    obj->value.bytes = 0;
+    obj->value_locked_flag = 0;
     obj->value_locked = 0;
+    obj->value.bytes = interlock_status_get();
     osMutexRelease(obj->mutex);
 
     if (wdt_fault)
@@ -140,7 +154,7 @@ int8_t interlock_fault_info_set(enum interlock_fault_info type, uint32_t value)
 {
     int8_t ret = 0;
     osStatus_t stat = osOK;
-    struct interlock_status *obj = interlock_stat_get();
+    struct interlock_status *obj = interlock_obj_get();
     stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
     if (stat != osOK)
     {
@@ -182,7 +196,10 @@ int8_t interlock_fault_info_set(enum interlock_fault_info type, uint32_t value)
         info->dose_symmetry_fault_cnt += value;
         break;
     case INTERLOCK_FAULT_DOSE_DUMMY_END_TIME:
-         info->dose_dummy_end_time = value;
+        info->dose_dummy_end_time = value;
+        break;
+    case INTERLOCK_FAULT_DOSE_REACH_UPPER_LIMIT:
+        info->dose_reach_upper_limit_cnt = value;
         break;
     default:
         ret = -1;
@@ -198,7 +215,7 @@ int8_t interlock_fault_info_set(enum interlock_fault_info type, uint32_t value)
 int8_t interlock_fault_info_clear(void)
 {
     osStatus_t stat = osOK;
-    struct interlock_status *obj = interlock_stat_get();
+    struct interlock_status *obj = interlock_obj_get();
     stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
     if (stat != osOK)
     {
@@ -238,7 +255,7 @@ static int8_t interlock_status_update(void)
 {
     int8_t ret = 0;
     osStatus_t stat = osOK;
-    struct interlock_status *obj = interlock_stat_get();
+    struct interlock_status *obj = interlock_obj_get();
 
     stat = osMutexAcquire(obj->mutex, MUTEX_TIMEOUT_MS);
     if (stat != osOK)
@@ -290,7 +307,7 @@ static int8_t interlock_status_update(void)
     if (fsm_state_get() == FSM_STATE_PRELIMINARY_BEGIN)
     {
         uint32_t time_now = osKernelGetTickCount() * 1000 / osKernelGetTickFreq();
-        uint32_t timestamp_dummy_end = interlock_stat_get()->fault_info.dose_dummy_end_time;
+        uint32_t timestamp_dummy_end = interlock_obj_get()->fault_info.dose_dummy_end_time;
 
         obj->value.bits.dose_dummy_timeout = time_now > timestamp_dummy_end + DOSE_DUMMY_TIMEOUT_THRESHOLD_MS ? 1 : 0;
 
@@ -299,6 +316,16 @@ static int8_t interlock_status_update(void)
             LOG_E("dummy timeout\r\n");
         }
     }
+
+    /* 10. check adcs7476 servo status */
+    struct ltc2632_object *ltc2632_obj = ltc2632_object_data_get();
+    obj->fault_info.adcs7476_1_servo_cnt += ltc2632_obj->a_servo_state;
+    obj->fault_info.adcs7476_2_servo_cnt += ltc2632_obj->b_servo_state;
+    obj->value.bits.adcs7476_1_servo = obj->fault_info.adcs7476_1_servo_cnt < ADCS7476_SERVO_THRESHOLD_CNT ? 0 : 1;
+    obj->value.bits.adcs7476_2_servo = obj->fault_info.adcs7476_2_servo_cnt < ADCS7476_SERVO_THRESHOLD_CNT ? 0 : 1;
+
+    /* 11. check dose reach upper limit status */
+    obj->value.bits.dose_reach_upper_limit = obj->fault_info.dose_reach_upper_limit_cnt > 0 ? 1 : 0;
 
     osMutexRelease(obj->mutex);
 
@@ -343,8 +370,8 @@ static int8_t interlock_app_init(void)
     .name = "interlock_mutex",
     .attr_bits = osMutexRecursive | osMutexPrioInherit
     };
-    interlock_stat_get()->mutex = osMutexNew(&mutex_attr);
-    if (interlock_stat_get()->mutex == NULL)
+    interlock_obj_get()->mutex = osMutexNew(&mutex_attr);
+    if (interlock_obj_get()->mutex == NULL)
     {
         LOG_E("mutex create failed\r\n");
         return -2;
@@ -376,13 +403,41 @@ static int8_t interlock_status_test(uint8_t argc, char **argv)
         interlock_status_cleanup();
         break;
     case 1:
-        LOG_I("interlock status: %#.8x\r\n", interlock_status_get());
+        {
+            struct interlock_status *stat = interlock_obj_get();
+            osMutexAcquire(stat->mutex, MUTEX_TIMEOUT_MS);
+            LOG_I("---------------------- realtime status --------------------------\r\n");
+            LOG_I("realtime value: %#.8x\r\n", stat->value.bytes);
+            LOG_I("power fault: %d\r\n", stat->value.bits.board_power_fault);
+            LOG_I("hv limit: %d\r\n", stat->value.bits.hv_limit);
+            LOG_I("comm timeout: %d\r\n", stat->value.bits.comm_timeout);
+            LOG_I("wdt fault: %d\r\n", stat->value.bits.wdt_fault);
+            LOG_I("adcs7476_1_offset_limit_high: %d\r\n", stat->value.bits.adcs7476_1_offset_limit_high);
+            LOG_I("adcs7476_1_offset_limit_low: %d\r\n", stat->value.bits.adcs7476_1_offset_limit_low);
+            LOG_I("adcs7476_2_offset_limit_high: %d\r\n", stat->value.bits.adcs7476_2_offset_limit_high);
+            LOG_I("adcs7476_2_offset_limit_low: %d\r\n", stat->value.bits.adcs7476_2_offset_limit_low);
+            LOG_I("illegal_write: %d\r\n", stat->value.bits.illegal_write);
+            LOG_I("dose_rate_low: %d\r\n", stat->value.bits.dose_rate_low);
+            LOG_I("dose_rate_high: %d\r\n", stat->value.bits.dose_rate_high);
+            LOG_I("dose_cp_low: %d\r\n", stat->value.bits.dose_cp_low);
+            LOG_I("dose_cp_high: %d\r\n", stat->value.bits.dose_cp_high);
+            LOG_I("dose_symmetry_fault: %d\r\n", stat->value.bits.dose_symmetry_fault);
+            LOG_I("dose_dummy_timeout: %d\r\n", stat->value.bits.dose_dummy_timeout);
+            LOG_I("adcs7476_1_servo: %d\r\n", stat->value.bits.adcs7476_1_servo);
+            LOG_I("adcs7476_2_servo: %d\r\n", stat->value.bits.adcs7476_2_servo);
+            LOG_I("dose_reach_upper_limit: %d\r\n", stat->value.bits.dose_reach_upper_limit);
+            LOG_I("---------------------- locked status --------------------------\r\n");
+            LOG_I("value_locked_flag: %d\r\n", stat->value_locked_flag);
+            LOG_I("value_locked: %#.8x\r\n", stat->value_locked);
+            osMutexRelease(stat->mutex);
+        }
         break;
     case 2:
         {
-            struct interlock_status *stat = interlock_stat_get();
+            struct interlock_status *stat = interlock_obj_get();
             struct fault_info *info = &stat->fault_info;
             osMutexAcquire(stat->mutex, MUTEX_TIMEOUT_MS);
+            LOG_I("---------------------- fault info --------------------------\r\n");
             LOG_I("com_timeout_cnt: %d\r\n", info->com_timeout_cnt);
             LOG_I("adcs7476_1_offset_limit_low_cnt: %d\r\n", info->adcs7476_1_offset_limit_low_cnt);
             LOG_I("adcs7476_1_offset_limit_high_cnt: %d\r\n", info->adcs7476_1_offset_limit_high_cnt);
@@ -394,6 +449,9 @@ static int8_t interlock_status_test(uint8_t argc, char **argv)
             LOG_I("dose_cp_high_cnt: %d\r\n", info->dose_cp_high_cnt);
             LOG_I("dose_symmetry_fault_cnt: %d\r\n", info->dose_symmetry_fault_cnt);
             LOG_I("dose_dummy_end_time: %d\r\n", info->dose_dummy_end_time);
+            LOG_I("adcs7476_1_servo_cnt: %d\r\n", info->adcs7476_1_servo_cnt);
+            LOG_I("adcs7476_2_servo_cnt: %d\r\n", info->adcs7476_2_servo_cnt);
+            LOG_I("dose_reach_upper_limit_cnt: %d\r\n", info->dose_reach_upper_limit_cnt);
             osMutexRelease(stat->mutex);
         }
         break;
