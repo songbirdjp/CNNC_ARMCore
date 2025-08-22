@@ -27,8 +27,8 @@ struct drv_i2c
 
     int8_t (*open)(struct drv_i2c *i2c);
     int8_t (*close)(struct drv_i2c *i2c);
-    int8_t (*write)(struct drv_i2c *i2c, uint16_t addr, uint8_t *buf, uint16_t size, uint32_t timeout);
-    int8_t (*read)(struct drv_i2c *i2c, uint16_t addr, uint8_t *buf, uint16_t size, uint32_t timeout);
+    int8_t (*write)(struct drv_i2c *i2c, uint16_t addr, uint16_t reg_addr, uint8_t *buf, uint16_t size, uint32_t timeout);
+    int8_t (*read)(struct drv_i2c *i2c, uint16_t addr, uint16_t reg_addr, uint8_t *buf, uint16_t size, uint32_t timeout);
     int8_t (*ioctl)(struct drv_i2c *i2c, uint8_t cmd, void *arg);
 };
 

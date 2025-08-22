@@ -21,18 +21,21 @@ struct board_status
             uint32_t hv_limit : 1;
             uint32_t comm_timeout : 1;
             uint32_t wdt_fault : 1;
-            uint32_t adcs7476_1_limit_high : 1;
-            uint32_t adcs7476_1_limit_low : 1;
-            uint32_t adcs7476_2_limit_high : 1;
-            uint32_t adcs7476_2_limit_low : 1;
+            uint32_t adcs7476_1_offset_limit_high : 1;
+            uint32_t adcs7476_1_offset_limit_low : 1;
+            uint32_t adcs7476_2_offset_limit_high :1;
+            uint32_t adcs7476_2_offset_limit_low : 1;
             uint32_t illegal_write : 1;
             uint32_t dose_rate_low : 1;
             uint32_t dose_rate_high : 1;
-            uint32_t dose_total_low : 1;
-            uint32_t dose_total_high : 1;
+            uint32_t dose_cp_low : 1;
+            uint32_t dose_cp_high : 1;
             uint32_t dose_symmetry_fault : 1;
             uint32_t dose_dummy_timeout : 1;
-            uint32_t reserved : 17;
+            uint32_t adcs7476_1_servo : 1;
+            uint32_t adcs7476_2_servo : 1;
+            uint32_t dose_reach_upper_limit : 1;
+            uint32_t reserved : 14;
         } bits;
     }interlock;
 
@@ -519,12 +522,12 @@ static int8_t dose_interlock_parse(enum uart_id id, struct cmd_object *cmd)
             }
             break;
         case 0x01:
-            uint32_t unready_override = cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
-            LOG_I("[%d]: dose unready override set: %#.8x\r\n", id, unready_override);
-            ret = dose_para_check(DOSE_PARA_UNREADY_OVERRIDE, id, 0, &unready_override);
+            uint32_t not_ready_override = cmd->data[5] << 24 | cmd->data[4] << 16 | cmd->data[3] << 8 | cmd->data[2];
+            LOG_I("[%d]: dose not ready override set: %#.8x\r\n", id, not_ready_override);
+            ret = dose_para_check(DOSE_PARA_NOT_READY_OVERRIDE, id, 0, &not_ready_override);
             if (ret != 0)
             {
-                LOG_E("[%d]: dose unready override check err: %d\r\n", id, ret);
+                LOG_E("[%d]: dose not ready override check err: %d\r\n", id, ret);
             }
             break;
         case 0x02:

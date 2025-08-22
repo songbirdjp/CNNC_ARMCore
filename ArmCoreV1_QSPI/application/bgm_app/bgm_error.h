@@ -9,12 +9,15 @@ extern "C" {
 
 enum bgm_error_type
 {
-    BGM_ERROR_PLAN_DATA = 0,
+    BGM_ERROR_AFC_LINK = 0,
+    BGM_ERROR_DOSE1_LINK,
+    BGM_ERROR_DOSE2_LINK,
+    BGM_ERROR_PLAN_DATA,
     BGM_ERROR_ALL,
 };
 
 int8_t bgm_error_info_clear(void);
-int32_t bgm_error_info_get(enum bgm_error_type type);
+uint32_t bgm_error_info_get(enum bgm_error_type type);
 int8_t bgm_error_info_set(enum bgm_error_type type, uint8_t value);
 
 

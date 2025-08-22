@@ -8,9 +8,10 @@
 extern "C" {
 #endif
 
-int8_t i2c_bus_init(DEVICE_I2C *i2c_bus, uint8_t *bus_name);
-int8_t i2c_device_write(DEVICE_I2C *i2c_bus, uint16_t dev_addr, uint8_t *data, uint16_t len);
-int8_t i2c_device_read(DEVICE_I2C *i2c_bus, uint16_t dev_addr, uint8_t *data, uint16_t len);
+#define I2C4_BUS_NAME_DEFAULT    "i2c4"
+
+int8_t i2c_device_write(uint8_t *bus_name, uint16_t dev_addr, uint16_t reg_addr, uint8_t *data, uint16_t len);
+int8_t i2c_device_read(uint8_t *bus_name, uint16_t dev_addr, uint16_t reg_addr, uint8_t *data, uint16_t len);
 
 #ifdef __cplusplus
 }

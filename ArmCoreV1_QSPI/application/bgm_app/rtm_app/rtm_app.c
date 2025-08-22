@@ -7,6 +7,7 @@
 #include "bgm_def.h"
 #include "dose_error.h"
 #include "bgm_error.h"
+#include "interlock_app.h"
 
 struct uart_cmd_set_get
 {
@@ -140,8 +141,9 @@ static int8_t rtm_cmd_parse(enum uart_id id, struct cmd_object *cmd)
             {
                 ret = dose_fault_clear(BGM_UART_DOSE1);
                 ret |= dose_fault_clear(BGM_UART_DOSE2);
-                ret |= dose_err_info_clear();
-                ret |= bgm_error_info_clear();
+                // ret |= dose_err_info_clear();
+                // ret |= bgm_error_info_clear();
+                ret |= interlock_fault_clear();
             }
             break;
         case UART_DATA_CMD_RECV_SYSTEM_FSM_STATE:
@@ -152,7 +154,7 @@ static int8_t rtm_cmd_parse(enum uart_id id, struct cmd_object *cmd)
                 struct bgm_data_info *obj = bgm_data_info_get();
                 osMutexAcquire(obj->mutex, osWaitForever);
                 obj->interlock_override = cmd->data[3] | cmd->data[4] << 8 | cmd->data[5] << 16 | cmd->data[6] << 24;
-                obj->unready_override = cmd->data[7] | cmd->data[8] << 8 | cmd->data[9] << 16 | cmd->data[10] << 24;
+                obj->not_ready_override = cmd->data[7] | cmd->data[8] << 8 | cmd->data[9] << 16 | cmd->data[10] << 24;
                 osMutexRelease(obj->mutex);
             }
             break;

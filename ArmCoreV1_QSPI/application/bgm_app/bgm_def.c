@@ -155,7 +155,7 @@ int8_t beam_deliver_type_get(uint16_t beam_id, uint8_t *deliver_type)
     ret = getPlanBeamData(beam_id, &beam_obj);
     if (ret != 0)
     {
-        LOG_E("get beam data err: %d\r\n", ret);
+        LOG_E("get beam %d data err: %d\r\n", beam_id, ret);
         return -1;
     }
 
@@ -182,7 +182,7 @@ int8_t dose_beam_parameter_set(enum uart_id id, uint16_t beam_id)
     ret = getPlanBeamData(beam_id, &beam_obj);
     if (ret != 0)
     {
-        LOG_E("get beam data err: %d\r\n", ret);
+        LOG_E("get beam %d data err: %d\r\n", beam_id, ret);
         return -1;
     }
 

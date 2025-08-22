@@ -3,6 +3,7 @@
 #include "plan_data.h"
 #include "timestamp.h"
 #include "ulog.h"
+#include "init_call.h"
 
 struct dose_err_info
 {
@@ -26,7 +27,7 @@ struct dose_err_info
             uint32_t ri_info : 1;
             uint32_t beam_info : 1;
             uint32_t interlock_override : 1;
-            uint32_t unready_override : 1;
+            uint32_t not_ready_override : 1;
             uint32_t timestamp : 1;
             uint32_t reserved : 15;
         }bits;
@@ -36,6 +37,7 @@ struct dose_err_info
     uint16_t ri_idx_pre;
 };
 
+static osMutexId_t mutex = NULL;
 static struct dose_err_info dose_err_info_obj[BGM_UART_DOSE2] = {0};
 static struct dose_err_info *dose_err_info_object_get(enum uart_id id)
 {
@@ -47,10 +49,28 @@ static struct dose_err_info *dose_err_info_object_get(enum uart_id id)
 
     return &dose_err_info_obj[id - BGM_UART_DOSE1];
 }
+static int8_t dose_err_info_init(void)
+{
+    osMutexAttr_t attr = {
+    .name = "dose_error_mutex",
+    .attr_bits = osMutexRecursive | osMutexPrioInherit
+    };
+
+    mutex = osMutexNew(&attr);
+    if (mutex == NULL)
+    {
+        LOG_E("dose error mutex create failed\r\n");
+        return -1;
+    }
+
+    return 0;
+}
+INIT_ENV_EXPORT(dose_err_info_init);
 
 int8_t dose_err_info_clear(void)
 {
     struct dose_err_info *obj = NULL;
+    osMutexAcquire(mutex, osWaitForever);
 
     for (uint8_t i = BGM_UART_DOSE1; i <= BGM_UART_DOSE2; i++)
     {
@@ -60,11 +80,17 @@ int8_t dose_err_info_clear(void)
         obj->ri_idx_pre = 0;
     }
 
+    osMutexRelease(mutex);
+
     return 0;
 }
 uint32_t dose_err_info_get(enum uart_id id)
 {
-    return dose_err_info_object_get(id)->error_code.bytes;
+    osMutexAcquire(mutex, osWaitForever);
+    uint32_t value = dose_err_info_object_get(id)->error_code.bytes;
+    osMutexRelease(mutex);
+
+    return value;
 }
 int8_t dose_para_check(enum dose_para_type para_type, enum uart_id id, uint16_t idx, void *value)
 {
@@ -88,6 +114,8 @@ int8_t dose_para_check(enum dose_para_type para_type, enum uart_id id, uint16_t 
     osMutexAcquire(obj->mutex, osWaitForever);
     memcpy(&info, obj, sizeof(struct bgm_data_info) - sizeof(osMutexId_t));
     osMutexRelease(obj->mutex);
+
+    osMutexAcquire(mutex, osWaitForever);
 
     switch (para_type)
     {
@@ -155,7 +183,9 @@ int8_t dose_para_check(enum dose_para_type para_type, enum uart_id id, uint16_t 
             ret = getPlanBeamData(info.beam_id, &beam_obj);
             if (ret != 0)
             {
-                return -3;
+                LOG_E("[%d]: get beam %d data err: %d\r\n", id, info.beam_id, ret);
+                ret = -3;
+                break;
             }
 
             if (*(uint16_t *)value != beam_obj.info->CPQuantityInBeam)
@@ -172,7 +202,9 @@ int8_t dose_para_check(enum dose_para_type para_type, enum uart_id id, uint16_t 
             ret = getPlanBeamData(info.beam_id, &beam_obj);
             if (ret != 0)
             {
-                return -3;
+                LOG_E("[%d]: get beam %d data err: %d\r\n", id, info.beam_id, ret);
+                ret = -3;
+                break;
             }
 
             if (*(uint16_t *)value != beam_obj.info->RIQuantityInBeam)
@@ -196,13 +228,16 @@ int8_t dose_para_check(enum dose_para_type para_type, enum uart_id id, uint16_t 
             ret = getPlanBeamData(info.beam_id, &beam_obj);
             if (ret != 0)
             {
-                return -3;
+                LOG_E("[%d]: get beam %d data err: %d\r\n", id, info.beam_id, ret);
+                ret = -3;
+                break;
             }
 
             if (idx > beam_obj.info->CPQuantityInBeam || idx == 0)
             {
                 LOG_E("[%d]: invalid cp index: %d\r\n", id, idx);
-                return -4;
+                ret = -4;
+                break;
             }
 
 
@@ -231,13 +266,16 @@ int8_t dose_para_check(enum dose_para_type para_type, enum uart_id id, uint16_t 
             ret = getPlanBeamData(info.beam_id, &beam_obj);
             if (ret != 0)
             {
-                return -3;
+                LOG_E("[%d]: get beam %d data err: %d\r\n", id, info.beam_id, ret);
+                ret = -3;
+                break;
             }
 
             if (idx > beam_obj.info->RIQuantityInBeam || idx == 0)
             {
                 LOG_E("[%d]: invalid ri index: %d\r\n", id, idx);
-                return -4;
+                ret = -4;
+                break;
             }
 
             if (idx == 1)
@@ -272,7 +310,9 @@ int8_t dose_para_check(enum dose_para_type para_type, enum uart_id id, uint16_t 
             ret = getPlanBeamData(info.beam_id, &beam_obj);
             if (ret != 0)
             {
-                return -3;
+                LOG_E("[%d]: get beam %d data err: %d\r\n", id, info.beam_id, ret);
+                ret = -3;
+                break;
             }
 
             uint8_t *tmp = (uint8_t *)value;
@@ -292,11 +332,11 @@ int8_t dose_para_check(enum dose_para_type para_type, enum uart_id id, uint16_t 
             dose_obj->error_code.bits.interlock_override = 1;
         }
         break;
-    case DOSE_PARA_UNREADY_OVERRIDE:
-        if (*(uint32_t *)value != info.unready_override)
+    case DOSE_PARA_NOT_READY_OVERRIDE:
+        if (*(uint32_t *)value != info.not_ready_override)
         {
-            LOG_E("[%d]: dose unready override mismatch: %d, expected: %d\r\n", id, *(uint32_t *)value, info.unready_override);
-            dose_obj->error_code.bits.unready_override = 1;
+            LOG_E("[%d]: dose not ready override mismatch: %d, expected: %d\r\n", id, *(uint32_t *)value, info.not_ready_override);
+            dose_obj->error_code.bits.not_ready_override = 1;
         }
         break;
     case DOSE_PARA_TIMESTAMP:
@@ -312,6 +352,8 @@ int8_t dose_para_check(enum dose_para_type para_type, enum uart_id id, uint16_t 
         break;
     }
 
+    osMutexRelease(mutex);
+
     return ret;
 }
 
@@ -323,8 +365,7 @@ static int8_t dose_error_test(uint8_t argc, char **argv)
     switch (atoi(argv[1]))
     {
     case 0:
-        struct dose_err_info *obj = dose_err_info_object_get(atoi(argv[2]));
-        LOG_I("[%d] dose error info: %#.8x\r\n", atoi(argv[2]), obj->error_code.bytes);
+        LOG_I("[%d] dose error info: %#.8x\r\n", atoi(argv[2]), dose_err_info_get(atoi(argv[2])));
         break;
     case 1:
         if (argc < 4)

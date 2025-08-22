@@ -36,8 +36,8 @@
 static osEventFlagsId_t gpio_event = NULL;
 static osMutexId_t gpio_mutex = NULL;
 
-static struct interlocks gpio_info = {0};
-static struct interlocks *gpio_info_get(void)
+static struct io_status gpio_info = {0};
+static struct io_status *gpio_info_get(void)
 {
     return &gpio_info;
 }
@@ -423,13 +423,20 @@ static int8_t io_init(void)
     return ret;
 }
 
+static int8_t (*io_callback)(struct io_status *state) = NULL;
+int8_t io_register_callback(int8_t (*callback)(struct io_status *state))
+{
+    io_callback = callback;
+    return 0;
+}
+
 static int8_t gpio_thread_entry(void *argument)
 {
     int8_t ret = 0;
-    struct interlocks *obj = gpio_info_get();
+    struct io_status *obj = gpio_info_get();
 
     osMutexId_t mutex = (osMutexId_t)argument;
-    struct interlocks interlocks = {0};
+    struct io_status io_obj = {0};
 
     ret = ioe_init();
     if(ret != 0)
@@ -457,27 +464,32 @@ static int8_t gpio_thread_entry(void *argument)
     {
         osEventFlagsWait(gpio_event, GPIO_EXTEND_EVENT, osFlagsWaitAny, GPIO_POLLING_TIME_MS);
 
-        ret = ioe_read(&interlocks.extend_status);
+        ret = ioe_read(&io_obj.extend_status);
         if (ret != 0)
         {
             LOG_E("ioe_read err: %d\r\n",ret);
         }
 
-        interlocks.detect_status.bits.ModTrigFB  = ReadIO_ModTrigFB();
-        interlocks.detect_status.bits.LvOKDetect  = ReadIO_LvOKDetect();
-        interlocks.detect_status.bits.HvEnDetect  = ReadIO_HvEnDetect();
-        interlocks.detect_status.bits.ModArcDetect  = ReadIO_ModArcDetect();
-        interlocks.detect_status.bits.ModTrigOnDetect  = ReadIO_ModTrigOnDetect();
+        io_obj.detect_status.bits.ModTrigFB  = ReadIO_ModTrigFB();
+        io_obj.detect_status.bits.LvOKDetect  = ReadIO_LvOKDetect();
+        io_obj.detect_status.bits.HvEnDetect  = ReadIO_HvEnDetect();
+        io_obj.detect_status.bits.ModArcDetect  = ReadIO_ModArcDetect();
+        io_obj.detect_status.bits.ModTrigOnDetect  = ReadIO_ModTrigOnDetect();
 
-        interlocks.detect_status.bits.ModHvOnDetect = ReadIO_ModHvOnDetect();
-        interlocks.detect_status.bits.ModSumDetect  = ReadIO_ModSumDetect();
-        interlocks.detect_status.bits.Dose1Detect  = ReadIO_Dose1Detect();
-        interlocks.detect_status.bits.Dose2Detect  = ReadIO_Dose2Detect();
-        interlocks.detect_status.bits.EmergencyDetect  = ReadIO_EmergencyDetect();
+        io_obj.detect_status.bits.ModHvOnDetect = ReadIO_ModHvOnDetect();
+        io_obj.detect_status.bits.ModSumDetect  = ReadIO_ModSumDetect();
+        io_obj.detect_status.bits.Dose1Detect  = ReadIO_Dose1Detect();
+        io_obj.detect_status.bits.Dose2Detect  = ReadIO_Dose2Detect();
+        io_obj.detect_status.bits.EmergencyDetect  = ReadIO_EmergencyDetect();
 
         osMutexAcquire(mutex, osWaitForever);
-        memcpy(obj, &interlocks, sizeof(struct interlocks));
+        memcpy(obj, &io_obj, sizeof(struct io_status));
         osMutexRelease(mutex);
+
+        if (io_callback != NULL)
+        {
+            io_callback(&io_obj);
+        }
     }
 
     return 0;
@@ -521,72 +533,73 @@ static int8_t io_thread_init(void)
 }
 INIT_APP_EXPORT(io_thread_init);
 
-struct interlocks interlock_status_get(void)
+struct io_status io_status_get(void)
 {
-    struct interlocks interlock = {0};
-    struct interlocks *obj = gpio_info_get();
+    struct io_status io_status = {0};
+    struct io_status *obj = gpio_info_get();
 
     osMutexAcquire(gpio_mutex, osWaitForever);
-    memcpy(&interlock, obj, sizeof(struct interlocks));
+    memcpy(&io_status, obj, sizeof(struct io_status));
     osMutexRelease(gpio_mutex);
 
-    return interlock;
+    return io_status;
 }
 
 
-#ifndef INTERLOCK_TEST
+#ifndef IO_STATUS_TEST
 #include "shell.h"
-static int8_t interlock_status_output(uint8_t argc, char *argv[])
+static int8_t io_status_output(uint8_t argc, char *argv[])
 {
-    struct interlocks interlock = interlock_status_get();
+    struct io_status io_status = io_status_get();
 
     LOG_I("//////////////////////BGM Interlocks Status//////////////////////// \r\n");
-    LOG_I("interrupt_flag           = %#.4x\r\n", interlock.extend_status.interrupt_flag);
-    LOG_I("interrupt_capture        = %#.4x (normal is 0xFFFF)\r\n", interlock.extend_status.interrupt_capture);
-    LOG_I("current                  = %#.4x\r\n", interlock.extend_status.current.bytes);
+    LOG_I("interrupt_flag           = %#.4x\r\n", io_status.extend_status.interrupt_flag);
+    LOG_I("interrupt_capture        = %#.4x (normal is 0xFFFF)\r\n", io_status.extend_status.interrupt_capture);
+    LOG_I("extend status current    = %#.4x\r\n", io_status.extend_status.current.bytes);
+    LOG_I("detect status current    = %#.4x\r\n", io_status.detect_status.bytes);
     LOG_I("------------------------------ status ----------------------------------------\r\n");
-    LOG_I("lv interlock:            = %d\r\n", interlock.detect_status.bits.LvOKDetect);
-    LOG_I("hv interlock:            = %d\r\n", interlock.detect_status.bits.HvEnDetect);
-    LOG_I("mod trigger:             = %d\r\n", interlock.detect_status.bits.ModTrigFB);
+    LOG_I("lv interlock:            = %d\r\n", io_status.detect_status.bits.LvOKDetect);
+    LOG_I("hv interlock:            = %d\r\n", io_status.detect_status.bits.HvEnDetect);
+    LOG_I("mod trigger:             = %d\r\n", io_status.detect_status.bits.ModTrigFB);
     LOG_I("------------------------------ lv interlock ----------------------------------\r\n");
-    LOG_I("VPSStateOPDetect         = %d\r\n", interlock.extend_status.current.bits.VPSStateOPDetect);
-    LOG_I("VPSStateFaultDetect      = %d\r\n", interlock.extend_status.current.bits.VPSStateFaultDetect);
+    LOG_I("VPSStateOPDetect         = %d\r\n", io_status.extend_status.current.bits.VPSStateOPDetect);
+    LOG_I("VPSStateFaultDetect      = %d\r\n", io_status.extend_status.current.bits.VPSStateFaultDetect);
     LOG_I("RTC_WD_OK                = null\r\n");
     LOG_I("LvInterlockEn            = %d\r\n", gpio_common_get()->read("GPIOE_4"));
-    LOG_I("EPSStateOPDetect         = %d\r\n", interlock.extend_status.current.bits.EPSStateOPDetect);
-    LOG_I("nEPSStateFaultDetect     = %d\r\n", interlock.extend_status.current.bits.nEPSStateFaultDetect);
-    LOG_I("WaterSW1Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW1Detect);
-    LOG_I("WaterSW2Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW2Detect);
-    LOG_I("WaterSW3Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW3Detect);
-    LOG_I("WaterSW4Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW4Detect);
-    LOG_I("WaterSW5Detect           = %d\r\n", interlock.extend_status.current.bits.WaterSW5Detect);
+    LOG_I("EPSStateOPDetect         = %d\r\n", io_status.extend_status.current.bits.EPSStateOPDetect);
+    LOG_I("nEPSStateFaultDetect     = %d\r\n", io_status.extend_status.current.bits.nEPSStateFaultDetect);
+    LOG_I("WaterSW1Detect           = %d\r\n", io_status.extend_status.current.bits.WaterSW1Detect);
+    LOG_I("WaterSW2Detect           = %d\r\n", io_status.extend_status.current.bits.WaterSW2Detect);
+    LOG_I("WaterSW3Detect           = %d\r\n", io_status.extend_status.current.bits.WaterSW3Detect);
+    LOG_I("WaterSW4Detect           = %d\r\n", io_status.extend_status.current.bits.WaterSW4Detect);
+    LOG_I("WaterSW5Detect           = %d\r\n", io_status.extend_status.current.bits.WaterSW5Detect);
     LOG_I("EPSEnable3V3             = %d\r\n", gpio_common_get()->read("GPIOG_7"));
-    LOG_I("CoolingLv1Detect         = %d\r\n", interlock.extend_status.current.bits.CoolingLv1Detect);
+    LOG_I("CoolingLv1Detect         = %d\r\n", io_status.extend_status.current.bits.CoolingLv1Detect);
     LOG_I("------------------------------ hv interlock ----------------------------------\r\n");
-    LOG_I("LvOKDetect               = %d\r\n", interlock.detect_status.bits.LvOKDetect);
-    LOG_I("CoolingLv2Detect         = %d\r\n", interlock.extend_status.current.bits.CoolingLv2Detect);
-    LOG_I("Dose2Detect              = %d\r\n", interlock.detect_status.bits.Dose2Detect);
+    LOG_I("LvOKDetect               = %d\r\n", io_status.detect_status.bits.LvOKDetect);
+    LOG_I("CoolingLv2Detect         = %d\r\n", io_status.extend_status.current.bits.CoolingLv2Detect);
+    LOG_I("Dose2Detect              = %d\r\n", io_status.detect_status.bits.Dose2Detect);
     LOG_I("HvInterlockEN            = %d\r\n", gpio_common_get()->read("GPIOE_5"));
     LOG_I("------------------------------ mod trigger -----------------------------------\r\n");
-    LOG_I("SF6HighDetect            = %d\r\n", interlock.extend_status.current.bits.SF6HighDetect);
-    LOG_I("SF6LowDetect             = %d\r\n", interlock.extend_status.current.bits.SF6LowDetect);
-    LOG_I("MVTreatmentENDetect      = %d\r\n", interlock.extend_status.current.bits.MVTreatmentENDetect);
-    LOG_I("HVEnDetect               = %d\r\n", interlock.detect_status.bits.HvEnDetect);
-    LOG_I("Dose1Detect              = %d\r\n", interlock.detect_status.bits.Dose1Detect);
+    LOG_I("SF6HighDetect            = %d\r\n", io_status.extend_status.current.bits.SF6HighDetect);
+    LOG_I("SF6LowDetect             = %d\r\n", io_status.extend_status.current.bits.SF6LowDetect);
+    LOG_I("MVTreatmentENDetect      = %d\r\n", io_status.extend_status.current.bits.MVTreatmentENDetect);
+    LOG_I("HVEnDetect               = %d\r\n", io_status.detect_status.bits.HvEnDetect);
+    LOG_I("Dose1Detect              = %d\r\n", io_status.detect_status.bits.Dose1Detect);
     LOG_I("ModPRFEn                 = %d\r\n", gpio_common_get()->read("GPIOE_2"));
-    LOG_I("GatingDetect             = %d\r\n", interlock.extend_status.current.bits.GatingDetect);
+    LOG_I("GatingDetect             = %d\r\n", io_status.extend_status.current.bits.GatingDetect);
     LOG_I("ModTriggerInhibitCtrl3V3 = %d\r\n", gpio_common_get()->read("GPIOC_6"));
     LOG_I("------------------------------ other status ----------------------------------\r\n");
     LOG_I("VPSEnable3V3             = %d\r\n", gpio_common_get()->read("GPIOE_6"));
-    LOG_I("HVConFBDetect            = %d\r\n", interlock.extend_status.current.bits.HVConFBDetect);
-    LOG_I("ModHvONDetect            = %d\r\n", interlock.detect_status.bits.ModHvOnDetect);
-    LOG_I("ModTrigONDetect          = %d\r\n", interlock.detect_status.bits.ModTrigOnDetect);
-    LOG_I("ModSumDetect             = %d\r\n", interlock.detect_status.bits.ModSumDetect);
-    LOG_I("PulseInhibitDetect       = %d\r\n", interlock.detect_status.bits.PulseInhibitDetect);
-    LOG_I("EmergencyDetect          = %d\r\n", interlock.detect_status.bits.EmergencyDetect);
-    LOG_I("ModArcDetect             = %d\r\n", interlock.detect_status.bits.ModArcDetect);
+    LOG_I("HVConFBDetect            = %d\r\n", io_status.extend_status.current.bits.HVConFBDetect);
+    LOG_I("ModHvONDetect            = %d\r\n", io_status.detect_status.bits.ModHvOnDetect);
+    LOG_I("ModTrigONDetect          = %d\r\n", io_status.detect_status.bits.ModTrigOnDetect);
+    LOG_I("ModSumDetect             = %d\r\n", io_status.detect_status.bits.ModSumDetect);
+    LOG_I("PulseInhibitDetect       = %d\r\n", io_status.detect_status.bits.PulseInhibitDetect);
+    LOG_I("EmergencyDetect          = %d\r\n", io_status.detect_status.bits.EmergencyDetect);
+    LOG_I("ModArcDetect             = %d\r\n", io_status.detect_status.bits.ModArcDetect);
 
     return 0;
 }
-MSH_CMD_EXPORT_ALIAS(interlock_status_output, interlock_status_output, output interlock status);
+MSH_CMD_EXPORT_ALIAS(io_status_output, io_status_output, output io status);
 #endif

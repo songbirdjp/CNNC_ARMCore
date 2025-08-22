@@ -88,7 +88,7 @@ static int8_t i2c_close(DEVICE_I2C *i2c)
     return 0;
 }
 
-static int8_t i2c_write(DEVICE_I2C *i2c, uint16_t addr, uint8_t *buf, uint16_t size, uint32_t timeout)
+static int8_t i2c_write(DEVICE_I2C *i2c, uint16_t addr, uint16_t reg_addr, uint8_t *buf, uint16_t size, uint32_t timeout)
 {
     osStatus_t ret = osOK;
     HAL_StatusTypeDef status = HAL_OK;
@@ -106,7 +106,7 @@ static int8_t i2c_write(DEVICE_I2C *i2c, uint16_t addr, uint8_t *buf, uint16_t s
         return -2;
     }
 
-    status = HAL_I2C_Master_Transmit_DMA(&i2c->hi2c, addr, buf, size);
+    status = HAL_I2C_Mem_Write_DMA(&i2c->hi2c, addr, reg_addr, I2C_MEMADD_SIZE_8BIT, buf, size);
     if (status != HAL_OK)
     {
         printf("device %s write data err:%d\r\n", i2c->name, status);
@@ -128,7 +128,7 @@ err:
     return ret;
 }
 
-static int8_t i2c_read(DEVICE_I2C *i2c, uint16_t addr, uint8_t *buf, uint16_t size, uint32_t timeout)
+static int8_t i2c_read(DEVICE_I2C *i2c, uint16_t addr, uint16_t reg_addr, uint8_t *buf, uint16_t size, uint32_t timeout)
 {
     osStatus_t ret = osOK;
     HAL_StatusTypeDef status = HAL_OK;
@@ -146,7 +146,7 @@ static int8_t i2c_read(DEVICE_I2C *i2c, uint16_t addr, uint8_t *buf, uint16_t si
         return -2;
     }
 
-    status = HAL_I2C_Master_Receive_DMA(&i2c->hi2c, addr, buf, size);
+    status = HAL_I2C_Mem_Read_DMA(&i2c->hi2c, addr, reg_addr, I2C_MEMADD_SIZE_8BIT, buf, size);
     if (status != HAL_OK)
     {
         printf("device %s read data err:%d\r\n", i2c->name, status);
@@ -178,12 +178,23 @@ static int8_t i2c_ioctl(DEVICE_I2C *i2c, uint8_t cmd, void *arg)
         return -1;
     }
 
+    ret = osMutexAcquire(i2c->mutex, osWaitForever);
+    if (ret != osOK)
+    {
+        printf("device %s acquire mutex err:%d\r\n", i2c->name, ret);
+        return -2;
+    }
+
     switch (cmd)
     {
     default:
         printf("i2c ioctl cmd %d is not supported\r\n", cmd);
-        return -2;
+        ret = -3;
+        goto err;
     }
+
+err:
+    osMutexRelease(i2c->mutex);
 
     return ret;
 }

@@ -6,6 +6,8 @@
 #include "adc_app.h"
 #include "event_override.h"
 #include "dose_error.h"
+#include "rtm_app.h"
+#include "interlock_app.h"
 
 // #define BGM_FSM_STATE_SIMULATION
 #ifdef BGM_FSM_STATE_SIMULATION
@@ -271,8 +273,16 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         LOG_I("cali_dose2_dac[1]: %d\r\n", info.cali_dose2_dac[1]);
         LOG_I("dose_meter_dummy: %f\r\n", info.dose_meter_dummy);
 #endif
+        /* 0. update beam deliver type */
+        uint8_t deliver_type = 0;
+        ret = beam_deliver_type_get(info.beam_id, &deliver_type);
+        if (ret != 0)
+        {
+            LOG_E("get beam deliver type err: %d\r\n", ret);
+            break;
+        }
         /* 1. set cali adc & dac value */
-        ret = dose_adc_value_set(BGM_UART_DOSE1, info.cali_dose1_adc);
+        ret |= dose_adc_value_set(BGM_UART_DOSE1, info.cali_dose1_adc);
         ret |= dose_adc_value_set(BGM_UART_DOSE2, info.cali_dose2_adc);
         ret |= dose_dac_value_set(BGM_UART_DOSE1, info.cali_dose1_dac);
         ret |= dose_dac_value_set(BGM_UART_DOSE2, info.cali_dose2_dac);
@@ -281,6 +291,11 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         // ret |= dose_beam_cumulated_clear(BGM_UART_DOSE2);
         /* 3. set generate mode to 0 */
         info.dose_mode = 0;
+        osMutexAcquire(obj->mutex, osWaitForever);
+        obj->deliver_type = deliver_type;
+        obj->dose_mode = info.dose_mode;
+        osMutexRelease(obj->mutex);
+        LOG_I("preliminary set dose_mode: %d\r\n", obj->dose_mode);
         ret |= dose_generate_mode_set(BGM_UART_DOSE1, &info.dose_mode);
         ret |= dose_generate_mode_set(BGM_UART_DOSE2, &info.dose_mode);
         /* 4. set pulse mode to 0 */
@@ -296,19 +311,13 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         /* 6. set dose board to dummy */
         ret |= dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
         ret |= dose_fsm_state_set(BGM_UART_DOSE2, DOSE_FSM_STATE_PRELIMINARY_BEGIN);
-        /* 7. update beam deliver type */
-        uint8_t deliver_type = 0;
-        ret |= beam_deliver_type_get(info.beam_id, &deliver_type);
-        osMutexAcquire(obj->mutex, osWaitForever);
-        obj->deliver_type = deliver_type;
-        obj->dose_mode = info.dose_mode;
-        osMutexRelease(obj->mutex);
         break;
     case BGM_STATE_PREPARE:
-        if (unready_event_with_override_get(UNREADY_EVENT_PLAN_DATA) != 0)
+        if (not_ready_event_with_override_get(NOT_READY_EVENT_PLAN_DATA) != 0)
         {
             LOG_E("prepare request failed, plan data is not ready\r\n");
-            return -1;
+            ret = -1;
+            break;
         }
 
         LOG_I("---remote set to prepare---\r\n");
@@ -329,6 +338,7 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         osMutexAcquire(obj->mutex, osWaitForever);
         obj->dose_mode = info.dose_mode;
         osMutexRelease(obj->mutex);
+        LOG_I("prepare set dose_mode: %d\r\n", obj->dose_mode);
         ret |= dose_generate_mode_set(BGM_UART_DOSE1, &info.dose_mode);
         ret |= dose_generate_mode_set(BGM_UART_DOSE2, &info.dose_mode);
         /* 3. set pulse mode */
@@ -370,7 +380,8 @@ static int8_t fsm_state_remote_set(enum bgm_fsm_state state_request)
         if (dose_err_info_get(BGM_UART_DOSE1) != 0 || dose_err_info_get(BGM_UART_DOSE2) != 0)
         {
             LOG_E("bgm set plan data to dose err: %d, %d\r\n", dose_err_info_get(BGM_UART_DOSE1), dose_err_info_get(BGM_UART_DOSE2));
-            return -1;
+            ret = -1;
+            break;
         }
         /* 1. set dose board to ready */
         ret = dose_fsm_state_set(BGM_UART_DOSE1, DOSE_FSM_STATE_READY);
@@ -539,6 +550,43 @@ static int8_t fsm_state_set(enum bgm_fsm_state state_request, enum fsm_source_t 
     if (ret != 0)
     {
         LOG_E("fsm state set err: %d\r\n", ret);
+    }
+    else
+    {
+        /* send fsm state to rtm */
+        osMutexAcquire(obj->mutex, osWaitForever);
+        if (obj->fsm_state != state_current)
+        {
+            struct bgm_app
+            {
+                uint8_t state;
+                uint8_t ctrl_mode;
+                uint8_t reserved[2];
+                uint8_t beam_id;
+                uint8_t reserved1;
+                uint16_t radiation_idx;
+                uint32_t not_ready_event;
+                uint32_t warning_interlock;
+                uint32_t minor_interlock;
+                uint32_t serious_interlock;
+            }buf = {0};
+
+            buf.state = obj->fsm_state;
+            buf.ctrl_mode = 1;
+            buf.beam_id = obj->beam_id;
+            buf.radiation_idx = obj->radiation_index;
+            buf.not_ready_event = not_ready_event_get();
+            buf.warning_interlock = 0;
+            buf.minor_interlock = 0;
+            buf.serious_interlock = interlock_status_get()->io;
+
+            ret = cmd_to_rtm_upload(RS422_BUS_MODULE_ID_RTM_ON_PLC | RS422_BUS_MODULE_ID_RTM_ON_ARM, UART_DATA_CMD_SEND_FSM_STATE, &buf, sizeof(buf));
+            if (ret != 0)
+            {
+                LOG_E("cmd_to_rtm_upload err: %d\r\n", ret);
+            }
+        }
+        osMutexRelease(obj->mutex);
     }
 
     return ret;
@@ -808,7 +856,7 @@ static void system_fsm_state_entry(void *argument)
     }
 }
 
-static int8_t dose_rate_calculate(void *argument)
+static int8_t dose_and_afc_polling_entry(void *argument)
 {
     int8_t ret = 0;
     float dose1_meter_cur = 0, dose2_meter_cur = 0;
@@ -859,16 +907,16 @@ static int8_t dose_rate_calculate(void *argument)
 
 static int8_t fsm_thread_init(void)
 {
-    osThreadAttr_t BGMFSM_attributes = {
+    osThreadAttr_t bgm_fsm_attr = {
     .name = "bgm_fsm_thread",
     .stack_size = 1024 * 4,
     .priority = (osPriority_t)osPriorityNormal,
     };
 
-    osThreadId_t BGMFSMHandle = osThreadNew(system_fsm_state_entry, NULL, &BGMFSM_attributes);
-    if (BGMFSMHandle == NULL)
+    osThreadId_t bgm_fsmHandle = osThreadNew(system_fsm_state_entry, NULL, &bgm_fsm_attr);
+    if (bgm_fsmHandle == NULL)
     {
-        printf("thread BGMFSM create failed\r\n");
+        printf("thread bgm fsm create failed\r\n");
         return -1;
     }
 
@@ -904,16 +952,16 @@ static int8_t fsm_thread_init(void)
         return -4;
     }
 
-    osThreadAttr_t dose_rate_calculate_attributes = {
-    .name = "dose_rate_calculate_thread",
+    osThreadAttr_t attr = {
+    .name = "dose_and_afc_polling_thread",
     .stack_size = 1024 * 4,
     .priority = (osPriority_t)osPriorityNormal,
     };
 
-    osThreadId_t dose_rate_calculateHandle = osThreadNew(dose_rate_calculate, NULL, &dose_rate_calculate_attributes);
-    if (dose_rate_calculateHandle == NULL)
+    osThreadId_t dose_and_afc_pollingHandle = osThreadNew(dose_and_afc_polling_entry, NULL, &attr);
+    if (dose_and_afc_pollingHandle == NULL)
     {
-        printf("thread dose rate calculate create failed\r\n");
+        printf("thread dose and afc polling create failed\r\n");
         return -5;
     }
 
@@ -971,7 +1019,7 @@ static int8_t bgm_info_get(uint8_t argc, char **argv)
     struct bgm_data_info *obj = bgm_data_info_get();
 
     osMutexAcquire(obj->mutex, osWaitForever);
-    memcpy(&info, obj, sizeof(struct bgm_data_info));
+    memcpy(&info, obj, sizeof(struct bgm_data_info) - sizeof(osMutexId_t));
     osMutexRelease(obj->mutex);
 
     LOG_I("dose_mode: %d\r\n", info.dose_mode);

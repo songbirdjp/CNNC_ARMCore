@@ -178,8 +178,8 @@ static int8_t arm_core_cmd_parse(APP_DATA_RECV *info)
         switch (cmd[1])
         {
         case 0x00:
-            obj->dose_mode = cmd[2];
-            LOG_I("set dose mode: %d\r\n", obj->dose_mode);
+            // obj->dose_mode = cmd[2];
+            LOG_I("set dose mode: %d\r\n", cmd[2]);
             break;
         case 0x01:
             obj->pulse_mode = cmd[2];

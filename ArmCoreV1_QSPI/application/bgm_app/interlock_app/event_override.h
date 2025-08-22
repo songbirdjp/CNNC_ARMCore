@@ -7,10 +7,10 @@
 extern "C" {
 #endif
 
-enum unready_event
+enum not_ready_event
 {
-    UNREADY_EVENT_PLAN_DATA = 0,
-    UNREADY_EVENT_MAX,
+    NOT_READY_EVENT_PLAN_DATA = 0,
+    NOT_READY_EVENT_MAX,
 };
 
 enum interlock_event
@@ -19,8 +19,8 @@ enum interlock_event
     INTERLOCK_EVENT_MAX,
 };
 
-uint32_t unready_event_get(void);
-int8_t unready_event_with_override_get(enum unready_event type);
+uint32_t not_ready_event_get(void);
+int8_t not_ready_event_with_override_get(enum not_ready_event type);
 int8_t interlock_with_override_get(enum interlock_event type);
 
 #ifdef __cplusplus

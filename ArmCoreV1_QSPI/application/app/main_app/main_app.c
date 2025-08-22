@@ -9,12 +9,11 @@
 #include "websocket_console.h"
 #include "websocket_port.h"
 #include "bgm_app.h"
-#include "io_port.h"
-#include "plan_data.h"
 #include "event_override.h"
 #include "dose_error.h"
 #include "eps_app.h"
 #include "vps_app.h"
+#include "interlock_app.h"
 
 #define DATA_PROCESS_LAN_EVENT      (1<<0)
 #define DATA_PROCESS_TCP_EVENT      (1<<1)
@@ -158,7 +157,7 @@ static int8_t ethercat_recv_data_process(TOBJ7010 *recv)
 #endif
 
     obj->interlock_override = recv->OutU32_InterlockOverride;
-    obj->unready_override = recv->OutU32_UnreadyOveride;
+    obj->not_ready_override = recv->OutU32_UnreadyOveride;
 
     /* TODO: add function send override to dose */
 
@@ -171,6 +170,7 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
 {
     int8_t ret = 0;
     struct bgm_data_info *obj = bgm_data_info_get();
+    struct interlock *interlock_obj = interlock_status_get();
 
     osMutexAcquire(obj->mutex, osWaitForever);
     send->InU8_FsmState = obj->fsm_state;
@@ -178,17 +178,16 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
     send->InU16_RadiationIndex = obj->radiation_index;
     osMutexRelease(obj->mutex);
 
-    send->InU16_NotReadyEvent = unready_event_get();
+    send->InU16_NotReadyEvent = not_ready_event_get();
 
-    struct interlocks interlock = interlock_status_get();
     send->InU32_WaringInterlock = 0;
-    send->InU32_MinorInterlock = interlock.detect_status.bytes; /* TODO: add two dose meter interlock */
-    send->InU32_SeriousInterlock = interlock.extend_status.current.bytes | interlock.extend_status.interrupt_capture << 16;
+    send->InU32_MinorInterlock = 0;
+    send->InU32_SeriousInterlock = interlock_obj->io;
 
 
     send->InF_BeamOnTime = 0;
 
-    if (send->InU8_FsmState > BGM_STATE_IDLE && send->InU8_FsmState < BGM_STATE_WORK)
+    if (send->InU8_FsmState >= BGM_STATE_INIT && send->InU8_FsmState < BGM_STATE_WORK)
     {
         send->InF_PrimaryDoseTotalActual = 0.0f;
         send->InF_SecondaryDoseTotalActual = 0.0f;
@@ -205,10 +204,10 @@ static int8_t ethercat_send_data_process(TOBJ6000 *send)
 
     send->InU8_DoseAFsmState = (uint8_t)dose_fsm_state_get(BGM_UART_DOSE1);
     send->InU8_DoseBFsmState = (uint8_t)dose_fsm_state_get(BGM_UART_DOSE2);
-    send->InU32_DoseAInterlock = dose_interlock_get(BGM_UART_DOSE1);
-    send->InU32_DoseBInterlock = dose_interlock_get(BGM_UART_DOSE2);
-    send->InU32_DoseAErrorCode = dose_err_info_get(BGM_UART_DOSE1);
-    send->InU32_DoseBErrorCode = dose_err_info_get(BGM_UART_DOSE2);
+    send->InU32_DoseAInterlock = interlock_obj->dose_interlock[0];
+    send->InU32_DoseBInterlock = interlock_obj->dose_interlock[1];
+    send->InU32_DoseAErrorCode = interlock_obj->dose_err[0];
+    send->InU32_DoseBErrorCode = interlock_obj->dose_err[1];
 
     send->InU32_AfcState = 0;
     send->InF_AfcPositionCurrent = afc_info_get(AFC_INFO_MAG_POSITION, NULL);
@@ -343,7 +342,7 @@ static void data_process_entry(void *argument)
     data_process_init();  /* register callback functions for tcp 、ethercat、fpga */
 
     for (;;)
-    {   
+    {
         event_flag = osEventFlagsWait(data_process_eventHandle, DATA_PROCESS_FPGA_EVENT | DATA_PROCESS_LAN_EVENT | DATA_PROCESS_TCP_EVENT, osFlagsWaitAny, osWaitForever);
         if (event_flag & DATA_PROCESS_LAN_EVENT)
         {

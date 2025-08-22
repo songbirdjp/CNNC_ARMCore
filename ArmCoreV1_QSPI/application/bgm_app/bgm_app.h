@@ -33,7 +33,7 @@ struct bgm_data_info
     enum bgm_fsm_state fsm_state_request_pre;
     enum bgm_fsm_state fsm_state_request_already;
     uint32_t interlock_override;
-    uint32_t unready_override;
+    uint32_t not_ready_override;
     uint16_t beam_id;
     uint16_t radiation_index;
     uint8_t deliver_type;

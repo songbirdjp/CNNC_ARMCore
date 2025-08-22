@@ -33,7 +33,7 @@ struct extend_status
     uint16_t interrupt_capture;
 };
 
-struct interlocks
+struct io_status
 {
     struct extend_status extend_status;
 
@@ -60,6 +60,7 @@ struct interlocks
     }detect_status;
 };
 
-struct interlocks interlock_status_get(void);
+struct io_status io_status_get(void);
+int8_t io_register_callback(int8_t (*callback)(struct io_status *state));
 
 #endif  /* __IO_PORT_H__ */
