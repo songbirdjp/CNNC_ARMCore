@@ -157,6 +157,10 @@ extern "C"
         uint32_t interlock_override;
         uint32_t unready_override;
 
+        uint8_t icm_current_state;
+        uint8_t bgm_current_state;
+        uint8_t qam_current_state;
+
         rtm_StateMachine_t state_machine;
 
         rtm_module_info_t rtm_module_info[RTM_MODULE_MAX];

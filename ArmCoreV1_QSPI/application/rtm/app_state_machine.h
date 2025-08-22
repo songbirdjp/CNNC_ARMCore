@@ -109,25 +109,28 @@ extern "C"
      (State_t)RET_TRAN)
     /******************************************************************************/
 
-typedef struct app_not_ready_event_table
-{
-    uint32_t reserved : 32;
-} app_not_ready_event_table_t;
+    typedef struct app_not_ready_event_table
+    {
+        uint32_t reserved : 32;
+    } app_not_ready_event_table_t;
 
-typedef struct app_serious_interlock_table
-{
-    uint32_t HvEN : 1;
-    uint32_t KVTreatmentEn : 1;
-    uint32_t MVTreatmentEn : 1;
-    uint32_t ethercat_link : 1;
-    uint32_t icm_link : 1;
-    uint32_t bgm_link : 1;
-    uint32_t qam_link : 1;
-    uint32_t bsm_link : 1;
-    uint32_t rtm_off_link : 1;
-    uint32_t reserved : 22;
-    uint32_t RTC_WD_OK : 1;
-} app_interlock_table_t;
+    typedef struct app_serious_interlock_table
+    {
+        uint32_t HvEN : 1;
+        uint32_t KVTreatmentEn : 1;
+        uint32_t MVTreatmentEn : 1;
+        uint32_t ethercat_link : 1;
+        uint32_t icm_link : 1;
+        uint32_t bgm_link : 1;
+        uint32_t qam_link : 1;
+        uint32_t bsm_link : 1;
+        uint32_t rtm_off_link : 1;
+        uint32_t icm_fault : 1;
+        uint32_t bgm_fault : 1;
+        uint32_t qam_fault : 1;
+        uint32_t reserved : 19;
+        uint32_t RTC_WD_OK : 1;
+    } app_interlock_table_t;
 
     typedef struct app_interlock_table
     {
@@ -148,7 +151,7 @@ typedef struct app_serious_interlock_table
         uint32_t plc_state;
         uint32_t dido_state;
         uint32_t data_record;
-    }app_state_table_t;
+    } app_state_table_t;
     typedef struct rtm_fault_check
     {
         uint32_t cur_time;

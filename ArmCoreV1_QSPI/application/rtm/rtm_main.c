@@ -149,6 +149,21 @@ static void app_rtm_main_thread(void *argument)
                     }
                     break;
                 }
+                case INPUT_ICM_CURRENT_STATE_CMD: /*ICM当前状态*/
+                {
+                    self->icm_current_state = *(uint8_t *)&(queue_frame.payload.data[1]);
+                    break;
+                }
+                case INPUT_BGM_CURRENT_STATE_CMD: /*BGM当前状态*/
+                {
+                    self->bgm_current_state = *(uint8_t *)&(queue_frame.payload.data[1]);
+                    break;
+                }
+                case INPUT_QAM_CURRENT_STATE_CMD: /*QAM当前状态*/
+                {
+                    self->qam_current_state = *(uint8_t *)&(queue_frame.payload.data[1]);
+                    break;
+                }
                 default:
                     break;
                 }
@@ -459,14 +474,11 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         len = (uint8_t *)&output_data.OutU8_systemCurrentState - (uint8_t *)&output_data.OutU8_fault_clear;
         if (memcmp(&output_data.OutU8_fault_clear, &data->OutU8_fault_clear, len) != 0)
         {
-            if (data->OutU8_fault_clear & 0x01)
-            {
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
-                rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
-            }
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BROADCAST_ID, OUTPUT_FAULT_CLEAR_CMD, &data->OutU8_fault_clear, len);
         }
 
         len = (uint8_t *)&output_data.OutU8_icm_require_state - (uint8_t *)&output_data.OutU8_rtm_on_require_state;
@@ -524,7 +536,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_VIBRATION_CMD, &data->OutU8_fkp_userPrompt, len);
         }
 
-        len = (uint8_t *)&output_data.OutU8_reserved3 - (uint8_t *)&output_data.OutU16_fkp_year;
+        len = (uint8_t *)&output_data.OutU32_cpg_led_blink - (uint8_t *)&output_data.OutU16_fkp_year;
         if (memcmp(&output_data.OutU16_fkp_year, &data->OutU16_fkp_year, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_TIMESTAMP_CMD, &data->OutU16_fkp_year, len);

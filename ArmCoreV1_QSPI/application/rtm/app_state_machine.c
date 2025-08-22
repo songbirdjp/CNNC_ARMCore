@@ -137,17 +137,17 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         if ((dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_HVEN != 1) ||
             (dido_structure.gpio_di_u.gpio_di_bit.DI_Slipring_HVEN_IN != 1))
         {
-            self->interlock_table.serious_interlock.HvEN = 1;
+            self->interlock_table.minor_interlock.HvEN = 1;
             retval = -1;
         }
         else
         {
-            self->interlock_table.serious_interlock.HvEN = 0;
+            self->interlock_table.minor_interlock.HvEN = 0;
         }
     }
     else
     {
-        self->interlock_table.serious_interlock.HvEN = 0;
+        self->interlock_table.minor_interlock.HvEN = 0;
     }
     // kv_treatment_en check
     if ((dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_KV_TreatmentEN != 1) ||
@@ -156,17 +156,17 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         if ((state == STATE_MACHINE_SURVIEW_WORK) ||
             (state == STATE_MACHINE_CT_WORK))
         {
-            self->interlock_table.serious_interlock.KVTreatmentEn = 1;
+            self->interlock_table.minor_interlock.KVTreatmentEn = 1;
             retval = -1;
         }
         else
         {
-            self->interlock_table.serious_interlock.KVTreatmentEn = 0;
+            self->interlock_table.minor_interlock.KVTreatmentEn = 0;
         }
     }
     else
     {
-        self->interlock_table.serious_interlock.KVTreatmentEn = 0;
+        self->interlock_table.minor_interlock.KVTreatmentEn = 0;
     }
     // mv_treatment_en check
     if ((dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_MV_TreatmentEN != 1) ||
@@ -174,17 +174,17 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         if (state == STATE_MACHINE_WORK)
         {
-            self->interlock_table.serious_interlock.MVTreatmentEn = 1;
+            self->interlock_table.minor_interlock.MVTreatmentEn = 1;
             retval = -1;
         }
         else
         {
-            self->interlock_table.serious_interlock.MVTreatmentEn = 0;
+            self->interlock_table.minor_interlock.MVTreatmentEn = 0;
         }
     }
     else
     {
-        self->interlock_table.serious_interlock.MVTreatmentEn = 0;
+        self->interlock_table.minor_interlock.MVTreatmentEn = 0;
     }
 
     // ethercat
@@ -240,7 +240,56 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.serious_interlock.rtm_off_link = 0;
     }
+    if ((app_rtm->icm_current_state == MV_TERMINATE_SIG) && (state != STATE_MACHINE_TERMINATE))
+    {
+        self->interlock_table.serious_interlock.icm_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.icm_fault = 0;
+    }
+    if ((app_rtm->icm_current_state == MV_INTERRUPT_SIG) && (state != STATE_MACHINE_INTERRUPT))
+    {
+        self->interlock_table.minor_interlock.icm_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.minor_interlock.icm_fault = 0;
+    }
 
+    if ((app_rtm->bgm_current_state == MV_TERMINATE_SIG) && (state != STATE_MACHINE_TERMINATE))
+    {
+        self->interlock_table.serious_interlock.bgm_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.bgm_fault = 0;
+    }
+    if ((app_rtm->bgm_current_state == MV_INTERRUPT_SIG) && (state != STATE_MACHINE_INTERRUPT))
+    {
+        self->interlock_table.minor_interlock.bgm_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.minor_interlock.bgm_fault = 0;
+    }
+
+    if ((app_rtm->qam_current_state == MV_TERMINATE_SIG) && (state != STATE_MACHINE_TERMINATE))
+    {
+        self->interlock_table.serious_interlock.qam_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.qam_fault = 0;
+    }
+    if ((app_rtm->qam_current_state == MV_INTERRUPT_SIG) && (state != STATE_MACHINE_INTERRUPT))
+    {
+        self->interlock_table.minor_interlock.qam_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.minor_interlock.qam_fault = 0;
+    }
     if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.RTC_WD_OK_IN != 1)
     {
         self->interlock_table.serious_interlock.RTC_WD_OK = 1;
@@ -374,35 +423,35 @@ static State_t module_init(void *self, Event_t const *const e)
         // uint32_t ret = osThreadFlagsGet();
         // if(ret & APP_RTM_THREAD_FLAG_ETHERCAT_READY)
         // {
-            rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].tx_disable = MODULE_TX_ENABLE;
+        rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].tx_disable = MODULE_TX_ENABLE;
         // }
         // if(ret & APP_RTM_THREAD_FLAG_RTM_OFF_READY)
         // {
-            rtm->rtm_module_info[RTM_MODULE_RTM_OFF].tx_disable = MODULE_TX_ENABLE;
+        rtm->rtm_module_info[RTM_MODULE_RTM_OFF].tx_disable = MODULE_TX_ENABLE;
         // }
         // if(ret & APP_RTM_THREAD_FLAG_ICM_READY)
         // {
-            rtm->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_ENABLE;
-        // }       
+        rtm->rtm_module_info[RTM_MODULE_ICM].tx_disable = MODULE_TX_ENABLE;
+        // }
         // if(ret & APP_RTM_THREAD_FLAG_BGM_READY)
         // {
-            rtm->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_ENABLE;
+        rtm->rtm_module_info[RTM_MODULE_BGM].tx_disable = MODULE_TX_ENABLE;
         // }
         // if(ret & APP_RTM_THREAD_FLAG_QAM_READY)
         // {
-            rtm->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_ENABLE;
-        // }       
+        rtm->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_ENABLE;
+        // }
         // // if(ret & APP_RTM_THREAD_FLAG_BSM_READY)
         // // {
         // //     rtm->rtm_module_info[RTM_MODULE_BSM].tx_disable = MODULE_TX_ENABLE;
-        // // } 
-        if((rtm->manage_info.status_word != 0) ||
-           (rtm->rtm_module_info[RTM_MODULE_ICM].manage_info.status_word != 0) ||
-           (rtm->rtm_module_info[RTM_MODULE_BGM].manage_info.status_word != 0) ||
-           (rtm->rtm_module_info[RTM_MODULE_QAM].manage_info.status_word != 0) ||
-           (rtm->rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word != 0) ||
-           (rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word != 0) ||
-           (rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].manage_info.status_word != 0))
+        // // }
+        if ((rtm->manage_info.status_word != 0) ||
+            (rtm->rtm_module_info[RTM_MODULE_ICM].manage_info.status_word != 0) ||
+            (rtm->rtm_module_info[RTM_MODULE_BGM].manage_info.status_word != 0) ||
+            (rtm->rtm_module_info[RTM_MODULE_QAM].manage_info.status_word != 0) ||
+            (rtm->rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word != 0) ||
+            (rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word != 0) ||
+            (rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].manage_info.status_word != 0))
         {
             bit_set(rtm->manage_info.status_word, RTM_MAIN_INIT_STATE_BIT);
         }
@@ -902,7 +951,37 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
                                    &rtm->interlock_table,
                                    STATE_MACHINE_PREPARE,
                                    rtm);
-        status = HANDLED();
+        if (check_finish == 0)
+        {
+            int32_t fault_flag = fault_override(rtm);
+
+            if (((fault_flag & SERIOUS_INTERLOCK) != 0) || ((fault_flag & MINOR_INTERLOCK) != 0))
+            {
+                app_do_get(&(rtm->app_dido), &dido_structure);
+                dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 0;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+                app_do_set(&(rtm->app_dido), &dido_structure);
+                status = HANDLED();
+            }
+            else if (((fault_flag & WARNING_INTERLOCK) != 0) || ((fault_flag & NOT_READY_EVENT) != 0) || (fault_flag == NO_FAULT))
+            {
+                app_do_get(&(rtm->app_dido), &dido_structure);
+                dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 1;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 1;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+                app_do_set(&(rtm->app_dido), &dido_structure);
+                status = HANDLED();
+            }
+            else
+            {
+                status = HANDLED();
+            }
+        }
+        else
+        {
+            status = HANDLED();
+        }
         break;
     }
     case ERROR_SIG:
@@ -1006,7 +1085,7 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
-                status = TRAN(&system_mv_interrupt);
+                status = TRAN(&system_mv_terminate);
             }
             else if ((fault_flag & MINOR_INTERLOCK) != 0)
             {

@@ -2171,8 +2171,8 @@ PROTO TOBJ6000 InputData0x6000
 * SubIndex 54 - OutU8_fkp_day<br>
 * SubIndex 55 - OutU8_fkp_hour<br>
 * SubIndex 56 - OutU8_fkp_minute<br>
-* SubIndex 57 - OutU8_fkp_fractions<br>
-* SubIndex 58 - OutU8_reserved3<br>
+* SubIndex 57 - OutU8_fkp_totalFractions<br>
+* SubIndex 58 - OutU8_fkp_fractions<br>
 * SubIndex 59 - OutU32_cpg_led_blink<br>
 * SubIndex 60 - OutU8_cpg_vibration<br>
 */
@@ -2234,8 +2234,8 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex54 - OutU8_fkp_day */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex55 - OutU8_fkp_hour */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex56 - OutU8_fkp_minute */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex57 - OutU8_fkp_fractions */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex58 - OutU8_reserved3 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex57 - OutU8_fkp_totalFractions */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex58 - OutU8_fkp_fractions */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex59 - OutU32_cpg_led_blink */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex60 - OutU8_cpg_vibration */
 
@@ -2299,8 +2299,8 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU8_fkp_day\000"
 "OutU8_fkp_hour\000"
 "OutU8_fkp_minute\000"
+"OutU8_fkp_totalFractions\000"
 "OutU8_fkp_fractions\000"
-"OutU8_reserved3\000"
 "OutU32_cpg_led_blink\000"
 "OutU8_cpg_vibration\000\377";
 #endif //#ifdef _OBJD_
@@ -2367,8 +2367,8 @@ UINT8 OutU8_fkp_month; /* Subindex53 - OutU8_fkp_month */
 UINT8 OutU8_fkp_day; /* Subindex54 - OutU8_fkp_day */
 UINT8 OutU8_fkp_hour; /* Subindex55 - OutU8_fkp_hour */
 UINT8 OutU8_fkp_minute; /* Subindex56 - OutU8_fkp_minute */
-UINT8 OutU8_fkp_fractions; /* Subindex57 - OutU8_fkp_fractions */
-UINT8 OutU8_reserved3; /* Subindex58 - OutU8_reserved3 */
+UINT8 OutU8_fkp_totalFractions; /* Subindex57 - OutU8_fkp_totalFractions */
+UINT8 OutU8_fkp_fractions; /* Subindex58 - OutU8_fkp_fractions */
 UINT32 OutU32_cpg_led_blink; /* Subindex59 - OutU32_cpg_led_blink */
 UINT8 OutU8_cpg_vibration; /* Subindex60 - OutU8_cpg_vibration */
 } OBJ_STRUCT_PACKED_END
