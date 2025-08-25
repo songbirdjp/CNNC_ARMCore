@@ -6,6 +6,7 @@
 #include "motorctrl.h"
 #include "tim.h"
 #include "AFCapp.h"
+// #include "timestamp.h"
 
 static int8_t AFC_ParaSet_parse(struct afc_object *cmd)
 {
@@ -185,7 +186,7 @@ static int8_t AFC_AFTMotorCmd_parse(struct afc_object *cmd)
                 motorCtrlByPWM(MOTOR_AFT, -60);
                 osDelay(200);
                 motorCtrlByPWM(MOTOR_AFT, 0);
-                printf("A2222222222222\r\n");
+                // printf("A2222222222222\r\n");
             }
             printf("obj->encoderValTarget = %d\r\n",obj->encoderValTarget);
             *cmd->len = 0x04;
@@ -457,7 +458,17 @@ static int8_t uart_recv_heartbeat_cmd_callback(struct uart_protocol *const self,
 }
 static int8_t uart_recv_time_sync_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
 {
-    return 0;//timestamp_ns_set(*(uint64_t *)data);
+    uint64_t timestamp_ns = (uint64_t)data[0] | 
+                            (uint64_t)data[1] << 8 | 
+                            (uint64_t)data[2] << 16 | 
+                            (uint64_t)data[3] << 24 | 
+                            (uint64_t)data[4] << 32 | 
+                            (uint64_t)data[5] << 40 | 
+                            (uint64_t)data[6] << 48 | 
+                            (uint64_t)data[7] << 56;
+    // return timestamp_ns_set(timestamp_ns);
+    return 0;
+    //timestamp_ns_set(*(uint64_t *)data);
 }
 static int8_t uart_recv_set_cmd_callback(struct uart_protocol *const self, uint32_t id, const uint8_t *data, uint16_t *len, void *arg)
 {
@@ -492,13 +503,13 @@ static int8_t afc_uart_recv_entry(void *argument)
     int8_t ret = 0;
     uint8_t buf[AFC_UART_FRAME_SIZE_MAX] = {0};
 
-    // ret = uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID, uart_recv_heartbeat_timeout_callback, NULL);
+    ret = uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_RX_TIMEOUT_CB_ID, uart_recv_heartbeat_timeout_callback, NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_RX_CB_ID, uart_recv_heartbeat_cmd_callback,  NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_PNT_RX_CB_ID, uart_recv_time_sync_cmd_callback, NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_SET_RX_CB_ID, uart_recv_set_cmd_callback, NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_GET_RX_CB_ID, uart_recv_get_cmd_callback, NULL);
     ret |= uart_protocol_rx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_REBOOT_RX_CB_ID, uart_recv_reboot_cmd_callback, NULL);
-    // ret |= uart_protocol_tx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_TX_CB_ID, uart_send_heartbeat_cmd_callback, NULL);
+    ret |= uart_protocol_tx_RegisterCallback(uart_protocal_get(), UART_PROTOCOL_HEARTBEAT_TX_CB_ID, uart_send_heartbeat_cmd_callback, NULL);
     if (ret != 0)
     {
         LOG_E("uart_protocol_rx_RegisterCallback err: %d\r\n", ret);

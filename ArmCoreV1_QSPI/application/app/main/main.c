@@ -292,8 +292,25 @@ static int8_t system_heap_init(void)
     return 0;
 }
 
+
+typedef enum
+{
+    RESET_FLAG_NONE        = 0x00000000,
+    RESET_FLAG_POR         = (1U << 0),  // Power On Reset
+    RESET_FLAG_BOR         = (1U << 1),  // Brown Out Reset
+    RESET_FLAG_PIN         = (1U << 2),  // NRST Pin Reset
+    RESET_FLAG_SFT         = (1U << 3),  // Software Reset
+    RESET_FLAG_IWDG        = (1U << 4),  // Independent Watchdog Reset
+    RESET_FLAG_WWDG        = (1U << 5),  // Window Watchdog Reset
+    RESET_FLAG_LPWR        = (1U << 6),  // Low Power Reset
+    RESET_FLAG_D1          = (1U << 7),  // Domain1 Reset
+    RESET_FLAG_D2          = (1U << 8),  // Domain2 Reset
+    RESET_FLAG_CPU         = (1U << 9)   // CPU Reset Flag
+} ResetFlagMask_t;
+
 static int8_t system_reset_status_check(void)
 {
+    uint32_t flags = RESET_FLAG_NONE;
     if (__HAL_RCC_GET_FLAG(RCC_FLAG_CPURST) != 0)
     {
         if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST) != 0)
@@ -303,6 +320,7 @@ static int8_t system_reset_status_check(void)
         else
         {
             printf("CPU reset checked\r\n");
+            /*
             printf("RCC_FLAG_D1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_D1RST));
             printf("RCC_FLAG_D2RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_D2RST));
             printf("RCC_FLAG_BORRST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_BORRST));
@@ -312,6 +330,17 @@ static int8_t system_reset_status_check(void)
             printf("RCC_FLAG_IWDG1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_IWDG1RST));
             printf("RCC_FLAG_WWDG1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_WWDG1RST));
             printf("RCC_FLAG_LPWR1RST: %d\r\n", __HAL_RCC_GET_FLAG(RCC_FLAG_LPWR1RST));
+            */
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_PORRST))   flags |= RESET_FLAG_POR;
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_BORRST))   flags |= RESET_FLAG_BOR;
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_PINRST))   flags |= RESET_FLAG_PIN;
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_SFTRST))   flags |= RESET_FLAG_SFT;
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_IWDG1RST)) flags |= RESET_FLAG_IWDG;
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_WWDG1RST)) flags |= RESET_FLAG_WWDG;
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_LPWR1RST)) flags |= RESET_FLAG_LPWR;
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_D1RST))    flags |= RESET_FLAG_D1;
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_D2RST))    flags |= RESET_FLAG_D2;
+           if (__HAL_RCC_GET_FLAG(RCC_FLAG_CPURST))   flags |= RESET_FLAG_CPU;
         }
     }
 
