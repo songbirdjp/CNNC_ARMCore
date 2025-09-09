@@ -3,6 +3,7 @@
 #include "fpga_port.h"
 #include "init_call.h"
 #include "spi.h"
+#include "ulog.h"
 
 //SEND_CONTROL sndCtrl;
 static uint8_t totalCmdNum;
@@ -64,7 +65,7 @@ void makeSingleSendAry(uint8_t index, uint8_t * pData, uint8_t size, bool isFirs
     {
         if(sndCtrl.writeIndex[index] >= sndCtrl.singleSize[index])
         {
-            printf("Error data fill in: send buf %d is full!\r\n", index);
+            LOG_E("Error data fill in: send buf %d is full!\r\n", index);
             return;
         }
     }
@@ -74,24 +75,24 @@ void makeSingleSendAry(uint8_t index, uint8_t * pData, uint8_t size, bool isFirs
         if(pData == NULL){
             sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i] = 0;
             sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i + 1] = 0;
-          //  printf("fill 0!\r\n");
+          //  LOG_I("fill 0!\r\n");
         }
         else if(size == 1){
             sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i] = pData[i];
             sndCtrl.cmdSendBuf[sndCtrl.singleSize[index] - 1] += pData[i];//checksum
-           // printf("size = 1!\r\n");
+           // LOG_I("size = 1!\r\n");
         }
         else{
             sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i] = pData[i+1];
             sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i + 1] = pData[i];
             sndCtrl.cmdSendBuf[sndCtrl.singleSize[index] - 1] += (pData[i] + pData[i+1]);//checksum
-         //   printf("size > 1!\r\n");
+         //   LOG_I("size > 1!\r\n");
         }
     }
     sndCtrl.writeIndex[index] += size;//size;
 
-   // for(uint16_t j=0; j < sndCtrl.singleSize[index]; j++) printf("0x%x ", sndCtrl.cmdSendBuf[j]);
-   // printf("\r\n");
+   // for(uint16_t j=0; j < sndCtrl.singleSize[index]; j++) LOG_I("0x%x ", sndCtrl.cmdSendBuf[j]);
+   // LOG_I("\r\n");
     if(isCmd) return;
     if(sndCtrl.writeIndex[index] >= (sndCtrl.singleSize[index] - 1))
     {
@@ -125,7 +126,7 @@ void makeParamSendAry(uint8_t * pData)
     for(uint8_t i =0; i < 82; i++)  initPos[i] = 3250;
     makeSingleSendAry(24, (uint8_t*)initPos, 164,1,0);//0x40
     makeSingleSendAry(24, &pData[56], 2,0,0);//0x40
-  //  for(uint8_t i = 0; i < 2; i++)  printf("0x%x ", pData[56+i]);
+  //  for(uint8_t i = 0; i < 2; i++)  LOG_I("0x%x ", pData[56+i]);
     initPos[0] = initPos[2] = 35100;
     initPos[1] = initPos[3] = 5687;
     makeSingleSendAry(24, (uint8_t*)initPos, 8,0,0);//0x40
@@ -143,7 +144,7 @@ void dataOut_CS_Deselect(void)
 
 void FPGA_WriteByteArray(uint8_t *pTxData, uint16_t size)
 {
-   // printf("write param!!!");
+   // LOG_I("write param!!!");
     if(DMATransmitting)  return;
 
     dataOut_CS_Select();// cs high in interrupt callback
@@ -160,16 +161,16 @@ void FPGA_ReadByteArray(uint8_t *pRxData, uint16_t size)
    // memset(pTxData, 0, size);
 
  // HAL_SPI_Receive_DMA(&hspi2,  pRxData , size);
-  //  printf("read: ");
-  //  for(uint16_t i = 0; i < size; i++)  printf("0x%x ",pRxData[i]);
-  //  printf("\r\n");
+  //  LOG_I("read: ");
+  //  for(uint16_t i = 0; i < size; i++)  LOG_I("0x%x ",pRxData[i]);
+  //  LOG_I("\r\n");
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 {
     // if(hspi == &hspi3)
     {
-       // printf("send irq!!!\r\n");
+       // LOG_I("send irq!!!\r\n");
         dataOut_CS_Deselect();// set cs here
         DMATransmitting = 0;
     }
@@ -185,9 +186,9 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
       //  DMACnt++;
        // FPGA_ReadByteArray(recvBuf, RECV_BUF_LEN);
       //  DMAReceived = 1;
-         //  printf("0x%x 0x%x", dmaBuf[0], dmaBuf[1]);
-       // for(uint16_t i = 0; i < 8; i++)   printf("0x%x ",recvBufCpy[4+MAX_RECV_PACK_SIZE*i]);
-     //   printf("\r\n");
+         //  LOG_I("0x%x 0x%x", dmaBuf[0], dmaBuf[1]);
+       // for(uint16_t i = 0; i < 8; i++)   LOG_I("0x%x ",recvBufCpy[4+MAX_RECV_PACK_SIZE*i]);
+     //   LOG_I("\r\n");
     }
 }
 #endif
@@ -201,14 +202,14 @@ static int8_t recv_from_fpga_init(osMessageQueueId_t queue)
 
     if (queue == NULL)
     {
-        printf("queue is null\r\n");
+        LOG_E("queue is null\r\n");
         return -1;
     }
 
     ret = device_recv_from_fpga_init(DEVICE_RECV_FROM_FPGA_NAME_DEFAULT);
     if (ret != 0)
     {
-        printf("device %s init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        LOG_E("device %s init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
         return -2;
 
     }
@@ -216,21 +217,21 @@ static int8_t recv_from_fpga_init(osMessageQueueId_t queue)
     ret = device_recv_from_fpga_buffer_init(recv_buf, sizeof(recv_buf));
     if (ret != 0)
     {
-        printf("device %s buffer init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        LOG_E("device %s buffer init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
         return -3;
     }
 
     ret = device_recv_from_fpga_queue_init(queue);
     if (ret != 0)
     {
-        printf("device %s queue init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        LOG_E("device %s queue init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
         return -4;
     }
 
     // ret = device_recv_from_fpga_open();
     // if (ret != 0)
     // {
-    //     printf("device %s open err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+    //     LOG_E("device %s open err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
     //     return -5;
     // }
 
@@ -245,7 +246,7 @@ static int8_t send_to_fpga_init(void)
     ret = device_send_to_fpga_init(DEVICE_SEND_TO_FPGA_NAME_DEFAULT);
     if (ret != 0)
     {
-        printf("device %s init err:%d\r\n", DEVICE_SEND_TO_FPGA_NAME_DEFAULT, ret);
+        LOG_E("device %s init err:%d\r\n", DEVICE_SEND_TO_FPGA_NAME_DEFAULT, ret);
         return -1;
     }
 
@@ -282,17 +283,17 @@ static void fpga_communication_entry(void *argument)
     stat = osMessageQueueGet(send_to_fpga_queueHandle, &recv_buf, 0, osWaitForever);
     if (stat != osOK)
     {
-        printf("get queue err:%d\r\n", stat);
+        LOG_E("get queue err:%d\r\n", stat);
     }
   
     ret = send_to_fpga_write(recv_buf.buf, recv_buf.len, 1000);
     if (ret != 0)
     {
-        printf("send data to fpga err:%d\r\n", ret);
+        LOG_E("send data to fpga err:%d\r\n", ret);
     }
 
-    // printf("recv_buf.len:%d\r\n", recv_buf.len);
-    // printf("%x %x %x %x %x %x\r\n", recv_buf.buf[0], recv_buf.buf[1], recv_buf.buf[2], recv_buf.buf[3], recv_buf.buf[4], recv_buf.buf[5]);
+    // LOG_I("recv_buf.len:%d\r\n", recv_buf.len);
+    // LOG_I("%x %x %x %x %x %x\r\n", recv_buf.buf[0], recv_buf.buf[1], recv_buf.buf[2], recv_buf.buf[3], recv_buf.buf[4], recv_buf.buf[5]);
   }
   /* USER CODE END fpga_communication_entry */
 }
@@ -308,21 +309,21 @@ static int8_t fpga_thread_init(void)
     send_to_fpga_queueHandle = osMessageQueueNew (10, sizeof(struct send_to_fpga_msg), NULL);
     if (send_to_fpga_queueHandle == NULL)
     {
-        printf("queue send to fpga create failed\r\n");
+        LOG_E("queue send to fpga create failed\r\n");
         return -1;
     }
 
     recv_from_fpga_queueHandle = osMessageQueueNew (3, RECV_BUF_LEN, NULL);
     if (recv_from_fpga_queueHandle == NULL)
     {
-        printf("queue recv from fpga create failed\r\n");
+        LOG_E("queue recv from fpga create failed\r\n");
         return -1;
     }
 
     osThreadId_t fpga_communication_threadHandle = osThreadNew(fpga_communication_entry, NULL, &fpga_communication_thread_attributes);
     if (fpga_communication_threadHandle == NULL)
     {
-        printf("thread fpga communication create failed\r\n");
+        LOG_E("thread fpga communication create failed\r\n");
         return -1;
     }
 
@@ -399,7 +400,7 @@ void make_cmd_to_fpga(uint8_t cmd, uint8_t *pData)
     stat = osMessageQueuePut(send_to_fpga_queueHandle, &send_buf, 0, 1000);
     if (stat != osOK)
     {
-        printf("spi3 queue put err:%d\r\n", stat);
+        LOG_E("spi3 queue put err:%d\r\n", stat);
     }
 }
 
@@ -411,14 +412,14 @@ void make_para_for_fpga(uint8_t *pData)
     make_cmd_to_fpga(CMD_BANK_SET, &pData[6]);//0
     make_cmd_to_fpga(CMD_TAR_MOD, &pData[80]);//1
     make_cmd_to_fpga(CMD_CTRL_VALID, &pData[660]);//0x11
-   // for(i = 0; i < 12; i++) printf("%x ",pData[660+i]);
-  //  printf("\r\n");
+   // for(i = 0; i < 12; i++) LOG_I("%x ",pData[660+i]);
+  //  LOG_I("\r\n");
     make_cmd_to_fpga(CMD_SCREEN_2ND, &pData[672]);//0x12
-  //  for(i = 0; i < 12; i++) printf("%x ",pData[672+i]);
-   // printf("\r\n");
+  //  for(i = 0; i < 12; i++) LOG_I("%x ",pData[672+i]);
+   // LOG_I("\r\n");
     make_cmd_to_fpga(CMD_INPLACE_STOP, &pData[684]);//0x13
-  //  for(i = 0; i < 12; i++) printf("%x ",pData[684+i]);
-   // printf("\r\n");
+  //  for(i = 0; i < 12; i++) LOG_I("%x ",pData[684+i]);
+   // LOG_I("\r\n");
     make_cmd_to_fpga(CMD_POS_MNI, &pData[40]);//0x14
     make_cmd_to_fpga(CMD_WAIT_POS, &pData[56]);//0x18
     memcpy(buf, &pData[496], 164);
@@ -456,7 +457,7 @@ int8_t recv_from_fpga_callback_register(int8_t (*cb)(void *arg))
     int8_t ret = device_recv_from_fpga_callback_register(cb);
     if (ret != 0)
     {
-        printf("device %s callback register err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        LOG_E("device %s callback register err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
         return -1;
     }
 

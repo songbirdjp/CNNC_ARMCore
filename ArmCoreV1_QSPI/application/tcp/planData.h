@@ -19,6 +19,7 @@ extern "C" {
 #define RT_SDRAM_PAYLOAD_LEN  (RT_SAVE_PAYLOAD_LEN+4)       //+ 2 leaf pos, because get 80 leafs pos from PLC, but fpga need 82 leafs pos
 
 enum planCommand {NO_USE,SEND_PLAN,CLOSE_PLAN};
+enum feedbackType {PLAN,ACTIVE};
 typedef struct {
     uint16_t frmTag;
     uint16_t frmType;
@@ -105,7 +106,7 @@ void planDataInit(void);
 void clearPlan(void);
 void setTCPSendControlSignal(uint8_t itemIndex, int32_t setVal);
 uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType JawPos);
-void updateNRTFeedback(void);
+void updateNRTFeedback(enum feedbackType type);
 
 #ifdef __cplusplus
 }

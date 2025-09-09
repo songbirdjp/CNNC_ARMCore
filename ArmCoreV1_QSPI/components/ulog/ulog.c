@@ -229,7 +229,7 @@ static void ulog_output(ulog_level_t severity, char *msg)
 #endif
 
 #ifdef USING_ULOG_THREAD
-    osStatus_t stat = osMessageQueuePut (ulog_output_queueHandle, msg_buf, 0, 1000);
+    osStatus_t stat = osMessageQueuePut (ulog_output_queueHandle, msg_buf, 0, 100);
     if (stat != osOK)
     {
         printf("ulog output queue put err:%d\r\n", stat);
@@ -334,7 +334,7 @@ static int8_t ulog_thread_init(void)
         return -1;
     }
 
-    ulog_output_queueHandle = osMessageQueueNew (16, ULOG_MAX_MESSAGE_LENGTH, NULL);
+    ulog_output_queueHandle = osMessageQueueNew (64, ULOG_MAX_MESSAGE_LENGTH, NULL);
     if (ulog_output_queueHandle == NULL)
     {
         printf("queue ulog output create failed\r\n");

@@ -83,5 +83,6 @@ int32_t tcp_send_process(uint8_t s);
 bool operateSendMutex(bool opType, uint8_t itemIndex, uint32_t timeout);
 bool isSendPeriod(uint8_t sn, uint8_t itemIndex);// to inquire if current loop is sending loop for  a group of period send data
 uint8_t isClientTypeMatch(uint8_t sn, uint8_t itemIndex);
+void clearClientInfo(uint8_t s);
 extern void nrtRecvDataProcess(APP_DATA_RECV* info);
 #endif //F407_W5500_HTTPSERVER_H

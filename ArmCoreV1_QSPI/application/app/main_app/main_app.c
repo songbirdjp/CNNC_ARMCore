@@ -6,6 +6,7 @@
 #include "init_call.h"
 #include "websocket.h"
 #include "planData.h"
+#include "ulog.h"
 
 // #define PARAM_SETTING_TAG 1
 // #define PLAN_DATA_SETTING_TAG 2
@@ -31,7 +32,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
 
     if (((uint8_t)checkSum != recvBuf[RECV_BUF_LEN - 1]) || (checkSum == 0))
     {
-        printf("Checksum err 0x%x 0x%x 0x%x 0x%x 0x%x\r\n", recvBuf[0],recvBuf[1],recvBuf[2],recvBuf[3],recvBuf[4]);
+        LOG_E("Checksum err 0x%x 0x%x 0x%x 0x%x 0x%x\r\n", recvBuf[0],recvBuf[1],recvBuf[2],recvBuf[3],recvBuf[4]);
         return -1;
     }
     else
@@ -40,36 +41,36 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
         operateSendMutex(1, 0, osWaitForever);// 1:Acquire 0:Release
         if (recvBuf[4] == PACKF0_CMD) 
         {
-           // printf("F0\r\n");
+           // LOG_I("F0\r\n");
             // for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
             // {   //RT 0 - 165 ：82 leaf and carrier pos
             //     rtFeedback.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
             // }
             memcpy(rtFeedback.rtPosUpload, &recvBuf[FPGA_RT_UPLOAD_START], 166);
-          //  printf("car %d\r\n",rtFeedback.rtPosUpload[82]);
+          //  LOG_E("car %d\r\n",rtFeedback.rtPosUpload[82]);
             rtFeedback.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
             rtFeedback.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
             rtFeedback.MlcCurFsm = recvBuf[FPGA_RT_UPLOAD_START+168];//RT 168
-          //  printf("sta: %d %d %d %d\r\n", rtFeedback.faultInfo1,rtFeedback.faultInfo2, rtFeedback.MlcCurFsm,recvBuf[FPGA_RT_UPLOAD_START+169]);
+          //  LOG_I("sta: %d %d %d %d\r\n", rtFeedback.faultInfo1,rtFeedback.faultInfo2, rtFeedback.MlcCurFsm,recvBuf[FPGA_RT_UPLOAD_START+169]);
           //  rtFeedback.jawTowardPos[X] = (recvBuf[170 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 171];//RT 170 - 171
          //   rtFeedback.jawTowardPos[Y] = (recvBuf[172 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 173];//RT 172 - 173
             memcpy(&rtFeedback.jawTowardPos[X], &recvBuf[FPGA_RT_UPLOAD_START+170], 4);
-           // printf("toward %d %d\r\n",rtFeedback.jawTowardPos[X],rtFeedback.jawTowardPos[Y]);
-          //  printf("sta 0x%x 0x%x 0x%x\r\n",rtFeedback.faultInfo1,rtFeedback.faultInfo2,rtFeedback.MlcCurFsm);
+           // LOG_I("toward %d %d\r\n",rtFeedback.jawTowardPos[X],rtFeedback.jawTowardPos[Y]);
+          //  LOG_I("sta 0x%x 0x%x 0x%x\r\n",rtFeedback.faultInfo1,rtFeedback.faultInfo2,rtFeedback.MlcCurFsm);
             // for (i = 0; i < 164; i += 2) 
             // {  //NRT 0 - 163 ：82 leaf second pos
             //     secondPosFeedback.leafSecondPos[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];                            
             // }
             memcpy(secondPosFeedback.leafSecondPos, &recvBuf[FPGA_NRT_UPLOAD_START], 164);
-          //  printf("sec %d\r\n",secondPosFeedback.leafSecondPos[80]); 
+          //  LOG_I("sec %d\r\n",secondPosFeedback.leafSecondPos[80]); 
            // interlockFeedback.boardLoss = recvBuf[FPGA_NRT_UPLOAD_START + 168];//NRT 166 bit6-7
           //  interlockFeedback.FPGAStatus = (recvBuf[FPGA_NRT_UPLOAD_START + 166] << 8) + recvBuf[FPGA_NRT_UPLOAD_START + 167]; //NRT 166-167 
             memcpy(&interlockFeedback.FPGAStatus, &recvBuf[FPGA_NRT_UPLOAD_START + 166], 2);  
-         //   printf("FPGAStatus %x\r\n",interlockFeedback.FPGAStatus);      
+         //   LOG_I("FPGAStatus %x\r\n",interlockFeedback.FPGAStatus);      
         }
         else if (recvBuf[4] == PACKF1_CMD) 
         {
-           // printf("F1\r\n");
+           // LOG_I("F1\r\n");
             // for (i = 0; i < (RT_FPGA_UPLOAD_PAYLOAD_LEN - 2); i += 2) 
             // {   //RT 0 - 165 ：82 leaf and carrier pos
             //     rtFeedback.rtPosUpload[i/2] = (recvBuf[i + FPGA_RT_UPLOAD_START] << 8) + recvBuf[i + FPGA_RT_UPLOAD_START + 1];
@@ -81,7 +82,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
            // rtFeedback.jawTowardPos[X] = (recvBuf[170 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 171];//RT 170 - 171
           //  rtFeedback.jawTowardPos[Y] = (recvBuf[172 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 173];//RT 172 - 173
             memcpy(&rtFeedback.jawTowardPos[X], &recvBuf[FPGA_RT_UPLOAD_START+170], 4);
-           // printf("jaw %d %d\r\n", rtFeedback.jawTowardPos[X],rtFeedback.jawTowardPos[Y]);
+           // LOG_I("jaw %d %d\r\n", rtFeedback.jawTowardPos[X],rtFeedback.jawTowardPos[Y]);
             // for (i = 0; i < 166; i += 2) 
             // {//NRT 0 - 165 ：82 leaf and carrier interlock
             //    interlockFeedback.leafNcarInterlock[i/2] = (recvBuf[i + FPGA_NRT_UPLOAD_START] << 8) + recvBuf[i + FPGA_NRT_UPLOAD_START + 1];
@@ -90,7 +91,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
             memcpy(&interlockFeedback.versionFPGA, &recvBuf[FPGA_NRT_UPLOAD_START + 166], 4);
         //    interlockFeedback.versionFPGA = 
         //        (recvBuf[FPGA_NRT_UPLOAD_START + 166]<<24)+(recvBuf[FPGA_NRT_UPLOAD_START + 167]<<16)+(recvBuf[FPGA_NRT_UPLOAD_START + 168]<<8)+recvBuf[FPGA_NRT_UPLOAD_START + 169];
-        //    printf("ver %x\r\n",interlockFeedback.versionFPGA);       
+        //    LOG_I("ver %x\r\n",interlockFeedback.versionFPGA);       
         }
         operateSendMutex(0, 0, 0);
         #endif
@@ -105,6 +106,7 @@ static int8_t realtime_ethercat_data_process(void)
 {
     static uint16_t oldState, oldPlanCmd, oldRadiationIndex, oldBeamIndex, oldErrState;
     struct JawFlagType JawState;
+    static uint8_t cnt;
 
     TOBJ7010 recv_data = {0};
     TOBJ6000 send_data = {0};
@@ -113,7 +115,7 @@ static int8_t realtime_ethercat_data_process(void)
     TOBJ6000 *send = (TOBJ6000 *)ethercat_send_data_get((uint16_t *)&send_data, sizeof(send_data));
     if (recv == NULL || send == NULL)
     {
-        printf("ethercat data get failed\r\n");
+        LOG_E("ethercat data get failed\r\n");
         return -1;
     }
  
@@ -122,6 +124,7 @@ static int8_t realtime_ethercat_data_process(void)
   //  memcpy(&send->InfoIn[0], &recv->InfoOut[0], sizeof(UINT16) * 8);         //rt upload， echo
     memcpy(send, recv, sizeof(UINT16) * 8);
 #else
+    cnt++;
     send->InU16_CrtFsmState = rtFeedback.MlcCurFsm;
     send->InU16_BeamIndexFB = oldBeamIndex;
     send->InU16_RidiationIndexFB = oldRadiationIndex;
@@ -130,19 +133,23 @@ static int8_t realtime_ethercat_data_process(void)
 #endif
     send->InU16_PlanCmdFB = recv->OutU16_PlanCmd;
     send->InU16_FaultInfo1 = rtFeedback.faultInfo1;
-   // printf("%x\r\n", rtFeedback.faultInfo1);
+    if(cnt++ >= 100){
+        if((send->InU16_FaultInfo1 & 0x800) == 0x800)   send->InU16_FaultInfo1 &= ~0x800;
+        else    send->InU16_FaultInfo1 |= 0x800;
+        cnt = 0;
+    }    
+   // LOG_I("%x\r\n", rtFeedback.faultInfo1);
   //  if(interlockFeedback.boardLoss&0x0007)  send->InU16_FaultInfo1 |= 0x0002;
-    if(tcp_link_status_get() == false) 
-    {
-        send->InU16_FaultInfo1 |= 0x400;
-    //   //  printf("tcp feedback\r\n");
-    }
+  //  if(tcp_link_status_get() == false) 
+  //  {
+  //      send->InU16_FaultInfo1 |= 0x400;
+  //  }
    // send->InU16_FaultInfo2 = rtFeedback.faultInfo2&0x00ff;
     send->InU16_FaultInfo2 = ((rtFeedback.jawInfo[Y]&0x00f0)<< 4) + ((rtFeedback.jawInfo[X]&0x00f0)<< 8) + (rtFeedback.faultInfo2&0x00ff);
     memcpy(send->InAU16_LeafCrtPos, rtFeedback.rtPosUpload, sizeof(uint16_t) * (8 * 10 + 3));
     send->InAU16_JawCrtPos[X] = rtFeedback.jawRTPos[X];
     send->InAU16_JawCrtPos[Y] = rtFeedback.jawRTPos[Y];
-   // printf("self %d %d\r\n",rtFeedback.jawRTPos[X],rtFeedback.jawRTPos[Y]);
+   // LOG_E("self %d %d\r\n",rtFeedback.jawRTPos[X],rtFeedback.jawRTPos[Y]);
     send->InU16_JawInfo = ((rtFeedback.jawInfo[Y]&0x0f)<< 4) + (rtFeedback.jawInfo[X]&0x0f);
 
     rtBeamData.fsmState = recv->OutU16_FsmStateSetting;   //save rt cmd
@@ -153,7 +160,7 @@ static int8_t realtime_ethercat_data_process(void)
 
     if(oldState != rtBeamData.fsmState)
     {
-        printf("fsm state: %d -> %d\r\n",oldState,rtBeamData.fsmState);
+        LOG_I("fsm state: %d -> %d\r\n",oldState,rtBeamData.fsmState);
         uint8_t newState = rtBeamData.fsmState;
         make_cmd_to_fpga(CMD_STA_REQ, &newState);
         oldState = rtBeamData.fsmState;
@@ -164,7 +171,7 @@ static int8_t realtime_ethercat_data_process(void)
     }
     if(oldPlanCmd != rtBeamData.planCmd)
     {
-        printf("plan cmd: %d -> %d\r\n",oldPlanCmd,rtBeamData.planCmd);  
+        LOG_I("plan cmd: %d -> %d\r\n",oldPlanCmd,rtBeamData.planCmd);  
         switch(rtBeamData.planCmd)
         {
         case NO_USE://Plan send finish
@@ -199,7 +206,7 @@ static int8_t realtime_ethercat_data_process(void)
     {
         if((oldBeamIndex != rtBeamData.beamIndex) || (oldRadiationIndex != rtBeamData.radiationIndex))
         {
-           // printf("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
+           // LOG_I("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
             if(sendCPtoDevice(rtBeamData.beamIndex, rtBeamData.radiationIndex, JawState))
             {
                 oldRadiationIndex = rtBeamData.radiationIndex;
@@ -219,7 +226,7 @@ static int8_t realtime_ethercat_data_process(void)
         if((isClientTypeMatch(sn, 0) > 0) && isSendPeriod(sn, 0))
         {
             operateSendMutex(1, 0, osWaitForever);//require
-            updateNRTFeedback();
+            updateNRTFeedback(ACTIVE);
             operateSendMutex(0, 0, 0);//release
         }  
         setTCPSendControlSignal(0, TCP_SEND_PERIOD);
@@ -254,28 +261,28 @@ static int8_t data_process_init(void)
     ret = tcp_establish_cb_register(non_realtime_tcp_callback);
     if (ret != 0)
     {
-        printf("tcp callback register err:%d\r\n", ret);
+        LOG_E("tcp callback register err:%d\r\n", ret);
         return ret;
     }
 
     ret = tcp_recv_data_callback_register(non_realtime_tcp_recv_data_callback);
     if (ret != 0)
     {
-        printf("tcp recv data callback register err:%d\r\n", ret);
+        LOG_E("tcp recv data callback register err:%d\r\n", ret);
         return ret;
     }
 
     ret = ethercat_slave_appl_cb_register(data_process_eventHandle, DATA_PROCESS_LAN_EVENT, realtime_ethercat_data_process);
     if (ret != 0)
     {
-        printf("ethercat callback register err:%d\r\n", ret);
+        LOG_E("ethercat callback register err:%d\r\n", ret);
         return ret;
     }
 
     ret = recv_from_fpga_callback_register(non_realtime_fpga_recv_data_callback);
     if (ret != 0)
     {
-        printf("recv fpga callback register err:%d\r\n", ret);
+        LOG_E("recv fpga callback register err:%d\r\n", ret);
         return ret;
     }
 
@@ -314,11 +321,11 @@ static void data_process_entry(void *argument)
         if (stat == osOK)
         {
             non_realtime_fpga_data_process(recv_from_fpga_buf);
-          // printf("buf: %x %x %x %x\r\n", recv_from_fpga_buf[0], recv_from_fpga_buf[1], recv_from_fpga_buf[2], recv_from_fpga_buf[3]);
+          // LOG_I("buf: %x %x %x %x\r\n", recv_from_fpga_buf[0], recv_from_fpga_buf[1], recv_from_fpga_buf[2], recv_from_fpga_buf[3]);
         }
         else
         {
-            printf("no msg in spi2 rx queue:%d\r\n", stat);
+            LOG_E("no msg in spi2 rx queue:%d\r\n", stat);
         }
     }
 
@@ -330,12 +337,12 @@ static void data_process_entry(void *argument)
     #ifdef IS_TCP_SERVER
           tcp_recv_process(&tcp_info);
     #endif
-            // printf("tcp_info len:%d\r\n", tcp_info.Len);
-            // printf("tcp_info %x %x %x %x\r\n", tcp_info.gDATABUF[0], tcp_info.gDATABUF[1], tcp_info.gDATABUF[2], tcp_info.gDATABUF[3]);
+            // LOG_I("tcp_info len:%d\r\n", tcp_info.Len);
+            // LOG_I("tcp_info %x %x %x %x\r\n", tcp_info.gDATABUF[0], tcp_info.gDATABUF[1], tcp_info.gDATABUF[2], tcp_info.gDATABUF[3]);
         }
         else
         {
-            printf("no msg in tcp rx queue:%d\r\n", stat);
+            LOG_E("no msg in tcp rx queue:%d\r\n", stat);
         }
     } 
   }
@@ -346,7 +353,7 @@ static int8_t main_app_thread_init(void)
 {
     osThreadAttr_t recv_data_process_thread_attributes = {
     .name = "recv_data_process_thread",
-    .stack_size = 3072 * 4,
+    .stack_size = 4096 * 4,
     .priority = (osPriority_t) osPriorityAboveNormal,
     };
 
@@ -359,21 +366,21 @@ static int8_t main_app_thread_init(void)
     data_process_eventHandle = osEventFlagsNew(NULL);
     if (data_process_eventHandle == NULL)
     {
-        printf("event data process create failed\r\n");
+        LOG_E("event data process create failed\r\n");
         return -1;
     }
 
     // osThreadId_t DataProcessHandle = osThreadNew(DataProccessTask, NULL, &DataProcess_attributes);
     // if (DataProcessHandle == NULL)
     // {
-    //     printf("thread data process create failed\r\n");
+    //     LOG_E("thread data process create failed\r\n");
     //     return -1;
     // }
 
     osThreadId_t recv_data_process_threadHandle = osThreadNew(data_process_entry, NULL, &recv_data_process_thread_attributes);
     if (recv_data_process_threadHandle == NULL)
     {
-        printf("thread recv data process create failed\r\n");
+        LOG_E("thread recv data process create failed\r\n");
         return -1;
     }
 

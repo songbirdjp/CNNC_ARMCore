@@ -508,7 +508,7 @@ int8_t fram_log_write(uint8_t *buf, uint16_t len)
 
     if (len > BYTE_LEN_PER_LINE)
     {
-        printf("write len err:%d\r\n", len);
+       // printf("write len err:%d\r\n", len);
         return -3;
     }
 

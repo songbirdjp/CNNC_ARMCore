@@ -6,6 +6,7 @@
 #include "main.h"
 #include "websocket.h"
 #include "gpio_port.h"
+#include "ulog.h"
 
 #define SOCK_TCPS   0
 
@@ -90,19 +91,20 @@ static int8_t do_tcp_server_send(uint8_t sn)
     switch (getSn_SR(sn))
     {
     case SOCK_INIT:
-       // printf("SOCK_INIT\r\n");
-        listen(sn);
+       // LOG_I("SOCK_INIT\r\n");
+        ret = listen(sn);
         break;
     case SOCK_ESTABLISHED:
-       // printf("SOCK_ESTABLISHED\r\n");
+       // LOG_I("SOCK_ESTABLISHED\r\n");
         tcp_establish_cb(sn); // period feedback here
         break;
     case SOCK_CLOSE_WAIT:
         osDelay(500);
-        close(sn);
+        ret = disconnect(sn);
         break;
     case SOCK_CLOSED:
-      //  printf("SOCK_CLOSED\r\n");
+      //  LOG_I("SOCK_CLOSED\r\n");
+        clearClientInfo(sn);
         ret = socket(sn, Sn_MR_TCP, 80, 0);
         break;
     default:    break;
@@ -121,7 +123,7 @@ static int8_t do_tcp_client(uint8_t sn)
             ret = socket(sn, Sn_MR_TCP, 8123, Sn_MR_ND);
             if (ret < 0)
             {
-                printf("tcp socket err:%d\r\n", ret);
+                LOG_E("tcp socket err:%d\r\n", ret);
             }
             break;
             
@@ -129,7 +131,7 @@ static int8_t do_tcp_client(uint8_t sn)
             ret = connect(sn, remote_ip, remote_port);/*socket连接服务器*/
             if (ret != SOCK_OK)
             {
-                printf("tcp connect err:%d\r\n", ret);
+                LOG_E("tcp connect err:%d\r\n", ret);
             }
             break;
 
@@ -139,7 +141,7 @@ static int8_t do_tcp_client(uint8_t sn)
 
         case SOCK_CLOSE_WAIT:        /*socket处于等待关闭状态*/
             close(sn);
-            printf("SOCK_CLOSE_WAIT\r\n");
+            LOG_I("SOCK_CLOSE_WAIT\r\n");
             break;
     }
 
@@ -159,7 +161,7 @@ static int8_t tcp_init(osMessageQueueId_t queue)
     ret = device_w5500_init(local_netinfo_get(), DEVICE_NAME_DEFAULT);
     if (ret != 0)
     {
-        printf("device w5500 init err\r\n");
+        LOG_E("device w5500 init err\r\n");
         return ret;
     }
 
@@ -208,7 +210,7 @@ static void TCPSendTask(void *argument)
     ret = tcp_init(tcp_rx_queueHandle);
     if (ret != 0)
     {
-        printf("tcp init err\r\n");
+        LOG_E("tcp init err\r\n");
         return;
     }
     /* Infinite loop */
@@ -217,7 +219,7 @@ static void TCPSendTask(void *argument)
         osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
         while(tcp_link_detect() == false)
         {
-            // printf("tcp link off\r\n");
+            // LOG_E("tcp link off\r\n");
 
             tcp_link_state_recover();
 
@@ -230,7 +232,7 @@ static void TCPSendTask(void *argument)
             ret = do_tcp_server_send(i);
             if (ret != 0)
             {
-                printf("do_tcp_client err:%d sn = %d\r\n", ret, i);
+                LOG_E("do_tcp_client err:%d sn = %d\r\n", ret, i);
             }
         }
     #else
@@ -259,7 +261,7 @@ static void tcp_recv_entry(void *argument)
         ret = tcp_data_recv_with_block();
         if (ret < 0)
         {
-            printf("tcp recv data err:%d\r\n", ret);
+            LOG_E("tcp recv data err:%d\r\n", ret);
         }
 
         // osDelay(1);
@@ -274,7 +276,7 @@ static void tcp_recv_entry(void *argument)
         ret = device_w5500_irq_process();
         if (ret < 0)
         {
-            printf("irq process err:%d\r\n", ret);
+            LOG_E("irq process err:%d\r\n", ret);
         }
 
         osMutexRelease(tcp_access_mutexHandle);
@@ -305,27 +307,27 @@ static int8_t tcp_thread_init(void)
     tcp_access_mutexHandle = osMutexNew(&tcp_access_mutex_attributes);
     if (tcp_access_mutexHandle == NULL)
     {
-        printf("mutex tcp access create failed\r\n");
+        LOG_E("mutex tcp access create failed\r\n");
         return -1;
     }
 
     tcp_rx_queueHandle = osMessageQueueNew (3, sizeof(TCP_DATA_t), &tcp_rx_queue_attributes);
     if (tcp_rx_queueHandle == NULL)
     {
-        printf("queue tcp rx create failed\r\n");
+        LOG_E("queue tcp rx create failed\r\n");
         return -1;
     }
 
     osThreadId_t tcp_irq_threadHandle = osThreadNew(tcp_recv_entry, NULL, &tcp_irq_thread_attributes);
     if (tcp_irq_threadHandle == NULL)
     {
-        printf("thread tcp irq create failed\r\n");
+        LOG_E("thread tcp irq create failed\r\n");
         return -1;
     }
     osThreadId_t tcp_sendHandle = osThreadNew(TCPSendTask, NULL, &tcp_send_attributes);
     if (tcp_sendHandle == NULL)
     {
-        printf("thread tcp create failed\r\n");
+        LOG_E("thread tcp create failed\r\n");
         return -1;
     }
 
@@ -345,7 +347,7 @@ int32_t tcp_client_data_send(uint8_t s, uint8_t *buf, uint16_t len)
     int32_t ret = send(s, buf, len);
     if (ret <= SOCK_BUSY)
     {
-        printf("tcp send err:%d\r\n", ret);
+        LOG_E("tcp send err:%d\r\n", ret);
     }
 
     osMutexRelease(tcp_access_mutexHandle);

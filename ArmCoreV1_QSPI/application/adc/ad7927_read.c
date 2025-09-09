@@ -1,4 +1,5 @@
 #include "ad7927_read.h"
+#include "ulog.h"
 
 static uint16_t spiSixteenBits =(
         (AD7927_CFGREG_11 << (15 - BUFFER))|
@@ -40,9 +41,9 @@ uint16_t ADCgetValue(SPI_HandleTypeDef* hspi, uint8_t channel)
  
 
     _spiADCStatus = HAL_SPI_TransmitReceive(hspi,&spiSixteenBits,&adcResult,1, 1000);
-    if(_spiADCStatus > 0)  printf("spi4 recv status = %d\r\n",_spiADCStatus);
+    if(_spiADCStatus > 0)  LOG_I("spi4 recv status = %d\r\n",_spiADCStatus);
 
     adcResult &= 0x0FFF;
-   // printf("adcResult = ch%d %d\r\n",channel, adcResult);
+   // LOG_I("adcResult = ch%d %d\r\n",channel, adcResult);
     return adcResult;
 }

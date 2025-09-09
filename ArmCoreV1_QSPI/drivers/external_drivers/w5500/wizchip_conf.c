@@ -297,7 +297,7 @@ int8_t ctlwizchip(ctlwizchip_type cwtype, void *arg)
     uint8_t tmp = 0;
 #endif
     uint8_t *ptmp[2] = {0, 0};
-   // printf("cwtype: %d\r\n", cwtype);
+   // LOG_I("cwtype: %d\r\n", cwtype);
     switch (cwtype)
     {
         case CW_RESET_WIZCHIP:
@@ -974,15 +974,15 @@ void NetworkParameterConfiguration(void)  //Intialize the network information to
     ctlnetwork(CN_SET_NETINFO, (void *) &gWIZNETINFO);
     ctlnetwork(CN_GET_NETINFO, (void *) &tempINFO);
     ctlwizchip(CW_GET_ID, (void *) tmpstr);
-  //  printf("set -- mac:0x%x.0x%x.0x%x.0x%x.0x%x.0x%x ip:%d.%d.%d.%d mask:%d.%d.%d.%d\r\n", gWIZNETINFO.mac[0], gWIZNETINFO.mac[1], gWIZNETINFO.mac[2], gWIZNETINFO.mac[3],gWIZNETINFO.mac[4], gWIZNETINFO.mac[5], gWIZNETINFO.ip[0], gWIZNETINFO.ip[1], gWIZNETINFO.ip[2], gWIZNETINFO.ip[3],gWIZNETINFO.sn[0], gWIZNETINFO.sn[1], gWIZNETINFO.sn[2], gWIZNETINFO.sn[3]);
-    printf("get --ip:%d.%d.%d.%d\r\n", tempINFO.ip[0], tempINFO.ip[1], tempINFO.ip[2], tempINFO.ip[3]);
+  //  LOG_I("set -- mac:0x%x.0x%x.0x%x.0x%x.0x%x.0x%x ip:%d.%d.%d.%d mask:%d.%d.%d.%d\r\n", gWIZNETINFO.mac[0], gWIZNETINFO.mac[1], gWIZNETINFO.mac[2], gWIZNETINFO.mac[3],gWIZNETINFO.mac[4], gWIZNETINFO.mac[5], gWIZNETINFO.ip[0], gWIZNETINFO.ip[1], gWIZNETINFO.ip[2], gWIZNETINFO.ip[3],gWIZNETINFO.sn[0], gWIZNETINFO.sn[1], gWIZNETINFO.sn[2], gWIZNETINFO.sn[3]);
+    LOG_I("get --ip:%d.%d.%d.%d\r\n", tempINFO.ip[0], tempINFO.ip[1], tempINFO.ip[2], tempINFO.ip[3]);
 }
 
 #if 0
 //W5500初始化
 void W5500_ChipInit(void)
 {
-    printf("W5500_ChipInit\r\n");
+    LOG_I("W5500_ChipInit\r\n");
     W5500_RESET();
 
    // reg_wizchip_cris_cbfunc(SPI_CrisEnter, SPI_CrisExit); //注册临界函数
@@ -997,7 +997,7 @@ void W5500_ChipInit(void)
 void SPI_WriteByte(uint8_t TxData)
 {
     uint8_t data;
-  //  printf("TxData: 0x%x data: 0x%x\r\n", TxData ,data);
+  //  LOG_I("TxData: 0x%x data: 0x%x\r\n", TxData ,data);
     // HAL_SPI_TransmitReceive(&hspi1, &TxData, &data, 1, 100);
 }
 

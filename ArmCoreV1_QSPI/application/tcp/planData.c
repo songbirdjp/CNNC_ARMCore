@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include "main_app.h"
 #include "hw_crc.h"
-#include "carrierCal.h"			   
+#include "carrierCal.h"	
+#include "ulog.h"		   
 
 #define PARAM_SETTING_TAG 1
 #define PLAN_DATA_SETTING_TAG 2
@@ -64,7 +65,7 @@ uint32_t Crc32Buffer(uint32_t crc, uint8_t *buf, uint32_t size)
 
 int8_t planDataCheck(uint8_t *pSDBeamStart)
  {
-    uint8_t *pBeamData = pSDBeamStart, i;
+    uint8_t *pBeamData = pSDBeamStart, i,j;
     uint16_t leafPos[80], max, min,jawTarget[2],totalRI,beamID,radiationID;
     SD_BEAM_DATA beamStruct= {0};
   
@@ -74,35 +75,38 @@ int8_t planDataCheck(uint8_t *pSDBeamStart)
         pBeamData += sizeof(beamStruct.totalRI); //skip total RI 
         beamID = (pBeamData[1] << 8) + pBeamData[0];
         pBeamData += sizeof(beamStruct.beamID);//skip beam index
-        printf("totalRI %d,beamID %d\r\n", totalRI, beamID);
+        LOG_I("totalRI %d,beamID %d\r\n", totalRI, beamID);
         for(uint16_t ri = 1; ri <= totalRI; ri++)
         {
             radiationID = (pBeamData[1] << 8) + pBeamData[0];
-          //  printf("radiationID %d,", radiationID);
+          //  LOG_I("radiationID %d,", radiationID);
             pBeamData += sizeof(beamStruct.riStruct.RI) + sizeof(beamStruct.riStruct.bigLeafTarget1); //skip (RI index + 1st big leaf)
-            for (i = 0; i < 80; i++) {
-                leafPos[i] = (pBeamData[2*i+1] << 8) + pBeamData[2*i];
-               // printf("leaf pos %d,", leafPos[i]);
+            for (j = 0; j < 80; j++) {
+                leafPos[j] = (pBeamData[2*j+1] << 8) + pBeamData[2*j];
+               // LOG_I("leaf pos %d,", leafPos[i]);
             }
             max = leafPos[0];//get max leaf pos
-            for (i = 1; i < 80; i++) {
-                if (max < leafPos[i])   max = leafPos[i];
-            //  if (min > leafPos[i])   min = leafPos[i];
+            for (j = 1; j < 80; j++) {
+                if (max < leafPos[j])   max = leafPos[j];
+            //  if (min > leafPos[j])   min = leafPos[j];
             }
             pBeamData += sizeof(beamStruct.riStruct.leafTarget);//skip leaf pos * 80
             pBeamData += sizeof(beamStruct.riStruct.bigLeafTarget2) + sizeof(beamStruct.riStruct.carrierTarget); //skip (2th big leaf + carrier pos)
             jawTarget[X] = (pBeamData[1] << 8) + pBeamData[0];
             jawTarget[Y] = (pBeamData[3] << 8) + pBeamData[2];
-         //   printf("%d xJawTarget %d\r\n", ri, jawTarget[0]);
+         //   LOG_I("%d xJawTarget %d\r\n", ri, jawTarget[0]);
             if((max/325/0.44*0.213 - jawTarget[X]/2.5/ENCODER_CNT_PER_MM) > 59)
             {
-                printf("Xjaw can't mask leaf end %d %d!\r\n",beamID,radiationID);
+                LOG_I("Xjaw can't mask leaf end %d %d %d %d!\r\n",beamID,radiationID, jawTarget[X], max);
                 interlockFeedback.jawInterlock[X] |= 0x10;
                 return -1;
             }
-            for(uint8_t j = 0; j < XY; j++){
-                jawTarget[j] /= 2.5;
-                if(planJawPosCheck(jawTarget[j], 0, j) == -1)  return -1;
+            for(uint8_t m = 0; m < XY; m++){
+                jawTarget[m] /= 2.5;
+                if(planJawPosCheck(jawTarget[m], 0, m) == -1){
+                    LOG_E("jaw%d pos invalid %d %d!\r\n",m,beamID,radiationID);
+                    return -1;
+                }  
             } 
             pBeamData += (sizeof(SD_RI_DATA) - offsetof(SD_RI_DATA, jawTarget[X]));
         }
@@ -111,9 +115,10 @@ int8_t planDataCheck(uint8_t *pSDBeamStart)
     return 0;
 }
 
-void updateNRTFeedback(void)
+void updateNRTFeedback(enum feedbackType type)
 {
     uint16_t typeLen = 0, *pFDAry = feedback;
+    if(type == ACTIVE)  secondPosFeedback.errorCode = 0xff;
 
     *pFDAry++ = 102;
     *pFDAry++ = 2;
@@ -138,68 +143,89 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 
     if (info->length > 0) u8LenTotal = info->length;
     else return -1;
-  //  printf("recv plan length = %d\r\n", u8LenTotal);
+  //  LOG_I("recv plan length = %d\r\n", u8LenTotal);
     //head
     frameHead.frmTag = (data[1] << 8) + data[0];
     frameHead.frmType = (data[3] << 8) + data[2];
     frameHead.frmLength = (data[5] << 8) + data[4];
     frameHead.bankNo = (data[7] << 8) + data[6];
-   // printf("head1: %d %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength,frameHead.bankNo);
+   // LOG_I("head1: %d %d %d %d\r\n", frameHead.frmTag, frameHead.frmType,frameHead.frmLength,frameHead.bankNo);
 
     if(frameHead.frmTag == PLAN_DATA_SETTING_TAG)
     {
         frameHead.totalPackInOneBeam = (data[9] << 8) + data[8];
         frameHead.packIndexInOneBeam = (data[11] << 8) + data[10];
-      //  printf("head2: %d %d\r\n",frameHead.totalPackInOneBeam, frameHead.packIndexInOneBeam);
+      //  LOG_I("head2: %d %d\r\n",frameHead.totalPackInOneBeam, frameHead.packIndexInOneBeam);
 
         if(frameHead.packIndexInOneBeam == 1)   lastPackIndex = 0;
-        payloadLength = u8LenTotal - 20;
+        payloadLength = u8LenTotal - 16;
         if(frameHead.frmLength != payloadLength)
         {
             secondPosFeedback.errorCode = 0xf1;
-            printf("recv error #1: tcp buf len = %d frame len =%d!!! \r\n", u8LenTotal, frameHead.frmLength);
+            LOG_E("recv error #1: tcp buf len = %d frame len =%d!!! \r\n", payloadLength, frameHead.frmLength);
             return -1;
         }
 
         if ((frameHead.packIndexInOneBeam > frameHead.totalPackInOneBeam) || (frameHead.packIndexInOneBeam < 1)) {
             secondPosFeedback.errorCode = 0xf2;
-            printf("recv error #2: total pack = %d, pack index = %d!!!\r\n",
+            LOG_E("recv error #2: total pack = %d, pack index = %d!!!\r\n",
             frameHead.totalPackInOneBeam, frameHead.packIndexInOneBeam);
             return -1;
         }
 
         if (frameHead.bankNo != BANK_NO) {
             secondPosFeedback.errorCode = 0xf3;
-            printf("recv error #3: bank no = %d!!! \r\n", frameHead.bankNo);
+            LOG_E("recv error #3: bank no = %d!!! \r\n", frameHead.bankNo);
             return -1;
         }
         
         if((SDRAM_BANK1_ADDR + SDRAM_BANK1_SIZE - (uint32_t)pSDRAM) < frameHead.frmLength) 
         {
             secondPosFeedback.errorCode = 0xf6;
-            printf("recv error #6: sdram is full, clear it!!! \r\n");
+            LOG_E("recv error #6: sdram is full, clear it!!! \r\n");
             return -1; 
         }
 
         if(frameHead.packIndexInOneBeam > lastPackIndex)    lastPackIndex = frameHead.packIndexInOneBeam;
         else{
             secondPosFeedback.errorCode = 0xf5;
-            printf("recv error #5: last index= %d index = %d!!! \r\n", frameHead.packIndexInOneBeam, lastPackIndex);
+            LOG_E("recv error #5: last index= %d index = %d!!! \r\n", frameHead.packIndexInOneBeam, lastPackIndex);
             frameHead.packIndexInOneBeam = lastPackIndex;
             return -1;
         }
 
-        uint16_t saveLength,sdramLength;
+        uint16_t sdramLength;
         uint8_t *pBeamData = pSDRAM;
+
+      //  saveLength = frameHead.frmLength;
+
+        last = u8LenTotal - 1;
+        frameEnd.crcHigh = (data[last - 2] << 8) + data[last - 3];
+        frameEnd.crcLow = (data[last] << 8) + data[last - 1];
+        crcInData = (frameEnd.crcHigh << 16) + frameEnd.crcLow;
+
+        crcCal = 0xffffffff;
+        crcCal = Crc32Buffer(crcCal, &data[12], frameHead.frmLength);
+       // crcCal = hardware_crc_calculate(CRC32, &data[12], saveLength); 
+        crcCal ^= 0xffffffff;
+           // LOG_I("recv crc: %u calculate crc: %u\r\n", crcInData, crcCal);
+        if (crcInData != crcCal) {
+            secondPosFeedback.errorCode = 0xf4;
+            LOG_E("recv error #4: crcInData: %x crcCal: %x!!! \r\n", crcInData, crcCal);
+            return -1;
+        }
 
         if (frameHead.packIndexInOneBeam == 1)
         {
-            ++rtBeamData.totalBeam;
+            if (++rtBeamData.totalBeam > MAX_BEAM_NUM){
+                --rtBeamData.totalBeam;
+                LOG_E("recv error #8: beam > 30, will not save!\r\n");
+                return -1;
+            } 
           //  uint8_t temp[frameHead.frmLength];
-         //   printf("recv plan %dB-> first pack of beam!\r\n", u8LenTotal);
-            saveLength = frameHead.frmLength+4;
-            sdramLength = saveLength;
-            for(i=0; i<saveLength; i++)
+         //   LOG_I("recv plan %dB-> first pack of beam!\r\n", u8LenTotal);
+            sdramLength = frameHead.frmLength;
+            for(i=0; i<frameHead.frmLength; i++)
             {
                 *pBeamData++ = data[12+i];
                 if((i -5)%RT_SAVE_PAYLOAD_LEN == 0){//0 + leaf pos*80 + 0, for FPGA need
@@ -213,22 +239,27 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
                     sdramLength += 2;
                 }
 
-               // printf("%d ", info->gDATABUF[12+i]);
+               // LOG_I("%d ", info->gDATABUF[12+i]);
             }
-          //  for(i = 12; i < saveLength; i++)  printf("%x ", data[i]);
-          //  printf("\r\n");
-            crcCal = 0xffffffff;
-            crcCal = Crc32Buffer(crcCal, &data[12], saveLength);//ok
-          //  crcCal = hardware_crc_calculate(CRC32, &data[12], saveLength);
-          //  printf("%d crc %x\r\n", saveLength, (crcCal^0xffffffff));
+          //  for(i = 12; i < saveLength; i++)  LOG_I("%x ", data[i]);
+          //  LOG_I("\r\n");
+         //   crcCal = 0xffffffff;
+        //    crcCal = Crc32Buffer(crcCal, &data[12], saveLength);//ok
+          //  LOG_I("%d crc %x\r\n", saveLength, (crcCal^0xffffffff));
         }
         else {
-            saveLength = frameHead.frmLength;
-            sdramLength = saveLength;
-            
-            for (i = 0; i < saveLength; i++) {
+            // saveLength = frameHead.frmLength;
+            // sdramLength = saveLength;
+            // crcCal = hardware_crc_calculate(CRC32, &data[16], saveLength);
+            // if (crcInData != crcCal) {
+            //     secondPosFeedback.errorCode = 0xf4;
+            //     LOG_E("recv error #4: crcInData: %x crcCal: %x!!! \r\n", crcInData, crcCal);
+            //     return -1;
+            // }
+            sdramLength = frameHead.frmLength - 4;
+            for (i = 0; i < (frameHead.frmLength - 4); i++) {
                 *pBeamData++ = data[16 + i];
-               //  printf("%x\r\n",pBeamData);
+               //  LOG_I("%x\r\n",pBeamData);
                 if ((i - 1) % RT_SAVE_PAYLOAD_LEN == 0) {//0 + leaf pos*80 + 0, for FPGA need
                     *pBeamData++ = 0;
                     *pBeamData++ = 0;
@@ -239,15 +270,16 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
                     sdramLength += 2;
                 }
             }
-
-           crcCal = Crc32Buffer(crcCal, &data[16], saveLength);//ok
-           // crcCal = hardware_crc_calculate_continue(&data[16], saveLength);
+          //  crcCal = 0xffffffff;
+           // crcCal = Crc32Buffer(crcCal, &data[16], saveLength);//ok
         }
-        pSDRAM += sdramLength;
+           // LOG_I("recv crc: %u calculate crc: %u\r\n", crcInData, crcCal);
 
+        pSDRAM += sdramLength;
         if (frameHead.packIndexInOneBeam == frameHead.totalPackInOneBeam) //the last pack in one beam
         {
-          //  for(int16_t i = 0; i <  frameHead.frmLength; i++)   printf("%d ", data[12+i]);
+          //  for(int16_t i = 0; i <  frameHead.frmLength; i++)   LOG_I("%d ", data[12+i]);
+#if 0
             lastPackIndex = 0;
             last = u8LenTotal - 1;
             frameEnd.crcHigh = (data[last - 2] << 8) + data[last - 3];
@@ -255,53 +287,51 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             crcCal ^= 0xffffffff;
             crcInData = (frameEnd.crcHigh << 16) + frameEnd.crcLow;
 
-           // printf("recv crc: %u calculate crc: %u\r\n", crcInData, crcCal);
+           // LOG_I("recv crc: %u calculate crc: %u\r\n", crcInData, crcCal);
             if (crcInData != crcCal) {
+                rtBeamData.totalBeam--;
                 secondPosFeedback.errorCode = 0xf4;
-                printf("recv error #4: crcInData: %x crcCal: %x!!! \r\n", crcInData, crcCal);
+                LOG_E("recv error #4: crcInData: %x crcCal: %x!!! \r\n", crcInData, crcCal);
                 return -1;
             }
-
+#endif
             //record each beam info
             // 1 beam in SDRAM: totalRI + BeamIndex + (RI1 + RI2 + ...+RI(totalRI)), sizeof(RI) = RT_PAYLOAD_LEN
             rtBeamData.beamIndex = (data[15] << 8) + data[14];//current beam index
-            // rtBeamData.totalRIInBeam[rtBeamData.beamIndex] = (data[13] << 8) + data[12];
-            // rtBeamData.oneBeamSize[rtBeamData.beamIndex] =
-            //         4 + RT_SDRAM_PAYLOAD_LEN
-            //         * rtBeamData.totalRIInBeam[rtBeamData.beamIndex];
             uint8_t beamBufIndex = 0;
             if(rtBeamData.totalBeam > 0)    beamBufIndex = rtBeamData.totalBeam - 1;
             rtBeamData.totalRIInBeam[beamBufIndex] = (data[13] << 8) + data[12];
             rtBeamData.oneBeamSize[beamBufIndex] =
                      4 + RT_SDRAM_PAYLOAD_LEN
                      * rtBeamData.totalRIInBeam[beamBufIndex];
-            if (rtBeamData.totalBeam >= MAX_BEAM_NUM) printf("Warn: beam > 30, will not be sent to FPGA!\r\n");
-            printf("Beam %d transfer finish, size is %d, crc is %x\r\n",
-                   rtBeamData.beamIndex, rtBeamData.oneBeamSize[beamBufIndex], crcInData);
+         //   if (rtBeamData.totalBeam >= MAX_BEAM_NUM) LOG_E("Warn: beam > 30, will not be sent to FPGA!\r\n");
+            LOG_I("Beam %d transfer finish, ri is %d, size is %d\r\n",
+                   rtBeamData.beamIndex, rtBeamData.totalRIInBeam[beamBufIndex], rtBeamData.oneBeamSize[beamBufIndex]);
         }
+
         secondPosFeedback.packIndexInOneBeam = frameHead.packIndexInOneBeam;
         secondPosFeedback.errorCode = 0xF0; //ok
-      //  printf("recv success #0!!! \r\n");
+      //  LOG_I("recv success #0!!! \r\n");
     }
     else if(frameHead.frmTag == PARAM_SETTING_TAG)
     {
-        printf("recv parameter %d bytes ", u8LenTotal);
+        LOG_I("recv parameter %d bytes ", u8LenTotal);
         if (frameHead.frmLength != (u8LenTotal - 10)) {
             secondPosFeedback.errorCode = 0xf1;
-            printf("recv error #1: tcp buf len = %d frame len =%d!!! \r\n", u8LenTotal, frameHead.frmLength);
+            LOG_E("recv error #1: tcp buf len = %d frame len =%d!!! \r\n", u8LenTotal, frameHead.frmLength);
             return -1;
         }
         if (frameHead.bankNo != BANK_NO) {
             secondPosFeedback.errorCode = 0xf3;
-            printf("recv error #3: bank no = %d!!! \r\n", frameHead.bankNo);
+            LOG_E("recv error #3: bank no = %d!!! \r\n", frameHead.bankNo);
             return -1;
         }
-        // printf("table:");
-        // for(uint16_t m = 0; m < 256; m++)   printf("%d ", CrcTable[m]);
-        // printf("\r\n");
-        // printf("data:");
-        // for(uint16_t n = 0; n < frameHead.frmLength; n++)   printf("%d ", data[6+n]);
-        // printf("\r\n");
+        // LOG_I("table:");
+        // for(uint16_t m = 0; m < 256; m++)   LOG_I("%d ", CrcTable[m]);
+        // LOG_I("\r\n");
+        // LOG_I("data:");
+        // for(uint16_t n = 0; n < frameHead.frmLength; n++)   LOG_I("%d ", data[6+n]);
+        // LOG_I("\r\n");
         crcCal = 0xffffffff;
         crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
     //    crcCal = hardware_crc_calculate(CRC32, &data[6], frameHead.frmLength);
@@ -314,24 +344,24 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         if (crcInData != crcCal)
         {
             secondPosFeedback.errorCode = 0xf4;
-            printf("recv error #4: crc error: %x %x!!! \r\n", crcInData, crcCal);
+            LOG_E("recv error #4: crc error: %x %x!!! \r\n", crcInData, crcCal);
             return -1;
         }
-        printf("crc:%u\r\n", crcInData);
+        LOG_I("crc:%u\r\n", crcInData);
         secondPosFeedback.errorCode = 0xF0; //ok
 #ifndef TEST
         make_para_for_fpga(data);
         plcSetJawParam(data);
-		if(data[58] == 80)  carrierFollowFlag = 1;//enable carrier following function
+		if(data[80] == 80)  carrierFollowFlag = 1;//enable carrier following function
 		else	carrierFollowFlag = 0;
 #endif
     }
     else if(frameHead.frmTag == PLAN_SETTING_FINISH_TAG)
     {
-      //  for(i = 0; i<6; i++)    printf("%d ", data[i]);
-      //  printf("\r\n");
+      //  for(i = 0; i<6; i++)    LOG_I("%d ", data[i]);
+     //   LOG_I("\r\n");
         crcCal = 0xffffffff;
-        crcCal = Crc32Buffer(crcCal, &data[6], frameHead.frmLength);
+        crcCal = Crc32Buffer(crcCal, data, 6);
         crcCal ^= 0xffffffff;
     
         last = u8LenTotal - 1;
@@ -341,20 +371,21 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         if (crcInData != crcCal)
         {
             secondPosFeedback.errorCode = 0xf4;
-            printf("recv error #4: crc error: %x %x!!! \r\n", crcInData, crcCal);
+            LOG_E("recv error #4: crc error: %x %x!!! \r\n", crcInData, crcCal);
             return -1;
         }
 
         pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
         if(planDataCheck(pSDRAM) < 0){
             secondPosFeedback.errorCode = 0xf7;
-            printf("recv error #7: plan error!!!\r\n");
+            LOG_E("recv error #7: plan error!!!\r\n");
+            return -1;
         }
-		if(carrierFollowFlag)   calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);
+		if(carrierFollowFlag == 1)  calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);
         secondPosFeedback.errorCode = 0xF0; //ok
     }
     else{
-        printf("error data pack:no valid tag!\r\n");
+        LOG_E("error data pack:no valid tag %d %d!\r\n",u8LenTotal,frameHead.frmTag);
     }    
 
     memset(&info, 0, sizeof(info));
@@ -377,16 +408,16 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
   //  rtBeamData.totalRIInBeam[1] = 0x704;
     if((beamIndex <= 0) || (RIIndex <= 0)/* || (RIIndex > rtBeamData.totalRIInBeam[beamIndex])*/)
     {
-        printf("Error: Invalid beam/RI index %d,%d,%d\r\n",rtBeamData.totalBeam,beamIndex,RIIndex);
+        LOG_E("Error: Invalid beam/RI index %d,%d,%d\r\n",rtBeamData.totalBeam,beamIndex,RIIndex);
         return 0;
     }
-   // printf("BEAM%d.RI%d\r\n", beamIndex, RIIndex);
+   // LOG_I("BEAM%d.RI%d\r\n", beamIndex, RIIndex);
 #if 0
     for(uint8_t i = 1; i < beamIndex; i++)
     {
       //  if(rtBeamData.oneBeamSize[i] == 0)  return; //beamIndex >= 2
         pBeamData += rtBeamData.oneBeamSize[i];
-      //  printf("beam %u size %u\r\n", i, rtBeamData.oneBeamSize[i]);
+      //  LOG_I("beam %u size %u\r\n", i, rtBeamData.oneBeamSize[i]);
     }   //skip front beams
 #endif
     uint16_t localBeamIndex;
@@ -398,13 +429,13 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
         {
             pBeamData += rtBeamData.oneBeamSize[skipBeamCnt];
             if(++skipBeamCnt >=  rtBeamData.totalBeam){
-                printf("Can't find beam%d\r\n", beamIndex);
+              //  LOG_E("Can't find beam%d\r\n", beamIndex);
                 return 0;
             }
         } 
         else    break;
     }	  
-  //  printf("%d %d %d %d %d %d\r\n", *pBeamData,*(pBeamData+1),*(pBeamData+2),*(pBeamData+3),*(pBeamData+4),*(pBeamData+5));
+  //  LOG_I("%d %d %d %d %d %d\r\n", *pBeamData,*(pBeamData+1),*(pBeamData+2),*(pBeamData+3),*(pBeamData+4),*(pBeamData+5));
     pBeamData += 4; //skip current beam head (total RI + beam index)
 
     pBeamData += RT_SDRAM_PAYLOAD_LEN*(RIIndex - 1);//skip front RIs
@@ -413,7 +444,7 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
     rtFeedback.faultInfo2 = 0;
     for(uint8_t i = 0; i < RT_FPGA_UPLOAD_POS_LEN; i+=2){
         rtFeedback.rtPosUpload[i/2] = (pBeamData[i+1] <<8) + pBeamData[i];
-        //printf("**** 0x%x 0x%x 0x%x====", recvBuf[i], recvBuf[i+1], rtDataUpload[i/2]);
+        //LOG_I("**** 0x%x 0x%x 0x%x====", recvBuf[i], recvBuf[i+1], rtDataUpload[i/2]);
         //  rtDataUpload[i/2] = 1;
     }
     memcpy(secondPosFeedback.leafSecondPos,  rtFeedback.rtPosUpload, 82*2);
@@ -424,8 +455,8 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
     pBeamData += 166;
     pBeamData += 4;//skip X/Y Jaw pos
     makeSingleSendAry(24, pBeamData, 8, 0,1);//CP limit pos
-    for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  printf("%x ",sndCtrl.cmdSendBuf[i]);
-    printf("\r\n");*/
+    for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  LOG_I("%x ",sndCtrl.cmdSendBuf[i]);
+    LOG_I("\r\n");*/
 #else
   //  makeSingleSendAry(24, pBeamData, RT_DOWNLOAD_PAYLOAD_LEN, 1);
     // makeSingleSendAry(24, pBeamData, 166, 1,1);
@@ -439,17 +470,18 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
     
     pBeamData += 4;//skip X/Y Jaw pos
     // makeSingleSendAry(24, pBeamData, 8, 0,1);//CP limit pos
-   // for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  printf("%x ",sndCtrl.cmdSendBuf[i]);
-   // printf("\r\n");
+   // for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  LOG_I("%x ",sndCtrl.cmdSendBuf[i]);
+   // LOG_I("\r\n");
 
     memmove(&send_buf[166], pBeamData, 18);
+  //  LOG_I("car pos %x %x\r\n", send_buf[164], send_buf[165]);
     make_cmd_to_fpga(CMD_TAR_SET, send_buf);
     make_cmd_to_fpga(CMD_SPD_ANA, &send_buf[174]);
     make_cmd_to_fpga(CMD_MOV_TIM, &send_buf[182]);
-   // printf("beamid %d ri %d:",beamIndex,RIIndex);
-   // printf("Jaw x %d y %d\r\n",pos[X],pos[Y]);
-   // for(uint8_t j = 0; j < 184; j++)    printf("%x ",send_buf[j]);
-   // printf("\r\n");
+   // LOG_I("beamid %d ri %d:",beamIndex,RIIndex);
+   // LOG_I("Jaw x %d y %d\r\n",pos[X],pos[Y]);
+   // for(uint8_t j = 0; j < 184; j++)    LOG_I("%x ",send_buf[j]);
+   // LOG_I("\r\n");
 #endif
 
     return 1;
@@ -458,7 +490,7 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
 void nrtRecvDataProcess(APP_DATA_RECV* info)
 {
     nrtRecvParamAndPlan(info);
-    updateNRTFeedback();
+    updateNRTFeedback(PLAN);
     ws_send(info->sn,  feedback, feedback16Len*2, true, false, WDT_BINDATA);
 	secondPosFeedback.errorCode = 0;								
 }
@@ -473,7 +505,7 @@ void clearPlan(void)
     uint8_t *pBeamData;
 	uint32_t sdTotalSize = 0;
   
-    printf("Clear plan!\r\n");
+    LOG_I("Clear plan!\r\n");
     pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
     pBeamData = pSDRAM;
     for(uint8_t i = 0; i < MAX_BEAM_NUM; i++)   sdTotalSize += rtBeamData.oneBeamSize[i];
@@ -494,7 +526,7 @@ void planDataInit(void)
     feedback16Len = (3+sizeof(interlockFeedback)/2) + (3+sizeof(secondPosFeedback)/2);
     feedback = (uint16_t*)pvPortMalloc(feedback16Len*2);
     if(feedback != NULL)   memset(feedback, 0, feedback16Len*2);
-    else    printf("%s file malloc err(line:%d)\r\n", __FILE__, __LINE__);  
+    else    LOG_I("%s file malloc err(line:%d)\r\n", __FILE__, __LINE__);  
 #if 0
     for(uint8_t i = 0; i < TOTAL_FPGA_CMD_NUM; i++)
     {

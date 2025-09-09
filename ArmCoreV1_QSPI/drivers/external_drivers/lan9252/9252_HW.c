@@ -64,6 +64,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "ecatappl.h"
 #include "tim.h"
+#include "ulog.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Internal Type Defines
@@ -174,7 +175,7 @@ UINT8 LAN9252_Init(void)
     // do
     // {
     //     data = PDIReadLAN9252DirectReg( LAN9252_BYTE_ORDER_REG);
-    //     printf("read test byte reg (0x64), readData is: 0x%x\r\n", data);
+    //     LOG_I("read test byte reg (0x64), readData is: 0x%x\r\n", data);
     //     HAL_Delay(1);
     // }while(0x87654321 != data);
 
@@ -198,7 +199,7 @@ UINT8 LAN9252_Init(void)
     do
     {
         data = PDIReadLAN9252DirectReg( LAN9252_BYTE_ORDER_REG);
-        printf("read test byte reg (0x64), readData is: 0x%x\r\n", data);
+        LOG_I("read test byte reg (0x64), readData is: 0x%x\r\n", data);
         HAL_Delay(1);
     }while(0x87654321 != data);
 
@@ -206,7 +207,7 @@ UINT8 LAN9252_Init(void)
     do
     {
         data = PDIReadLAN9252DirectReg( LAN9252_HW_CFG);
-        printf("read hw cfg ready reg (0x74), readData is: 0x%x\r\n", data);
+        LOG_I("read hw cfg ready reg (0x74), readData is: 0x%x\r\n", data);
         HAL_Delay(1);
     }while(!(data & (1 << 27)));
 

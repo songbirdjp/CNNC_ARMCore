@@ -1,5 +1,5 @@
 #include "drv_spi.h"
-
+#include "ulog.h"
 
 #undef USING_SPI_SLAVE_TO_MASTER_INTERRUPT
 static DEVICE_SPI device_send_to_fpga = {0};
@@ -45,7 +45,7 @@ static int8_t fpga_opt_before_write(DEVICE_SPI *spi)
 }
 static int8_t fpga_opt_after_write(DEVICE_SPI *spi)
 {
-    // printf("after write\r\n");
+    // LOG_I("after write\r\n");
 
     return 0;
 }
@@ -56,19 +56,19 @@ static int8_t fpga_opt_complete_write(DEVICE_SPI *spi)
 }
 static int8_t fpga_opt_before_read(DEVICE_SPI *spi)
 {
-    // printf("before read\r\n");
+    // LOG_I("before read\r\n");
 
     return 0;
 }
 static int8_t fpga_opt_after_read(DEVICE_SPI *spi)
 {
-    // printf("after read\r\n");
+    // LOG_I("after read\r\n");
 
     return 0;
 }
 static int8_t fpga_opt_complete_read(DEVICE_SPI *spi)
 {
-    // printf("complete read\r\n");
+    // LOG_I("complete read\r\n");
 
     return 0;
 }
@@ -89,21 +89,21 @@ int8_t device_send_to_fpga_init(uint8_t *device_name)
 {
     if (device_name == NULL)
     {
-        printf("ptr is null\r\n");
+        LOG_E("ptr is null\r\n");
         return -1;
     }
 
     int8_t ret = spi_init(device_send_to_fpga_get(), device_name, SPI_MASTER);
     if (ret != 0)
     {
-        printf("device send to fpga init err:%d\r\n", ret);
+        LOG_E("device send to fpga init err:%d\r\n", ret);
     }
 
 #ifdef USING_SPI_OPTION_FUNCTION
     ret = device_send_to_fpga_opt_init(device_send_to_fpga_get(), &device_send_to_fpga_opt);
     if (ret != 0)
     {
-        printf("device send to fpga init err:%d\r\n", ret);
+        LOG_E("device send to fpga init err:%d\r\n", ret);
         return ret;
     }
 #endif
@@ -127,7 +127,7 @@ int8_t device_recv_from_fpga_init(uint8_t *device_name)
 {
     if (device_name == NULL)
     {
-        printf("ptr is null\r\n");
+        LOG_E("ptr is null\r\n");
         return -1;
     }
 

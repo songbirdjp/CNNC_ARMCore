@@ -4,7 +4,7 @@
 #include "lan9252_app.h"
 #include "cmsis_os2.h"
 #include "init_call.h"
-
+#include "ulog.h"
 
 int8_t ethercat_slave_appl_cb_register(osEventFlagsId_t output_event, uint32_t event_flag, void (*fun_cb)(void))
 {
@@ -16,7 +16,7 @@ int8_t ethercat_slave_appl_cb_register(osEventFlagsId_t output_event, uint32_t e
     int8_t ret = lan9252_app_ops_register(output_event, event_flag, fun_cb);
     if (ret != 0)
     {
-        printf("lan9252 appl ops register err:%d\r\n", ret);
+        LOG_E("lan9252 appl ops register err:%d\r\n", ret);
         return ret;
     }
 
@@ -30,13 +30,13 @@ static int8_t ethercat_slave_init(void)
     ret = device_lan9252_init(DEVICE_NAME_OSPI1_DEFAULT);
     if (ret != 0)
     {
-        printf("device lan9252 init err:%d\r\n", ret);
+        LOG_E("device lan9252 init err:%d\r\n", ret);
     }
 
     ret = lan9252_app_ops_init();
     if (ret != 0)
     {
-        printf("lan9252 appl ops init err:%d\r\n", ret);
+        LOG_E("lan9252 appl ops init err:%d\r\n", ret);
     }
 
     LAN9252_Init();
@@ -87,11 +87,11 @@ int8_t ethercat_recv_data_update_with_block(uint32_t timeout)
     {
         lan9252_app_ops_get()->appl_output_update((uint16_t *)&pdo_output_data);
 
-        // printf("%x %x %x %x\n", sDOOutputs.InfoOut[0], sDOOutputs.InfoOut[1], sDOOutputs.InfoOut[2], sDOOutputs.InfoOut[3]);
+        // LOG_I("%x %x %x %x\n", sDOOutputs.InfoOut[0], sDOOutputs.InfoOut[1], sDOOutputs.InfoOut[2], sDOOutputs.InfoOut[3]);
     }
     else
     {
-        printf("no msg in lan9252 rx queue:%d\r\n", stat);
+        LOG_E("no msg in lan9252 rx queue:%d\r\n", stat);
     }
 
     return 0;
@@ -172,7 +172,7 @@ static void ethercat_slave_entry(void *argument)
     ret = ethercat_slave_wait_event();
     if (ret < 0)
     {
-        printf("ethercat wait err:%d\r\n", ret);
+        LOG_E("ethercat wait err:%d\r\n", ret);
     }
     // osDelay(100);
   }
@@ -196,14 +196,14 @@ static int8_t ethercat_thread_init(void)
     osThreadId_t EthercatSlaveHandle = osThreadNew(Ethercatfunc, NULL, &EthercatSlave_attributes);
     if (EthercatSlaveHandle == NULL)
     {
-        printf("thread ethercat slave create failed\r\n");
+        LOG_E("thread ethercat slave create failed\r\n");
         return -1;
     }
 
     osThreadId_t lan9252_irq_threadHandle = osThreadNew(ethercat_slave_entry, NULL, &lan9252_irq_thread_attributes);
     if (lan9252_irq_threadHandle == NULL)
     {
-        printf("thread lan9252 irq create failed\r\n");
+        LOG_E("thread lan9252 irq create failed\r\n");
         return -1;
     }
 

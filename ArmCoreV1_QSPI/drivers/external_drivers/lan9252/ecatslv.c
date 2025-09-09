@@ -1525,7 +1525,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
     stateTrans <<= 4;
     stateTrans += alControl;
 
-   // printf("stateTrans: 0x%x\r\n",stateTrans);
+   // LOG_I("stateTrans: 0x%x\r\n",stateTrans);
     /* check the SYNCM settings depending on the state transition */
     switch ( stateTrans )
     {
@@ -2617,7 +2617,7 @@ void ECAT_Main(void)
 
     if ( bMbxRunning )
     {
-       // printf("11111\r\n");
+       // LOG_I("11111\r\n");
         
         /* Slave is at least in PREOP, Mailbox is running */
 

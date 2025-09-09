@@ -127,11 +127,11 @@ void BrakeCtrl(uint8_t _brakeCtrl, uint8_t axesType)
 uint16_t getEncodeValue(uint8_t axesType)
 {
     if(axesType == X){
-       // printf("get encX: %u\r\n", __HAL_TIM_GET_COUNTER(&htim8));
+       // LOG_I("get encX: %u\r\n", __HAL_TIM_GET_COUNTER(&htim8));
         return __HAL_TIM_GET_COUNTER(&htim8);
     }
     else if(axesType == Y) {
-       // printf("get encY: %u\r\n", __HAL_TIM_GET_COUNTER(&htim5));
+       // LOG_I("get encY: %u\r\n", __HAL_TIM_GET_COUNTER(&htim5));
         return __HAL_TIM_GET_COUNTER(&htim5);
     }
 }
@@ -140,11 +140,11 @@ void setEncodeValue(uint16_t setValue, uint8_t axesType)
 {
     if(axesType == X){
         __HAL_TIM_SET_COUNTER(&htim8, setValue);
-      //  printf("set encX: %u\r\n", setValue);
+      //  LOG_I("set encX: %u\r\n", setValue);
     }
     else if(axesType == Y) {
         __HAL_TIM_SET_COUNTER(&htim5, setValue);
-       // printf("set encY: %u\r\n", setValue);
+       // LOG_I("set encY: %u\r\n", setValue);
     }
 }
 
@@ -175,10 +175,10 @@ void motorCtrlByPWM(double dutyCycle, uint8_t axesType)
 
     if ((absDutyCycle < 3) && (dutyCycle != 0)) absDutyCycle = 3;
     else if (absDutyCycle > 100)  absDutyCycle = 100;// Assuming duty cycle is in percentage
-   // printf("duty %d %lf\r\n",htim3.Init.Period, absDutyCycle);
+   // LOG_I("duty %d %lf\r\n",htim3.Init.Period, absDutyCycle);
   //  startPWMOutput(axesType);
     if(axesType == X){
-      //  printf("duty %d %lf\r\n",htim3.Init.Period, absDutyCycle);
+      //  LOG_I("duty %d %lf\r\n",htim3.Init.Period, absDutyCycle);
         pulseLength = (double)((htim3.Init.Period + 1) * absDutyCycle) / 100;
         __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, (uint16_t) pulseLength);
     }
@@ -186,8 +186,8 @@ void motorCtrlByPWM(double dutyCycle, uint8_t axesType)
         pulseLength = (double)((htim15.Init.Period + 1) * absDutyCycle) / 100;
         __HAL_TIM_SET_COMPARE(&htim15, TIM_CHANNEL_1, (uint16_t) pulseLength);
     }
-   // printf("pulseLength = %lf %d\r\n",pulseLength, (uint16_t) pulseLength);
-//    printf("%ld,%d,%f,%f,%d\r\n", encoder_val, _encoderYZ, MotorSpeed, pid_output, tmp);
+   // LOG_I("pulseLength = %lf %d\r\n",pulseLength, (uint16_t) pulseLength);
+//    LOG_I("%ld,%d,%f,%f,%d\r\n", encoder_val, _encoderYZ, MotorSpeed, pid_output, tmp);
 }
 
 void motorEnable(uint8_t axesType)
@@ -212,13 +212,13 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim)//todo
     if (htim->Instance == TIM15)
     {
         jawCtrlByAxes[Y].EnableTriggernFault = 0;
-      //  printf("44444444444444444\r\n");
+      //  LOG_I("44444444444444444\r\n");
        SetMotorYIO(0,0);
     }
     if (htim->Instance == TIM3)
     {
         jawCtrlByAxes[X].EnableTriggernFault = 0;
-       // printf("11111111111111\r\n");
+       // LOG_I("11111111111111\r\n");
         SetMotorXIO(0, 0);
     }
 }
@@ -234,14 +234,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
     if (htim->Instance == TIM15)
     {
-        // printf("33333333\r\n");
+        // LOG_I("33333333\r\n");
 
         SetMotorYIO(jawCtrlByAxes[Y].MotorDir,jawCtrlByAxes[Y].MotorMoveEn);
          jawCtrlByAxes[Y].EnableTriggernFault = 1;
     }
     else if (htim->Instance == TIM3)
     {
-       // printf("2222222222222222\r\n");
+       // LOG_I("2222222222222222\r\n");
         SetMotorXIO(jawCtrlByAxes[X].MotorDir,jawCtrlByAxes[X].MotorMoveEn);
         jawCtrlByAxes[X].EnableTriggernFault = 1;
     }
@@ -253,11 +253,11 @@ void yjaw_nfault_callback(void)
     if(1 == jawCtrlByAxes[Y].EnableTriggernFault)
     {
         if (HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_6) == GPIO_PIN_RESET){
-     // printf("1\r\n");
+     // LOG_I("1\r\n");
             SetMotorYIO(0, 0);
         }
       else{
-       //  printf("0\r\n");
+       //  LOG_I("0\r\n");
            SetMotorYIO(jawCtrlByAxes[Y].MotorDir, jawCtrlByAxes[Y].MotorMoveEn);
        }
     }
@@ -267,10 +267,10 @@ void xjaw_nfault_callback(void)
 {
     if(1 == jawCtrlByAxes[X].EnableTriggernFault){
         if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15) == GPIO_PIN_RESET){
-         //   printf("3\r\n");
+         //   LOG_I("3\r\n");
             SetMotorXIO(0, 0);
         } else {
-          //  printf("4\r\n");
+          //  LOG_I("4\r\n");
             SetMotorXIO(jawCtrlByAxes[X].MotorDir, jawCtrlByAxes[X].MotorMoveEn);
         }
     }

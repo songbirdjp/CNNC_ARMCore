@@ -3,6 +3,7 @@
 #include "tcp_tasks.h"
 #include <stdio.h>
 #include "crypto_sha.h"
+#include "ulog.h"
 
 #ifdef IS_TCP_SERVER
 
@@ -11,6 +12,14 @@ static uint8_t serviceNumber = 0;
 static CLIENT_INFO client[MAX_CLIENT_NUM];
 static const char ws_base64char[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+void clearClientInfo(uint8_t s)
+{
+    client[s].connectStatus = 0;
+    client[s].clientType = 0;
+    client[s].socketNum = -1;
+    client[s].loopCnt = 0; 
+}
 
 static void ws_getRandomString(char *buff, uint32_t len)
 {
@@ -277,9 +286,9 @@ static int32_t ws_dePackage(
         cIn = dataOffset;
         cOut = 0;
         maskCount = 0;
-        // if (type == 0x02)   printf("bin");
-        // else if (type == 0x01)  printf("txt");
-        // printf(" %dB:", dataLen);
+        // if (type == 0x02)   LOG_I("bin");
+        // else if (type == 0x01)  LOG_I("txt");
+        // LOG_I(" %dB:", dataLen);
         for (; cOut < dataLen; cIn++, cOut++, maskCount++)
         {
             // maskKey[4]循环使用
@@ -287,12 +296,12 @@ static int32_t ws_dePackage(
                 maskCount = 0;
             // 异或运算后得到数据
             data[cOut] = maskKey[maskCount] ^ data[cIn];
-         //   if (type == 0x02)   printf("%x ", data[cOut]);
-          //  else if (type == 0x01)  printf("%c", data[cOut]);
+         //   if (type == 0x02)   LOG_I("%x ", data[cOut]);
+          //  else if (type == 0x01)  LOG_I("%c", data[cOut]);
         }
         // 断尾
         data[cOut] = '\0';
-     //   printf("\r\n");
+     //   LOG_I("\r\n");
     }
     // 解包数据没使用掩码, 直接复制数据段
     else
@@ -325,21 +334,21 @@ int32_t ws_send(uint8_t s, void *buff, int32_t buffLen, bool fin, bool mask, Ws_
     // 非包数据发送
     if (type == WDT_NULL)
     {
-        printf("send WDT_NULL \r\n");
+        LOG_I("send WDT_NULL \r\n");
         //  memcpy(wsPkg, (uint8_t *)buff, buffLen);
-        //  for(int i = 0; i < buffLen; i++)    printf("%x\r\n", wsPkg[i]);
+        //  for(int i = 0; i < buffLen; i++)    LOG_I("%x\r\n", wsPkg[i]);
         return tcp_client_data_send(s, (uint8_t *)buff, buffLen);
     }
 
     // 数据打包 +14 预留类型、掩码、长度保存位
     memset(wsPkg, 0, buffLen + headLen);
     retLen = ws_enPackage((uint8_t *)buff, buffLen, wsPkg, (buffLen + headLen), fin, mask, type);
-    //   printf("retLen: %d\r\n",retLen );
+    //   LOG_I("retLen: %d\r\n",retLen );
     if (retLen <= 0)    return -1;
     
     // 显示数据
-  //   printf("ws_send: %x %x %x %x %x %x\r\n", wsPkg[0],wsPkg[1],wsPkg[2],wsPkg[3],wsPkg[4],wsPkg[5] );
-    //  for(int32_t i = 0; i < retLen; i++)    printf("0x%x ", wsPkg[i]);
+  //   LOG_I("ws_send: %x %x %x %x %x %x\r\n", wsPkg[0],wsPkg[1],wsPkg[2],wsPkg[3],wsPkg[4],wsPkg[5] );
+    //  for(int32_t i = 0; i < retLen; i++)    LOG_I("0x%x ", wsPkg[i]);
     ret = tcp_client_data_send(s, wsPkg, retLen);
 
     return ret;
@@ -357,16 +366,16 @@ int32_t ws_recv(uint8_t s, void* buff, int32_t buffSize, Ws_DataType* retType, u
     retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen, &retDataLen, retHeadLen, &retPkgType); //为防止一次接收到多包数据(粘包),先尝试性解析ws头部字节（最大14Bytes）,得知总长度后再解析剩下部分
     if (retDePkg == 0 || (retDePkg < 0 && maxHeadLen - retDePkg > buffSize))//头部解析失败或解析出的包长过大（超过2K）
     {
-         printf("tcp recv error %d\r\n", retDePkg);
+         LOG_E("tcp recv error %d\r\n", retDePkg);
     } 
     else
     {
-       // printf("retDePkg1 %d\r\n", retDePkg);
+       // LOG_I("retDePkg1 %d\r\n", retDePkg);
         if (retDePkg < 0)//尝试解析出完整的一包
         {
             retDePkg = ws_dePackage((uint8_t*)buff, maxHeadLen - retDePkg, &retDataLen, retHeadLen, &retPkgType);
         }
-      //  printf("retDePkg2 %d\r\n", *retHeadLen);
+      //  LOG_I("retDePkg2 %d\r\n", *retHeadLen);
         if (retDePkg > 0)   //已经解析到完整的一包
         {
             //收到 PING 包,应自动回复 PONG
@@ -406,7 +415,7 @@ static void sha1_hash(const char *source, char *buff)
     uint32_t len;
     
    if(crypto_sha1_cal(source, strlen(source), Message_Digest, &len))
-        printf("SHA1 ERROR: Could not compute message digest \r\n");
+        LOG_E("SHA1 ERROR: Could not compute message digest \r\n");
     else
     {
         for(i = 0; i < len; i++)    sprintf(buff+2*i, "%02X", Message_Digest[i]);
@@ -464,10 +473,10 @@ static int32_t ws_buildRespondShakeKey(char *acceptKey, uint32_t acceptKeyLen, c
     memcpy(clientKey, acceptKey, acceptKeyLen);
     memcpy(&clientKey[acceptKeyLen], guid, guidLen);
 
-   // printf("message: %s\r\n", clientKey);
+   // LOG_I("message: %s\r\n", clientKey);
      sha1_hash(clientKey, sha1DataTemp);
      sha1DataTempLen = strlen((const char *)sha1DataTemp);
-    // printf("digest:  %d %s\r\n", sha1DataTempLen, sha1DataTemp);
+    // LOG_I("digest:  %d %s\r\n", sha1DataTempLen, sha1DataTemp);
 
     // 把hex字符串如"12ABCDEF",转为数值数组如{0x12,0xAB,0xCD,0xEF}
     for (i = j = 0; i < sha1DataTempLen;)
@@ -516,34 +525,34 @@ static int32_t ws_replyClient(uint8_t s, char *buff, char *path)
     char recvShakeKey[30] = {0};
     char respondPackage[256] = {0};
 
-    //  printf("%s\r\n",buff);
+    //  LOG_I("%s\r\n",buff);
     // path检查
     if (path && !strstr((char *)buff, path))
     {
-        printf("path not matched\r\n");
+        LOG_E("path not matched\r\n");
         return -1;
     }
     // 获取握手key
     if (!(keyOffset = strstr((char *)buff, "Sec-WebSocket-Key: ")))
     {
-        printf("Sec-WebSocket-Key not found\r\n");
+        LOG_I("Sec-WebSocket-Key not found\r\n");
         return -1;
     }
     // 获取握手key
     keyOffset += strlen("Sec-WebSocket-Key: ");
     sscanf((const char *)keyOffset, "%s", recvShakeKey);
     ret = strlen((const char *)recvShakeKey);
-  //  printf("recvShakeKey len %d\r\n", ret);
+  //  LOG_I("recvShakeKey len %d\r\n", ret);
     if (ret < 1)
     {
-        printf("Sec-WebSocket-Key not matched\r\n");
+        LOG_I("Sec-WebSocket-Key not matched\r\n");
         return -1;
     }
     // 创建回复key
     ws_buildHttpRespond(recvShakeKey, ret, respondPackage);
-  //    printf("response %s\r\n",respondPackage);
+   //   LOG_I("response %s\r\n",respondPackage);
     tcp_client_data_send(s, (uint8_t *)respondPackage, strlen(respondPackage));
-    printf("Handshake Success!\r\n");
+    LOG_I("Handshake Success!\r\n");
 
     return 1;
 }
@@ -556,13 +565,20 @@ int8_t getClientType(uint8_t s, uint8_t *pString)
     {
         if(strstr(p, CONTROLLER_AUTHORIZATION)) 
         {
+            for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
+            {
+                if(client[i].clientType == CONTROLLER){
+                    clearClientInfo(i);
+                    disconnect(i);
+                }
+            }
             client[s].clientType = CONTROLLER;//this client is controller
-            printf("client %d is controller\r\n", s);
+            LOG_I("client %d is controller\r\n", s);
         }
         else if( strstr(p, SERVICE_AUTHORIZATION) )
         {
             client[s].clientType = SERVICE;//this client is service
-            printf("client %d is service\r\n", s);
+            LOG_I("client %d is service\r\n", s);
             serviceNumber++;
         }
         else    return -1;
@@ -613,11 +629,11 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
     APP_DATA_RECV itemRecv;
     uint32_t retHeadLen = 0;
 
- //   printf("recv length = %d\r\n", len);
+ //   LOG_I("recv length = %d\r\n", len);
     
     if (strncmp(data, "GET", 3) == 0)
     { // deal with handshake
-        // printf("%s\r\n",data);
+      //   LOG_I("%s\r\n",data);
         if (strstr(data, "Sec-WebSocket-Key"))
         {
             ret = ws_replyClient(s, data, "/");
@@ -625,7 +641,7 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
             {
                 ret = getClientType(s, data);
                 if(ret < 0){
-                    printf("failed to get client type!\r\n"); 
+                    LOG_I("failed to get client type!\r\n"); 
                 }
                 else{
                     client[s].socketNum = s;
@@ -634,17 +650,17 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
                 }  
             } 
             else{
-                printf("handshake failed!\r\n");
+                LOG_E("handshake failed!\r\n");
                 ret = -1;
             }   
         }
         else{
-            printf("Invalid client request!\r\n");
+            LOG_E("Invalid client request!\r\n");
             ret = -1;
         }
         #if 0
         else{
-                printf("show service interface!\r\n");
+                LOG_I("show service interface!\r\n");
                 showServiceInterfaceOnPC(s);
                // disconnect(s);
                 close(s);
@@ -654,14 +670,14 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
     }
     else if (client[s].connectStatus > 0)
     {   // recv data after handshake
-      //  for (i = 0; i < len; i++) printf("%x ", data[i]);
-      //  printf("\r\n");
+      //  for (i = 0; i < len; i++) LOG_I("%x ", data[i]);
+      //  LOG_I("\r\n");
     
         ret = ws_recv(s, data, DATA_BUF_SIZE, &retPkgType, &retHeadLen);
-//printf("ret %d\r\n", retHeadLen);
+//LOG_I("ret %d\r\n", retHeadLen);
         if(ret < 0)//本包数据内容或长度错误，直接丢弃
         {
-            printf("this pack is wrong\r\n");
+            LOG_E("this pack is wrong\r\n");
             return 0;
         } 
         else//正常解包
@@ -669,36 +685,34 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
             switch(retPkgType)
             {
             case WDT_DISCONN:
-                printf("socket%d going to disconnect!\r\n", s);
+                LOG_I("socket%d going to disconnect!\r\n", s);
+				clearClientInfo(s);
                 uint8_t closeFrame[] = {0x88, 0x02, 0x03, 0xe8}; // status code:1000    close normal
                 ws_send(s, closeFrame, sizeof(closeFrame), true, false, WDT_NULL);
-                close(s);
-                client[s].connectStatus = 0;
-                client[s].clientType = 0;
-                client[s].socketNum = -1;
-				client[s].loopCnt = 0;	
+                osDelay(10);
+                disconnect(s);
                 if(client[s].clientType == SERVICE) serviceNumber--;
                 break;	
             case WDT_PING:	
                 uint16_t payloadLen = len - retHeadLen;
                 uint8_t *pdata = NULL;
-                 printf("recv ping and reply pong %d\r\n",payloadLen);
+                 LOG_I("recv ping and reply pong %d\r\n",payloadLen);
                 //  for(i=0; i< payloadLen; i++)
-                //     printf("%x ",data[i]);
-                // printf("\r\n");
+                //     LOG_I("%x ",data[i]);
+                // LOG_I("\r\n");
                 if(payloadLen > 0)  pdata = data;
                 ws_send(s, pdata, payloadLen, true, false, WDT_PONG);
                 break;	 
             case WDT_TXTDATA:
-               // printf("recv data: %s\r\n",data);s
+               // LOG_I("recv data: %s\r\n",data);s
             case WDT_BINDATA:
                 itemRecv.length = len - retHeadLen;
                 itemRecv.sn = s;
                 itemRecv.recvDataType = retPkgType;
                 itemRecv.clientType = client[s].clientType;
                 itemRecv.tcpData = data;
-              //  for(uint8_t i = 0; i < itemRecv.length; i++) printf("%x ", data[i]);
-             //   printf("\r\n");
+              //  for(uint8_t i = 0; i < itemRecv.length; i++) LOG_I("%x ", data[i]);
+             //   LOG_I("\r\n");
                 nrtRecvDataProcess(&itemRecv);
             break;
             default:    break;
@@ -716,19 +730,19 @@ int32_t tcp_send_process(uint8_t s)
 
     if ((s > MAX_CLIENT_NUM) || (s < 0))
     {
-        printf("Invalid socket number %d!\r\n", s);
+        LOG_E("Invalid socket number %d!\r\n", s);
         return -1;
     }
 
     if ((client[s].socketNum == -1) || (client[s].connectStatus < 1))
     {
-      //  printf("Not a client sn %d!\r\n", s);
+      //  LOG_E("Not a client sn %d!\r\n", s);
         return 0;//sn not bind with a client yet
     }
 
     if((sendStructInfo.pActiveSend == NULL) || (sendStructInfo.sendItemNum == 0))
     {
-      //  printf("no send data struct is attached\r\n");
+      //  LOG_E("no send data struct is attached\r\n");
         return 0;// no data to send
     } 
 
@@ -740,12 +754,12 @@ int32_t tcp_send_process(uint8_t s)
         {   // send data
             if((sendStructInfo.pActiveSend[i].sendMode == WDT_BINDATA) || (sendStructInfo.pActiveSend[i].sendMode == WDT_TXTDATA) || (sendStructInfo.pActiveSend[i].sendMode == WDT_NULL))
             {
-                if(!operateSendMutex(1, i, osWaitForever))  printf("%s mutex is NULL!\r\n", sendStructInfo.pActiveSend[i].name);
+                if(!operateSendMutex(1, i, osWaitForever))  LOG_I("%s mutex is NULL!\r\n", sendStructInfo.pActiveSend[i].name);
                 ret = ws_send(s, sendStructInfo.pActiveSend[i].tcpData, sendStructInfo.pActiveSend[i].length, true, false, sendStructInfo.pActiveSend[i].sendMode);
                 operateSendMutex(0, i, 0);
             }
             else{
-                printf("Wrong ws send data type!\r\n");
+                LOG_E("Wrong ws send data type!\r\n");
                 return -1;
             } 
 
@@ -763,7 +777,7 @@ int32_t tcp_send_process(uint8_t s)
                 }    
             }  
             else{
-                printf("ws send failed!\r\n");
+                LOG_E("ws send failed!\r\n");
                 return -1;
             }   
         }

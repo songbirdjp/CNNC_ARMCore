@@ -22,6 +22,7 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "ulog.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -132,7 +133,7 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
    configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
    called if a stack overflow is detected. */
 
-   printf("%s stack over flow\r\n", pcTaskName);
+   LOG_E("%s stack over flow\r\n", pcTaskName);
 }
 /* USER CODE END 4 */
 
@@ -150,7 +151,7 @@ void vApplicationMallocFailedHook(void)
    to query the size of free heap space that remains (although it does not
    provide information on how the remaining heap might be fragmented). */
 
-   printf("malloc failed, thread name: %s\r\n", osThreadGetName(osThreadGetId()));
+   LOG_E("malloc failed, thread name: %s\r\n", osThreadGetName(osThreadGetId()));
 }
 /* USER CODE END 5 */
 
@@ -222,7 +223,7 @@ void StartDefaultTask(void *argument)
         {
             HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
             // crtPos = getEncodeValue(1);
-            // printf("crt pos: %ld\r\n", crtPos);
+            // LOG_I("crt pos: %ld\r\n", crtPos);
         }
     }
   /* USER CODE END StartDefaultTask */
