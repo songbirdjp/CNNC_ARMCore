@@ -45,6 +45,7 @@ typedef enum {
     MotorFSM_FindZeroCheck,
     MotorFSM_ManualControl,
     MotorFSM_AutoControl,
+    MotorFSM_FindZeroCheck_Error,
     MotorFSM_ERROR_STATE
 } MotorFindingZeroFSM_t;
 

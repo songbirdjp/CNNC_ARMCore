@@ -313,13 +313,14 @@ uint16_t* AFC_ADCSampleRecvProcess(void)
     event_flag = osEventFlagsWait(adcs7476_event, ADC7476_MASTER_FLAG | ADC7476_SLAVE_FLAG, osFlagsWaitAll,osWaitForever);//osWaitForever
     osMessageQueueGet(obj_master->queue, recv_tmp, NULL, 0);
     osMessageQueueGet(obj_slave->queue, recv_tmp_1, NULL, 0);
-    // uint32_t master_queue_count = osMessageQueueGetCount(obj_master->queue);
-    // uint32_t slave_queue_count = osMessageQueueGetCount(obj_slave->queue);
-    // LOG_E("Master queue waiting count: %d\r\n", master_queue_count);
-    // LOG_E("Slave queue waiting count: %d\r\n", slave_queue_count);
+
     memcpy(combined_data, recv_tmp, obj_master->buf_len * sizeof(uint16_t));
     memcpy(combined_data + obj_master->buf_len, recv_tmp_1, obj_slave->buf_len * sizeof(uint16_t));
 #if 0
+    uint32_t master_queue_count = osMessageQueueGetCount(obj_master->queue);
+    uint32_t slave_queue_count = osMessageQueueGetCount(obj_slave->queue);
+    LOG_E("Master queue waiting count: %d\r\n", master_queue_count);
+    LOG_E("Slave queue waiting count: %d\r\n", slave_queue_count);
     for (uint8_t i = 0; i < 2; i++)
     {
         // LOG_E("obj_master->data[%d] = %d\r\n", i, recv_tmp[i]);

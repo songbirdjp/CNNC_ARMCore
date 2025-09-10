@@ -280,7 +280,7 @@ static int8_t afc_command_frame_parse(struct afc_object *cmd)
         break;
     }
 
-    if (ret != 0)
+    if (ret != 0)                    
     {
         printf("AFC uart command [%.2x, %.2x] parse err: %d\r\n", cmd->data[0], cmd->data[1], ret);
     }
