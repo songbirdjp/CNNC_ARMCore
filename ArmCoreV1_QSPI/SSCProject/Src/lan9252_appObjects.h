@@ -91,9 +91,6 @@
 * SubIndex 55 - Reference to 0x7010.55<br>
 * SubIndex 56 - Reference to 0x7010.56<br>
 * SubIndex 57 - Reference to 0x7010.57<br>
-* SubIndex 58 - Reference to 0x7010.58<br>
-* SubIndex 59 - Reference to 0x7010.59<br>
-* SubIndex 60 - Reference to 0x7010.60<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -153,10 +150,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex54 - Reference to 0x7010.54 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex55 - Reference to 0x7010.55 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex56 - Reference to 0x7010.56 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex57 - Reference to 0x7010.57 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex58 - Reference to 0x7010.58 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex59 - Reference to 0x7010.59 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex60 - Reference to 0x7010.60 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex57 - Reference to 0x7010.57 */
 
 /**
 * \brief Object/Entry names
@@ -218,10 +212,7 @@ OBJCONST UCHAR OBJMEM aName0x1601[] = "OutputData process data mapping\000"
 "SubIndex 054\000"
 "SubIndex 055\000"
 "SubIndex 056\000"
-"SubIndex 057\000"
-"SubIndex 058\000"
-"SubIndex 059\000"
-"SubIndex 060\000\377";
+"SubIndex 057\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -287,9 +278,6 @@ UINT32 SI54; /* Subindex54 - Reference to 0x7010.54 */
 UINT32 SI55; /* Subindex55 - Reference to 0x7010.55 */
 UINT32 SI56; /* Subindex56 - Reference to 0x7010.56 */
 UINT32 SI57; /* Subindex57 - Reference to 0x7010.57 */
-UINT32 SI58; /* Subindex58 - Reference to 0x7010.58 */
-UINT32 SI59; /* Subindex59 - Reference to 0x7010.59 */
-UINT32 SI60; /* Subindex60 - Reference to 0x7010.60 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1601;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -299,7 +287,7 @@ TOBJ1601;
 */
 PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={60,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100910,0x70100A08,0x70100B08,0x70100C08,0x70100D08,0x70100E10,0x70100F20,0x70101020,0x70101108,0x70101208,0x70101310,0x70101420,0x70101520,0x70101620,0x70101708,0x70101808,0x70101920,0x70101A20,0x70101B08,0x70101C08,0x70101D20,0x70101E20,0x70101F08,0x70102008,0x70102120,0x70102220,0x70102308,0x70102408,0x70102510,0x70102620,0x70102720,0x70102808,0x70102908,0x70102A08,0x70102B08,0x70102C20,0x70102D20,0x70102E08,0x70102F08,0x70103020,0x70103120,0x70103208,0x70103308,0x70103410,0x70103508,0x70103608,0x70103708,0x70103808,0x70103908,0x70103A08,0x70103B20,0x70103C08}
+={57,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100910,0x70100A08,0x70100B08,0x70100C08,0x70100D08,0x70100E10,0x70100F20,0x70101020,0x70101108,0x70101208,0x70101310,0x70101420,0x70101520,0x70101620,0x70101708,0x70101808,0x70101920,0x70101A20,0x70101B08,0x70101C08,0x70101D20,0x70101E20,0x70101F08,0x70102008,0x70102120,0x70102220,0x70102308,0x70102408,0x70102510,0x70102620,0x70102720,0x70102808,0x70102908,0x70102A08,0x70102B08,0x70102C20,0x70102D20,0x70102E08,0x70102F08,0x70103020,0x70103120,0x70103210,0x70103308,0x70103408,0x70103508,0x70103608,0x70103708,0x70103808,0x70103908}
 #endif
 ;
 /** @}*/
@@ -520,6 +508,14 @@ PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 * SubIndex 199 - Reference to 0x6000.199<br>
 * SubIndex 200 - Reference to 0x6000.200<br>
 * SubIndex 201 - Reference to 0x6000.201<br>
+* SubIndex 202 - Reference to 0x6000.202<br>
+* SubIndex 203 - Reference to 0x6000.203<br>
+* SubIndex 204 - Reference to 0x6000.204<br>
+* SubIndex 205 - Reference to 0x6000.205<br>
+* SubIndex 206 - Reference to 0x6000.206<br>
+* SubIndex 207 - Reference to 0x6000.207<br>
+* SubIndex 208 - Reference to 0x6000.208<br>
+* SubIndex 209 - Reference to 0x6000.209<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -723,7 +719,15 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex198 - Reference to 0x6000.198 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex199 - Reference to 0x6000.199 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex200 - Reference to 0x6000.200 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex201 - Reference to 0x6000.201 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex201 - Reference to 0x6000.201 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex202 - Reference to 0x6000.202 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex203 - Reference to 0x6000.203 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex204 - Reference to 0x6000.204 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex205 - Reference to 0x6000.205 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex206 - Reference to 0x6000.206 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex207 - Reference to 0x6000.207 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex208 - Reference to 0x6000.208 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex209 - Reference to 0x6000.209 */
 
 /**
 * \brief Object/Entry names
@@ -929,7 +933,15 @@ OBJCONST UCHAR OBJMEM aName0x1A00[] = "InputData process data mapping\000"
 "SubIndex 198\000"
 "SubIndex 199\000"
 "SubIndex 200\000"
-"SubIndex 201\000\377";
+"SubIndex 201\000"
+"SubIndex 202\000"
+"SubIndex 203\000"
+"SubIndex 204\000"
+"SubIndex 205\000"
+"SubIndex 206\000"
+"SubIndex 207\000"
+"SubIndex 208\000"
+"SubIndex 209\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -1139,6 +1151,14 @@ UINT32 SI198; /* Subindex198 - Reference to 0x6000.198 */
 UINT32 SI199; /* Subindex199 - Reference to 0x6000.199 */
 UINT32 SI200; /* Subindex200 - Reference to 0x6000.200 */
 UINT32 SI201; /* Subindex201 - Reference to 0x6000.201 */
+UINT32 SI202; /* Subindex202 - Reference to 0x6000.202 */
+UINT32 SI203; /* Subindex203 - Reference to 0x6000.203 */
+UINT32 SI204; /* Subindex204 - Reference to 0x6000.204 */
+UINT32 SI205; /* Subindex205 - Reference to 0x6000.205 */
+UINT32 SI206; /* Subindex206 - Reference to 0x6000.206 */
+UINT32 SI207; /* Subindex207 - Reference to 0x6000.207 */
+UINT32 SI208; /* Subindex208 - Reference to 0x6000.208 */
+UINT32 SI209; /* Subindex209 - Reference to 0x6000.209 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1A00;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -1148,7 +1168,7 @@ TOBJ1A00;
 */
 PROTO TOBJ1A00 InputDataProcessDataMapping0x1A00
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={201,0x60000108,0x60000208,0x60000320,0x60000408,0x60000508,0x60000610,0x60000708,0x60000808,0x60000908,0x60000A08,0x60000B08,0x60000C08,0x60000D10,0x60000E20,0x60000F20,0x60001020,0x60001120,0x60001201,0x60001301,0x60001401,0x60001501,0x60001601,0x60001701,0x60001801,0x60001901,0x60001A01,0x60001B01,0x60001C01,0x60001D01,0x60001E04,0x60001F01,0x60002001,0x60002101,0x60002201,0x60002301,0x60002401,0x60002501,0x60002601,0x60002708,0x60002801,0x60002901,0x60002A01,0x60002B01,0x60002C01,0x60002D01,0x60002E01,0x60002F01,0x60003001,0x60003101,0x60003201,0x60003301,0x60003401,0x60003501,0x60003601,0x60003701,0x60003801,0x60003901,0x60003A01,0x60003B01,0x60003C01,0x60003D01,0x60003E01,0x60003F01,0x60004001,0x60004101,0x60004201,0x60004301,0x60004401,0x60004501,0x60004601,0x60004701,0x60004801,0x60004901,0x60004A01,0x60004B01,0x60004C01,0x60004D01,0x60004E01,0x60004F01,0x60005001,0x60005101,0x60005201,0x60005301,0x60005401,0x60005501,0x60005601,0x60005701,0x60005810,0x60005901,0x60005A07,0x60005B08,0x60005C01,0x60005D01,0x60005E01,0x60005F01,0x60006001,0x60006101,0x60006201,0x60006301,0x60006408,0x60006510,0x60006601,0x60006701,0x60006801,0x60006901,0x60006A01,0x60006B01,0x60006C01,0x60006D01,0x60006E08,0x60006F08,0x60007008,0x60007110,0x60007208,0x60007308,0x60007410,0x60007520,0x60007620,0x60007720,0x60007820,0x60007908,0x60007A08,0x60007B10,0x60007C08,0x60007D08,0x60007E10,0x60007F20,0x60008020,0x60008120,0x60008220,0x60008320,0x60008420,0x60008520,0x60008608,0x60008708,0x60008820,0x60008920,0x60008A20,0x60008B08,0x60008C08,0x60008D20,0x60008E20,0x60008F20,0x60009008,0x60009108,0x60009210,0x60009308,0x60009408,0x60009510,0x60009620,0x60009720,0x60009820,0x60009920,0x60009A08,0x60009B08,0x60009C10,0x60009D08,0x60009E08,0x60009F10,0x6000A020,0x6000A120,0x6000A220,0x6000A320,0x6000A408,0x6000A508,0x6000A610,0x6000A708,0x6000A808,0x6000A910,0x6000AA20,0x6000AB20,0x6000AC20,0x6000AD20,0x6000AE20,0x6000AF20,0x6000B020,0x6000B108,0x6000B208,0x6000B310,0x6000B408,0x6000B508,0x6000B610,0x6000B720,0x6000B820,0x6000B920,0x6000BA20,0x6000BB20,0x6000BC20,0x6000BD20,0x6000BE20,0x6000BF20,0x6000C020,0x6000C120,0x6000C220,0x6000C320,0x6000C420,0x6000C520,0x6000C620,0x6000C720,0x6000C810,0x6000C920}
+={209,0x60000108,0x60000208,0x60000320,0x60000408,0x60000508,0x60000610,0x60000708,0x60000808,0x60000908,0x60000A08,0x60000B08,0x60000C08,0x60000D10,0x60000E20,0x60000F20,0x60001020,0x60001120,0x60001201,0x60001301,0x60001401,0x60001501,0x60001601,0x60001701,0x60001801,0x60001901,0x60001A01,0x60001B01,0x60001C01,0x60001D01,0x60001E04,0x60001F01,0x60002001,0x60002101,0x60002201,0x60002301,0x60002401,0x60002501,0x60002601,0x60002708,0x60002801,0x60002901,0x60002A01,0x60002B01,0x60002C01,0x60002D01,0x60002E01,0x60002F01,0x60003001,0x60003101,0x60003201,0x60003301,0x60003401,0x60003501,0x60003601,0x60003701,0x60003801,0x60003901,0x60003A01,0x60003B01,0x60003C01,0x60003D01,0x60003E01,0x60003F01,0x60004001,0x60004101,0x60004201,0x60004301,0x60004401,0x60004501,0x60004601,0x60004701,0x60004801,0x60004901,0x60004A01,0x60004B01,0x60004C01,0x60004D01,0x60004E01,0x60004F01,0x60005001,0x60005101,0x60005201,0x60005301,0x60005401,0x60005501,0x60005601,0x60005701,0x60005810,0x60005901,0x60005A07,0x60005B08,0x60005C01,0x60005D01,0x60005E01,0x60005F01,0x60006001,0x60006101,0x60006201,0x60006301,0x60006408,0x60006510,0x60006601,0x60006701,0x60006801,0x60006901,0x60006A01,0x60006B01,0x60006C01,0x60006D01,0x60006E08,0x60006F08,0x60007008,0x60007110,0x60007208,0x60007308,0x60007410,0x60007520,0x60007620,0x60007720,0x60007820,0x60007908,0x60007A08,0x60007B10,0x60007C08,0x60007D08,0x60007E10,0x60007F20,0x60008020,0x60008120,0x60008220,0x60008320,0x60008420,0x60008520,0x60008608,0x60008708,0x60008820,0x60008920,0x60008A20,0x60008B08,0x60008C08,0x60008D20,0x60008E20,0x60008F20,0x60009008,0x60009108,0x60009210,0x60009308,0x60009408,0x60009510,0x60009620,0x60009720,0x60009820,0x60009920,0x60009A08,0x60009B08,0x60009C10,0x60009D08,0x60009E08,0x60009F10,0x6000A020,0x6000A120,0x6000A220,0x6000A320,0x6000A408,0x6000A508,0x6000A610,0x6000A708,0x6000A808,0x6000A910,0x6000AA20,0x6000AB20,0x6000AC20,0x6000AD20,0x6000AE20,0x6000AF20,0x6000B020,0x6000B108,0x6000B208,0x6000B310,0x6000B408,0x6000B508,0x6000B610,0x6000B720,0x6000B820,0x6000B920,0x6000BA20,0x6000BB20,0x6000BC20,0x6000BD20,0x6000BE20,0x6000BF20,0x6000C020,0x6000C120,0x6000C220,0x6000C320,0x6000C420,0x6000C520,0x6000C620,0x6000C720,0x6000C808,0x6000C908,0x6000CA10,0x6000CB20,0x6000CC20,0x6000CD20,0x6000CE20,0x6000CF20,0x6000D020,0x6000D108}
 #endif
 ;
 /** @}*/
@@ -1465,8 +1485,16 @@ PROTO TOBJ1C13 sTxPDOassign
 * SubIndex 197 - InF_psm_velocity_x_r_cur<br>
 * SubIndex 198 - InF_psm_velocity_y_r_cur<br>
 * SubIndex 199 - InF_psm_velocity_z_r_cur<br>
-* SubIndex 200 - InU16_FkpButton<br>
-* SubIndex 201 - InU32_CpgButton<br>
+* SubIndex 200 - InU8_function_button<br>
+* SubIndex 201 - InU8_special_button<br>
+* SubIndex 202 - InU16_data_valid_flag<br>
+* SubIndex 203 - InUF_load_position_x_cur<br>
+* SubIndex 204 - InUF_load_position_y_cur<br>
+* SubIndex 205 - InUF_load_position_z_cur<br>
+* SubIndex 206 - InUF_load_position_x_r_tar<br>
+* SubIndex 207 - InUF_load_position_y_r_tar<br>
+* SubIndex 208 - InUF_load_position_z_r_tar<br>
+* SubIndex 209 - InU8_trm_require_state<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -1669,8 +1697,16 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex197 - InF_psm_velocity_x_r_cur */
 { DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex198 - InF_psm_velocity_y_r_cur */
 { DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex199 - InF_psm_velocity_z_r_cur */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex200 - InU16_FkpButton */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex201 - InU32_CpgButton */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex200 - InU8_function_button */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex201 - InU8_special_button */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex202 - InU16_data_valid_flag */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex203 - InUF_load_position_x_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex204 - InUF_load_position_y_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex205 - InUF_load_position_z_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex206 - InUF_load_position_x_r_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex207 - InUF_load_position_y_r_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex208 - InUF_load_position_z_r_tar */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex209 - InU8_trm_require_state */
 
 /**
 * \brief Object/Entry names
@@ -1875,8 +1911,16 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 "InF_psm_velocity_x_r_cur\000"
 "InF_psm_velocity_y_r_cur\000"
 "InF_psm_velocity_z_r_cur\000"
-"InU16_FkpButton\000"
-"InU32_CpgButton\000\377";
+"InU8_function_button\000"
+"InU8_special_button\000"
+"InU16_data_valid_flag\000"
+"InUF_load_position_x_cur\000"
+"InUF_load_position_y_cur\000"
+"InUF_load_position_z_cur\000"
+"InUF_load_position_x_r_tar\000"
+"InUF_load_position_y_r_tar\000"
+"InUF_load_position_z_r_tar\000"
+"InU8_trm_require_state\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -2084,8 +2128,16 @@ REAL32 InF_psm_velocity_z_cur; /* Subindex196 - InF_psm_velocity_z_cur */
 REAL32 InF_psm_velocity_x_r_cur; /* Subindex197 - InF_psm_velocity_x_r_cur */
 REAL32 InF_psm_velocity_y_r_cur; /* Subindex198 - InF_psm_velocity_y_r_cur */
 REAL32 InF_psm_velocity_z_r_cur; /* Subindex199 - InF_psm_velocity_z_r_cur */
-UINT16 InU16_FkpButton; /* Subindex200 - InU16_FkpButton */
-UINT32 InU32_CpgButton; /* Subindex201 - InU32_CpgButton */
+UINT8 InU8_function_button; /* Subindex200 - InU8_function_button */
+UINT8 InU8_special_button; /* Subindex201 - InU8_special_button */
+UINT16 InU16_data_valid_flag; /* Subindex202 - InU16_data_valid_flag */
+REAL32 InUF_load_position_x_cur; /* Subindex203 - InUF_load_position_x_cur */
+REAL32 InUF_load_position_y_cur; /* Subindex204 - InUF_load_position_y_cur */
+REAL32 InUF_load_position_z_cur; /* Subindex205 - InUF_load_position_z_cur */
+REAL32 InUF_load_position_x_r_tar; /* Subindex206 - InUF_load_position_x_r_tar */
+REAL32 InUF_load_position_y_r_tar; /* Subindex207 - InUF_load_position_y_r_tar */
+REAL32 InUF_load_position_z_r_tar; /* Subindex208 - InUF_load_position_z_r_tar */
+UINT8 InU8_trm_require_state; /* Subindex209 - InU8_trm_require_state */
 } OBJ_STRUCT_PACKED_END
 TOBJ6000;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -2095,7 +2147,7 @@ TOBJ6000;
 */
 PROTO TOBJ6000 InputData0x6000
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={201,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+={209,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -2124,7 +2176,7 @@ PROTO TOBJ6000 InputData0x6000
 * SubIndex 7 - OutU8_fault_clear<br>
 * SubIndex 8 - OutU8_systemCurrentState<br>
 * SubIndex 9 - OutU16_reboot<br>
-* SubIndex 10 - OutU8_Reserved1<br>
+* SubIndex 10 - OutU8_treatment_record_state<br>
 * SubIndex 11 - OutU8_ethercat_Link_state<br>
 * SubIndex 12 - OutU8_rtm_on_require_state<br>
 * SubIndex 13 - OutU8_rtm_on_require_ctrl_mode<br>
@@ -2164,17 +2216,14 @@ PROTO TOBJ6000 InputData0x6000
 * SubIndex 47 - OutU8_psm_require_ctrl_mode<br>
 * SubIndex 48 - OutU32_psm_interlock_override<br>
 * SubIndex 49 - OutU32_psm_unready_override<br>
-* SubIndex 50 - OutU8_fkp_led_blink<br>
-* SubIndex 51 - OutU8_fkp_userPrompt<br>
-* SubIndex 52 - OutU16_fkp_year<br>
-* SubIndex 53 - OutU8_fkp_month<br>
-* SubIndex 54 - OutU8_fkp_day<br>
-* SubIndex 55 - OutU8_fkp_hour<br>
-* SubIndex 56 - OutU8_fkp_minute<br>
-* SubIndex 57 - OutU8_fkp_totalFractions<br>
-* SubIndex 58 - OutU8_fkp_fractions<br>
-* SubIndex 59 - OutU32_cpg_led_blink<br>
-* SubIndex 60 - OutU8_cpg_vibration<br>
+* SubIndex 50 - OutU16_fkp_year<br>
+* SubIndex 51 - OutU8_fkp_month<br>
+* SubIndex 52 - OutU8_fkp_day<br>
+* SubIndex 53 - OutU8_fkp_hour<br>
+* SubIndex 54 - OutU8_fkp_minute<br>
+* SubIndex 55 - OutU8_fkp_totalFractions<br>
+* SubIndex 56 - OutU8_fkp_fractions<br>
+* SubIndex 57 - OutU8_reserved3<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -2187,7 +2236,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex7 - OutU8_fault_clear */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex8 - OutU8_systemCurrentState */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex9 - OutU16_reboot */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex10 - OutU8_Reserved1 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex10 - OutU8_treatment_record_state */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex11 - OutU8_ethercat_Link_state */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex12 - OutU8_rtm_on_require_state */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex13 - OutU8_rtm_on_require_ctrl_mode */
@@ -2227,17 +2276,14 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex47 - OutU8_psm_require_ctrl_mode */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex48 - OutU32_psm_interlock_override */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex49 - OutU32_psm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex50 - OutU8_fkp_led_blink */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex51 - OutU8_fkp_userPrompt */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex52 - OutU16_fkp_year */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex53 - OutU8_fkp_month */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex54 - OutU8_fkp_day */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex55 - OutU8_fkp_hour */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex56 - OutU8_fkp_minute */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex57 - OutU8_fkp_totalFractions */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex58 - OutU8_fkp_fractions */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex59 - OutU32_cpg_led_blink */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex60 - OutU8_cpg_vibration */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex50 - OutU16_fkp_year */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex51 - OutU8_fkp_month */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex52 - OutU8_fkp_day */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex53 - OutU8_fkp_hour */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex54 - OutU8_fkp_minute */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex55 - OutU8_fkp_totalFractions */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex56 - OutU8_fkp_fractions */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex57 - OutU8_reserved3 */
 
 /**
 * \brief Object/Entry names
@@ -2252,7 +2298,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU8_fault_clear\000"
 "OutU8_systemCurrentState\000"
 "OutU16_reboot\000"
-"OutU8_Reserved1\000"
+"OutU8_treatment_record_state\000"
 "OutU8_ethercat_Link_state\000"
 "OutU8_rtm_on_require_state\000"
 "OutU8_rtm_on_require_ctrl_mode\000"
@@ -2292,8 +2338,6 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU8_psm_require_ctrl_mode\000"
 "OutU32_psm_interlock_override\000"
 "OutU32_psm_unready_override\000"
-"OutU8_fkp_led_blink\000"
-"OutU8_fkp_userPrompt\000"
 "OutU16_fkp_year\000"
 "OutU8_fkp_month\000"
 "OutU8_fkp_day\000"
@@ -2301,8 +2345,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU8_fkp_minute\000"
 "OutU8_fkp_totalFractions\000"
 "OutU8_fkp_fractions\000"
-"OutU32_cpg_led_blink\000"
-"OutU8_cpg_vibration\000\377";
+"OutU8_reserved3\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -2320,7 +2363,7 @@ UINT16 OutU16_radiation_index; /* Subindex6 - OutU16_radiation_index */
 UINT8 OutU8_fault_clear; /* Subindex7 - OutU8_fault_clear */
 UINT8 OutU8_systemCurrentState; /* Subindex8 - OutU8_systemCurrentState */
 UINT16 OutU16_reboot; /* Subindex9 - OutU16_reboot */
-UINT8 OutU8_Reserved1; /* Subindex10 - OutU8_Reserved1 */
+UINT8 OutU8_treatment_record_state; /* Subindex10 - OutU8_treatment_record_state */
 UINT8 OutU8_ethercat_Link_state; /* Subindex11 - OutU8_ethercat_Link_state */
 UINT8 OutU8_rtm_on_require_state; /* Subindex12 - OutU8_rtm_on_require_state */
 UINT8 OutU8_rtm_on_require_ctrl_mode; /* Subindex13 - OutU8_rtm_on_require_ctrl_mode */
@@ -2360,17 +2403,14 @@ UINT8 OutU8_psm_require_state; /* Subindex46 - OutU8_psm_require_state */
 UINT8 OutU8_psm_require_ctrl_mode; /* Subindex47 - OutU8_psm_require_ctrl_mode */
 UINT32 OutU32_psm_interlock_override; /* Subindex48 - OutU32_psm_interlock_override */
 UINT32 OutU32_psm_unready_override; /* Subindex49 - OutU32_psm_unready_override */
-UINT8 OutU8_fkp_led_blink; /* Subindex50 - OutU8_fkp_led_blink */
-UINT8 OutU8_fkp_userPrompt; /* Subindex51 - OutU8_fkp_userPrompt */
-UINT16 OutU16_fkp_year; /* Subindex52 - OutU16_fkp_year */
-UINT8 OutU8_fkp_month; /* Subindex53 - OutU8_fkp_month */
-UINT8 OutU8_fkp_day; /* Subindex54 - OutU8_fkp_day */
-UINT8 OutU8_fkp_hour; /* Subindex55 - OutU8_fkp_hour */
-UINT8 OutU8_fkp_minute; /* Subindex56 - OutU8_fkp_minute */
-UINT8 OutU8_fkp_totalFractions; /* Subindex57 - OutU8_fkp_totalFractions */
-UINT8 OutU8_fkp_fractions; /* Subindex58 - OutU8_fkp_fractions */
-UINT32 OutU32_cpg_led_blink; /* Subindex59 - OutU32_cpg_led_blink */
-UINT8 OutU8_cpg_vibration; /* Subindex60 - OutU8_cpg_vibration */
+UINT16 OutU16_fkp_year; /* Subindex50 - OutU16_fkp_year */
+UINT8 OutU8_fkp_month; /* Subindex51 - OutU8_fkp_month */
+UINT8 OutU8_fkp_day; /* Subindex52 - OutU8_fkp_day */
+UINT8 OutU8_fkp_hour; /* Subindex53 - OutU8_fkp_hour */
+UINT8 OutU8_fkp_minute; /* Subindex54 - OutU8_fkp_minute */
+UINT8 OutU8_fkp_totalFractions; /* Subindex55 - OutU8_fkp_totalFractions */
+UINT8 OutU8_fkp_fractions; /* Subindex56 - OutU8_fkp_fractions */
+UINT8 OutU8_reserved3; /* Subindex57 - OutU8_reserved3 */
 } OBJ_STRUCT_PACKED_END
 TOBJ7010;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -2380,7 +2420,7 @@ TOBJ7010;
 */
 PROTO TOBJ7010 OutputData0x7010
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={60,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+={57,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -2394,17 +2434,17 @@ PROTO TOBJ7010 OutputData0x7010
 #ifdef _OBJD_
 TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1601 */
-{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 60 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 57 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
 /* Object 0x1A00 */
-{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 201 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 209 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
 /* Object 0x1C12 */
 {NULL , NULL ,  0x1C12 , {DEFTYPE_UNSIGNED16 , 1 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C12 , aName0x1C12 , &sRxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x1C13 */
 {NULL , NULL ,  0x1C13 , {DEFTYPE_UNSIGNED16 , 1 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C13 , aName0x1C13 , &sTxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x6000 */
-{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 201 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 209 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
 /* Object 0x7010 */
-{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 60 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 57 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
 {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL}};
 #endif    //#ifdef _OBJD_
 

@@ -164,6 +164,11 @@ static void app_rtm_main_thread(void *argument)
                     self->qam_current_state = *(uint8_t *)&(queue_frame.payload.data[1]);
                     break;
                 }
+                case OUTPUT_BEAM_ID_CMD: /*beamID*/
+                {
+                    self->beamID = *(uint8_t *)&(queue_frame.payload.data[1]);
+                    break;
+                }
                 default:
                     break;
                 }
@@ -183,6 +188,7 @@ static void app_rtm_main_thread(void *argument)
         rtm_state_dispatch(&(self->state_machine), (Event_t *)&rtm_event);
 
         rtm_status.fsm_state_current = rtm_get_state(&(self->state_machine));
+        rtm_status.beam_ID = self->beamID;
         rtm_status.not_ready_event = *(uint32_t *)&(self->interlock_table.not_ready_event);
         rtm_status.warning_interlock = *(uint32_t *)&(self->interlock_table.warning_interlock);
         rtm_status.minor_interlock = *(uint32_t *)&(self->interlock_table.minor_interlock);
@@ -293,8 +299,8 @@ enum
     OUTPUT_DATA_RTM_OFF_REQUIRE_STATE,
     OUTPUT_DATA_GMM_REQUIRE_STATE,
     OUTPUT_DATA_PSM_REQUIRE_STATE,
-    OUTPUT_DATA_FKP_LED_BLINK,
-    OUTPUT_DATA_CPG_LED_BLINK,
+    OUTPUT_DATA_FKP_TIME,
+    OUTPUT_DATA_TREATMENT_RECORD_STATE,
 };
 
 static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7010 *data)
@@ -327,6 +333,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
             break;
         case OUTPUT_DATA_SYSTEM_STATE:
             flag = OUTPUT_DATA_RTM_ON_REQUIRE_STATE;
@@ -364,19 +371,19 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], GMM_ID, OUTPUT_GMM_REQUIRE_STATE_CMD, &data->OutU8_gmm_require_state, len);
             break;
         case OUTPUT_DATA_PSM_REQUIRE_STATE:
-            flag = OUTPUT_DATA_BEAM_ID;
-            len = (uint8_t *)&output_data.OutU8_fkp_led_blink - (uint8_t *)&output_data.OutU8_psm_require_state;
+            flag = OUTPUT_DATA_FKP_TIME;
+            len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_psm_require_state;
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], PSM_ID, OUTPUT_PSM_REQUIRE_STATE_CMD, &data->OutU8_psm_require_state, len);
             break;
-        case OUTPUT_DATA_FKP_LED_BLINK:
-            flag = OUTPUT_DATA_CPG_LED_BLINK;
-            len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_fkp_led_blink;
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_LED_BLINK_CMD, &data->OutU8_fkp_led_blink, len);
+        case OUTPUT_DATA_FKP_TIME:
+            flag = OUTPUT_DATA_TREATMENT_RECORD_STATE;
+            len = (uint8_t *)&output_data.OutU8_reserved3 - (uint8_t *)&output_data.OutU16_fkp_year;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_TIMESTAMP_CMD, &data->OutU16_fkp_year, len);
             break;
-        case OUTPUT_DATA_CPG_LED_BLINK:
+        case OUTPUT_DATA_TREATMENT_RECORD_STATE:
             flag = OUTPUT_DATA_BEAM_ID;
-            len = sizeof(output_data.OutU32_cpg_led_blink);
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], CPG_ID, OUTPUT_CPG_LED_BLINK_CMD, &data->OutU32_cpg_led_blink, len);
+            len = (uint8_t *)&output_data.OutU8_ethercat_Link_state - (uint8_t *)&output_data.OutU8_treatment_record_state;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], RTM_OFF_ARM_ID, OUTPUT_RTM_OFF_ARM_TREATMENT_RECORD_CMD, &data->OutU8_treatment_record_state, len);
             break;
         default:
             break;
@@ -385,7 +392,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
     else
     {
         // reboot
-        len = (uint8_t *)&output_data.OutU8_Reserved1 - (uint8_t *)&output_data.OutU16_reboot;
+        len = (uint8_t *)&output_data.OutU8_treatment_record_state - (uint8_t *)&output_data.OutU16_reboot;
         if (memcmp(&output_data.OutU16_reboot, &data->OutU16_reboot, len) != 0)
         {
             // RTM_ON_ARM
@@ -518,34 +525,20 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], GMM_ID, OUTPUT_GMM_REQUIRE_STATE_CMD, &data->OutU8_gmm_require_state, len);
         }
 
-        len = (uint8_t *)&output_data.OutU8_fkp_led_blink - (uint8_t *)&output_data.OutU8_psm_require_state;
+        len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_psm_require_state;
         if (memcmp(&output_data.OutU8_psm_require_state, &data->OutU8_psm_require_state, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], PSM_ID, OUTPUT_PSM_REQUIRE_STATE_CMD, &data->OutU8_psm_require_state, len);
         }
-
-        len = (uint8_t *)&output_data.OutU8_fkp_userPrompt - (uint8_t *)&output_data.OutU8_fkp_led_blink;
-        if (memcmp(&output_data.OutU8_fkp_led_blink, &data->OutU8_fkp_led_blink, len) != 0)
-        {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_LED_BLINK_CMD, &data->OutU8_fkp_led_blink, len);
-        }
-
-        len = (uint8_t *)&output_data.OutU16_fkp_year - (uint8_t *)&output_data.OutU8_fkp_userPrompt;
-        if (memcmp(&output_data.OutU8_fkp_userPrompt, &data->OutU8_fkp_userPrompt, len) != 0)
-        {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_VIBRATION_CMD, &data->OutU8_fkp_userPrompt, len);
-        }
-
-        len = (uint8_t *)&output_data.OutU32_cpg_led_blink - (uint8_t *)&output_data.OutU16_fkp_year;
+        len = (uint8_t *)&output_data.OutU8_reserved3 - (uint8_t *)&output_data.OutU16_fkp_year;
         if (memcmp(&output_data.OutU16_fkp_year, &data->OutU16_fkp_year, len) != 0)
         {
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], FKP_ID, OUTPUT_FKP_TIMESTAMP_CMD, &data->OutU16_fkp_year, len);
         }
-
-        len = (uint8_t *)&output_data.OutU8_cpg_vibration - (uint8_t *)&output_data.OutU32_cpg_led_blink + sizeof(output_data.OutU8_cpg_vibration);
-        if (memcmp(&output_data.OutU32_cpg_led_blink, &data->OutU32_cpg_led_blink, len) != 0)
+        len = (uint8_t *)&output_data.OutU8_ethercat_Link_state - (uint8_t *)&output_data.OutU8_treatment_record_state;
+        if (memcmp(&output_data.OutU8_treatment_record_state, &data->OutU8_treatment_record_state, len) != 0)
         {
-            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], CPG_ID, OUTPUT_CPG_LED_BLINK_CMD, &data->OutU32_cpg_led_blink, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], RTM_OFF_ARM_ID, OUTPUT_RTM_OFF_ARM_TREATMENT_RECORD_CMD, &data->OutU8_treatment_record_state, len);
         }
         memcpy(&output_data, data, sizeof(TOBJ7010));
     }
@@ -609,11 +602,14 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
     case INPUT_PSM_INFO_CMD:
         memcpy(&input_data->InU32_psm_move_status, queue_frame->payload.data + 1, len);
         break;
-    case INPUT_FKP_BUTTON_CMD:
-        memcpy(&input_data->InU16_FkpButton, queue_frame->payload.data + 1, len);
+    case INPUT_RTM_OFF_ARM_BUTTON_CMD:
+        memcpy(&input_data->InU8_function_button, queue_frame->payload.data + 1, len);
         break;
-    case INPUT_CPG_BUTTON_CMD:
-        memcpy(&input_data->InU32_CpgButton, queue_frame->payload.data + 1, len);
+    case INPUT_RTM_OFF_ARM_TRM_REQUIRE_CMD:
+        memcpy(&input_data->InU8_trm_require_state, queue_frame->payload.data + 1, len);
+        break;
+    case INPUT_RTM_OFF_ARM_LOAD_POSITION_CMD:
+        memcpy(&input_data->InU16_data_valid_flag, queue_frame->payload.data + 1, len);
         break;
     default:
         LOG_E("unknown cmd %x\r\n", cmd);

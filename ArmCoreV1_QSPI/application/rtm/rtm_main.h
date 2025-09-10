@@ -50,12 +50,11 @@ extern "C"
         OUTPUT_QAM_REQUIRE_STATE_CMD = 0x14,
         // OUTPUT_BSM_REQUIRE_STATE_CMD = 0x15,
         OUTPUT_RTM_OFF_REQUIRE_STATE_CMD = 0x16,
-        OUTPUT_FKP_LED_BLINK_CMD = 0x17,
-        OUTPUT_FKP_VIBRATION_CMD = 0x1B,
-        OUTPUT_FKP_TIMESTAMP_CMD = 0x1C,
-        OUTPUT_CPG_LED_BLINK_CMD = 0x18,
+        OUTPUT_RTM_OFF_ARM_TREATMENT_RECORD_CMD = 0x18,
         OUTPUT_GMM_REQUIRE_STATE_CMD = 0x19,
         OUTPUT_PSM_REQUIRE_STATE_CMD = 0x1A,
+        OUTPUT_FKP_VIBRATION_CMD = 0x1B,
+        OUTPUT_FKP_TIMESTAMP_CMD = 0x1C,
         OUTPUT_STATE_SYNC_CMD = 0x1E,
         OUTPUT_MAX_CMD,
         OUTPUT_RTM_ON_ARM_REQUIRE_STATE_CMD = OUTPUT_MAX_CMD,
@@ -70,12 +69,13 @@ extern "C"
         INPUT_QAM_CURRENT_STATE_CMD = 0x41,
         INPUT_RTM_OFF_ARM_CURRENT_STATE_CMD = 0x61,
         INPUT_RTM_OFF_ARM_DIDO_CMD = 0x63,
+        INPUT_RTM_OFF_ARM_BUTTON_CMD = 0x65,
+        INPUT_RTM_OFF_ARM_TRM_REQUIRE_CMD = 0x68,
+        INPUT_RTM_OFF_ARM_LOAD_POSITION_CMD = 0x69,
         INPUT_PSM_CURRENT_STATE_CMD = 0x71,
         INPUT_PSM_INFO_CMD = 0x72,
         INPUT_GMM_CURRENT_STATE_CMD = 0x81,
         INPUT_GMM_INFO_CMD = 0x82,
-        INPUT_FKP_BUTTON_CMD = 0x91,
-        INPUT_CPG_BUTTON_CMD = 0xA1,
         INPUT_MAX_CMD,
         INPUT_RTM_ON_ARM_CURRENT_STATE_CMD = INPUT_MAX_CMD,
         INPUT_RTM_ON_ARM_DIDO_CMD = INPUT_MAX_CMD + 1,
@@ -83,7 +83,6 @@ extern "C"
 
     typedef enum
     {
-
         RTM_MODULE_RTM_ON_PLC = 0,
         RTM_MODULE_RTM_ON_ARM,
         RTM_MODULE_ICM,
@@ -156,6 +155,7 @@ extern "C"
         uint16_t PLC_info;
         uint32_t interlock_override;
         uint32_t unready_override;
+        uint8_t beamID;
 
         uint8_t icm_current_state;
         uint8_t bgm_current_state;

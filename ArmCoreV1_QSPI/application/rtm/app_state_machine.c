@@ -1301,7 +1301,7 @@ static State_t module_mv_complete(void *self, Event_t const *const e)
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
