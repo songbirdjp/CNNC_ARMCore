@@ -9,13 +9,13 @@
  *
  */
 #include "app_state_machine.h"
-#include "app_fault_check.h"
 #include "ulog.h"
 #include "rtm_main.h"
-#include "app_manage.h"
-#define RTM_INIT_WAIT_TIME (100000)
-static int32_t stateMachine_ctor(StateMachine_t *self,
-                                 StateHandler_t initial)
+
+#define RTM_ERROR_WAIT_TIME (50)
+#define RTM_INIT_WAIT_TIME (120000)
+int32_t stateMachine_ctor(StateMachine_t *self,
+                          StateHandler_t initial)
 {
     if (self == NULL || initial == NULL)
     {
@@ -25,7 +25,7 @@ static int32_t stateMachine_ctor(StateMachine_t *self,
     self->StateHandler = initial;
     return 0;
 }
-static int32_t stateMachine_init(StateMachine_t *self, Event_t const *e)
+int32_t stateMachine_init(StateMachine_t *self, Event_t const *e)
 {
     if (self == NULL)
     {
@@ -34,7 +34,7 @@ static int32_t stateMachine_init(StateMachine_t *self, Event_t const *e)
     self->StateHandler(self, e);
     return 0;
 }
-static int32_t stateMachine_dispatch(StateMachine_t *self, Event_t const *e)
+int32_t stateMachine_dispatch(StateMachine_t *self, Event_t const *e)
 {
     if (self == NULL || e == NULL)
     {
@@ -109,6 +109,372 @@ static State_t module_ct_work(void *self, Event_t const *const e);
 static State_t module_kv_complete(void *self, Event_t const *const e);
 static State_t module_kv_terminate(void *self, Event_t const *const e);
 
+#define EMERGENCY_TEST
+#ifdef EMERGENCY_TEST
+#include "shell.h"
+uint8_t emergency1 = 1;
+uint8_t emergency2 = 1;
+uint8_t emergency3 = 1;
+uint8_t emergency4 = 1;
+uint8_t emergency5 = 1;
+uint8_t emergency_fkp_cpg = 1;
+static int8_t emergency_test(int argc, char *argv[])
+{
+    LOG_I("emergency1:%d\r\n", emergency1);
+    LOG_I("emergency2:%d\r\n", emergency2);
+    LOG_I("emergency3:%d\r\n", emergency3);
+    LOG_I("emergency4:%d\r\n", emergency4);
+    LOG_I("emergency5:%d\r\n", emergency5);
+    LOG_I("emergency_fkp_cpg:%d\r\n", emergency_fkp_cpg);
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(emergency_test, emergency_test, emergency test);
+#endif
+
+static int32_t fault_handle(interlock_table_t *interlock_table, uint8_t state, void *arg)
+{
+    app_rtm_main_t *app_rtm = (app_rtm_main_t *)arg;
+    dido_structure_t dido_structure = {0};
+    app_do_get(&(app_rtm->app_dido), &dido_structure);
+    if (interlock_table->serious_interlock.emergency_stop == 1)
+    {
+        dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 0;
+#define EMERGENCY_TEST
+#ifdef EMERGENCY_TEST
+        app_di_get(&(app_rtm->app_dido), &dido_structure);
+        emergency1 = dido_structure.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_EMERGENCY1;
+        emergency2 = dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_CITB_EMERGENCY2;
+        emergency3 = dido_structure.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_EMERGENCY3;
+        emergency4 = dido_structure.mcp23017_0x02_u.mcp23017_0x02_bit.DI_CITB_EMERGENCY4;
+        emergency5 = dido_structure.mcp23017_0x02_u.mcp23017_0x02_bit.DI_CITB_EMERGENCY5;
+        emergency_fkp_cpg = app_rtm->cpg_fkp_emergency_stop;
+#endif
+    }
+    else
+    {
+        if (state == STATE_MACHINE_SHUTDOWN)
+        {
+            dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 0;
+        }
+        else
+        {
+            dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 1;
+        }
+    }
+    app_do_set(&(app_rtm->app_dido), &dido_structure);
+    return 0;
+}
+
+static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock_table, uint8_t state, void *arg, uint32_t time_out)
+{
+    int32_t retval = 0;
+    app_rtm_main_t *app_rtm = (app_rtm_main_t *)arg;
+    self->cur_time = osKernelGetTickCount();
+    dido_structure_t dido_structure = {0};
+    app_do_get(&(app_rtm->app_dido), &dido_structure);
+    app_di_get(&(app_rtm->app_dido), &dido_structure);
+
+    if ((0 == dido_structure.mcp23017_0x02_u.mcp23017_0x02_bit.DI_CITB_EMERGENCY4) ||
+        (0 == dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_CITB_EMERGENCY2) ||
+        (0 == dido_structure.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_EMERGENCY3) ||
+        (0 == dido_structure.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_EMERGENCY1) ||
+        (0 == dido_structure.mcp23017_0x02_u.mcp23017_0x02_bit.DI_CITB_EMERGENCY5) ||
+        (0 == app_rtm->cpg_fkp_emergency_stop))
+    {
+        self->interlock_table.serious_interlock.emergency_stop = 1;
+        self->interlock_table.not_ready_event.emergency_stop = 1; // 紧急触发
+        retval = -1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.emergency_stop = 0;
+        self->interlock_table.not_ready_event.emergency_stop = 0;
+    }
+    if (((dido_structure.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR2 != 1) ||
+         (dido_structure.mcp23017_0x01_u.mcp23017_0x01_bit.DI_CITB_TREATMENT_ROOM_DOOR1 != 1)))
+    {
+        self->interlock_table.not_ready_event.door_open = 1;
+        if ((state == STATE_MACHINE_READY) ||
+            (state == STATE_MACHINE_WORK) ||
+            (state == STATE_MACHINE_SURVIEW_READY) ||
+            (state == STATE_MACHINE_SURVIEW_WORK) ||
+            (state == STATE_MACHINE_CT_READY) ||
+            (state == STATE_MACHINE_CT_WORK))
+        {
+            self->interlock_table.minor_interlock.door_open = 1;
+        }
+        else
+        {
+            self->interlock_table.minor_interlock.door_open = 0;
+        }
+        if ((dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn == 1) && (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_HvEn == 0))
+        {
+            self->interlock_table.minor_interlock.HvEN = 1;
+        }
+        retval = -1;
+    }
+    else
+    {
+        self->interlock_table.minor_interlock.door_open = 0;
+        self->interlock_table.not_ready_event.door_open = 0;
+        if (dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn ^ dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_HvEn)
+        {
+            self->interlock_table.minor_interlock.HvEN = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.minor_interlock.HvEN = 0;
+        }
+    }
+    if (dido_structure.mcp23017_0x02_u.mcp23017_0x02_bit.DI_TREATMENT_ROOM_DOOR_READY != 1)
+    {
+        self->interlock_table.not_ready_event.search_state = 1;
+        retval = -1;
+    }
+    else
+    {
+        self->interlock_table.not_ready_event.search_state = 0;
+    }
+    // kv_treatment_en check
+    if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_KV_TreatmentEN != 1)
+    {
+        if ((state == STATE_MACHINE_SURVIEW_WORK) ||
+            (state == STATE_MACHINE_CT_WORK))
+        {
+            self->interlock_table.minor_interlock.KVTreatmentEn = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.minor_interlock.KVTreatmentEn = 0;
+        }
+    }
+    else
+    {
+        self->interlock_table.minor_interlock.KVTreatmentEn = 0;
+    }
+    // mv_treatment_en check
+    if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.DI_MV_TreatmentEN != 1)
+    {
+        if (state == STATE_MACHINE_WORK)
+        {
+            self->interlock_table.minor_interlock.MVTreatmentEn = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.minor_interlock.MVTreatmentEn = 0;
+        }
+    }
+    else
+    {
+        self->interlock_table.minor_interlock.MVTreatmentEn = 0;
+    }
+
+    // ethercat
+    if (bit_get(app_rtm->rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_ethercat_info.manage_info.status_word, ETHERCAT_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.ethercat_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.ethercat_link = 0;
+    }
+
+    // RTM ON
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_RTM_ON].manage_info.status_word, MODULE_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_RTM_ON].manage_info.status_word, MODULE_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.rtm_on_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.rtm_on_link = 0;
+    }
+    // PSM
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_PSM].manage_info.status_word, MODULE_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_PSM].manage_info.status_word, MODULE_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.psm_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.psm_link = 0;
+    }
+    // FKP
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_FKP].manage_info.status_word, MODULE_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_FKP].manage_info.status_word, MODULE_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.fkp_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.fkp_link = 0;
+    }
+    if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_FKP].manage_info.status_word, MODULE_FAULT_STATE_BIT))
+    {
+        bit_clean(app_rtm->rtm_module_info[RTM_MODULE_FKP].manage_info.status_word, MODULE_FAULT_STATE_BIT);
+        self->interlock_table.serious_interlock.fkp_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.fkp_fault = 0;
+    }
+
+    // CPG
+    if (bit_get(app_rtm->app_cpg.manage_info.status_word, CPG_L_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->app_cpg.manage_info.status_word, CPG_L_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.cpg_l_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.cpg_l_link = 0;
+    }
+    if (bit_get(app_rtm->app_cpg.manage_info.status_word, CPG_R_LINK_STATE_BIT))
+    {
+        bit_clean(app_rtm->app_cpg.manage_info.status_word, CPG_R_LINK_STATE_BIT);
+        self->interlock_table.serious_interlock.cpg_r_link = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.cpg_r_link = 0;
+    }
+    if (bit_get(app_rtm->app_cpg.manage_info.status_word, CPG_L_FAULT_STATE_BIT))
+    {
+        bit_clean(app_rtm->app_cpg.manage_info.status_word, CPG_L_FAULT_STATE_BIT);
+        self->interlock_table.serious_interlock.cpg_l_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.cpg_l_fault = 0;
+    }
+    if (bit_get(app_rtm->app_cpg.manage_info.status_word, CPG_R_FAULT_STATE_BIT))
+    {
+        bit_clean(app_rtm->app_cpg.manage_info.status_word, CPG_R_FAULT_STATE_BIT);
+        self->interlock_table.serious_interlock.cpg_r_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.cpg_r_fault = 0;
+    }
+    if (bit_get(app_rtm->app_cpg.manage_info.status_word, CPG_Y_BRAKE_STATE_BIT))
+    {
+        bit_clean(app_rtm->app_cpg.manage_info.status_word, CPG_Y_BRAKE_STATE_BIT);
+        self->interlock_table.minor_interlock.cpg_y_brake_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.minor_interlock.cpg_y_brake_fault = 0;
+    }
+
+    if ((app_rtm->psm_current_state == MV_TERMINATE_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
+    {
+        self->interlock_table.serious_interlock.psm_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.psm_fault = 0;
+    }
+    if ((app_rtm->psm_current_state == MV_INTERRUPT_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
+    {
+        self->interlock_table.minor_interlock.psm_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.minor_interlock.psm_fault = 0;
+    }
+
+    if ((app_rtm->gmm_current_state == MV_TERMINATE_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
+    {
+        self->interlock_table.serious_interlock.gmm_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.serious_interlock.gmm_fault = 0;
+    }
+    if ((app_rtm->gmm_current_state == MV_INTERRUPT_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
+    {
+        self->interlock_table.minor_interlock.gmm_fault = 1;
+    }
+    else
+    {
+        self->interlock_table.minor_interlock.gmm_fault = 0;
+    }
+    if ((self->cur_time - self->last_time > time_out) || (retval == 0))
+    {
+        if (self->fault_clear_flag == 1) // 清除故障
+        {
+            self->fault_clear_flag = 0;
+            memcpy(interlock_table, &self->interlock_table, sizeof(interlock_table_t));
+        }
+        else
+        {
+            interlock_table->not_ready_event = self->interlock_table.not_ready_event;
+            *((uint32_t *)&(interlock_table->serious_interlock)) |= *((uint32_t *)&(self->interlock_table.serious_interlock));
+            *((uint32_t *)&(interlock_table->minor_interlock)) |= *((uint32_t *)&(self->interlock_table.minor_interlock));
+            *((uint32_t *)&(interlock_table->warning_interlock)) |= *((uint32_t *)&(self->interlock_table.warning_interlock));
+        }
+        fault_handle(interlock_table, state, app_rtm);
+
+        retval = 0;
+    }
+    else
+    {
+        retval = -1;
+    }
+    return retval;
+}
+static void fault_check_init(rtm_fault_check_t *self)
+{
+    self->cur_time = osKernelGetTickCount();
+    self->last_time = self->cur_time;
+    self->fault_clear_flag = 0;
+    memset(&self->interlock_table, 0, sizeof(interlock_table_t));
+}
+static void fault_clear(rtm_fault_check_t *self)
+{
+    self->cur_time = osKernelGetTickCount();
+    self->last_time = self->cur_time;
+    self->fault_clear_flag = 1;
+    memset(&self->interlock_table, 0, sizeof(interlock_table_t));
+}
+#define NO_FAULT (0x00)
+#define NOT_READY_EVENT (0x01)
+#define WARNING_INTERLOCK (0x02)
+#define MINOR_INTERLOCK (0x04)
+#define SERIOUS_INTERLOCK (0x08)
+static int32_t fault_override(app_rtm_main_t *self)
+{
+    int32_t retval = NO_FAULT;
+    if (self == NULL)
+    {
+        return SERIOUS_INTERLOCK;
+    }
+    if (((*(uint32_t *)&(self->interlock_table.not_ready_event) & (~(self->unready_override))) != 0))
+    {
+        retval |= NOT_READY_EVENT;
+    }
+    if (((*(uint32_t *)&(self->interlock_table.warning_interlock) & (~(self->interlock_override))) != 0))
+    {
+        retval |= WARNING_INTERLOCK;
+    }
+    if (((*(uint32_t *)&(self->interlock_table.minor_interlock) & (~(self->interlock_override))) != 0))
+    {
+        retval |= MINOR_INTERLOCK;
+    }
+    if (((*(uint32_t *)&(self->interlock_table.serious_interlock) & (~(self->interlock_override))) != 0))
+    {
+        retval |= SERIOUS_INTERLOCK;
+    }
+    return retval;
+}
 static State_t system_initialization(void *self, Event_t const *const e)
 {
     State_t status;
@@ -152,7 +518,7 @@ static State_t module_init(void *self, Event_t const *const e)
     case ENTER_SIG:
     {
         app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.mcp23017_0x03_u.mcp23017_0x03_bit.DO_STAND_RESERVE = 1;
+        dido_structure.mcp23017_0x03_u.mcp23017_0x03_bit.DO_Power_CUT = 1;
         dido_structure.mcp23017_0x03_u.mcp23017_0x03_bit.DO_RTM_SystemShutDown = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_ThreePhasePowerOn = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
@@ -161,6 +527,8 @@ static State_t module_init(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
+        rtm->rtm_module_info[RTM_MODULE_PSM].tx_disable = MODULE_TX_ENABLE;
+        // rtm->rtm_module_info[RTM_MODULE_GMM].tx_disable = MODULE_TX_ENABLE;
         fault_check_init(&(rtm->fault_check));
         last_time = osKernelGetTickCount();
         // LOG_I("module_init enter\r\n");
@@ -170,65 +538,34 @@ static State_t module_init(void *self, Event_t const *const e)
     case EXIT_SIG:
     {
         // LOG_I("module_init exit\r\n");
-        // ret = osThreadFlagsGet();
-        // if (ret & APP_RTM_THREAD_FLAG_ETHERCAT_READY)
-        // {
-        rtm->rtm_module_info[RTM_MODULE_RTM_ON].tx_disable = MODULE_TX_ENABLE;
-        // }
-        // if (ret & APP_RTM_THREAD_FLAG_RTM_OFF_READY)
-        // {
-        rtm->rtm_module_info[RTM_MODULE_PSM].tx_disable = MODULE_TX_ENABLE;
-        // }
-        // if (ret & APP_RTM_THREAD_FLAG_ICM_READY)
-        // {
-        rtm->rtm_module_info[RTM_MODULE_FKP].tx_disable = MODULE_TX_ENABLE;
-        // }
-        // if (ret & APP_RTM_THREAD_FLAG_BGM_READY)
-        // {
-        rtm->rtm_module_info[RTM_MODULE_CPG].tx_disable = MODULE_TX_ENABLE;
-        // }
-        // if (ret & APP_RTM_THREAD_FLAG_QAM_READY)
-        // {
-        rtm->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].tx_disable = MODULE_TX_ENABLE;
-        // }
-        if (manage_info_status_bit_get(&rtm->manage_info, RTM_MAIN_MEMORY_STATE_BIT) ||
-            manage_info_status_bit_get(&rtm->manage_info, RTM_MAIN_WAIT_GMM_SYSTEM_ON_STATE_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_PSM].manage_info, MODULE_PERIPHERAL_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_PSM].manage_info, MODULE_TX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_PSM].manage_info, MODULE_RX_INIT_BIT) ||
-            // manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_GMM].manage_info, MODULE_PERIPHERAL_INIT_BIT) ||
-            // manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_GMM].manage_info, MODULE_TX_INIT_BIT) ||
-            // manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_GMM].manage_info, MODULE_RX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_FKP].manage_info, MODULE_PERIPHERAL_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_FKP].manage_info, MODULE_TX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_FKP].manage_info, MODULE_RX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_CPG].manage_info, MODULE_PERIPHERAL_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_CPG].manage_info, MODULE_TX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_CPG].manage_info, MODULE_RX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_RTM_ON].manage_info, MODULE_PERIPHERAL_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_RTM_ON].manage_info, MODULE_TX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_RTM_ON].manage_info, MODULE_RX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].manage_info, MODULE_PERIPHERAL_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].manage_info, MODULE_TX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->rtm_module_info[RTM_MODULE_RTM_OFF_PLC].manage_info, MODULE_RX_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->app_dido.manage_info, DIDO_PERIPHERAL_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->app_dido.manage_info, DIDO_DI_INIT_BIT) ||
-            manage_info_status_bit_get(&rtm->app_dido.manage_info, DIDO_DO_INIT_BIT))
-        {
-            manage_info_status_word_set(&rtm->manage_info, RTM_MAIN_INIT_STATE_BIT, 1);
-        }
         check_finish = -1;
         status = HANDLED();
         break;
     }
     case TIME_SIG:
     {
-        if (app_rtm_thread_flag_get(1) > 0)
+        check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
+                                   STATE_MACHINE_INIT,
+                                   rtm,
+                                   3000);
+        if (check_finish == 0)
         {
-            check_finish = fault_check(&rtm->fault_check,
-                                       STATE_MACHINE_INIT,
-                                       rtm);
-            if (check_finish == 0)
+            app_di_get(&(rtm->app_dido), &dido_structure);
+            // TODO:罩壳状态获取
+            app_do_get(&(rtm->app_dido), &dido_structure);
+            dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+            dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+            app_do_set(&(rtm->app_dido), &dido_structure);
+
+            cur_time = osKernelGetTickCount();
+
+            if ((cur_time - last_time) > RTM_INIT_WAIT_TIME)
+            {
+                // 初始化失败
+                status = TRAN(&system_systemOn);
+            }
+            else
             {
                 if (rtm->gmm_current_state == SYSTEM_ON_SIG)
                 {
@@ -236,51 +573,13 @@ static State_t module_init(void *self, Event_t const *const e)
                 }
                 else
                 {
-                    if ((cur_time - last_time) > RTM_INIT_WAIT_TIME)
-                    {
-                        if (rtm->gmm_current_state != SYSTEM_ON_SIG)
-                        {
-                            manage_info_status_word_set(&rtm->manage_info, RTM_MAIN_WAIT_GMM_SYSTEM_ON_STATE_BIT, 1);
-                        }
-                        status = TRAN(&system_systemOn);
-                    }
+                    status = HANDLED();
                 }
-            }
-            else
-            {
-                status = HANDLED();
             }
         }
         else
         {
-            cur_time = osKernelGetTickCount();
-            if ((cur_time - last_time) > RTM_INIT_WAIT_TIME)
-            {
-                if (rtm->gmm_current_state != SYSTEM_ON_SIG)
-                {
-                    manage_info_status_word_set(&rtm->manage_info, RTM_MAIN_WAIT_GMM_SYSTEM_ON_STATE_BIT, 1);
-                }
-                status = TRAN(&system_systemOn);
-            }
-            else
-            {
-                ret = osThreadFlagsGet();
-                if ((ret & APP_RTM_THREAD_FLAG_DI_READY) &&
-                    (ret & APP_RTM_THREAD_FLAG_DO_READY))
-                {
-                    app_di_get(&(rtm->app_dido), &dido_structure);
-                    // TODO:罩壳状态获取
-                    app_do_get(&(rtm->app_dido), &dido_structure);
-                    dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
-                    dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
-                    app_do_set(&(rtm->app_dido), &dido_structure);
-
-                    fault_check(&rtm->fault_check,
-                                STATE_MACHINE_INIT,
-                                rtm);
-                }
-                status = HANDLED();
-            }
+            status = HANDLED();
         }
         break;
     }
@@ -415,7 +714,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     }
     case MV_PREPARE_SIG:
     {
-        if ((check_finish == 0) && (fault_override(&(rtm->fault_check)) == NO_FAULT))
+        if ((check_finish == 0) && (fault_override(rtm) == NO_FAULT))
         {
             status = TRAN(&system_mv_preliminary);
         }
@@ -427,7 +726,7 @@ static State_t module_idle(void *self, Event_t const *const e)
     }
     case KV_PRELIMINARY_SIG:
     {
-        if ((check_finish == 0) && (fault_override(&(rtm->fault_check)) == NO_FAULT))
+        if ((check_finish == 0) && (fault_override(rtm) == NO_FAULT))
         {
             status = TRAN(&system_kv_preliminary);
         }
@@ -440,8 +739,10 @@ static State_t module_idle(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_IDLE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if ((rtm->PLC_info & 0x02) != (PLC_info & 0x02))
         {
             app_do_get(&(rtm->app_dido), &dido_structure);
@@ -705,11 +1006,13 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_PRELIMINARY,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_mv_prepare);
             }
@@ -724,24 +1027,24 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
         }
         break;
     }
-    case MANUAL_ENTER_SIG:
-    {
-        app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
-        app_do_set(&(rtm->app_dido), &dido_structure);
-        status = HANDLED();
-        break;
-    }
-    case MANUAL_EXIT_SIG:
-    {
-        app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
-        app_do_set(&(rtm->app_dido), &dido_structure);
-        status = HANDLED();
-        break;
-    }
+    // case MANUAL_ENTER_SIG:
+    // {
+    //     app_do_get(&(rtm->app_dido), &dido_structure);
+    //     dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    //     dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    //     app_do_set(&(rtm->app_dido), &dido_structure);
+    //     status = HANDLED();
+    //     break;
+    // }
+    // case MANUAL_EXIT_SIG:
+    // {
+    //     app_do_get(&(rtm->app_dido), &dido_structure);
+    //     dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+    //     dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+    //     app_do_set(&(rtm->app_dido), &dido_structure);
+    //     status = HANDLED();
+    //     break;
+    // }
     case ERROR_SIG:
     {
         fault_clear(&(rtm->fault_check));
@@ -821,7 +1124,7 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
     }
     case MV_READY_SIG:
     {
-        if ((check_finish == 0) && (fault_override(&(rtm->fault_check)) == NO_FAULT))
+        if ((check_finish == 0) && (fault_override(rtm) == NO_FAULT))
         {
             status = TRAN(&system_mv_ready);
         }
@@ -834,11 +1137,13 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_PREPARE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if (((fault_flag & SERIOUS_INTERLOCK) != 0) || ((fault_flag & MINOR_INTERLOCK) != 0))
             {
@@ -851,9 +1156,7 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
                 app_do_set(&(rtm->app_dido), &dido_structure);
                 status = HANDLED();
             }
-            else if (((fault_flag & WARNING_INTERLOCK) != 0) ||
-                     ((fault_flag & NOT_READY_EVENT) != 0) ||
-                     (fault_flag == NO_FAULT))
+            else if (((fault_flag & WARNING_INTERLOCK) != 0) || ((fault_flag & NOT_READY_EVENT) != 0) || (fault_flag == NO_FAULT))
             {
                 app_do_get(&(rtm->app_dido), &dido_structure);
                 dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
@@ -948,7 +1251,7 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_mv_radiation);
             }
@@ -972,15 +1275,17 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_READY,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
-                status = TRAN(&system_mv_interrupt);
+                status = TRAN(&system_mv_terminate);
             }
             else if ((fault_flag & MINOR_INTERLOCK) != 0)
             {
@@ -1034,6 +1339,7 @@ static State_t system_mv_radiation(void *self, Event_t const *const e)
     {
         rtm_sm->current_state = MV_RADIATION_SIG;
         status = TRAN(&module_mv_work);
+
         // LOG_I("system_mv_work enter\r\n");
         break;
     }
@@ -1081,7 +1387,7 @@ static State_t module_mv_work(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_mv_complete);
             }
@@ -1105,11 +1411,13 @@ static State_t module_mv_work(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_WORK,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
@@ -1198,8 +1506,8 @@ static State_t module_mv_complete(void *self, Event_t const *const e)
         app_do_get(&(rtm->app_dido), &dido_structure);
         dido_structure.mcp23017_0x03_u.mcp23017_0x03_bit.DO_RadiationIndicator = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
         // LOG_I("module_mv_complete enter\r\n");
@@ -1226,8 +1534,10 @@ static State_t module_mv_complete(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_COMPLETE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         status = HANDLED();
         break;
     }
@@ -1291,7 +1601,7 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
         dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
         app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
         // LOG_I("module_mv_interrupt enter\r\n");
@@ -1309,13 +1619,8 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == NO_FAULT)
             {
-                app_do_get(&(rtm->app_dido), &dido_structure);
-                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
-                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
-                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
-                app_do_set(&(rtm->app_dido), &dido_structure);
                 status = TRAN(&system_mv_ready);
             }
             else
@@ -1333,11 +1638,13 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_INTERRUPT,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
@@ -1345,6 +1652,11 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
             }
             else if ((fault_flag & MINOR_INTERLOCK) != 0)
             {
+                app_do_get(&(rtm->app_dido), &dido_structure);
+                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+                dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 0;
+                app_do_set(&(rtm->app_dido), &dido_structure);
                 status = HANDLED();
             }
             else if ((fault_flag & WARNING_INTERLOCK) != 0)
@@ -1374,6 +1686,11 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
     {
         fault_clear(&(rtm->fault_check));
         check_finish = -1;
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareHvEn = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareKVTreatmentEn = 0;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_SoftwareMVTreatmentEn = 1;
+        app_do_set(&(rtm->app_dido), &dido_structure);
         status = HANDLED();
         break;
     }
@@ -1453,8 +1770,10 @@ static State_t module_mv_terminate(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_TERMINATE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         status = HANDLED();
         break;
     }
@@ -1535,8 +1854,10 @@ static State_t module_kv_terminate(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_TERMINATE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             status = TRAN(&system_systemOn);
@@ -1628,7 +1949,7 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_kv_prepare);
             }
@@ -1639,32 +1960,34 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
         }
         break;
     }
-    case MANUAL_ENTER_SIG:
-    {
-        app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
-        app_do_set(&(rtm->app_dido), &dido_structure);
-        status = HANDLED();
-        break;
-    }
-    case MANUAL_EXIT_SIG:
-    {
-        app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
-        app_do_set(&(rtm->app_dido), &dido_structure);
-        status = HANDLED();
-        break;
-    }
+    // case MANUAL_ENTER_SIG:
+    // {
+    //     app_do_get(&(rtm->app_dido), &dido_structure);
+    //     dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 1;
+    //     dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 1;
+    //     app_do_set(&(rtm->app_dido), &dido_structure);
+    //     status = HANDLED();
+    //     break;
+    // }
+    // case MANUAL_EXIT_SIG:
+    // {
+    //     app_do_get(&(rtm->app_dido), &dido_structure);
+    //     dido_structure.gpio_do_u.gpio_do_bit.DO_softwareMoveEN = 0;
+    //     dido_structure.gpio_do_u.gpio_do_bit.DO_TreatmentMotionEnable = 0;
+    //     app_do_set(&(rtm->app_dido), &dido_structure);
+    //     status = HANDLED();
+    //     break;
+    // }
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_KV_PRELIMINARY,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
@@ -1778,7 +2101,7 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_surview_ready);
             }
@@ -1793,7 +2116,7 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_ct_ready);
             }
@@ -1807,11 +2130,13 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_KV_PREPARE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
@@ -1922,7 +2247,7 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == 0)
+            if (fault_override(rtm) == 0)
             {
                 status = TRAN(&system_surview_radiation);
             }
@@ -1936,11 +2261,13 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_SURVIEW_READY,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
@@ -2050,7 +2377,7 @@ static State_t module_surview_work(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_kv_complete);
             }
@@ -2064,11 +2391,13 @@ static State_t module_surview_work(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_SURVIEW_WORK,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
@@ -2179,7 +2508,7 @@ static State_t module_ct_ready(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_ct_radiation);
             }
@@ -2193,11 +2522,13 @@ static State_t module_ct_ready(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_CT_READY,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
@@ -2307,7 +2638,7 @@ static State_t module_ct_work(void *self, Event_t const *const e)
     {
         if (check_finish == 0)
         {
-            if (fault_override(&(rtm->fault_check)) == NO_FAULT)
+            if (fault_override(rtm) == NO_FAULT)
             {
                 status = TRAN(&system_kv_complete);
             }
@@ -2321,11 +2652,13 @@ static State_t module_ct_work(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_CT_WORK,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
-            int32_t fault_flag = fault_override(&(rtm->fault_check));
+            int32_t fault_flag = fault_override(rtm);
 
             if ((fault_flag & SERIOUS_INTERLOCK) != 0)
             {
@@ -2405,8 +2738,8 @@ static State_t module_kv_complete(void *self, Event_t const *const e)
     State_t status;
     rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
-    static int32_t check_finish = -1;
     dido_structure_t dido_structure = {0};
+    static int32_t check_finish = -1;
     switch (e->sig)
     {
     case ENTER_SIG:
@@ -2437,8 +2770,10 @@ static State_t module_kv_complete(void *self, Event_t const *const e)
     case TIME_SIG:
     {
         check_finish = fault_check(&rtm->fault_check,
+                                   &rtm->interlock_table,
                                    STATE_MACHINE_KV_COMPLETE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         status = HANDLED();
         break;
     }
@@ -2467,8 +2802,7 @@ void rtm_state_machine_ctor(rtm_StateMachine_t *self, void *parameters)
     self->parameters = parameters;
     self->current_state = NULL_SIG;
     stateMachine_ctor(self, system_initialization);
-    Event_t event = {NULL_SIG, NULL};
-    stateMachine_dispatch(self, &event);
+    stateMachine_dispatch(self, NULL_SIG);
 }
 
 int32_t rtm_state_dispatch(rtm_StateMachine_t *self, Event_t const *e)

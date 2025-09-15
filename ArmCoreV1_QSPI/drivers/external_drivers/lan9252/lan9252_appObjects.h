@@ -440,7 +440,7 @@ TOBJ1A00;
 */
 PROTO TOBJ1A00 InputDataProcessDataMapping0x1A00
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={40,0x60000108,0x60000208,0x60000320,0x60000408,0x60000508,0x60000610,0x60000708,0x60000808,0x60000908,0x60000A08,0x60000B20,0x60000C20,0x60000D20,0x60000E20,0x60000F08,0x60001008,0x60001108,0x60001208,0x60001308,0x60001408,0x60001520,0x60001620,0x60001720,0x60001820,0x60001920,0x60001A20,0x60001B20,0x60001C20,0x60001D20,0x60001E20,0x60001F20,0x60002020,0x60002120,0x60002220,0x60002308,0x60002408,0x60002508,0x60002608,0x60002710,0x60002820}
+={40,0x60000108,0x60000208,0x60000320,0x60000408,0x60000508,0x60000610,0x60000708,0x60000808,0x60000908,0x60000A08,0x60000B20,0x60000C20,0x60000D20,0x60000E20,0x60000F08,0x60001008,0x60001108,0x60001208,0x60001308,0x60001408,0x60001520,0x60001620,0x60001720,0x60001820,0x60001920,0x60001A20,0x60001B20,0x60001C20,0x60001D20,0x60001E20,0x60001F20,0x60002020,0x60002120,0x60002220,0x60002308,0x60002408,0x60002508,0x60002608,0x60002708,0x60002808}
 #endif
 ;
 /** @}*/
@@ -596,8 +596,8 @@ PROTO TOBJ1C13 sTxPDOassign
 * SubIndex 36 - InU8_reserved5<br>
 * SubIndex 37 - InU8_reserved6<br>
 * SubIndex 38 - InU8_reserved7<br>
-* SubIndex 39 - InU16_FkpButton<br>
-* SubIndex 40 - InU32_CpgButton<br>
+* SubIndex 39 - InU8_function_button<br>
+* SubIndex 40 - InU8_special_button<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -639,8 +639,8 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex36 - InU8_reserved5 */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex37 - InU8_reserved6 */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex38 - InU8_reserved7 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex39 - InU16_FkpButton */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex40 - InU32_CpgButton */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex39 - InU8_function_button */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex40 - InU8_special_button */
 
 /**
 * \brief Object/Entry names
@@ -684,8 +684,8 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 "InU8_reserved5\000"
 "InU8_reserved6\000"
 "InU8_reserved7\000"
-"InU16_FkpButton\000"
-"InU32_CpgButton\000\377";
+"InU8_function_button\000"
+"InU8_special_button\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -732,8 +732,8 @@ UINT8 InU8_psm_move_ctrl; /* Subindex35 - InU8_psm_move_ctrl */
 UINT8 InU8_reserved5; /* Subindex36 - InU8_reserved5 */
 UINT8 InU8_reserved6; /* Subindex37 - InU8_reserved6 */
 UINT8 InU8_reserved7; /* Subindex38 - InU8_reserved7 */
-UINT16 InU16_FkpButton; /* Subindex39 - InU16_FkpButton */
-UINT32 InU32_CpgButton; /* Subindex40 - InU32_CpgButton */
+UINT8 InU8_function_button; /* Subindex39 - InU8_function_button */
+UINT8 InU8_special_button; /* Subindex40 - InU8_special_button */
 } OBJ_STRUCT_PACKED_END
 __attribute__((aligned(1), packed))TOBJ6000;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_

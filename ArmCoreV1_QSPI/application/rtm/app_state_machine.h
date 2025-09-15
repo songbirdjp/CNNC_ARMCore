@@ -38,8 +38,8 @@ extern "C"
         STATE_MACHINE_KV_PRELIMINARY, /*< KV preliminary state */
         STATE_MACHINE_KV_PREPARE,     /*< KV prepare state */
         STATE_MACHINE_SURVIEW_READY,  /*< Surview ready state */
-        STATE_MACHINE_CT_READY,       /*< CT ready state */
         STATE_MACHINE_SURVIEW_WORK,   /*< Surview work state */
+        STATE_MACHINE_CT_READY,       /*< CT ready state */
         STATE_MACHINE_CT_WORK,        /*< CT work state */
         STATE_MACHINE_KV_COMPLETE,    /*< KV complete state */
         STATE_MACHINE_MAX
@@ -75,7 +75,7 @@ extern "C"
     };
     enum sigs
     {
-        ENTER_SIG = USER_MAX_SIG,
+        ENTER_SIG = 100,
         EXIT_SIG,
         MAX_SIG,
     };
@@ -109,7 +109,62 @@ extern "C"
 #define TRAN(target)                                                      \
     (((StateMachine_t *)(self))->StateHandler = (StateHandler_t)(target), \
      (State_t)RET_TRAN)
-    
+
+    int32_t stateMachine_ctor(StateMachine_t *self, StateHandler_t initial);
+    int32_t stateMachine_init(StateMachine_t *self, Event_t const *e);
+    int32_t stateMachine_dispatch(StateMachine_t *self, Event_t const *e);
+    /******************************************************************************/
+
+    typedef struct app_not_ready_event_table
+    {
+        uint32_t emergency_stop : 1; // emergency stop, 0: normal, 1: emergency stop
+        uint32_t door_open : 1;      // door open, 0: door open, 1: door close
+        uint32_t search_state : 1;   // search state, 0: search, 1: not search
+        uint32_t reserved : 29;
+    } app_not_ready_event_table_t;
+
+    typedef struct app_serious_interlock_table
+    {
+        uint32_t emergency_stop : 1;
+        uint32_t door_open : 1;
+        uint32_t HvEN : 1;
+        uint32_t KVTreatmentEn : 1;
+
+        uint32_t MVTreatmentEn : 1;
+        uint32_t ethercat_link : 1;
+        uint32_t rtm_on_link : 1;
+        uint32_t psm_link : 1;
+
+        uint32_t gmm_link : 1;
+        uint32_t fkp_link : 1;
+        uint32_t fkp_fault : 1;
+        uint32_t cpg_y_brake_fault : 1;
+
+        uint32_t cpg_l_link : 1;
+        uint32_t cpg_l_fault : 1;
+        uint32_t cpg_r_link : 1;
+        uint32_t cpg_r_fault : 1;
+        
+        uint32_t psm_fault : 1;
+        uint32_t gmm_fault : 1;
+        uint32_t reserved : 14;
+    } app_serious_interlock_table_t;
+
+    typedef struct app_interlock_table
+    {
+        app_not_ready_event_table_t not_ready_event;
+        uint32_t warning_interlock;
+        app_serious_interlock_table_t minor_interlock;
+        app_serious_interlock_table_t serious_interlock;
+    } interlock_table_t;
+
+    typedef struct rtm_fault_check
+    {
+        uint32_t cur_time;
+        uint32_t last_time;
+        uint8_t fault_clear_flag;
+        interlock_table_t interlock_table;
+    } rtm_fault_check_t;
 
     typedef enum RtmSignals rtm_state_t;
 

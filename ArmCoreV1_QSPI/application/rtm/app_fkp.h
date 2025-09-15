@@ -12,13 +12,11 @@
 #define _APP_FKP_H_
 #include <stdint.h>
 #include "dev_uart.h"
+#include "app_manage.h"
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-#define FKP_SEND_INIT_BIT (0)
-#define FKP_RECV_INIT_BIT (1)
-#define FKP_STATE_BIT (2)
 
     typedef struct serial_frame_format
     {
@@ -50,6 +48,7 @@ extern "C"
         uint8_t day;
         uint8_t hour;
         uint8_t minute;
+        uint8_t totalFractions;
         uint8_t fractions;
     } __attribute__((aligned(1), packed)) fkp_send_structure_t;
 
@@ -64,6 +63,8 @@ extern "C"
         uint8_t Reserve[7];
     } __attribute__((aligned(1), packed)) fkp_recv_structure_t;
 
+void app_fkp_rx_thread(void *argument);
+void app_fkp_tx_thread(void *argument);
 #ifdef __cplusplus
 }
 #endif

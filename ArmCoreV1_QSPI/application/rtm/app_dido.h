@@ -12,7 +12,7 @@
 #define _APP_DIDO_H_
 
 #include "drv_mcp23017.h"
-#include "app_fault_check.h"
+#include "app_manage.h"
 #ifdef __cplusplus
 extern "C"
 {
@@ -170,10 +170,6 @@ extern "C"
 
     typedef struct app_dido
     {
-#define DIDO_PERIPHERAL_INIT_BIT (0)
-#define DIDO_DI_INIT_BIT (1)
-#define DIDO_DO_INIT_BIT (2)
-#define DIDO_LINK_STATE_BIT (3)
         manage_info_t manage_info;
 
         osThreadId_t do_thread_id;

@@ -179,7 +179,7 @@ static int8_t fdcan_read(struct device_fdcan *fdcan, struct fdcan_rx_msg *msg, u
     osStatus_t ret = osMessageQueueGet(fdcan->rx_queue, msg, 0, timeout);
     if (ret != osOK)
     {
-        printf("device %s read data err: %d\r\n", fdcan->name, ret);
+        // printf("device %s read data err: %d\r\n", fdcan->name, ret);
         return -3;
     }
 

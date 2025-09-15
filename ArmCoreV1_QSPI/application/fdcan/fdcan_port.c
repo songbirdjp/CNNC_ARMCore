@@ -147,7 +147,7 @@ static int8_t device_fdcan_init(struct device_fdcan *fdcan, uint8_t *device_name
 
     irq_info.irq_idx = FDCAN_IT_RX_FIFO0_MESSAGE_LOST | FDCAN_IT_RX_FIFO0_FULL | FDCAN_IT_RX_FIFO0_NEW_MESSAGE | \
                    FDCAN_IT_RX_FIFO1_MESSAGE_LOST | FDCAN_IT_RX_FIFO1_FULL | FDCAN_IT_RX_FIFO1_NEW_MESSAGE | \
-                   FDCAN_IT_RAM_ACCESS_FAILURE | FDCAN_IT_ERROR_LOGGING_OVERFLOW | FDCAN_IT_ARB_PROTOCOL_ERROR | \
+                   FDCAN_IT_RAM_ACCESS_FAILURE | FDCAN_IT_ERROR_LOGGING_OVERFLOW | \
                    FDCAN_IT_DATA_PROTOCOL_ERROR | FDCAN_IT_ERROR_PASSIVE | FDCAN_IT_ERROR_WARNING | FDCAN_IT_BUS_OFF;
 
 
@@ -158,7 +158,7 @@ static int8_t device_fdcan_init(struct device_fdcan *fdcan, uint8_t *device_name
         return ret;
     }
 
-    fdcan1_enable_switch(1);
+    // fdcan1_enable_switch(1);
     /* 6. open device */
     ret = fdcan->open(fdcan);
     if (ret != 0)

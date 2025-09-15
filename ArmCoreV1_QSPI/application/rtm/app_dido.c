@@ -4,7 +4,6 @@
 #include "init_call.h"
 #include "shell.h"
 #include "ulog.h"
-#include "app_manage.h"
 enum
 {
     DIDO_STATE_STABLE = 0,
@@ -311,11 +310,10 @@ static void app_di_poll_entry(void *argument)
     int32_t retVal = di_device_init(self);
     if (retVal != 0)
     {
-        manage_info_status_word_set(&self->manage_info, DIDO_PERIPHERAL_INIT_BIT, 1);
         LOG_I("di device init fail, errorCode:%d.\r\n", retVal);
         goto exit;
     }
-    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DI_READY);
+    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DI);
     for (;;)
     {
         mcp23017_msg.data = (uint8_t *)(&(dido_value_cur.mcp23017_0x00_u.mcp23017_0x00));
@@ -325,15 +323,10 @@ static void app_di_poll_entry(void *argument)
                                  1000);
         if (device_err != DEV_EOK)
         {
-            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 1);
             LOG_I("read mcp23017_0 fail, errorCode:%d\r\n", device_err);
             device_ioctl(self->di_mcp23017_0x00,
                          I2C_CMD_INIT,
                          NULL);
-        }
-        else
-        {
-            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 0);
         }
 
         mcp23017_msg.data = (uint8_t *)(&(dido_value_cur.mcp23017_0x01_u.mcp23017_0x01));
@@ -343,15 +336,10 @@ static void app_di_poll_entry(void *argument)
                                  1000);
         if (device_err != DEV_EOK)
         {
-            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 1);
             LOG_I("read mcp23017_1 fail, errorCode:%d\r\n", device_err);
             device_ioctl(self->di_mcp23017_0x01,
                          I2C_CMD_INIT,
                          NULL);
-        }
-        else
-        {
-            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 0);
         }
 
         mcp23017_msg.data = (uint8_t *)(&(dido_value_cur.mcp23017_0x02_u.mcp23017_0x02));
@@ -361,15 +349,10 @@ static void app_di_poll_entry(void *argument)
                                  1000);
         if (device_err != DEV_EOK)
         {
-            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 1);
             LOG_I("read mcp23017_2 fail, errorCode:%d\r\n", device_err);
             device_ioctl(self->di_mcp23017_0x02,
                          I2C_CMD_INIT,
                          NULL);
-        }
-        else
-        {
-            manage_info_status_word_set(&self->manage_info, DIDO_LINK_STATE_BIT, 0);
         }
         /*读取gpio di*/
         device_err = device_read(self->di_gpio_gating,
@@ -450,7 +433,7 @@ static void app_do_entry(void *argument)
         LOG_I("do device init fail, errorCode:%d.\r\n", retVal);
         goto exit;
     }
-    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DO_READY);
+    app_rtm_thread_flag_set(APP_RTM_THREAD_FLAG_DO);
     for (;;)
     {
         ret = osThreadFlagsWait(APP_RTM_THREAD_FLAG_DO_UPDATE, osFlagsWaitAll, 0xFFFFFFFF);
