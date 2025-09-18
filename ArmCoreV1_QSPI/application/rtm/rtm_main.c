@@ -202,7 +202,7 @@ static void app_rtm_main_thread(void *argument)
         }
         // 周期上报状态
         current_time = osKernelGetTickCount();
-        if (current_time - last_time > 1000)
+        if (getElapsedTime(current_time, last_time) > 1000)
         {
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, RTM_ON_PLC_ID, INPUT_RTM_ON_ARM_CURRENT_STATE_CMD, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
             last_time = current_time;
@@ -319,7 +319,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
     current_time = osKernelGetTickCount();
     if (memcmp(&output_data, data, sizeof(TOBJ7010)) == 0)
     {
-        if (current_time - last_time < 200)
+        if (getElapsedTime(current_time, last_time) < 200)
         {
             return;
         }
@@ -646,7 +646,7 @@ static void app_ethercat_rx_thread(void *argument)
             ethercat_output_data_distribute(self, &output_data);
         }
         current_time = osKernelGetTickCount();
-        if (current_time - last_time > 1000)
+        if (getElapsedTime(current_time, last_time) > 1000)
         {
             last_time = current_time;
             if (bit_get(self->manage_info.status_word, MODULE_LINK_STATE_BIT) == 0)
@@ -682,7 +682,7 @@ static void app_ethercat_tx_thread(void *argument)
             ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
         }
         current_time = osKernelGetTickCount();
-        if (current_time - last_time > 500)
+        if (getElapsedTime(current_time, last_time) > 500)
         {
             last_time = current_time;
             input_data.InU8_ethercat_Link_state = !input_data.InU8_ethercat_Link_state;

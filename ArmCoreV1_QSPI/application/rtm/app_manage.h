@@ -56,4 +56,15 @@ static inline int32_t app_rtm_thread_flag_get(uint32_t timeout)
     }
     return flags;
 }
+inline static uint32_t getElapsedTime(uint32_t currentTime, uint32_t lastTime)
+{
+    if (currentTime >= lastTime)
+    {
+        return currentTime - lastTime; // 未溢出
+    }
+    else
+    {
+        return (uint32_t)(-1) - lastTime + currentTime + 1; // 溢出补偿
+    }
+}
 #endif /* __APP_MANAGE_H__ */

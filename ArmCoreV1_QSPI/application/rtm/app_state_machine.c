@@ -300,7 +300,7 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.serious_interlock.RTC_WD_OK = 0;
     }
 
-    if ((self->cur_time - self->last_time > RTM_ERROR_WAIT_TIME) || (retval == 0))
+    if ((getElapsedTime(self->cur_time, self->last_time) > RTM_ERROR_WAIT_TIME) || (retval == 0))
     {
         if (self->fault_clear_flag == 1) // 清除故障
         {
@@ -469,7 +469,7 @@ static State_t module_init(void *self, Event_t const *const e)
         {
             cur_time = osKernelGetTickCount();
 
-            if ((cur_time - last_time) > RTM_INIT_WAIT_TIME)
+            if (getElapsedTime(cur_time, last_time) > RTM_INIT_WAIT_TIME)
             {
                 // 初始化失败
                 bit_set(rtm->manage_info.status_word, RTM_MAIN_INIT_STATE_BIT);
