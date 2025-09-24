@@ -290,6 +290,7 @@ void app_rtm_ethercat_state_op_clean(void)
 enum
 {
     OUTPUT_DATA_BEAM_ID = 0,
+    OUTPUT_DATA_STATE_SYNC,
     OUTPUT_DATA_RADIATION_INDEX,
     OUTPUT_DATA_SYSTEM_STATE,
     OUTPUT_DATA_RTM_ON_REQUIRE_STATE,
@@ -327,13 +328,19 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
         switch (flag)
         {
         case OUTPUT_DATA_BEAM_ID:
-            flag = OUTPUT_DATA_SYSTEM_STATE;
+            flag = OUTPUT_DATA_STATE_SYNC;
             len = (uint8_t *)&output_data.OutU8_state_sync - (uint8_t *)&output_data.OutU8_beam_id;
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_ICM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_QAM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
             rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_ON_ARM], BROADCAST_ID, OUTPUT_BEAM_ID_CMD, &data->OutU8_beam_id, len);
+            break;
+        case OUTPUT_DATA_STATE_SYNC:
+            flag = OUTPUT_DATA_SYSTEM_STATE;
+            len = (uint8_t *)&output_data.OutU16_radiation_index - (uint8_t *)&output_data.OutU8_state_sync;
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_BGM], BGM_ID | GMM_ID, OUTPUT_STATE_SYNC_CMD, &data->OutU8_state_sync, len);
+            rtm_set_data_distribute(self->queue_group[RTM_MODULE_RTM_OFF], BGM_ID | GMM_ID, OUTPUT_STATE_SYNC_CMD, &data->OutU8_state_sync, len);
             break;
         case OUTPUT_DATA_SYSTEM_STATE:
             flag = OUTPUT_DATA_RTM_ON_REQUIRE_STATE;
@@ -640,7 +647,7 @@ static void app_ethercat_rx_thread(void *argument)
             if (ethercat_Link_state != output_data.OutU8_ethercat_Link_state)
             {
                 ethercat_Link_state = output_data.OutU8_ethercat_Link_state;
-                last_time = current_time;
+                last_time = osKernelGetTickCount();
             }
             // TODO: 处理输出数据
             ethercat_output_data_distribute(self, &output_data);

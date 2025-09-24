@@ -1032,11 +1032,17 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
     rtm_StateMachine_t *rtm_sm = (rtm_StateMachine_t *)self;
     app_rtm_main_t *rtm = (app_rtm_main_t *)(rtm_sm->parameters);
     static int32_t check_finish = -1;
+    dido_structure_t dido_structure = {0};
     switch (e->sig)
     {
     case ENTER_SIG:
     {
         // LOG_I("module_mv_ready enter\r\n");
+        app_do_get(&(rtm->app_dido), &dido_structure);
+        dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 1;
+        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
+        app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
         status = HANDLED();
         break;
@@ -1442,6 +1448,7 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
             else if ((fault_flag & MINOR_INTERLOCK) != 0)
             {
                 app_do_get(&(rtm->app_dido), &dido_structure);
+                dido_structure.gpio_do_u.gpio_do_bit.DO_HVEN = 1;
                 dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 0;
                 dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
                 app_do_set(&(rtm->app_dido), &dido_structure);
@@ -1474,10 +1481,6 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
     {
         fault_clear(&(rtm->fault_check));
         check_finish = -1;
-        app_do_get(&(rtm->app_dido), &dido_structure);
-        dido_structure.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN = 1;
-        dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
-        app_do_set(&(rtm->app_dido), &dido_structure);
         status = HANDLED();
         break;
     }
