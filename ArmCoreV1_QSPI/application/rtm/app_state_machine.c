@@ -240,7 +240,9 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.serious_interlock.rtm_off_link = 0;
     }
-    if ((app_rtm->icm_current_state == MV_TERMINATE_SIG) && (state != STATE_MACHINE_TERMINATE))
+    // ICM
+    if ((app_rtm->icm_current_state == MV_TERMINATE_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
     {
         self->interlock_table.serious_interlock.icm_fault = 1;
     }
@@ -248,7 +250,8 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.serious_interlock.icm_fault = 0;
     }
-    if ((app_rtm->icm_current_state == MV_INTERRUPT_SIG) && (state != STATE_MACHINE_INTERRUPT))
+    if ((app_rtm->icm_current_state == MV_INTERRUPT_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
     {
         self->interlock_table.minor_interlock.icm_fault = 1;
     }
@@ -256,8 +259,9 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.minor_interlock.icm_fault = 0;
     }
-
-    if ((app_rtm->bgm_current_state == MV_TERMINATE_SIG) && (state != STATE_MACHINE_TERMINATE))
+    // BGM
+    if ((app_rtm->bgm_current_state == MV_TERMINATE_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
     {
         self->interlock_table.serious_interlock.bgm_fault = 1;
     }
@@ -265,7 +269,8 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.serious_interlock.bgm_fault = 0;
     }
-    if ((app_rtm->bgm_current_state == MV_INTERRUPT_SIG) && (state != STATE_MACHINE_INTERRUPT))
+    if ((app_rtm->bgm_current_state == MV_INTERRUPT_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
     {
         self->interlock_table.minor_interlock.bgm_fault = 1;
     }
@@ -273,8 +278,9 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.minor_interlock.bgm_fault = 0;
     }
-
-    if ((app_rtm->qam_current_state == MV_TERMINATE_SIG) && (state != STATE_MACHINE_TERMINATE))
+    // QAM
+    if ((app_rtm->qam_current_state == MV_TERMINATE_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
     {
         self->interlock_table.serious_interlock.qam_fault = 1;
     }
@@ -282,7 +288,8 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.serious_interlock.qam_fault = 0;
     }
-    if ((app_rtm->qam_current_state == MV_INTERRUPT_SIG) && (state != STATE_MACHINE_INTERRUPT))
+    if ((app_rtm->qam_current_state == MV_INTERRUPT_SIG) &&
+        ((state == STATE_MACHINE_WORK) || (state == STATE_MACHINE_SURVIEW_WORK) || (state == STATE_MACHINE_CT_WORK)))
     {
         self->interlock_table.minor_interlock.qam_fault = 1;
     }
@@ -290,6 +297,7 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.minor_interlock.qam_fault = 0;
     }
+    //RTC WD
     if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.RTC_WD_OK_IN != 1)
     {
         self->interlock_table.serious_interlock.RTC_WD_OK = 1;

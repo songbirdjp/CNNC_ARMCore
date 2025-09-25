@@ -50,6 +50,9 @@ typedef struct
     uint32_t warning_interlock;
     uint32_t minor_interlock;
     uint32_t serious_interlock;
+    uint16_t TotalStep;
+    uint16_t CurrentStep;
+    uint16_t ErrorCode;
 } __attribute__((aligned(1), packed)) rtm_status_t;
 
 static int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len);
@@ -193,7 +196,9 @@ static void app_rtm_main_thread(void *argument)
         rtm_status.warning_interlock = *(uint32_t *)&(self->interlock_table.warning_interlock);
         rtm_status.minor_interlock = *(uint32_t *)&(self->interlock_table.minor_interlock);
         rtm_status.serious_interlock = *(uint32_t *)&(self->interlock_table.serious_interlock);
-
+        rtm_status.TotalStep = 0x1;
+        rtm_status.CurrentStep = 0x1;
+        rtm_status.ErrorCode = 0x0;
         if (memcmp(&rtm_status_old, &rtm_status, sizeof(rtm_status_t)) != 0)
         {
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, RTM_ON_PLC_ID, INPUT_RTM_ON_ARM_CURRENT_STATE_CMD, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
@@ -320,7 +325,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
     current_time = osKernelGetTickCount();
     if (memcmp(&output_data, data, sizeof(TOBJ7010)) == 0)
     {
-        if (getElapsedTime(current_time, last_time) < 200)
+        if (getElapsedTime(current_time, last_time) < 100)
         {
             return;
         }
@@ -551,7 +556,7 @@ static void ethercat_output_data_distribute(rtm_module_info_t *const self, TOBJ7
     }
 }
 
-static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ6000 *data, queue_frame_t *queue_frame)
+static void ethercat_input_data_6000_distribute(rtm_module_info_t *const self, TOBJ6000 *data, queue_frame_t *queue_frame)
 {
     TOBJ6000 *input_data = data;
 
@@ -577,7 +582,7 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
         memcpy(&input_data->InU8_rtm_on_arm_fsm_state_current, queue_frame->payload.data + 1, len);
         break;
     case INPUT_RTM_ON_ARM_DIDO_CMD:
-        memcpy((uint8_t *)(&input_data->InU32_rtm_on_arm_serious_interlock) + sizeof(input_data->InU32_rtm_on_arm_serious_interlock), queue_frame->payload.data + 1, len);
+        memcpy((uint8_t *)(&input_data->InU16_ErrorCode_RTM_ON_ARM) + sizeof(input_data->InU16_ErrorCode_RTM_ON_ARM), queue_frame->payload.data + 1, len);
         break;
     case INPUT_ICM_CURRENT_STATE_CMD:
         memcpy(&input_data->InU8_icm_fsm_state_current, queue_frame->payload.data + 1, len);
@@ -619,7 +624,38 @@ static void ethercat_input_data_distribute(rtm_module_info_t *const self, TOBJ60
         memcpy(&input_data->InU16_data_valid_flag, queue_frame->payload.data + 1, len);
         break;
     default:
-        LOG_E("unknown cmd %x\r\n", cmd);
+        break;
+    }
+}
+static void ethercat_input_data_6010_distribute(rtm_module_info_t *const self, TOBJ6010 *data, queue_frame_t *queue_frame)
+{
+    TOBJ6010 *input_data = data;
+
+    if (queue_frame == NULL || data == NULL)
+    {
+        return;
+    }
+
+    if ((0 == ((queue_frame->payload.id_ack >> 1) & self->ID)) &&
+        ((queue_frame->payload.id_ack >> 1) != 0x00))
+    {
+        return;
+    }
+    uint8_t cmd = queue_frame->payload.data[0];
+    uint16_t len = queue_frame->payload.length - 1;
+    // TODO:做长度判断
+    switch (cmd)
+    {
+    case INPUT_FKP_STATE_CMD:
+        memcpy(&input_data->InU32_FkpButtonFaultMask, queue_frame->payload.data + 1, len);
+        break;
+    case INPUT_CPG_L_STATE_CMD:
+        memcpy(&input_data->InU32_CpgButtonFaultMask_L, queue_frame->payload.data + 1, len);
+        break;
+    case INPUT_CPG_R_STATE_CMD:
+        memcpy(&input_data->InU32_CpgButtonFaultMask_R, queue_frame->payload.data + 1, len);
+        break;
+    default:
         break;
     }
 }
@@ -678,22 +714,25 @@ static void app_ethercat_tx_thread(void *argument)
     uint32_t last_time = 0;
     current_time = osKernelGetTickCount();
     last_time = current_time;
-    TOBJ6000 input_data = {0};
+    TOBJ6000 input_data_6000 = {0};
+    TOBJ6010 input_data_6010 = {0};
     for (;;)
     {
         status = osMessageQueueGet(self->module_queue, &queue_frame, NULL, 100);
         if (status == osOK)
         {
             app_data_record(self->app_data_record, self->ID, &queue_frame.payload, queue_frame.length);
-            ethercat_input_data_distribute(self, &input_data, &queue_frame);
-            ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
+            ethercat_input_data_6000_distribute(self, &input_data_6000, &queue_frame);
+            ethercat_send_data_update((uint16_t *)&input_data_6000, sizeof(TOBJ6000), SEND_INDEX_TYPE_6000);
+            ethercat_input_data_6010_distribute(self, &input_data_6010, &queue_frame);
+            ethercat_send_data_update((uint16_t *)&input_data_6010, sizeof(TOBJ6010), SEND_INDEX_TYPE_6010);
         }
         current_time = osKernelGetTickCount();
         if (getElapsedTime(current_time, last_time) > 500)
         {
             last_time = current_time;
-            input_data.InU8_ethercat_Link_state = !input_data.InU8_ethercat_Link_state;
-            ethercat_send_data_update((uint16_t *)&input_data, sizeof(TOBJ6000));
+            input_data_6000.InU8_ethercat_Link_state = !input_data_6000.InU8_ethercat_Link_state;
+            ethercat_send_data_update((uint16_t *)&input_data_6000, sizeof(TOBJ6000), SEND_INDEX_TYPE_6000);
         }
     }
 exit:

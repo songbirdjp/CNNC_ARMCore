@@ -62,7 +62,7 @@ static int32_t ethercat_slave_wait_event(void)
     {
         PDI_Isr();
     }
-    
+
     if (ret & LAN9252_SYNC0_IRQ_EVENT)
     {
         Sync0_Isr();
@@ -102,7 +102,7 @@ int16_t ethercat_state_get(void)
     HW_EscReadWord(WordValue, 0x130);
     return (int16_t)WordValue;
 }
-int8_t ethercat_send_data_update(uint16_t *buf, uint16_t len) /* slave to master */
+int8_t ethercat_send_data_update(uint16_t *buf, uint16_t len, ethercat_send_index_type_t index_type) /* slave to master */
 {
     if (buf == NULL)
     {
@@ -110,7 +110,17 @@ int8_t ethercat_send_data_update(uint16_t *buf, uint16_t len) /* slave to master
     }
 
     osMutexAcquire(lan9252_app_ops_get()->pdo_input_update_mutex, osWaitForever);
-    memcpy(&InputData0x6000, buf, len);
+    switch (index_type)
+    {
+    case SEND_INDEX_TYPE_6000:
+        memcpy(&InputData0x6000, buf, len);
+        break;
+    case SEND_INDEX_TYPE_6010:
+        memcpy(&InputData0x6010, buf, len);
+        break;
+    default:
+        break;
+    }
     osMutexRelease(lan9252_app_ops_get()->pdo_input_update_mutex);
 
     return 0;
@@ -130,7 +140,7 @@ uint16_t *ethercat_recv_data_get(uint16_t *buf, uint16_t len) /* master to slave
     return buf;
 }
 
-uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len)
+uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len, ethercat_send_index_type_t index_type)
 {
     if (buf == NULL)
     {
@@ -138,7 +148,17 @@ uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len)
     }
 
     osMutexAcquire(lan9252_app_ops_get()->pdo_input_update_mutex, osWaitForever);
-    memcpy(buf, &InputData0x6000, len);
+    switch (index_type)
+    {
+    case SEND_INDEX_TYPE_6000:
+        memcpy(buf, &InputData0x6000, len);
+        break;
+    case SEND_INDEX_TYPE_6010:
+        memcpy(buf, &InputData0x6010, len);
+        break;
+    default:
+        break;
+    }
     osMutexRelease(lan9252_app_ops_get()->pdo_input_update_mutex);
 
     return buf;
@@ -161,7 +181,7 @@ static uint64_t ethercat_timestamp_get(void)
 
         count++;
 
-    }while (count < 10);
+    } while (count < 10);
 
     if (count == 10)
     {
@@ -176,11 +196,11 @@ static int8_t ethercat_timestamp_sync(void)
     uint64_t timestamp_local = timestamp_ns_get();
     int64_t diff = timestamp_local - u64Timestamp;
 #define UTC_OFFSET_NS 28800000000000 /* 8 hours */
-    if (llabs(diff) > 2000000)  /* -> ECAT_CheckTimer */
+    if (llabs(diff) > 2000000)       /* -> ECAT_CheckTimer */
     {
         timestamp_ns_set(ethercat_timestamp_get() + UTC_OFFSET_NS);
 #if 0
-        #include "ulog.h"
+#include "ulog.h"
         LOG_I("------sync timestamp------\r\n");
         LOG_I("u64Timestamp: %#.llx\r\n", u64Timestamp);
         LOG_I("timestamp_local: %#.llx\r\n", timestamp_local);
@@ -193,17 +213,17 @@ static int8_t ethercat_timestamp_sync(void)
 
 /*
  * ethercat thread init
-*/
+ */
 static void Ethercatfunc(void *argument)
 {
     osDelay(100);
-  /* USER CODE BEGIN Ethercatfunc */
+    /* USER CODE BEGIN Ethercatfunc */
     ethercat_slave_init();
 
     ethercat_slave_stack_init();
 
     /* Infinite loop */
-    for(;;)
+    for (;;)
     {
 
         ethercat_slave_main_loop();
@@ -212,40 +232,40 @@ static void Ethercatfunc(void *argument)
 
         osDelay(2);
     }
-  /* USER CODE END Ethercatfunc */
+    /* USER CODE END Ethercatfunc */
 }
 
 static void ethercat_slave_entry(void *argument)
 {
-  /* USER CODE BEGIN ethercat_slave_entry */
-  /* Infinite loop */
-  int32_t ret = 0;
-  osDelay(200); /* wait ethercat init complete */
+    /* USER CODE BEGIN ethercat_slave_entry */
+    /* Infinite loop */
+    int32_t ret = 0;
+    osDelay(200); /* wait ethercat init complete */
 
-  for(;;)
-  {
-    ret = ethercat_slave_wait_event();
-    if (ret < 0)
+    for (;;)
     {
-        printf("ethercat wait err:%d\r\n", ret);
+        ret = ethercat_slave_wait_event();
+        if (ret < 0)
+        {
+            printf("ethercat wait err:%d\r\n", ret);
+        }
+        // osDelay(100);
     }
-    // osDelay(100);
-  }
-  /* USER CODE END ethercat_slave_entry */
+    /* USER CODE END ethercat_slave_entry */
 }
 
 int8_t ethercat_thread_init(void)
 {
     osThreadAttr_t EthercatSlave_attributes = {
-    .name = "EthercatSlave",
-    .stack_size = 1024 * 4,
-    .priority = (osPriority_t) osPriorityHigh,
+        .name = "EthercatSlave",
+        .stack_size = 1024 * 4,
+        .priority = (osPriority_t)osPriorityHigh,
     };
 
     osThreadAttr_t lan9252_irq_thread_attributes = {
-    .name = "lan9252_irq_thread",
-    .stack_size = 512 * 4,
-    .priority = (osPriority_t) osPriorityRealtime,
+        .name = "lan9252_irq_thread",
+        .stack_size = 512 * 4,
+        .priority = (osPriority_t)osPriorityRealtime,
     };
 
     osThreadId_t EthercatSlaveHandle = osThreadNew(Ethercatfunc, NULL, &EthercatSlave_attributes);

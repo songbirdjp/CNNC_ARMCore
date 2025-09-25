@@ -288,6 +288,9 @@ void APPL_InputMapping(UINT16* pData)
             case 0x1A00:
                 memcpy(pTmpData, (UINT16 *)&InputData0x6000 + 1 , sizeof(InputData0x6000) - 2);
                 break;
+            case 0x1A01:
+                memcpy((UINT8 *)pTmpData + sizeof(InputData0x6000) - 2, (UINT16 *)&InputData0x6010 + 1 , sizeof(InputData0x6010) - 2);
+                break;
         }
     }
 
