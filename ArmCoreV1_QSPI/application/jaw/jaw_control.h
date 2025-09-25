@@ -8,21 +8,24 @@
 extern "C" {
 #endif
 
+#define MAX_PREPARE_INPOS  (0.1*ENCODER_CNT_PER_MM + 0.5)   //precision: 0.1mm
+#define MAX_SERVO_INPOS  (0.3*ENCODER_CNT_PER_MM + 0.5)   //precision: 0.3mm
 typedef enum {
     INIT_MOVE_FORWARD = 100,
-    INIT_MOVE_BACKWARD,
-    LIMSWITCH_FALLING,
-    LIMSWITCH_RISING,
-    INIT_END,
-    IDLE,
-    PARK_START,
-    PARK_END,
-    PREPARE_START,
-   // PREPARE_SET_FLAG,
-    PREPARE_END,
-    SERVO,
-    POWER_SAVE,
-    SHUTDOWN
+    INIT_MOVE_BACKWARD,//101
+    LIMSWITCH_FALLING,//102
+    LIMSWITCH_RISING,//103
+    INIT_END,//104
+    IDLE,//105
+    PARK_START,//106
+    PARK_END,//107
+    PREPARE_START,//108
+    PREPARE_END,//109
+    SERVO,//110
+    MANUAL_START,//111
+    MANUAL_END,//112
+    POWER_SAVE,//113
+    SHUTDOWN//114
 } JawCtlFsm;
 
 typedef enum {
@@ -66,6 +69,7 @@ typedef struct
     uint32_t encoderTotalCnt;
     uint16_t preparePos;
     uint16_t posInPlan;
+    uint16_t manualPos;
     //uint16_t realPlanCmd;
     SVG_Type fSVG;
     PIDAdjType uartPIDCmd;
@@ -110,7 +114,7 @@ extern JAW_SET_PARAM jawParameterByAxes[2];
 
 void plcSetJawParam(uint8_t *pData);
 void messageToJawTask(struct JawFlagType source, uint16_t signalType, uint8_t axes, uint16_t* value);
-int8_t planJawPosCheck(uint16_t planPos, uint16_t actPos, uint8_t axes);
+int8_t planJawPosCheck(uint16_t planPos, uint16_t actPos, uint8_t axes, uint16_t precision);
 
 #ifdef __cplusplus
 }

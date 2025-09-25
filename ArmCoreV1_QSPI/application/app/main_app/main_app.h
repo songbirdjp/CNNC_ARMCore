@@ -28,25 +28,25 @@ struct ethercat_data_send    /* slave -> master */
 
 #define IS_TCP_SERVER
 enum serverFsmStates {
-    FSM_NOSTATE,
-    FSM_INIT,
-    FSM_IDLE,
-    FSM_PRELIMINARY,
-    FSM_PREPARE,
-    FSM_READY,
-    FSM_SERVO,
+    FSM_NOSTATE,//0
+    FSM_INIT,//1
+    FSM_IDLE,//2
+    FSM_PRELIMINARY,//3
+    FSM_PREPARE,//4
+    FSM_READY,//5
+    FSM_SERVO,//6
     GAP1,
     GAP2,
     GAP3,
-    FSM_PARK,
-    FSM_MANUAL,
-    FSM_COMPLETE,
-    FSM_SHUTDOWN,
-    FSM_POWERSAVE,
-    FSM_TERMINATE,
-    FSM_INTERRUPT,
-    ERROR_STATE,
-    UART_DEBUG,
+    FSM_PARK,//10
+    FSM_MANUAL,//11
+    FSM_COMPLETE,//12
+    FSM_SHUTDOWN,//13
+    FSM_POWERSAVE,//14
+    FSM_TERMINATE,//15
+    FSM_INTERRUPT,//16
+    ERROR_STATE,//17
+    UART_DEBUG,//18
     TOTAL_FSM
 };
 #ifdef __cplusplus

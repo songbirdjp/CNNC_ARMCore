@@ -103,7 +103,7 @@ int8_t planDataCheck(uint8_t *pSDBeamStart)
             }
             for(uint8_t m = 0; m < XY; m++){
                 jawTarget[m] /= 2.5;
-                if(planJawPosCheck(jawTarget[m], 0, m) == -1){
+                if(planJawPosCheck(jawTarget[m], 0, m, (uint16_t)MAX_PREPARE_INPOS) == -1){
                     LOG_E("jaw%d pos invalid %d %d!\r\n",m,beamID,radiationID);
                     return -1;
                 }  
@@ -279,22 +279,6 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         if (frameHead.packIndexInOneBeam == frameHead.totalPackInOneBeam) //the last pack in one beam
         {
           //  for(int16_t i = 0; i <  frameHead.frmLength; i++)   LOG_I("%d ", data[12+i]);
-#if 0
-            lastPackIndex = 0;
-            last = u8LenTotal - 1;
-            frameEnd.crcHigh = (data[last - 2] << 8) + data[last - 3];
-            frameEnd.crcLow = (data[last] << 8) + data[last - 1];
-            crcCal ^= 0xffffffff;
-            crcInData = (frameEnd.crcHigh << 16) + frameEnd.crcLow;
-
-           // LOG_I("recv crc: %u calculate crc: %u\r\n", crcInData, crcCal);
-            if (crcInData != crcCal) {
-                rtBeamData.totalBeam--;
-                secondPosFeedback.errorCode = 0xf4;
-                LOG_E("recv error #4: crcInData: %x crcCal: %x!!! \r\n", crcInData, crcCal);
-                return -1;
-            }
-#endif
             //record each beam info
             // 1 beam in SDRAM: totalRI + BeamIndex + (RI1 + RI2 + ...+RI(totalRI)), sizeof(RI) = RT_PAYLOAD_LEN
             rtBeamData.beamIndex = (data[15] << 8) + data[14];//current beam index
@@ -374,14 +358,14 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             LOG_E("recv error #4: crc error: %x %x!!! \r\n", crcInData, crcCal);
             return -1;
         }
-
+/*
         pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
         if(planDataCheck(pSDRAM) < 0){
             secondPosFeedback.errorCode = 0xf7;
             LOG_E("recv error #7: plan error!!!\r\n");
             return -1;
         }
-		if(carrierFollowFlag == 1)  calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);
+		if(carrierFollowFlag == 1)  calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);*/
         secondPosFeedback.errorCode = 0xF0; //ok
     }
     else{
@@ -458,8 +442,6 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
     for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  LOG_I("%x ",sndCtrl.cmdSendBuf[i]);
     LOG_I("\r\n");*/
 #else
-  //  makeSingleSendAry(24, pBeamData, RT_DOWNLOAD_PAYLOAD_LEN, 1);
-    // makeSingleSendAry(24, pBeamData, 166, 1,1);
     memmove(send_buf, pBeamData, 166);
     pBeamData += 166;
 
@@ -469,10 +451,6 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
     messageToJawTask(JawPos, PLAN_DATA, XY, pos);
     
     pBeamData += 4;//skip X/Y Jaw pos
-    // makeSingleSendAry(24, pBeamData, 8, 0,1);//CP limit pos
-   // for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  LOG_I("%x ",sndCtrl.cmdSendBuf[i]);
-   // LOG_I("\r\n");
-
     memmove(&send_buf[166], pBeamData, 18);
   //  LOG_I("car pos %x %x\r\n", send_buf[164], send_buf[165]);
     make_cmd_to_fpga(CMD_TAR_SET, send_buf);

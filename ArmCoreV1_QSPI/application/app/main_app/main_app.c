@@ -19,6 +19,7 @@
 #define DATA_PROCESS_LAN_EVENT    (1<<1)
 #define DATA_PROCESS_TCP_EVENT    (1<<2)
 static osEventFlagsId_t data_process_eventHandle = NULL;
+static uint16_t planCmd, stateCmd;
 
 static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
 {
@@ -107,6 +108,7 @@ static int8_t realtime_ethercat_data_process(void)
     static uint16_t oldState, oldPlanCmd, oldRadiationIndex, oldBeamIndex, oldErrState;
     struct JawFlagType JawState;
     static uint8_t cnt;
+    uint16_t errReset;
 
     TOBJ7010 recv_data = {0};
     TOBJ6000 send_data = {0};
@@ -152,27 +154,41 @@ static int8_t realtime_ethercat_data_process(void)
    // LOG_E("self %d %d\r\n",rtFeedback.jawRTPos[X],rtFeedback.jawRTPos[Y]);
     send->InU16_JawInfo = ((rtFeedback.jawInfo[Y]&0x0f)<< 4) + (rtFeedback.jawInfo[X]&0x0f);
 
-    rtBeamData.fsmState = recv->OutU16_FsmStateSetting;   //save rt cmd
+    stateCmd = recv->OutU16_FsmStateSetting;   //save rt cmd
     rtBeamData.beamIndex = recv->OutU16_BeamIndex;
     rtBeamData.radiationIndex = recv->OutU16_RidiationIndex;
-    rtBeamData.planCmd = recv->OutU16_PlanCmd;
-    rtBeamData.errReset = recv->OutU16_Reserve;
+    planCmd = recv->OutU16_PlanCmd;
+    errReset = recv->OutU16_ErrReset; /* Subindex12 - OutU16_ErrReset */
 
-    if(oldState != rtBeamData.fsmState)
+    if(oldState != stateCmd)
     {
-        LOG_I("fsm state: %d -> %d\r\n",oldState,rtBeamData.fsmState);
-        uint8_t newState = rtBeamData.fsmState;
+        LOG_I("fsm state: %d -> %d\r\n",oldState,stateCmd);
+        uint8_t newState = stateCmd;
         make_cmd_to_fpga(CMD_STA_REQ, &newState);
-        oldState = rtBeamData.fsmState;
+        oldState = stateCmd;
 
         uint16_t state[2];
-        state[0] = state[1] = rtBeamData.fsmState;
+        state[0] = state[1] = stateCmd;
         messageToJawTask(JawState, COMMAND, XY, state);
+
+        if(stateCmd == FSM_MANUAL)
+        {
+            uint16_t pos = 0;
+            if(recv->OutU16_JawXControlModeSetting == 2){
+                pos = recv->OutU16_JawXPositionSetting;
+                messageToJawTask(JawState, PLAN_DATA, X, &pos);
+            }
+            else if(recv->OutU16_JawYControlModeSetting == 2){
+                pos = recv->OutU16_JawYPositionSetting;
+                messageToJawTask(JawState, PLAN_DATA, Y, &pos);
+            }
+        }
     }
-    if(oldPlanCmd != rtBeamData.planCmd)
+
+    if(oldPlanCmd != planCmd)
     {
-        LOG_I("plan cmd: %d -> %d\r\n",oldPlanCmd,rtBeamData.planCmd);  
-        switch(rtBeamData.planCmd)
+        LOG_I("plan cmd: %d -> %d\r\n",oldPlanCmd,planCmd);  
+        switch(planCmd)
         {
         case NO_USE://Plan send finish
             if(oldPlanCmd == SEND_PLAN){
@@ -184,7 +200,7 @@ static int8_t realtime_ethercat_data_process(void)
             oldBeamIndex = oldRadiationIndex = 0;
         break;
         case CLOSE_PLAN://clear plan
-            if(rtBeamData.fsmState == FSM_IDLE){
+            if(stateCmd == FSM_IDLE){
                 clearPlan();
                 oldBeamIndex = 0;
                 oldRadiationIndex = 0;
@@ -192,17 +208,18 @@ static int8_t realtime_ethercat_data_process(void)
         break;
         default:    break;
         }
-        oldPlanCmd = rtBeamData.planCmd;
+        oldPlanCmd = planCmd;
     }
-    if(oldErrState != rtBeamData.errReset)
+    if(oldErrState != errReset)
     {
-        if(rtBeamData.errReset == 1){
+        if(errReset == 1){
             uint16_t state[2];
             state[0] = state[1] = FSM_IDLE;
             messageToJawTask(JawState, COMMAND, XY, state);
         }
+        oldErrState = errReset;
     }
-    if(((rtBeamData.fsmState == FSM_IDLE)||(rtBeamData.fsmState == FSM_SERVO))&&(rtBeamData.beamIndex > 0))
+    if(((stateCmd == FSM_IDLE)||(stateCmd == FSM_SERVO))&&(rtBeamData.beamIndex > 0))
     {
         if((oldBeamIndex != rtBeamData.beamIndex) || (oldRadiationIndex != rtBeamData.radiationIndex))
         {
@@ -221,7 +238,7 @@ static int8_t realtime_ethercat_data_process(void)
  static int8_t non_realtime_tcp_callback(uint8_t sn)
  {
 #ifdef IS_TCP_SERVER
-    if(rtBeamData.planCmd == NO_USE)
+    if(/*(stateCmd > FSM_NOSTATE )&&*/(planCmd == NO_USE))
     {
         if((isClientTypeMatch(sn, 0) > 0) && isSendPeriod(sn, 0))
         {

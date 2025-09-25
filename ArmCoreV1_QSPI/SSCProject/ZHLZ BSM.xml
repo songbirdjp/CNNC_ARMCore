@@ -15,8 +15,8 @@
 		</Groups>
 		<Devices>
 			<Device Physics="YY">
-				<Type ProductCode="#x92520202" RevisionNo="#x1">BSM_BankB</Type>
-				<Name>BSM_BankB</Name>
+				<Type ProductCode="#x92520202" RevisionNo="#x1">lan9252_app</Type>
+				<Name>lan9252_app</Name>
 				<Info>
 					<StateMachine>
 						<Timeout>
@@ -44,8 +44,8 @@
 								<BitSize>24</BitSize>
 							</DataType>
 							<DataType>
-								<Name>STRING(9)</Name>
-								<BitSize>72</BitSize>
+								<Name>STRING(11)</Name>
+								<BitSize>88</BitSize>
 							</DataType>
 							<DataType>
 								<Name>USINT</Name>
@@ -184,7 +184,7 @@
 							</DataType>
 							<DataType>
 								<Name>DT1601</Name>
-								<BitSize>336</BitSize>
+								<BitSize>400</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -301,6 +301,28 @@
 									<Comment>Reference to 0x7010.10</Comment>
 									<BitSize>32</BitSize>
 									<BitOffs>304</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>11</SubIdx>
+									<Name>SubIndex 011</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x7010.11</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>336</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>12</SubIdx>
+									<Name>SubIndex 012</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x7010.12</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>368</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -1133,7 +1155,7 @@
 							</DataType>
 							<DataType>
 								<Name>DT7010</Name>
-								<BitSize>176</BitSize>
+								<BitSize>208</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -1236,10 +1258,30 @@
 								</SubItem>
 								<SubItem>
 									<SubIdx>10</SubIdx>
-									<Name>OutU16_Reserve</Name>
+									<Name>OutU16_JawXPositionSetting</Name>
 									<Type>UINT</Type>
 									<BitSize>16</BitSize>
 									<BitOffs>160</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>11</SubIdx>
+									<Name>OutU16_JawYPositionSetting</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
+									<BitOffs>176</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>12</SubIdx>
+									<Name>OutU16_ErrReset</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
+									<BitOffs>192</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -1274,10 +1316,10 @@
 							<Object>
 								<Index>#x1008</Index>
 								<Name>Device name</Name>
-								<Type>STRING(9)</Type>
-								<BitSize>72</BitSize>
+								<Type>STRING(11)</Type>
+								<BitSize>88</BitSize>
 								<Info>
-									<DefaultData>42534D5F42616E6B42</DefaultData>
+									<DefaultData>6C616E393235325F617070</DefaultData>
 								</Info>
 								<Flags>
 									<Access>ro</Access>
@@ -1385,12 +1427,12 @@
 								<Index>#x1601</Index>
 								<Name>OutputData process data mapping</Name>
 								<Type>DT1601</Type>
-								<BitSize>336</BitSize>
+								<BitSize>400</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
 										<Info>
-											<DefaultData>0A</DefaultData>
+											<DefaultData>0C</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -1451,6 +1493,18 @@
 										<Name>SubIndex 010</Name>
 										<Info>
 											<DefaultData>100A1070</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 011</Name>
+										<Info>
+											<DefaultData>100B1070</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 012</Name>
+										<Info>
+											<DefaultData>100C1070</DefaultData>
 										</Info>
 									</SubItem>
 								</Info>
@@ -1767,12 +1821,12 @@
 								<Index>#x7010</Index>
 								<Name>OutputData</Name>
 								<Type>DT7010</Type>
-								<BitSize>176</BitSize>
+								<BitSize>208</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
 										<Info>
-											<DefaultData>0A</DefaultData>
+											<DefaultData>0C</DefaultData>
 										</Info>
 									</SubItem>
 								</Info>
@@ -1785,7 +1839,7 @@
 				<Fmmu>MBoxState</Fmmu>
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1000" ControlByte="#x26" Enable="1">MBoxOut</Sm>
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1080" ControlByte="#x22" Enable="1">MBoxIn</Sm>
-				<Sm DefaultSize="20" StartAddress="#x1100" ControlByte="#x64" Enable="1">Outputs</Sm>
+				<Sm DefaultSize="24" StartAddress="#x1100" ControlByte="#x64" Enable="1">Outputs</Sm>
 				<Sm DefaultSize="208" StartAddress="#x1400" ControlByte="#x20" Enable="1">Inputs</Sm>
 				<RxPdo Fixed="true" Mandatory="true" Sm="2">
 					<Index>#x1601</Index>
@@ -1857,7 +1911,21 @@
 						<Index>#x7010</Index>
 						<SubIndex>10</SubIndex>
 						<BitLen>16</BitLen>
-						<Name>OutU16_Reserve</Name>
+						<Name>OutU16_JawXPositionSetting</Name>
+						<DataType>UINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x7010</Index>
+						<SubIndex>11</SubIndex>
+						<BitLen>16</BitLen>
+						<Name>OutU16_JawYPositionSetting</Name>
+						<DataType>UINT</DataType>
+					</Entry>
+					<Entry>
+						<Index>#x7010</Index>
+						<SubIndex>12</SubIndex>
+						<BitLen>16</BitLen>
+						<Name>OutU16_ErrReset</Name>
 						<DataType>UINT</DataType>
 					</Entry>
 				</RxPdo>

@@ -59,22 +59,22 @@ void initSVG(struct SVG_Type* inst, uint8_t axes)
 {
     memset(inst, 0, sizeof(struct SVG_Type));
 
-    inst->DynamicValues.AccelerationNeg = 80;//mm/s^2
-    inst->DynamicValues.AccelerationPos = 80;
+    inst->DynamicValues.AccelerationNeg = 170;//mm/s^2
+    inst->DynamicValues.AccelerationPos = 170;
     if(axes){
-        inst->DynamicValues.VelocityNeg = 12.88;//mm/s
-        inst->DynamicValues.VelocityPos = 12.88;
+        inst->DynamicValues.VelocityNeg = 17;//max average should = 12.88
+        inst->DynamicValues.VelocityPos = 17;
     }
     else{
-        inst->DynamicValues.VelocityNeg = 8.52;
-        inst->DynamicValues.VelocityPos = 8.52;
+        inst->DynamicValues.VelocityNeg = 17;//max average should = 8.52
+        inst->DynamicValues.VelocityPos = 17;
     }
-    inst->DynamicValues.JerkNeg = 350;//mm/s^3
-    inst->DynamicValues.JerkPos = 350;
+    inst->DynamicValues.JerkNeg = 2400;//mm/s^3
+    inst->DynamicValues.JerkPos = 2400;
     inst->DynamicLimits.AccelerationNeg = 175;
     inst->DynamicLimits.AccelerationPos = 175;
-    inst->DynamicLimits.JerkNeg = 1000;
-    inst->DynamicLimits.JerkPos = 1000;
+    inst->DynamicLimits.JerkNeg = 2500;
+    inst->DynamicLimits.JerkPos = 2500;
     if(axes){   //Y Jaw 
         inst->DynamicLimits.PositionNeg = 0.0;
         inst->DynamicLimits.PositionPos = 1000;

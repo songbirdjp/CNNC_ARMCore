@@ -36,14 +36,14 @@ typedef struct {
 }FRAME_END;
 
 typedef struct {
-    uint16_t fsmState;
-    uint16_t planCmd;
+   // uint16_t fsmState;
+   // uint16_t planCmd;
     uint8_t totalBeam; // < 30
     uint16_t totalRIInBeam[MAX_BEAM_NUM];   // total RI in one beam, < 10240
     uint32_t oneBeamSize[MAX_BEAM_NUM];
     uint16_t beamIndex;
     uint16_t radiationIndex;
-    uint16_t errReset;
+   // uint16_t errReset;
 }BEAM_DATA;
 
 typedef struct {
