@@ -95,10 +95,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(LAN9252_SYNC1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : CHIP_RUN_LED_Pin SYSTEM_STATE_Pin DO_HVEN_Pin DO_MV_TREATMENT_EN_Pin
-                           DO_KV_TREATMENT_EN_Pin DO_EMERGENCY_Pin */
-  GPIO_InitStruct.Pin = CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin|DO_HVEN_Pin|DO_MV_TREATMENT_EN_Pin
-                          |DO_KV_TREATMENT_EN_Pin|DO_EMERGENCY_Pin;
+  /*Configure GPIO pins : CHIP_RUN_LED_Pin SYSTEM_STATE_Pin */
+  GPIO_InitStruct.Pin = CHIP_RUN_LED_Pin|SYSTEM_STATE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -131,10 +129,17 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : DO_HVEN_Pin DO_MV_TREATMENT_EN_Pin DO_KV_TREATMENT_EN_Pin DO_EMERGENCY_Pin */
+  GPIO_InitStruct.Pin = DO_HVEN_Pin|DO_MV_TREATMENT_EN_Pin|DO_KV_TREATMENT_EN_Pin|DO_EMERGENCY_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /*Configure GPIO pins : DO_PULSE_INHIBIT_Pin DO_PowerCut_Pin */
   GPIO_InitStruct.Pin = DO_PULSE_INHIBIT_Pin|DO_PowerCut_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 

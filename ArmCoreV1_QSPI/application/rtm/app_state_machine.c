@@ -191,54 +191,54 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word, MODULE_LINK_STATE_BIT))
     {
         bit_clean(app_rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].manage_info.status_word, MODULE_LINK_STATE_BIT);
-        self->interlock_table.serious_interlock.ethercat_link = 1;
+        self->interlock_table.minor_interlock.ethercat_link = 1;
     }
     else
     {
-        self->interlock_table.serious_interlock.ethercat_link = 0;
+        self->interlock_table.minor_interlock.ethercat_link = 0;
     }
 
     // ICM
     if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_ICM].manage_info.status_word, MODULE_LINK_STATE_BIT))
     {
         bit_clean(app_rtm->rtm_module_info[RTM_MODULE_ICM].manage_info.status_word, MODULE_LINK_STATE_BIT);
-        self->interlock_table.serious_interlock.icm_link = 1;
+        self->interlock_table.minor_interlock.icm_link = 1;
     }
     else
     {
-        self->interlock_table.serious_interlock.icm_link = 0;
+        self->interlock_table.minor_interlock.icm_link = 0;
     }
 
     // BGM
     if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_BGM].manage_info.status_word, MODULE_LINK_STATE_BIT))
     {
         bit_clean(app_rtm->rtm_module_info[RTM_MODULE_BGM].manage_info.status_word, MODULE_LINK_STATE_BIT);
-        self->interlock_table.serious_interlock.bgm_link = 1;
+        self->interlock_table.minor_interlock.bgm_link = 1;
     }
     else
     {
-        self->interlock_table.serious_interlock.bgm_link = 0;
+        self->interlock_table.minor_interlock.bgm_link = 0;
     }
 
     // QAM
     if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_QAM].manage_info.status_word, MODULE_LINK_STATE_BIT))
     {
         bit_clean(app_rtm->rtm_module_info[RTM_MODULE_QAM].manage_info.status_word, MODULE_LINK_STATE_BIT);
-        self->interlock_table.serious_interlock.qam_link = 1;
+        self->interlock_table.minor_interlock.qam_link = 1;
     }
     else
     {
-        self->interlock_table.serious_interlock.qam_link = 0;
+        self->interlock_table.minor_interlock.qam_link = 0;
     }
     // RTM OFF ARM
     if (bit_get(app_rtm->rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word, MODULE_LINK_STATE_BIT))
     {
         bit_clean(app_rtm->rtm_module_info[RTM_MODULE_RTM_OFF].manage_info.status_word, MODULE_LINK_STATE_BIT);
-        self->interlock_table.serious_interlock.rtm_off_link = 1;
+        self->interlock_table.minor_interlock.rtm_off_link = 1;
     }
     else
     {
-        self->interlock_table.serious_interlock.rtm_off_link = 0;
+        self->interlock_table.minor_interlock.rtm_off_link = 0;
     }
     // ICM
     if ((app_rtm->icm_current_state == MV_TERMINATE_SIG) &&
@@ -300,12 +300,12 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     //RTC WD
     if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.RTC_WD_OK_IN != 1)
     {
-        self->interlock_table.serious_interlock.RTC_WD_OK = 1;
+        self->interlock_table.minor_interlock.RTC_WD_OK = 1;
         retval = -1;
     }
     else
     {
-        self->interlock_table.serious_interlock.RTC_WD_OK = 0;
+        self->interlock_table.minor_interlock.RTC_WD_OK = 0;
     }
 
     if ((getElapsedTime(self->cur_time, self->last_time) > RTM_ERROR_WAIT_TIME) || (retval == 0))
