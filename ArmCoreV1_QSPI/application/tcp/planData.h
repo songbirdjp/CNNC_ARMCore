@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#define MAX_BEAM_NUM    30
+#define MAX_BEAM_NUM    50
 #define MAX_CP_IN_BEAM 8//3601
 #define TCP_SEND_PERIOD 1000 //100*1 = 100ms
 
@@ -38,7 +38,7 @@ typedef struct {
 typedef struct {
    // uint16_t fsmState;
    // uint16_t planCmd;
-    uint8_t totalBeam; // < 30
+    uint8_t totalBeam; // < MAX_BEAM_NUM
     uint16_t totalRIInBeam[MAX_BEAM_NUM];   // total RI in one beam, < 10240
     uint32_t oneBeamSize[MAX_BEAM_NUM];
     uint16_t beamIndex;

@@ -6,15 +6,13 @@
 extern "C" {
 #endif
 
-#define BANKA
+//#define BANKA
 //#define TEST
 #ifdef BANKA
 #define BANK_NO 1 //A=1 B=2
 #else
 #define BANK_NO 2 //A=1 B=2
 #endif
-
-#define MAX_BEAM_NUM    30
 
 struct ethercat_data_recv     /* master -> slave */
 {

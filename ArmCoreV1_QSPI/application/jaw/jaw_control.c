@@ -742,6 +742,7 @@ int8_t doubleLoopPID(uint8_t axes)
     if(((rtFeedback.jawRTPos[axes] + rtFeedback.jawTowardPos[axes]) >= avoidCollisionDist[axes]) 
         && (jawControlByAxes[axes].fSVG.moveDirection > 0))
     {
+        interlockFeedback.jawInterlock[axes] |= 0x800;
         LOG_E("jaw%d too close%d + %d\r\n",axes, rtFeedback.jawRTPos[axes],rtFeedback.jawTowardPos[axes]);
         ret = -3;
     }

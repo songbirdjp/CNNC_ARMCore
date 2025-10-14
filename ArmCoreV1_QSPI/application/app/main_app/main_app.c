@@ -134,13 +134,13 @@ static int8_t realtime_ethercat_data_process(void)
     memcpy(&send->InU16_LeafCrtControlMode, &recv->OutU16_LeafControlModeSetting, sizeof(uint16_t) * 4);//control mode feedback
 #endif
     send->InU16_PlanCmdFB = recv->OutU16_PlanCmd;
-    send->InU16_FaultInfo1 = rtFeedback.faultInfo1;
+    send->InU16_FaultInfo1 |= rtFeedback.faultInfo1;
     if(cnt++ >= 100){
         if((send->InU16_FaultInfo1 & 0x800) == 0x800)   send->InU16_FaultInfo1 &= ~0x800;
-        else    send->InU16_FaultInfo1 |= 0x800;
+        else    send->InU16_FaultInfo1 |= 0x800;  
         cnt = 0;
     }    
-   // LOG_I("%x\r\n", rtFeedback.faultInfo1);
+  //  LOG_I("%x\r\n", send->InU16_FaultInfo1);
   //  if(interlockFeedback.boardLoss&0x0007)  send->InU16_FaultInfo1 |= 0x0002;
   //  if(tcp_link_status_get() == false) 
   //  {

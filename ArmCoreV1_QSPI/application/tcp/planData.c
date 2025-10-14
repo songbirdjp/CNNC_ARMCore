@@ -219,7 +219,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
         {
             if (++rtBeamData.totalBeam > MAX_BEAM_NUM){
                 --rtBeamData.totalBeam;
-                LOG_E("recv error #8: beam > 30, will not save!\r\n");
+                LOG_E("recv error #8: beam sum %d > 50, will not save!\r\n",rtBeamData.totalBeam);
                 return -1;
             } 
           //  uint8_t temp[frameHead.frmLength];
