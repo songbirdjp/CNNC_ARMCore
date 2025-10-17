@@ -196,9 +196,9 @@ static void app_rtm_main_thread(void *argument)
         rtm_status.warning_interlock = *(uint32_t *)&(self->interlock_table.warning_interlock);
         rtm_status.minor_interlock = *(uint32_t *)&(self->interlock_table.minor_interlock);
         rtm_status.serious_interlock = *(uint32_t *)&(self->interlock_table.serious_interlock);
-        rtm_status.TotalStep = 0x1;
-        rtm_status.CurrentStep = 0x1;
-        rtm_status.ErrorCode = 0x0;
+        rtm_status.TotalStep = self->TotalStep;
+        rtm_status.CurrentStep = self->CurrentStep;
+        rtm_status.ErrorCode = self->ErrorCode;
         if (memcmp(&rtm_status_old, &rtm_status, sizeof(rtm_status_t)) != 0)
         {
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, RTM_ON_PLC_ID, INPUT_RTM_ON_ARM_CURRENT_STATE_CMD, (uint8_t *)&rtm_status, sizeof(rtm_status_t));

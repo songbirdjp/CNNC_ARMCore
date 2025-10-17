@@ -35,18 +35,30 @@ extern osThreadId_t app_rtm_main_threadId;
 #define APP_RTM_THREAD_FLAG_QAM_READY (1 << 6)
 #define APP_RTM_THREAD_FLAG_BSM_READY (1 << 7)
 
-#define APP_RTM_THREAD_FLAG_ALL (APP_RTM_THREAD_FLAG_ETHERCAT_READY |  \
-                                 APP_RTM_THREAD_FLAG_DI_READY |        \
-                                 APP_RTM_THREAD_FLAG_DO_READY |        \
-                                 APP_RTM_THREAD_FLAG_RTM_OFF_READY | \
-                                 APP_RTM_THREAD_FLAG_ICM_READY | \
-                                 APP_RTM_THREAD_FLAG_BGM_READY | \
+#define APP_RTM_THREAD_FLAG_ALL (APP_RTM_THREAD_FLAG_ETHERCAT_READY | \
+                                 APP_RTM_THREAD_FLAG_DI_READY |       \
+                                 APP_RTM_THREAD_FLAG_DO_READY |       \
+                                 APP_RTM_THREAD_FLAG_RTM_OFF_READY |  \
+                                 APP_RTM_THREAD_FLAG_ICM_READY |      \
+                                 APP_RTM_THREAD_FLAG_BGM_READY |      \
                                  APP_RTM_THREAD_FLAG_QAM_READY)
 
 static inline void app_rtm_thread_flag_set(uint32_t flag)
 {
     osThreadFlagsSet(app_rtm_main_threadId, flag);
 }
+
+static inline uint32_t countOnes(uint32_t hex)
+{
+    uint32_t count = 0;
+    while (hex != 0)
+    {
+        count += hex & 1; // 检查最低位是否为1
+        hex >>= 1;        // 右移一位
+    }
+    return count;
+}
+
 static inline int32_t app_rtm_thread_flag_get(uint32_t timeout)
 {
     uint32_t flags = osThreadFlagsWait(APP_RTM_THREAD_FLAG_ALL, osFlagsWaitAll | osFlagsNoClear, timeout);

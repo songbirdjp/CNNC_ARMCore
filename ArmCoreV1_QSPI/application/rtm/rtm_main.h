@@ -152,6 +152,9 @@ extern "C"
         manage_info_t manage_info;
         app_data_record_t app_data_record;
 
+        uint16_t TotalStep;
+        uint16_t CurrentStep;
+        uint16_t ErrorCode;
         rtm_fault_check_t fault_check;
         interlock_table_t interlock_table;
         app_state_table_t app_state_table;

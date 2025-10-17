@@ -297,7 +297,7 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     {
         self->interlock_table.minor_interlock.qam_fault = 0;
     }
-    //RTC WD
+    // RTC WD
     if (dido_structure.mcp23017_0x00_u.mcp23017_0x00_bit.RTC_WD_OK_IN != 1)
     {
         self->interlock_table.minor_interlock.RTC_WD_OK = 1;
@@ -421,6 +421,9 @@ static State_t module_init(void *self, Event_t const *const e)
         dido_structure.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN = 0;
         app_do_set(&(rtm->app_dido), &dido_structure);
         fault_check_init(&(rtm->fault_check));
+        rtm->TotalStep = countOnes(APP_RTM_THREAD_FLAG_ALL);
+        rtm->CurrentStep = 0;
+        rtm->ErrorCode = 0;
         // LOG_I("module_init enter\r\n");
         status = HANDLED();
         break;
@@ -428,7 +431,9 @@ static State_t module_init(void *self, Event_t const *const e)
     case EXIT_SIG:
     {
         // LOG_I("module_init exit\r\n");
-        // uint32_t ret = osThreadFlagsGet();
+        uint32_t ret = osThreadFlagsGet();
+
+        rtm->ErrorCode = APP_RTM_THREAD_FLAG_ALL ^ ret;
         // if(ret & APP_RTM_THREAD_FLAG_ETHERCAT_READY)
         // {
         rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].tx_disable = MODULE_TX_ENABLE;
@@ -491,6 +496,7 @@ static State_t module_init(void *self, Event_t const *const e)
                 }
                 else
                 {
+                    rtm->CurrentStep = countOnes(osThreadFlagsGet());
                     status = HANDLED();
                 }
             }
