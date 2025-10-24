@@ -620,7 +620,7 @@ static void ethercat_input_data_6000_distribute(rtm_module_info_t *const self, T
     case INPUT_RTM_OFF_ARM_TRM_REQUIRE_CMD:
         memcpy(&input_data->InU8_trm_require_state, queue_frame->payload.data + 1, len);
         break;
-    case INPUT_RTM_OFF_ARM_LOAD_POSITION_CMD:
+    case INPUT_PSM_SETUP_POSITION_CMD:
         memcpy(&input_data->InU16_data_valid_flag, queue_frame->payload.data + 1, len);
         break;
     default:
