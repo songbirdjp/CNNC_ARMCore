@@ -12,6 +12,7 @@
 #include "ulog.h"
 #include "rtm_main.h"
 #include "app_manage.h"
+#include "sys_cfg.h"
 
 #define RTM_ERROR_WAIT_TIME (50)
 #define RTM_INIT_WAIT_TIME (20000)
@@ -505,6 +506,18 @@ static State_t module_init(void *self, Event_t const *const e)
         {
             status = HANDLED();
         }
+        uint8_t board_id = 0;
+        app_board_id_get(&(rtm->app_dido), &board_id);
+        *(uint8_t *)&(rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx) = board_id;
+        uint8_t *fw_ver = system_info_get()->fw_version;
+        rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx.FirmWareVersion |= (0x00 << 24); /* software version */
+        rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx.FirmWareVersion |= (strtoul(&fw_ver[0], NULL, 10) << 16);
+        rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx.FirmWareVersion |= (strtoul(&fw_ver[3], NULL, 10) << 8);
+        rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx.FirmWareVersion |= strtoul(&fw_ver[6], NULL, 10);
+        memcpy(&(rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx),
+               &(rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx),
+               sizeof(heartbeat_t));
+        app_rtm_module_heartbeat_init(rtm, rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx);
         break;
     }
     default:

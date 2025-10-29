@@ -238,8 +238,8 @@ static void app_di_poll_entry(void *argument)
     memset(&dido_state, 0, sizeof(dido_structure_t));
 
     mcp23017_msg_t mcp23017_msg = {
-        .gpio_port = DRIVER_MCP23017_GPB,
-        .dataLen = 1};
+        .gpio_port = DRIVER_MCP23017_GPA,
+        .dataLen = 2};
     pin_msg_t pin_msg = PIN_STATE_NONE;
     // osDelay(100);//规避内部I2C解锁延时切换打断ethercat初始化过程，造成safe op
     int32_t retVal = di_device_init(self);
@@ -605,4 +605,10 @@ void app_do_get(app_dido_t *self, dido_structure_t *dido_value)
     osMutexAcquire(self->mutex, osWaitForever);
     memcpy((uint8_t *)dido_value + DO_DATA_OFFSET_START, (uint8_t *)(&self->dido_structure_temp) + DO_DATA_OFFSET_START, DO_DATA_OFFSET_END - DO_DATA_OFFSET_START);
     osMutexRelease(self->mutex);
+}
+void app_board_id_get(app_dido_t *self, uint8_t *board_id)
+{
+    dido_structure_t dido_value;
+    app_di_get(self, &dido_value);
+    *board_id = dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_Board_ID;
 }

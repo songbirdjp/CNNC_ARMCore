@@ -25,6 +25,7 @@ extern "C"
 #define __OUT    /*!< Defines 'write only' permissions              */
 #define __IN_OUT /*!< Defines 'read / write' permissions            */
 
+#pragma pack(push, 1)
     typedef struct dido_structure
     {
 #define DI_DATA_OFFSET_START (0x00)
@@ -34,19 +35,21 @@ extern "C"
         {
             struct
             {
-                uint8_t RTC_WD_OK_IN : 1;
-                uint8_t reserve : 1;
-                uint8_t DI_BSM_NOT_READY : 1;
-                uint8_t DI_MV_TreatmentEN : 1;
-                uint8_t DI_HVEN : 1;
-                uint8_t DI_Pulse_Inhibit : 1;
-                uint8_t DI_KV_TreatmentEN : 1;
-                uint8_t DI_Power_cut_FB : 1;
+                uint16_t DI_Board_ID : 8;
+
+                uint16_t RTC_WD_OK_IN : 1;
+                uint16_t reserve : 1;
+                uint16_t DI_BSM_NOT_READY : 1;
+                uint16_t DI_MV_TreatmentEN : 1;
+                uint16_t DI_HVEN : 1;
+                uint16_t DI_Pulse_Inhibit : 1;
+                uint16_t DI_KV_TreatmentEN : 1;
+                uint16_t DI_Power_cut_FB : 1;
             } mcp23017_0x00_bit;
-            uint8_t mcp23017_0x00;
+            uint16_t mcp23017_0x00;
         } mcp23017_0x00_u;
         /********gpio di Size: 8 bits, Offset: 0x1***********/
-#define DI_DATA_GPIO_OFFSET (0x01)
+#define DI_DATA_GPIO_OFFSET (0x02)
         __IN union
         {
             struct
@@ -59,10 +62,10 @@ extern "C"
             } gpio_di_bit;
             uint8_t gpio_di;
         } gpio_di_u;
-#define DI_DATA_OFFSET_END (0x02)
-#define DO_DATA_OFFSET_START (0x02)
+#define DI_DATA_OFFSET_END (0x03)
+#define DO_DATA_OFFSET_START (0x03)
         /******gpio do Size: 16 bits, Offset: 0x2***********/
-#define DO_DATA_GPIO_OFFSET (0x02)
+#define DO_DATA_GPIO_OFFSET (0x03)
         __OUT union
         {
             struct
@@ -86,9 +89,9 @@ extern "C"
             } gpio_do_bit;
             uint16_t gpio_do;
         } gpio_do_u;
-#define DO_DATA_OFFSET_END (0x4)
+#define DO_DATA_OFFSET_END (0x5)
     } dido_structure_t __attribute__((aligned(1)));
-
+#pragma pack(pop)
     typedef int32_t (*app_dido_callback_t)(dido_structure_t);
 
     typedef struct app_dido
@@ -132,6 +135,7 @@ extern "C"
     void app_di_get(app_dido_t *self, dido_structure_t *dido_value);
     void app_do_set(app_dido_t *self, dido_structure_t *dido_value);
     void app_do_get(app_dido_t *self, dido_structure_t *dido_value);
+    void app_board_id_get(app_dido_t *self, uint8_t *board_id);
 #ifdef __cplusplus
 }
 #endif

@@ -55,6 +55,21 @@ typedef struct
     uint16_t ErrorCode;
 } __attribute__((aligned(1), packed)) rtm_status_t;
 
+typedef struct
+{
+    uint8_t board_id_rtm_on_arm;
+    uint8_t reserved_rtm_on_arm;
+    uint32_t firmware_version_rtm_on_arm;
+    uint8_t board_id_icm;
+    uint8_t reserved_icm;
+    uint32_t firmware_version_icm;
+    uint8_t board_id_bgm;
+    uint8_t reserved_bgm;
+    uint32_t firmware_version_bgm;
+    uint8_t board_id_qam;
+    uint8_t reserved_qam;
+    uint32_t firmware_version_qam;
+} __attribute__((aligned(1), packed)) module_versions_t;
 static int32_t rtm_set_data_distribute(osMessageQueueId_t queue_id, uint32_t ID, uint8_t cmd, uint8_t *data, uint16_t len);
 static app_rtm_main_t app_rtm;
 
@@ -97,6 +112,24 @@ static void module_tx_queue_state_bit_set(osMessageQueueId_t queue_id)
         }
     }
 }
+void module_versions_get(app_rtm_main_t *self, module_versions_t *module_versions)
+{
+    if (self == NULL || module_versions == NULL)
+    {
+        return;
+    }
+    module_versions->board_id_rtm_on_arm = *(uint8_t *)&(self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx);
+    module_versions->firmware_version_rtm_on_arm = self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx.FirmWareVersion;
+
+    module_versions->board_id_icm = *(uint8_t *)&(self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx);
+    module_versions->firmware_version_icm = self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx.FirmWareVersion;
+
+    module_versions->board_id_bgm = *(uint8_t *)&(self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx);
+    module_versions->firmware_version_bgm = self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.FirmWareVersion;
+
+    module_versions->board_id_qam = *(uint8_t *)&(self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx);
+    module_versions->firmware_version_qam = self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx.FirmWareVersion;
+}
 #define RTM_MAIN_THREAD_CYCLE_MS (1)
 static void app_rtm_main_thread(void *argument)
 {
@@ -108,10 +141,13 @@ static void app_rtm_main_thread(void *argument)
     dido_structure_t dido_structure = {0};
     dido_structure_t dido_structure_old = {0};
 
+    module_versions_t module_versions = {0};
+    uint32_t last_time_module_versions = 0;
     uint32_t current_time = 0;
     uint32_t last_time = 0;
     current_time = osKernelGetTickCount();
     last_time = current_time;
+    last_time_module_versions = current_time;
 
     uint8_t system_state_require = 0;
     Event_t rtm_event = {0};
@@ -212,13 +248,19 @@ static void app_rtm_main_thread(void *argument)
             rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, RTM_ON_PLC_ID, INPUT_RTM_ON_ARM_CURRENT_STATE_CMD, (uint8_t *)&rtm_status, sizeof(rtm_status_t));
             last_time = current_time;
         }
+        if (getElapsedTime(current_time, last_time_module_versions) > 1000)
+        {
+            module_versions_get(self, &module_versions);
+            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, RTM_ON_PLC_ID, INPUT_RTM_ON_ARM_VERSIONS_CMD, (uint8_t *)&module_versions, sizeof(module_versions_t));
+            last_time_module_versions = current_time;
+        }
         // DIDO上报
         app_do_get(&(self->app_dido), &dido_structure);
         app_di_get(&(self->app_dido), &dido_structure);
         if (memcmp(&dido_structure_old, &dido_structure, sizeof(dido_structure_t)) != 0)
         {
             memcpy(&dido_structure_old, &dido_structure, sizeof(dido_structure_t));
-            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, RTM_ON_PLC_ID, INPUT_RTM_ON_ARM_DIDO_CMD, (uint8_t *)&dido_structure, sizeof(dido_structure_t));
+            rtm_set_data_distribute(self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].module_queue, RTM_ON_PLC_ID, INPUT_RTM_ON_ARM_DIDO_CMD, (uint8_t *)&dido_structure + 1, sizeof(dido_structure_t) - 1);
         }
 #if 1
         state_require = system_state_require;
@@ -575,6 +617,12 @@ static void ethercat_input_data_6000_distribute(rtm_module_info_t *const self, T
     // TODO:做长度判断
     switch (cmd)
     {
+    case INPUT_RTM_ON_ARM_VERSIONS_CMD:
+        memcpy(&input_data->InU8_BoardID_RTM_ON_ARM, queue_frame->payload.data + 1, len);
+        break;
+    case INPUT_RTM_OFF_VERSIONS_CMD:
+        memcpy(&input_data->InU8_BoardID_RTM_OFF_ARM, queue_frame->payload.data + 1, len);
+        break;
     case INPUT_RADIATION_INDEX_CMD:
         memcpy(&input_data->InU16_radiation_index, queue_frame->payload.data + 1, len);
         break;
@@ -783,10 +831,7 @@ int32_t uart_protocol_heartbeat_rx_callback(struct uart_protocol *const self,
         LOG_E("%s heartbeat rx len err!\r\n", rtm_module_info->module_name);
     }
 
-    // if (memcmp(&(rtm_module_info->heartbeat_info_rx), heartbeat, sizeof(heartbeat_t)) != 0)
-    // {
-    //     LOG_E("%s heartbeat rx err!\r\n", rtm_module_info->module_name);
-    // }
+    memcpy(&(rtm_module_info->heartbeat_info_rx), heartbeat, sizeof(heartbeat_t));
 
     app_rtm_thread_flag_set(rtm_module_info->module_thread_flags);
     return 0;
@@ -1038,6 +1083,21 @@ exit:
     LOG_E("%s tx thread exit\r\n", self->module_name);
     osThreadExit();
 }
+void app_rtm_module_heartbeat_init(app_rtm_main_t *self, heartbeat_t heartbeat)
+{
+    if (self == NULL)
+    {
+        return;
+    }
+    // 本地模块信息赋值
+    for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
+    {
+        self->rtm_module_info[i].heartbeat_info_tx.board_id = heartbeat.board_id;
+        self->rtm_module_info[i].heartbeat_info_tx.HardwareVersion = heartbeat.HardwareVersion;
+        self->rtm_module_info[i].heartbeat_info_tx.FirmWareVersion = heartbeat.FirmWareVersion;
+    }
+}
+
 int app_rtm_data_handle_create(void)
 {
     int32_t ret = 0;
@@ -1104,35 +1164,7 @@ int app_rtm_data_handle_create(void)
     self->rtm_module_info[RTM_MODULE_QAM].tx_disable = MODULE_TX_DISABLE;
     // self->rtm_module_info[RTM_MODULE_BSM].tx_disable = MODULE_TX_DISABLE;
     self->rtm_module_info[RTM_MODULE_RTM_OFF].tx_disable = MODULE_TX_DISABLE;
-    // 远程模块信息赋值
-    self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].heartbeat_info_rx.board_id = 0;
-    self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].heartbeat_info_rx.HardwareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_RTM_ON_PLC].heartbeat_info_rx.FirmWareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx.board_id = 0;
-    self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx.HardwareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx.FirmWareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx.board_id = 0;
-    self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx.HardwareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx.FirmWareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.board_id = 0;
-    self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.HardwareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.FirmWareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx.board_id = 0;
-    self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx.HardwareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx.FirmWareVersion = 0;
-    // self->rtm_module_info[RTM_MODULE_BSM].heartbeat_info_rx.board_id = 0;
-    // self->rtm_module_info[RTM_MODULE_BSM].heartbeat_info_rx.HardwareVersion = 0;
-    // self->rtm_module_info[RTM_MODULE_BSM].heartbeat_info_rx.FirmWareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_RTM_OFF].heartbeat_info_rx.board_id = 0;
-    self->rtm_module_info[RTM_MODULE_RTM_OFF].heartbeat_info_rx.HardwareVersion = 0;
-    self->rtm_module_info[RTM_MODULE_RTM_OFF].heartbeat_info_rx.FirmWareVersion = 0;
-    // 本地模块信息赋值
-    for (uint8_t i = 0; i < RTM_MODULE_MAX; i++)
-    {
-        self->rtm_module_info[i].heartbeat_info_tx.board_id = 0;
-        self->rtm_module_info[i].heartbeat_info_tx.HardwareVersion = 0;
-        self->rtm_module_info[i].heartbeat_info_tx.FirmWareVersion = 0;
-    }
+
     ret = app_data_record_init(&self->app_data_record);
     if (ret != 0)
     {
@@ -1387,6 +1419,8 @@ int8_t dido_test(uint8_t argc, uint8_t **argv)
         if (strcmp(argv[2], "read") == 0)
         {
             app_di_get(&app_rtm.app_dido, &dido_value);
+            LOG_I("DI board_id: %x\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_Board_ID);
+
             LOG_I("DI RTC_WD_OK_IN value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.RTC_WD_OK_IN);
             LOG_I("DI DI_BSM_NOT_READY value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_BSM_NOT_READY);
             LOG_I("DI DI_MV_TreatmentEN value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_MV_TreatmentEN);
@@ -1394,11 +1428,19 @@ int8_t dido_test(uint8_t argc, uint8_t **argv)
             LOG_I("DI DI_Pulse_Inhibit value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_Pulse_Inhibit);
             LOG_I("DI DI_KV_TreatmentEN value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_KV_TreatmentEN);
             LOG_I("DI DI_Power_cut_FB value: %d\r\n", dido_value.mcp23017_0x00_u.mcp23017_0x00_bit.DI_Power_cut_FB);
-
+            osDelay(100);
             LOG_I("DI DI_GATING_IN value: %d\r\n", dido_value.gpio_di_u.gpio_di_bit.DI_GATING_IN);
             LOG_I("DI DI_Slipring_HVEN_IN value: %d\r\n", dido_value.gpio_di_u.gpio_di_bit.DI_Slipring_HVEN_IN);
             LOG_I("DI DI_Slipring_KV_TreatmentEN_IN value: %d\r\n", dido_value.gpio_di_u.gpio_di_bit.DI_Slipring_KV_TreatmentEN_IN);
             LOG_I("DI DI_Slipring_MV_TreatmentEN_IN value: %d\r\n", dido_value.gpio_di_u.gpio_di_bit.DI_Slipring_MV_TreatmentEN_IN);
+            osDelay(100);
+            LOG_I("DO DO_MV_TreatmentEN value: %d\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_MV_TreatmentEN);
+            LOG_I("DO DO_KV_TreatmentEN value: %d\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_KV_TreatmentEN);
+            LOG_I("DO DO_Emergency value: %d\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_Emergency);
+            LOG_I("DO DO_Pulse_Inhibit value: %d\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_Pulse_Inhibit);
+            LOG_I("DO DO_HVEN value: %d\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_HVEN);
+            LOG_I("DO DO_PowerCut value: %d\r\n", dido_value.gpio_do_u.gpio_do_bit.DO_PowerCut);
+            osDelay(100);
         }
         else
         {

@@ -71,6 +71,7 @@ extern "C"
         INPUT_RTM_OFF_ARM_DIDO_CMD = 0x63,
         INPUT_RTM_OFF_ARM_BUTTON_CMD = 0x65,
         INPUT_RTM_OFF_ARM_TRM_REQUIRE_CMD = 0x68,
+        INPUT_RTM_OFF_VERSIONS_CMD = 0x69,
         INPUT_FKP_STATE_CMD = 0x6A,
         INPUT_CPG_L_STATE_CMD = 0x6B,
         INPUT_CPG_R_STATE_CMD = 0x6C,
@@ -82,6 +83,7 @@ extern "C"
         INPUT_MAX_CMD,
         INPUT_RTM_ON_ARM_CURRENT_STATE_CMD = INPUT_MAX_CMD,
         INPUT_RTM_ON_ARM_DIDO_CMD = INPUT_MAX_CMD + 1,
+        INPUT_RTM_ON_ARM_VERSIONS_CMD = INPUT_MAX_CMD + 2,
     };
 
     typedef enum
@@ -177,6 +179,7 @@ extern "C"
         app_dido_t app_dido;
     } app_rtm_main_t;
 
+    void app_rtm_module_heartbeat_init(app_rtm_main_t *self, heartbeat_t heartbeat);
 #ifdef __cplusplus
 }
 #endif
