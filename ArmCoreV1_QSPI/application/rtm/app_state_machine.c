@@ -514,7 +514,7 @@ static State_t module_init(void *self, Event_t const *const e)
         rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx.FirmWareVersion |= (strtoul(&fw_ver[0], NULL, 10) << 16);
         rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx.FirmWareVersion |= (strtoul(&fw_ver[3], NULL, 10) << 8);
         rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx.FirmWareVersion |= strtoul(&fw_ver[6], NULL, 10);
-        memcpy(&(rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx),
+        memcpy(rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx,
                &(rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx),
                sizeof(heartbeat_t));
         app_rtm_module_heartbeat_init(rtm, rtm->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_tx);

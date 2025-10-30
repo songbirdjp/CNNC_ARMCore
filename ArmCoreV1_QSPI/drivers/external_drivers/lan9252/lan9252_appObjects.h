@@ -92,6 +92,8 @@
 * SubIndex 56 - Reference to 0x7010.56<br>
 * SubIndex 57 - Reference to 0x7010.57<br>
 * SubIndex 58 - Reference to 0x7010.58<br>
+* SubIndex 59 - Reference to 0x7010.59<br>
+* SubIndex 60 - Reference to 0x7010.60<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -152,7 +154,9 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex55 - Reference to 0x7010.55 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex56 - Reference to 0x7010.56 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex57 - Reference to 0x7010.57 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex58 - Reference to 0x7010.58 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex58 - Reference to 0x7010.58 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex59 - Reference to 0x7010.59 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex60 - Reference to 0x7010.60 */
 
 /**
 * \brief Object/Entry names
@@ -215,7 +219,9 @@ OBJCONST UCHAR OBJMEM aName0x1601[] = "OutputData process data mapping\000"
 "SubIndex 055\000"
 "SubIndex 056\000"
 "SubIndex 057\000"
-"SubIndex 058\000\377";
+"SubIndex 058\000"
+"SubIndex 059\000"
+"SubIndex 060\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -282,6 +288,8 @@ UINT32 SI55; /* Subindex55 - Reference to 0x7010.55 */
 UINT32 SI56; /* Subindex56 - Reference to 0x7010.56 */
 UINT32 SI57; /* Subindex57 - Reference to 0x7010.57 */
 UINT32 SI58; /* Subindex58 - Reference to 0x7010.58 */
+UINT32 SI59; /* Subindex59 - Reference to 0x7010.59 */
+UINT32 SI60; /* Subindex60 - Reference to 0x7010.60 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1601;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -291,7 +299,7 @@ TOBJ1601;
 */
 PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={58,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100910,0x70100A08,0x70100B08,0x70100C08,0x70100D08,0x70100E10,0x70100F20,0x70101020,0x70101108,0x70101208,0x70101310,0x70101420,0x70101520,0x70101620,0x70101708,0x70101808,0x70101920,0x70101A20,0x70101B08,0x70101C08,0x70101D20,0x70101E20,0x70101F08,0x70102008,0x70102120,0x70102220,0x70102308,0x70102408,0x70102510,0x70102620,0x70102720,0x70102808,0x70102908,0x70102A20,0x70102B08,0x70102C08,0x70102D20,0x70102E20,0x70102F08,0x70103008,0x70103120,0x70103220,0x70103310,0x70103408,0x70103508,0x70103608,0x70103708,0x70103808,0x70103908,0x70103A08}
+={60,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100910,0x70100A08,0x70100B08,0x70100C08,0x70100D08,0x70100E10,0x70100F20,0x70101020,0x70101120,0x70101208,0x70101308,0x70101410,0x70101520,0x70101620,0x70101720,0x70101808,0x70101908,0x70101A20,0x70101B20,0x70101C08,0x70101D08,0x70101E20,0x70101F20,0x70102008,0x70102108,0x70102220,0x70102320,0x70102408,0x70102508,0x70102610,0x70102720,0x70102820,0x70102908,0x70102A08,0x70102B20,0x70102C20,0x70102D08,0x70102E08,0x70102F20,0x70103020,0x70103108,0x70103208,0x70103320,0x70103420,0x70103510,0x70103608,0x70103708,0x70103808,0x70103908,0x70103A08,0x70103B08,0x70103C08}
 #endif
 ;
 /** @}*/
@@ -562,6 +570,7 @@ PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 * SubIndex 249 - Reference to 0x6000.249<br>
 * SubIndex 250 - Reference to 0x6000.250<br>
 * SubIndex 251 - Reference to 0x6000.251<br>
+* SubIndex 252 - Reference to 0x6000.252<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -815,7 +824,8 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex248 - Reference to 0x6000.248 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex249 - Reference to 0x6000.249 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex250 - Reference to 0x6000.250 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex251 - Reference to 0x6000.251 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex251 - Reference to 0x6000.251 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex252 - Reference to 0x6000.252 */
 
 /**
 * \brief Object/Entry names
@@ -1071,7 +1081,8 @@ OBJCONST UCHAR OBJMEM aName0x1A00[] = "InputData process data mapping\000"
 "SubIndex 248\000"
 "SubIndex 249\000"
 "SubIndex 250\000"
-"SubIndex 251\000\377";
+"SubIndex 251\000"
+"SubIndex 252\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -1331,6 +1342,7 @@ UINT32 SI248; /* Subindex248 - Reference to 0x6000.248 */
 UINT32 SI249; /* Subindex249 - Reference to 0x6000.249 */
 UINT32 SI250; /* Subindex250 - Reference to 0x6000.250 */
 UINT32 SI251; /* Subindex251 - Reference to 0x6000.251 */
+UINT32 SI252; /* Subindex252 - Reference to 0x6000.252 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1A00;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -1340,7 +1352,7 @@ TOBJ1A00;
 */
 PROTO TOBJ1A00 InputDataProcessDataMapping0x1A00
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={251,0x60000108,0x60000208,0x60000320,0x60000408,0x60000508,0x60000620,0x60000708,0x60000808,0x60000920,0x60000A08,0x60000B08,0x60000C20,0x60000D08,0x60000E08,0x60000F20,0x60001008,0x60001108,0x60001220,0x60001308,0x60001408,0x60001520,0x60001608,0x60001708,0x60001820,0x60001908,0x60001A08,0x60001B20,0x60001C08,0x60001D08,0x60001E20,0x60001F08,0x60002008,0x60002110,0x60002208,0x60002308,0x60002408,0x60002508,0x60002608,0x60002708,0x60002810,0x60002920,0x60002A20,0x60002B20,0x60002C20,0x60002D10,0x60002E10,0x60002F10,0x60003001,0x60003101,0x60003201,0x60003301,0x60003401,0x60003501,0x60003601,0x60003701,0x60003801,0x60003901,0x60003A01,0x60003B01,0x60003C04,0x60003D01,0x60003E01,0x60003F01,0x60004001,0x60004101,0x60004201,0x60004301,0x60004401,0x60004508,0x60004608,0x60004701,0x60004801,0x60004901,0x60004A01,0x60004B01,0x60004C01,0x60004D01,0x60004E01,0x60004F01,0x60005001,0x60005101,0x60005201,0x60005301,0x60005401,0x60005501,0x60005601,0x60005701,0x60005801,0x60005901,0x60005A01,0x60005B01,0x60005C01,0x60005D01,0x60005E01,0x60005F01,0x60006001,0x60006101,0x60006201,0x60006301,0x60006401,0x60006501,0x60006601,0x60006701,0x60006801,0x60006901,0x60006A01,0x60006B01,0x60006C01,0x60006D01,0x60006E01,0x60006F10,0x60007001,0x60007107,0x60007208,0x60007301,0x60007401,0x60007501,0x60007601,0x60007701,0x60007801,0x60007901,0x60007A01,0x60007B01,0x60007C07,0x60007D10,0x60007E01,0x60007F01,0x60008001,0x60008101,0x60008201,0x60008301,0x60008401,0x60008501,0x60008608,0x60008708,0x60008808,0x60008910,0x60008A08,0x60008B08,0x60008C10,0x60008D20,0x60008E20,0x60008F20,0x60009020,0x60009110,0x60009210,0x60009310,0x60009408,0x60009508,0x60009610,0x60009708,0x60009808,0x60009910,0x60009A20,0x60009B20,0x60009C20,0x60009D20,0x60009E10,0x60009F10,0x6000A010,0x6000A120,0x6000A220,0x6000A320,0x6000A408,0x6000A508,0x6000A620,0x6000A720,0x6000A820,0x6000A908,0x6000AA08,0x6000AB20,0x6000AC20,0x6000AD20,0x6000AE08,0x6000AF08,0x6000B010,0x6000B108,0x6000B208,0x6000B310,0x6000B420,0x6000B520,0x6000B620,0x6000B720,0x6000B810,0x6000B910,0x6000BA10,0x6000BB08,0x6000BC08,0x6000BD10,0x6000BE08,0x6000BF08,0x6000C010,0x6000C120,0x6000C220,0x6000C320,0x6000C420,0x6000C510,0x6000C610,0x6000C710,0x6000C808,0x6000C908,0x6000CA10,0x6000CB08,0x6000CC08,0x6000CD10,0x6000CE20,0x6000CF20,0x6000D020,0x6000D120,0x6000D210,0x6000D310,0x6000D410,0x6000D520,0x6000D620,0x6000D720,0x6000D808,0x6000D908,0x6000DA10,0x6000DB08,0x6000DC08,0x6000DD10,0x6000DE20,0x6000DF20,0x6000E020,0x6000E120,0x6000E210,0x6000E310,0x6000E410,0x6000E520,0x6000E620,0x6000E720,0x6000E820,0x6000E920,0x6000EA20,0x6000EB20,0x6000EC20,0x6000ED20,0x6000EE20,0x6000EF20,0x6000F020,0x6000F120,0x6000F208,0x6000F308,0x6000F410,0x6000F520,0x6000F620,0x6000F720,0x6000F820,0x6000F920,0x6000FA20,0x6000FB08}
+={252,0x60000108,0x60000208,0x60000320,0x60000408,0x60000508,0x60000620,0x60000708,0x60000808,0x60000920,0x60000A08,0x60000B08,0x60000C20,0x60000D08,0x60000E08,0x60000F20,0x60001008,0x60001108,0x60001220,0x60001308,0x60001408,0x60001520,0x60001608,0x60001708,0x60001820,0x60001908,0x60001A08,0x60001B20,0x60001C08,0x60001D08,0x60001E20,0x60001F08,0x60002008,0x60002120,0x60002208,0x60002308,0x60002420,0x60002508,0x60002608,0x60002720,0x60002808,0x60002908,0x60002A10,0x60002B08,0x60002C08,0x60002D08,0x60002E08,0x60002F08,0x60003008,0x60003110,0x60003220,0x60003320,0x60003420,0x60003520,0x60003610,0x60003710,0x60003810,0x60003901,0x60003A01,0x60003B01,0x60003C01,0x60003D01,0x60003E01,0x60003F01,0x60004001,0x60004101,0x60004201,0x60004301,0x60004401,0x60004504,0x60004601,0x60004701,0x60004801,0x60004901,0x60004A01,0x60004B01,0x60004C01,0x60004D01,0x60004E08,0x60004F08,0x60005001,0x60005101,0x60005201,0x60005301,0x60005401,0x60005501,0x60005601,0x60005701,0x60005801,0x60005901,0x60005A01,0x60005B01,0x60005C01,0x60005D01,0x60005E01,0x60005F01,0x60006001,0x60006101,0x60006201,0x60006301,0x60006401,0x60006501,0x60006601,0x60006701,0x60006801,0x60006901,0x60006A01,0x60006B01,0x60006C01,0x60006D01,0x60006E01,0x60006F01,0x60007001,0x60007101,0x60007201,0x60007301,0x60007401,0x60007501,0x60007601,0x60007701,0x60007810,0x60007901,0x60007A07,0x60007B08,0x60007C01,0x60007D01,0x60007E01,0x60007F01,0x60008001,0x60008101,0x60008201,0x60008301,0x60008401,0x60008507,0x60008610,0x60008701,0x60008801,0x60008901,0x60008A01,0x60008B01,0x60008C01,0x60008D01,0x60008E01,0x60008F08,0x60009008,0x60009108,0x60009210,0x60009308,0x60009408,0x60009510,0x60009620,0x60009720,0x60009820,0x60009920,0x60009A10,0x60009B10,0x60009C10,0x60009D08,0x60009E08,0x60009F10,0x6000A008,0x6000A108,0x6000A210,0x6000A320,0x6000A420,0x6000A520,0x6000A620,0x6000A710,0x6000A810,0x6000A910,0x6000AA20,0x6000AB20,0x6000AC20,0x6000AD08,0x6000AE08,0x6000AF20,0x6000B020,0x6000B120,0x6000B208,0x6000B308,0x6000B420,0x6000B520,0x6000B620,0x6000B708,0x6000B808,0x6000B910,0x6000BA08,0x6000BB08,0x6000BC10,0x6000BD20,0x6000BE20,0x6000BF20,0x6000C020,0x6000C110,0x6000C210,0x6000C310,0x6000C408,0x6000C508,0x6000C610,0x6000C708,0x6000C808,0x6000C910,0x6000CA20,0x6000CB20,0x6000CC20,0x6000CD20,0x6000CE10,0x6000CF10,0x6000D010,0x6000D108,0x6000D208,0x6000D310,0x6000D408,0x6000D508,0x6000D610,0x6000D720,0x6000D820,0x6000D920,0x6000DA20,0x6000DB10,0x6000DC10,0x6000DD10,0x6000DE20,0x6000DF20,0x6000E020,0x6000E108,0x6000E208,0x6000E310,0x6000E408,0x6000E508,0x6000E610,0x6000E720,0x6000E820,0x6000E920,0x6000EA20,0x6000EB10,0x6000EC10,0x6000ED10,0x6000EE20,0x6000EF20,0x6000F020,0x6000F120,0x6000F220,0x6000F320,0x6000F420,0x6000F520,0x6000F620,0x6000F720,0x6000F820,0x6000F920,0x6000FA20,0x6000FB08,0x6000FC08}
 #endif
 ;
 /** @}*/
@@ -1372,6 +1384,20 @@ PROTO TOBJ1A00 InputDataProcessDataMapping0x1A00
 * SubIndex 10 - Reference to 0x6010.10<br>
 * SubIndex 11 - Reference to 0x6010.11<br>
 * SubIndex 12 - Reference to 0x6010.12<br>
+* SubIndex 13 - Reference to 0x6010.13<br>
+* SubIndex 14 - Reference to 0x6010.14<br>
+* SubIndex 15 - Reference to 0x6010.15<br>
+* SubIndex 16 - Reference to 0x6010.16<br>
+* SubIndex 17 - Reference to 0x6010.17<br>
+* SubIndex 18 - Reference to 0x6010.18<br>
+* SubIndex 19 - Reference to 0x6010.19<br>
+* SubIndex 20 - Reference to 0x6010.20<br>
+* SubIndex 21 - Reference to 0x6010.21<br>
+* SubIndex 22 - Reference to 0x6010.22<br>
+* SubIndex 23 - Reference to 0x6010.23<br>
+* SubIndex 24 - Reference to 0x6010.24<br>
+* SubIndex 25 - Reference to 0x6010.25<br>
+* SubIndex 26 - Reference to 0x6010.26<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A01[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -1386,7 +1412,21 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A01[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex9 - Reference to 0x6010.9 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex10 - Reference to 0x6010.10 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex11 - Reference to 0x6010.11 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex12 - Reference to 0x6010.12 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex12 - Reference to 0x6010.12 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex13 - Reference to 0x6010.13 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex14 - Reference to 0x6010.14 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - Reference to 0x6010.15 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex16 - Reference to 0x6010.16 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex17 - Reference to 0x6010.17 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex18 - Reference to 0x6010.18 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex19 - Reference to 0x6010.19 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex20 - Reference to 0x6010.20 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex21 - Reference to 0x6010.21 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex22 - Reference to 0x6010.22 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex23 - Reference to 0x6010.23 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex24 - Reference to 0x6010.24 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex25 - Reference to 0x6010.25 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex26 - Reference to 0x6010.26 */
 
 /**
 * \brief Object/Entry names
@@ -1403,7 +1443,21 @@ OBJCONST UCHAR OBJMEM aName0x1A01[] = "InputData process data mapping\000"
 "SubIndex 009\000"
 "SubIndex 010\000"
 "SubIndex 011\000"
-"SubIndex 012\000\377";
+"SubIndex 012\000"
+"SubIndex 013\000"
+"SubIndex 014\000"
+"SubIndex 015\000"
+"SubIndex 016\000"
+"SubIndex 017\000"
+"SubIndex 018\000"
+"SubIndex 019\000"
+"SubIndex 020\000"
+"SubIndex 021\000"
+"SubIndex 022\000"
+"SubIndex 023\000"
+"SubIndex 024\000"
+"SubIndex 025\000"
+"SubIndex 026\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -1424,6 +1478,20 @@ UINT32 SI9; /* Subindex9 - Reference to 0x6010.9 */
 UINT32 SI10; /* Subindex10 - Reference to 0x6010.10 */
 UINT32 SI11; /* Subindex11 - Reference to 0x6010.11 */
 UINT32 SI12; /* Subindex12 - Reference to 0x6010.12 */
+UINT32 SI13; /* Subindex13 - Reference to 0x6010.13 */
+UINT32 SI14; /* Subindex14 - Reference to 0x6010.14 */
+UINT32 SI15; /* Subindex15 - Reference to 0x6010.15 */
+UINT32 SI16; /* Subindex16 - Reference to 0x6010.16 */
+UINT32 SI17; /* Subindex17 - Reference to 0x6010.17 */
+UINT32 SI18; /* Subindex18 - Reference to 0x6010.18 */
+UINT32 SI19; /* Subindex19 - Reference to 0x6010.19 */
+UINT32 SI20; /* Subindex20 - Reference to 0x6010.20 */
+UINT32 SI21; /* Subindex21 - Reference to 0x6010.21 */
+UINT32 SI22; /* Subindex22 - Reference to 0x6010.22 */
+UINT32 SI23; /* Subindex23 - Reference to 0x6010.23 */
+UINT32 SI24; /* Subindex24 - Reference to 0x6010.24 */
+UINT32 SI25; /* Subindex25 - Reference to 0x6010.25 */
+UINT32 SI26; /* Subindex26 - Reference to 0x6010.26 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1A01;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -1433,7 +1501,7 @@ TOBJ1A01;
 */
 PROTO TOBJ1A01 InputDataProcessDataMapping0x1A01
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={12,0x60100120,0x60100210,0x60100310,0x60100410,0x60100520,0x60100610,0x60100710,0x60100810,0x60100920,0x60100A10,0x60100B10,0x60100C10}
+={26,0x60100120,0x60100210,0x60100310,0x60100410,0x60100520,0x60100610,0x60100710,0x60100810,0x60100920,0x60100A10,0x60100B10,0x60100C10,0x60100D10,0x60100E20,0x60100F20,0x60101020,0x60101120,0x60101220,0x60101320,0x60101420,0x60101520,0x60101620,0x60101720,0x60101820,0x60101920,0x60101A08}
 #endif
 ;
 /** @}*/
@@ -1560,248 +1628,249 @@ PROTO TOBJ1C13 sTxPDOassign
 * SubIndex 7 - InU8_BoardID_BGM<br>
 * SubIndex 8 - InU8_Reserved_BGM<br>
 * SubIndex 9 - InU32_FirmWareVersion_BGM<br>
-* SubIndex 10 - InU8_BoardID_QAM<br>
-* SubIndex 11 - InU8_Reserved_QAM<br>
-* SubIndex 12 - InU32_FirmWareVersion_QAM<br>
-* SubIndex 13 - InU8_BoardID_RTM_OFF_ARM<br>
-* SubIndex 14 - InU8_Reserved_RTM_OFF_ARM<br>
-* SubIndex 15 - InU32_FirmWareVersion_RTM_OFF_ARM<br>
-* SubIndex 16 - InU8_BoardID_PSM<br>
-* SubIndex 17 - InU8_Reserved_PSM<br>
-* SubIndex 18 - InU32_FirmWareVersion_PSM<br>
-* SubIndex 19 - InU8_BoardID_GMM<br>
-* SubIndex 20 - InU8_Reserved_GMM<br>
-* SubIndex 21 - InU32_FirmWareVersion_GMM<br>
-* SubIndex 22 - InU8_BoardID_FKP<br>
-* SubIndex 23 - InU8_Reserved_FKP<br>
-* SubIndex 24 - InU32_FirmWareVersion_FKP<br>
-* SubIndex 25 - InU8_BoardID_CPG_L<br>
-* SubIndex 26 - InU8_Reserved_CPG_L<br>
-* SubIndex 27 - InU32_FirmWareVersion_CPG_L<br>
-* SubIndex 28 - InU8_BoardID_CPG_R<br>
-* SubIndex 29 - InU8_Reserved_CPG_R<br>
-* SubIndex 30 - InU32_FirmWareVersion_CPG_R<br>
-* SubIndex 31 - InU8_beam_id<br>
-* SubIndex 32 - InU8_reserved1<br>
-* SubIndex 33 - InU16_radiation_index<br>
-* SubIndex 34 - InU8_rtm_on_arm_fsm_state_current<br>
-* SubIndex 35 - InU8_rtm_on_arm_ctrl_mode_cur<br>
-* SubIndex 36 - InU8_ethercat_Link_state<br>
-* SubIndex 37 - InU8_reserved2<br>
-* SubIndex 38 - InU8_rtm_on_arm_beam_id<br>
-* SubIndex 39 - InU8_reserved3<br>
-* SubIndex 40 - InU16_rtm_on_arm_radiation_index<br>
-* SubIndex 41 - InU32_rtm_on_arm_not_ready_event<br>
-* SubIndex 42 - InU32_rtm_on_arm_warning_interlock<br>
-* SubIndex 43 - InU32_rtm_on_arm_minor_interlock<br>
-* SubIndex 44 - InU32_rtm_on_arm_serious_interlock<br>
-* SubIndex 45 - InU16_TotalStep_RTM_ON_ARM<br>
-* SubIndex 46 - InU16_CurrentStep_RTM_ON_ARM<br>
-* SubIndex 47 - InU16_ErrorCode_RTM_ON_ARM<br>
-* SubIndex 48 - InB1_ON_DI_RTC_WD_OK_IN<br>
-* SubIndex 49 - InB1_ON_DI_Reserve0<br>
-* SubIndex 50 - InB1_ON_DI_BSM_NOT_READY<br>
-* SubIndex 51 - InB1_ON_DI_MV_TreatmentEN<br>
-* SubIndex 52 - InB1_ON_DI_DI_HVEN<br>
-* SubIndex 53 - InB1_ON_DI_Pulse_Inhibit<br>
-* SubIndex 54 - InB1_ON_DI_KV_TreatmentEN<br>
-* SubIndex 55 - InB1_ON_DI_Power_cut_FB<br>
-* SubIndex 56 - InB1_ON_DI_GATING_IN<br>
-* SubIndex 57 - InB1_ON_DI_Slipring_HVEN_IN<br>
-* SubIndex 58 - InB1_ON_DI_Slipring_KV_TreatmentEN_IN<br>
-* SubIndex 59 - InB1_ON_DI_Slipring_MV_TreatmentEN_IN<br>
-* SubIndex 60 - InB4_ON_DI_reserve1<br>
-* SubIndex 61 - InB1_ON_DO_reserve0<br>
-* SubIndex 62 - InB1_ON_DO_MV_TreatmentEN<br>
-* SubIndex 63 - InB1_ON_DO_KV_TreatmentEN<br>
-* SubIndex 64 - InB1_ON_DO_Emergency<br>
-* SubIndex 65 - InB1_ON_DO_Pulse_Inhibit<br>
-* SubIndex 66 - InB1_ON_DO_HVEN<br>
-* SubIndex 67 - InB1_ON_DO_PowerCut<br>
-* SubIndex 68 - InB1_ON_DO_reserve1<br>
-* SubIndex 69 - InU8_ON_DO_reserve2<br>
-* SubIndex 70 - InU8_OFF_reserve0<br>
-* SubIndex 71 - InB1_OFF_DI_CITB_EMERGENCY2<br>
-* SubIndex 72 - InB1_OFF_DI_UPS_LOAD_PORT<br>
-* SubIndex 73 - InB1_OFF_DI_STAND_BREAKER1<br>
-* SubIndex 74 - InB1_OFF_DI_STAND_EMERGENCY<br>
-* SubIndex 75 - InB1_OFF_DI_TouchGuard<br>
-* SubIndex 76 - InB1_OFF_DI_HvEn<br>
-* SubIndex 77 - InB1_OFF_DI_MV_TreatmentEN<br>
-* SubIndex 78 - InB1_OFF_DI_KV_TreatmentEN<br>
-* SubIndex 79 - InB1_OFF_DI_STAND_BREAKER7<br>
-* SubIndex 80 - InB1_OFF_DI_STAND_BREAKER3<br>
-* SubIndex 81 - InB1_OFF_DI_UPS_ON_BYPASS<br>
-* SubIndex 82 - InB1_OFF_DI_STAND_BREAKER5<br>
-* SubIndex 83 - InB1_OFF_DI_CITB_EMERGENCY3<br>
-* SubIndex 84 - InB1_OFF_DI_COVER3<br>
-* SubIndex 85 - InB1_OFF_DI_POWER_CUT<br>
-* SubIndex 86 - InB1_OFF_DI_STAND_BREAKER4<br>
-* SubIndex 87 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR1<br>
-* SubIndex 88 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR2<br>
-* SubIndex 89 - InB1_OFF_DI_CITB_EMERGENCY1<br>
-* SubIndex 90 - InB1_OFF_DI_CITB_SEARCH_TREATMENT_ROOM<br>
-* SubIndex 91 - InB1_OFF_DI_CONTROL_ROOM_BREAKER1<br>
-* SubIndex 92 - InB1_OFF_DI_UPS_ON_BATT<br>
-* SubIndex 93 - InB1_OFF_DI_CONTROL_ROOM_BREAKER5<br>
-* SubIndex 94 - InB1_OFF_DI_STAND_BREAKER6<br>
-* SubIndex 95 - InB1_OFF_DI_CITB_EMERGENCY5<br>
-* SubIndex 96 - InB1_OFF_DI_COVER1<br>
-* SubIndex 97 - InB1_OFF_DI_STAND_RESERVE<br>
-* SubIndex 98 - InB1_OFF_DI_TREATMENT_ROOM_DOOR_READY<br>
-* SubIndex 99 - InB1_OFF_DI_COVER2<br>
-* SubIndex 100 - InB1_OFF_DI_CONTROL_ROOM_BREAKER2<br>
-* SubIndex 101 - InB1_OFF_DI_CONTROL_ROOM_BREAKER4<br>
-* SubIndex 102 - InB1_OFF_DI_STAND_CONTACTOR2<br>
-* SubIndex 103 - InB1_OFF_DI_STAND_CONTACTOR1<br>
-* SubIndex 104 - InB1_OFF_DI_UPS_LOW_BATT<br>
-* SubIndex 105 - InB1_OFF_DI_HvKey<br>
-* SubIndex 106 - InB1_OFF_DI_COVER4<br>
-* SubIndex 107 - InB1_OFF_DI_CITB_EMERGENCY4<br>
-* SubIndex 108 - InB1_OFF_DI_CONTROL_ROOM_BREAKER3<br>
-* SubIndex 109 - InB1_OFF_DI_STAND_BREAKER2<br>
-* SubIndex 110 - InB1_OFF_RTC_WD_OK_IN<br>
-* SubIndex 111 - InU16_OFF_mcp23017_di_reserve<br>
-* SubIndex 112 - InB1_OFF_DI_GATING<br>
-* SubIndex 113 - InB7_OFF_reserve1<br>
-* SubIndex 114 - InU8_OFF_reserve2<br>
-* SubIndex 115 - InB1_OFF_DO_RTM_AutoPowerUp<br>
-* SubIndex 116 - InB1_OFF_DO_SearchTreatmentRoomRelay<br>
-* SubIndex 117 - InB1_OFF_DO_Laser<br>
-* SubIndex 118 - InB1_OFF_DO_Power_CUT<br>
-* SubIndex 119 - InB1_OFF_DO_STAND_RESERVE<br>
-* SubIndex 120 - InB1_OFF_DO_TreatmentRoomLight<br>
-* SubIndex 121 - InB1_OFF_DO_RadiationIndicator<br>
-* SubIndex 122 - InB1_OFF_DO_ReadyIndicator<br>
-* SubIndex 123 - InB1_OFF_DO_RTM_SystemShutDown<br>
-* SubIndex 124 - InB7_OFF_reserve3<br>
-* SubIndex 125 - InU16_OFF_mcp23017_do_reserve<br>
-* SubIndex 126 - InB1_OFF_DO_SoftwareHvEn<br>
-* SubIndex 127 - InB1_OFF_DO_SoftwareKVTreatmentEn<br>
-* SubIndex 128 - InB1_OFF_DO_SoftwareMVTreatmentEn<br>
-* SubIndex 129 - InB1_OFF_DO_ThreePhasePowerOn<br>
-* SubIndex 130 - InB1_OFF_DO_softwareMoveEN<br>
-* SubIndex 131 - InB1_OFF_DO_TreatmentMotionEnable<br>
-* SubIndex 132 - InB1_OFF_DO_AsuMotionEnable<br>
-* SubIndex 133 - InB1_OFF_reserve4<br>
-* SubIndex 134 - InU8_OFF_reserve5<br>
-* SubIndex 135 - InU8_icm_fsm_state_current<br>
-* SubIndex 136 - InU8_icm_ctrl_mode_cur<br>
-* SubIndex 137 - InU16_reserved4<br>
-* SubIndex 138 - InU8_icm_beam_id<br>
-* SubIndex 139 - InU8_reserved5<br>
-* SubIndex 140 - InU16_icm_radiation_index<br>
-* SubIndex 141 - InU32_icm_not_ready_event<br>
-* SubIndex 142 - InU32_icm_warning_interlock<br>
-* SubIndex 143 - InU32_icm_minor_interlock<br>
-* SubIndex 144 - InU32_icm_serious_interlock<br>
-* SubIndex 145 - InU16_TotalStep_ICM<br>
-* SubIndex 146 - InU16_CurrentStep_ICM<br>
-* SubIndex 147 - InU16_ErrorCode_ICM<br>
-* SubIndex 148 - InU8_bgm_fsm_state_current<br>
-* SubIndex 149 - InU8_bgm_ctrl_mode_cur<br>
-* SubIndex 150 - InU16_reserved6<br>
-* SubIndex 151 - InU8_bgm_beam_id<br>
-* SubIndex 152 - InU8_reserved7<br>
-* SubIndex 153 - InU16_bgm_radiation_index<br>
-* SubIndex 154 - InU32_bgm_not_ready_event<br>
-* SubIndex 155 - InU32_bgm_warning_interlock<br>
-* SubIndex 156 - InU32_bgm_minor_interlock<br>
-* SubIndex 157 - InU32_bgm_serious_interlock<br>
-* SubIndex 158 - InU16_TotalStep_BGM<br>
-* SubIndex 159 - InU16_CurrentStep_BGM<br>
-* SubIndex 160 - InU16_ErrorCode_BGM<br>
-* SubIndex 161 - InF_beam_on_time<br>
-* SubIndex 162 - InF_primary_dose_current<br>
-* SubIndex 163 - InF_primary_dose_rate_current<br>
-* SubIndex 164 - InU8_primary_dose_fsm_state<br>
-* SubIndex 165 - InU8_reserved8<br>
-* SubIndex 166 - InU32_primary_dose_interlock<br>
-* SubIndex 167 - InF_second_dose_current<br>
-* SubIndex 168 - InF_secondry_dose_rate_current<br>
-* SubIndex 169 - InU8_secondry_dose_fsm_rate<br>
-* SubIndex 170 - InU8_reserved9<br>
-* SubIndex 171 - InU32_secondry_dose_interlock<br>
-* SubIndex 172 - InU32_afc_interlock<br>
-* SubIndex 173 - InF_afc_position_current<br>
-* SubIndex 174 - InU8_qam_fsm_state_current<br>
-* SubIndex 175 - InU8_qam_ctrl_mode_cur<br>
-* SubIndex 176 - InU16_reserved10<br>
-* SubIndex 177 - InU8_qam_beam_id<br>
-* SubIndex 178 - InU8_reserved11<br>
-* SubIndex 179 - InU16_qam_radiation_index<br>
-* SubIndex 180 - InU32_qam_not_ready_event<br>
-* SubIndex 181 - InU32_qam_warning_interlock<br>
-* SubIndex 182 - InU32_qam_minor_interlock<br>
-* SubIndex 183 - InU32_qam_serious_interlock<br>
-* SubIndex 184 - InU16_TotalStep_QAM<br>
-* SubIndex 185 - InU16_CurrentStep_QAM<br>
-* SubIndex 186 - InU16_ErrorCode_QAM<br>
-* SubIndex 187 - InU8_rtm_off_fsm_state_current<br>
-* SubIndex 188 - InU8_rtm_off_ctrl_mode_cur<br>
-* SubIndex 189 - InU16_reserved12<br>
-* SubIndex 190 - InU8_rtm_off_beam_id<br>
-* SubIndex 191 - InU8_reserved13<br>
-* SubIndex 192 - InU16_rtm_off_radiation_index<br>
-* SubIndex 193 - InU32_rtm_off_not_ready_event<br>
-* SubIndex 194 - InU32_rtm_off_warning_interlock<br>
-* SubIndex 195 - InU32_rtm_off_minor_interlock<br>
-* SubIndex 196 - InU32_rtm_off_serious_interlock<br>
-* SubIndex 197 - InU16_TotalStep_RTM_OFF_ARM<br>
-* SubIndex 198 - InU16_CurrentStep_RTM_OFF_ARM<br>
-* SubIndex 199 - InU16_ErrorCode_RTM_OFF_ARM<br>
-* SubIndex 200 - InU8_gmm_fsm_state_current<br>
-* SubIndex 201 - InU8_gmm_ctrl_mode_cur<br>
-* SubIndex 202 - InU16_reserved14<br>
-* SubIndex 203 - InU8_gmm_beam_id<br>
-* SubIndex 204 - InU8_reserved15<br>
-* SubIndex 205 - InU16_gmm_radiation_index<br>
-* SubIndex 206 - InU32_gmm_not_ready_event<br>
-* SubIndex 207 - InU32_gmm_warning_interlock<br>
-* SubIndex 208 - InU32_gmm_minor_interlock<br>
-* SubIndex 209 - InU32_gmm_serious_interlock<br>
-* SubIndex 210 - InU16_TotalStep_GMM<br>
-* SubIndex 211 - InU16_CurrentStep_GMM<br>
-* SubIndex 212 - InU16_ErrorCode_GMM<br>
-* SubIndex 213 - InU32_gmm_move_status<br>
-* SubIndex 214 - InF_gmm_position_cur<br>
-* SubIndex 215 - InF_gmm_velocity_cur<br>
-* SubIndex 216 - InU8_psm_fsm_state_current<br>
-* SubIndex 217 - InU8_psm_ctrl_mode_cur<br>
-* SubIndex 218 - InU16_reserved16<br>
-* SubIndex 219 - InU8_psm_beam_id<br>
-* SubIndex 220 - InU8_reserved17<br>
-* SubIndex 221 - InU16_psm_radiation_index<br>
-* SubIndex 222 - InU32_psm_not_ready_event<br>
-* SubIndex 223 - InU32_psm_warning_interlock<br>
-* SubIndex 224 - InU32_psm_minor_interlock<br>
-* SubIndex 225 - InU32_psm_serious_interlock<br>
-* SubIndex 226 - InU16_TotalStep_PSM<br>
-* SubIndex 227 - InU16_CurrentStep_PSM<br>
-* SubIndex 228 - InU16_ErrorCode_PSM<br>
-* SubIndex 229 - InU32_psm_move_status<br>
-* SubIndex 230 - InF_psm_position_x_cur<br>
-* SubIndex 231 - InF_psm_position_y_cur<br>
-* SubIndex 232 - InF_psm_position_z_cur<br>
-* SubIndex 233 - InF_psm_position_x_r_cur<br>
-* SubIndex 234 - InF_psm_position_y_r_cur<br>
-* SubIndex 235 - InF_psm_position_z_r_cur<br>
-* SubIndex 236 - InF_psm_velocity_x_cur<br>
-* SubIndex 237 - InF_psm_velocity_y_cur<br>
-* SubIndex 238 - InF_psm_velocity_z_cur<br>
-* SubIndex 239 - InF_psm_velocity_x_r_cur<br>
-* SubIndex 240 - InF_psm_velocity_y_r_cur<br>
-* SubIndex 241 - InF_psm_velocity_z_r_cur<br>
-* SubIndex 242 - InU8_function_button<br>
-* SubIndex 243 - InU8_special_button<br>
-* SubIndex 244 - InU16_data_valid_flag<br>
-* SubIndex 245 - InUF_load_position_x_cur<br>
-* SubIndex 246 - InUF_load_position_y_cur<br>
-* SubIndex 247 - InUF_load_position_z_cur<br>
-* SubIndex 248 - InUF_load_position_x_r_tar<br>
-* SubIndex 249 - InUF_load_position_y_r_tar<br>
-* SubIndex 250 - InUF_load_position_z_r_tar<br>
-* SubIndex 251 - InU8_trm_require_state<br>
+* SubIndex 10 - InU8_BoardID_primary_dose<br>
+* SubIndex 11 - InU8_Reserved_primary_dose<br>
+* SubIndex 12 - InU32_FirmWareVersion_primary_dose<br>
+* SubIndex 13 - InU8_BoardID_second_dose<br>
+* SubIndex 14 - InU8_Reserved_second_dose<br>
+* SubIndex 15 - InU32_FirmWareVersion_second_dose<br>
+* SubIndex 16 - InU8_BoardID_AFC<br>
+* SubIndex 17 - InU8_Reserved_AFC<br>
+* SubIndex 18 - InU32_FirmWareVersion_AFC<br>
+* SubIndex 19 - InU8_BoardID_QAM<br>
+* SubIndex 20 - InU8_Reserved_QAM<br>
+* SubIndex 21 - InU32_FirmWareVersion_QAM<br>
+* SubIndex 22 - InU8_BoardID_RTM_OFF_ARM<br>
+* SubIndex 23 - InU8_Reserved_RTM_OFF_ARM<br>
+* SubIndex 24 - InU32_FirmWareVersion_RTM_OFF_ARM<br>
+* SubIndex 25 - InU8_BoardID_PSM<br>
+* SubIndex 26 - InU8_Reserved_PSM<br>
+* SubIndex 27 - InU32_FirmWareVersion_PSM<br>
+* SubIndex 28 - InU8_BoardID_GMM<br>
+* SubIndex 29 - InU8_Reserved_GMM<br>
+* SubIndex 30 - InU32_FirmWareVersion_GMM<br>
+* SubIndex 31 - InU8_BoardID_FKP<br>
+* SubIndex 32 - InU8_Reserved_FKP<br>
+* SubIndex 33 - InU32_FirmWareVersion_FKP<br>
+* SubIndex 34 - InU8_BoardID_CPG_L<br>
+* SubIndex 35 - InU8_Reserved_CPG_L<br>
+* SubIndex 36 - InU32_FirmWareVersion_CPG_L<br>
+* SubIndex 37 - InU8_BoardID_CPG_R<br>
+* SubIndex 38 - InU8_Reserved_CPG_R<br>
+* SubIndex 39 - InU32_FirmWareVersion_CPG_R<br>
+* SubIndex 40 - InU8_beam_id<br>
+* SubIndex 41 - InU8_reserved1<br>
+* SubIndex 42 - InU16_radiation_index<br>
+* SubIndex 43 - InU8_rtm_on_arm_fsm_state_current<br>
+* SubIndex 44 - InU8_rtm_on_arm_ctrl_mode_cur<br>
+* SubIndex 45 - InU8_ethercat_Link_state<br>
+* SubIndex 46 - InU8_reserved2<br>
+* SubIndex 47 - InU8_rtm_on_arm_beam_id<br>
+* SubIndex 48 - InU8_reserved3<br>
+* SubIndex 49 - InU16_rtm_on_arm_radiation_index<br>
+* SubIndex 50 - InU32_rtm_on_arm_not_ready_event<br>
+* SubIndex 51 - InU32_rtm_on_arm_warning_interlock<br>
+* SubIndex 52 - InU32_rtm_on_arm_minor_interlock<br>
+* SubIndex 53 - InU32_rtm_on_arm_serious_interlock<br>
+* SubIndex 54 - InU16_TotalStep_RTM_ON_ARM<br>
+* SubIndex 55 - InU16_CurrentStep_RTM_ON_ARM<br>
+* SubIndex 56 - InU16_ErrorCode_RTM_ON_ARM<br>
+* SubIndex 57 - InB1_ON_DI_RTC_WD_OK_IN<br>
+* SubIndex 58 - InB1_ON_DI_Reserve0<br>
+* SubIndex 59 - InB1_ON_DI_BSM_NOT_READY<br>
+* SubIndex 60 - InB1_ON_DI_MV_TreatmentEN<br>
+* SubIndex 61 - InB1_ON_DI_DI_HVEN<br>
+* SubIndex 62 - InB1_ON_DI_Pulse_Inhibit<br>
+* SubIndex 63 - InB1_ON_DI_KV_TreatmentEN<br>
+* SubIndex 64 - InB1_ON_DI_Power_cut_FB<br>
+* SubIndex 65 - InB1_ON_DI_GATING_IN<br>
+* SubIndex 66 - InB1_ON_DI_Slipring_HVEN_IN<br>
+* SubIndex 67 - InB1_ON_DI_Slipring_KV_TreatmentEN_IN<br>
+* SubIndex 68 - InB1_ON_DI_Slipring_MV_TreatmentEN_IN<br>
+* SubIndex 69 - InB4_ON_DI_reserve1<br>
+* SubIndex 70 - InB1_ON_DO_reserve0<br>
+* SubIndex 71 - InB1_ON_DO_MV_TreatmentEN<br>
+* SubIndex 72 - InB1_ON_DO_KV_TreatmentEN<br>
+* SubIndex 73 - InB1_ON_DO_Emergency<br>
+* SubIndex 74 - InB1_ON_DO_Pulse_Inhibit<br>
+* SubIndex 75 - InB1_ON_DO_HVEN<br>
+* SubIndex 76 - InB1_ON_DO_PowerCut<br>
+* SubIndex 77 - InB1_ON_DO_reserve1<br>
+* SubIndex 78 - InU8_ON_DO_reserve2<br>
+* SubIndex 79 - InU8_OFF_reserve0<br>
+* SubIndex 80 - InB1_OFF_DI_CITB_EMERGENCY2<br>
+* SubIndex 81 - InB1_OFF_DI_UPS_LOAD_PORT<br>
+* SubIndex 82 - InB1_OFF_DI_STAND_BREAKER1<br>
+* SubIndex 83 - InB1_OFF_DI_STAND_EMERGENCY<br>
+* SubIndex 84 - InB1_OFF_DI_TouchGuard<br>
+* SubIndex 85 - InB1_OFF_DI_HvEn<br>
+* SubIndex 86 - InB1_OFF_DI_MV_TreatmentEN<br>
+* SubIndex 87 - InB1_OFF_DI_KV_TreatmentEN<br>
+* SubIndex 88 - InB1_OFF_DI_STAND_BREAKER7<br>
+* SubIndex 89 - InB1_OFF_DI_STAND_BREAKER3<br>
+* SubIndex 90 - InB1_OFF_DI_UPS_ON_BYPASS<br>
+* SubIndex 91 - InB1_OFF_DI_STAND_BREAKER5<br>
+* SubIndex 92 - InB1_OFF_DI_CITB_EMERGENCY3<br>
+* SubIndex 93 - InB1_OFF_DI_COVER3<br>
+* SubIndex 94 - InB1_OFF_DI_POWER_CUT<br>
+* SubIndex 95 - InB1_OFF_DI_STAND_BREAKER4<br>
+* SubIndex 96 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR1<br>
+* SubIndex 97 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR2<br>
+* SubIndex 98 - InB1_OFF_DI_CITB_EMERGENCY1<br>
+* SubIndex 99 - InB1_OFF_DI_CITB_SEARCH_TREATMENT_ROOM<br>
+* SubIndex 100 - InB1_OFF_DI_CONTROL_ROOM_BREAKER1<br>
+* SubIndex 101 - InB1_OFF_DI_UPS_ON_BATT<br>
+* SubIndex 102 - InB1_OFF_DI_CONTROL_ROOM_BREAKER5<br>
+* SubIndex 103 - InB1_OFF_DI_STAND_BREAKER6<br>
+* SubIndex 104 - InB1_OFF_DI_CITB_EMERGENCY5<br>
+* SubIndex 105 - InB1_OFF_DI_COVER1<br>
+* SubIndex 106 - InB1_OFF_DI_STAND_RESERVE<br>
+* SubIndex 107 - InB1_OFF_DI_TREATMENT_ROOM_DOOR_READY<br>
+* SubIndex 108 - InB1_OFF_DI_COVER2<br>
+* SubIndex 109 - InB1_OFF_DI_CONTROL_ROOM_BREAKER2<br>
+* SubIndex 110 - InB1_OFF_DI_CONTROL_ROOM_BREAKER4<br>
+* SubIndex 111 - InB1_OFF_DI_STAND_CONTACTOR2<br>
+* SubIndex 112 - InB1_OFF_DI_STAND_CONTACTOR1<br>
+* SubIndex 113 - InB1_OFF_DI_UPS_LOW_BATT<br>
+* SubIndex 114 - InB1_OFF_DI_HvKey<br>
+* SubIndex 115 - InB1_OFF_DI_COVER4<br>
+* SubIndex 116 - InB1_OFF_DI_CITB_EMERGENCY4<br>
+* SubIndex 117 - InB1_OFF_DI_CONTROL_ROOM_BREAKER3<br>
+* SubIndex 118 - InB1_OFF_DI_STAND_BREAKER2<br>
+* SubIndex 119 - InB1_OFF_RTC_WD_OK_IN<br>
+* SubIndex 120 - InU16_OFF_mcp23017_di_reserve<br>
+* SubIndex 121 - InB1_OFF_DI_GATING<br>
+* SubIndex 122 - InB7_OFF_reserve1<br>
+* SubIndex 123 - InU8_OFF_reserve2<br>
+* SubIndex 124 - InB1_OFF_DO_RTM_AutoPowerUp<br>
+* SubIndex 125 - InB1_OFF_DO_SearchTreatmentRoomRelay<br>
+* SubIndex 126 - InB1_OFF_DO_Laser<br>
+* SubIndex 127 - InB1_OFF_DO_Power_CUT<br>
+* SubIndex 128 - InB1_OFF_DO_STAND_RESERVE<br>
+* SubIndex 129 - InB1_OFF_DO_TreatmentRoomLight<br>
+* SubIndex 130 - InB1_OFF_DO_RadiationIndicator<br>
+* SubIndex 131 - InB1_OFF_DO_ReadyIndicator<br>
+* SubIndex 132 - InB1_OFF_DO_RTM_SystemShutDown<br>
+* SubIndex 133 - InB7_OFF_reserve3<br>
+* SubIndex 134 - InU16_OFF_mcp23017_do_reserve<br>
+* SubIndex 135 - InB1_OFF_DO_SoftwareHvEn<br>
+* SubIndex 136 - InB1_OFF_DO_SoftwareKVTreatmentEn<br>
+* SubIndex 137 - InB1_OFF_DO_SoftwareMVTreatmentEn<br>
+* SubIndex 138 - InB1_OFF_DO_ThreePhasePowerOn<br>
+* SubIndex 139 - InB1_OFF_DO_softwareMoveEN<br>
+* SubIndex 140 - InB1_OFF_DO_TreatmentMotionEnable<br>
+* SubIndex 141 - InB1_OFF_DO_AsuMotionEnable<br>
+* SubIndex 142 - InB1_OFF_reserve4<br>
+* SubIndex 143 - InU8_OFF_reserve5<br>
+* SubIndex 144 - InU8_icm_fsm_state_current<br>
+* SubIndex 145 - InU8_icm_ctrl_mode_cur<br>
+* SubIndex 146 - InU16_reserved4<br>
+* SubIndex 147 - InU8_icm_beam_id<br>
+* SubIndex 148 - InU8_reserved5<br>
+* SubIndex 149 - InU16_icm_radiation_index<br>
+* SubIndex 150 - InU32_icm_not_ready_event<br>
+* SubIndex 151 - InU32_icm_warning_interlock<br>
+* SubIndex 152 - InU32_icm_minor_interlock<br>
+* SubIndex 153 - InU32_icm_serious_interlock<br>
+* SubIndex 154 - InU16_TotalStep_ICM<br>
+* SubIndex 155 - InU16_CurrentStep_ICM<br>
+* SubIndex 156 - InU16_ErrorCode_ICM<br>
+* SubIndex 157 - InU8_bgm_fsm_state_current<br>
+* SubIndex 158 - InU8_bgm_ctrl_mode_cur<br>
+* SubIndex 159 - InU16_reserved6<br>
+* SubIndex 160 - InU8_bgm_beam_id<br>
+* SubIndex 161 - InU8_reserved7<br>
+* SubIndex 162 - InU16_bgm_radiation_index<br>
+* SubIndex 163 - InU32_bgm_not_ready_event<br>
+* SubIndex 164 - InU32_bgm_warning_interlock<br>
+* SubIndex 165 - InU32_bgm_minor_interlock<br>
+* SubIndex 166 - InU32_bgm_serious_interlock<br>
+* SubIndex 167 - InU16_TotalStep_BGM<br>
+* SubIndex 168 - InU16_CurrentStep_BGM<br>
+* SubIndex 169 - InU16_ErrorCode_BGM<br>
+* SubIndex 170 - InF_beam_on_time<br>
+* SubIndex 171 - InF_primary_dose_current<br>
+* SubIndex 172 - InF_primary_dose_rate_current<br>
+* SubIndex 173 - InU8_primary_dose_fsm_state<br>
+* SubIndex 174 - InU8_reserved8<br>
+* SubIndex 175 - InU32_primary_dose_interlock<br>
+* SubIndex 176 - InF_second_dose_current<br>
+* SubIndex 177 - InF_secondry_dose_rate_current<br>
+* SubIndex 178 - InU8_secondry_dose_fsm_rate<br>
+* SubIndex 179 - InU8_reserved9<br>
+* SubIndex 180 - InU32_secondry_dose_interlock<br>
+* SubIndex 181 - InU32_afc_interlock<br>
+* SubIndex 182 - InF_afc_position_current<br>
+* SubIndex 183 - InU8_qam_fsm_state_current<br>
+* SubIndex 184 - InU8_qam_ctrl_mode_cur<br>
+* SubIndex 185 - InU16_reserved10<br>
+* SubIndex 186 - InU8_qam_beam_id<br>
+* SubIndex 187 - InU8_reserved11<br>
+* SubIndex 188 - InU16_qam_radiation_index<br>
+* SubIndex 189 - InU32_qam_not_ready_event<br>
+* SubIndex 190 - InU32_qam_warning_interlock<br>
+* SubIndex 191 - InU32_qam_minor_interlock<br>
+* SubIndex 192 - InU32_qam_serious_interlock<br>
+* SubIndex 193 - InU16_TotalStep_QAM<br>
+* SubIndex 194 - InU16_CurrentStep_QAM<br>
+* SubIndex 195 - InU16_ErrorCode_QAM<br>
+* SubIndex 196 - InU8_rtm_off_fsm_state_current<br>
+* SubIndex 197 - InU8_rtm_off_ctrl_mode_cur<br>
+* SubIndex 198 - InU16_reserved12<br>
+* SubIndex 199 - InU8_rtm_off_beam_id<br>
+* SubIndex 200 - InU8_reserved13<br>
+* SubIndex 201 - InU16_rtm_off_radiation_index<br>
+* SubIndex 202 - InU32_rtm_off_not_ready_event<br>
+* SubIndex 203 - InU32_rtm_off_warning_interlock<br>
+* SubIndex 204 - InU32_rtm_off_minor_interlock<br>
+* SubIndex 205 - InU32_rtm_off_serious_interlock<br>
+* SubIndex 206 - InU16_TotalStep_RTM_OFF_ARM<br>
+* SubIndex 207 - InU16_CurrentStep_RTM_OFF_ARM<br>
+* SubIndex 208 - InU16_ErrorCode_RTM_OFF_ARM<br>
+* SubIndex 209 - InU8_gmm_fsm_state_current<br>
+* SubIndex 210 - InU8_gmm_ctrl_mode_cur<br>
+* SubIndex 211 - InU16_reserved14<br>
+* SubIndex 212 - InU8_gmm_beam_id<br>
+* SubIndex 213 - InU8_reserved15<br>
+* SubIndex 214 - InU16_gmm_radiation_index<br>
+* SubIndex 215 - InU32_gmm_not_ready_event<br>
+* SubIndex 216 - InU32_gmm_warning_interlock<br>
+* SubIndex 217 - InU32_gmm_minor_interlock<br>
+* SubIndex 218 - InU32_gmm_serious_interlock<br>
+* SubIndex 219 - InU16_TotalStep_GMM<br>
+* SubIndex 220 - InU16_CurrentStep_GMM<br>
+* SubIndex 221 - InU16_ErrorCode_GMM<br>
+* SubIndex 222 - InU32_gmm_move_status<br>
+* SubIndex 223 - InF_gmm_position_cur<br>
+* SubIndex 224 - InF_gmm_velocity_cur<br>
+* SubIndex 225 - InU8_psm_fsm_state_current<br>
+* SubIndex 226 - InU8_psm_ctrl_mode_cur<br>
+* SubIndex 227 - InU16_reserved16<br>
+* SubIndex 228 - InU8_psm_beam_id<br>
+* SubIndex 229 - InU8_reserved17<br>
+* SubIndex 230 - InU16_psm_radiation_index<br>
+* SubIndex 231 - InU32_psm_not_ready_event<br>
+* SubIndex 232 - InU32_psm_warning_interlock<br>
+* SubIndex 233 - InU32_psm_minor_interlock<br>
+* SubIndex 234 - InU32_psm_serious_interlock<br>
+* SubIndex 235 - InU16_TotalStep_PSM<br>
+* SubIndex 236 - InU16_CurrentStep_PSM<br>
+* SubIndex 237 - InU16_ErrorCode_PSM<br>
+* SubIndex 238 - InU32_psm_move_status<br>
+* SubIndex 239 - InF_psm_position_x_cur<br>
+* SubIndex 240 - InF_psm_position_y_cur<br>
+* SubIndex 241 - InF_psm_position_z_cur<br>
+* SubIndex 242 - InF_psm_position_x_r_cur<br>
+* SubIndex 243 - InF_psm_position_y_r_cur<br>
+* SubIndex 244 - InF_psm_position_z_r_cur<br>
+* SubIndex 245 - InF_psm_velocity_x_cur<br>
+* SubIndex 246 - InF_psm_velocity_y_cur<br>
+* SubIndex 247 - InF_psm_velocity_z_cur<br>
+* SubIndex 248 - InF_psm_velocity_x_r_cur<br>
+* SubIndex 249 - InF_psm_velocity_y_r_cur<br>
+* SubIndex 250 - InF_psm_velocity_z_r_cur<br>
+* SubIndex 251 - InU8_function_button<br>
+* SubIndex 252 - InU8_special_button<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -1814,248 +1883,249 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex7 - InU8_BoardID_BGM */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex8 - InU8_Reserved_BGM */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex9 - InU32_FirmWareVersion_BGM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex10 - InU8_BoardID_QAM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex11 - InU8_Reserved_QAM */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex12 - InU32_FirmWareVersion_QAM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex13 - InU8_BoardID_RTM_OFF_ARM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex14 - InU8_Reserved_RTM_OFF_ARM */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - InU32_FirmWareVersion_RTM_OFF_ARM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex16 - InU8_BoardID_PSM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex17 - InU8_Reserved_PSM */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex18 - InU32_FirmWareVersion_PSM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex19 - InU8_BoardID_GMM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex20 - InU8_Reserved_GMM */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex21 - InU32_FirmWareVersion_GMM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex22 - InU8_BoardID_FKP */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex23 - InU8_Reserved_FKP */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex24 - InU32_FirmWareVersion_FKP */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex25 - InU8_BoardID_CPG_L */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex26 - InU8_Reserved_CPG_L */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex27 - InU32_FirmWareVersion_CPG_L */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex28 - InU8_BoardID_CPG_R */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex29 - InU8_Reserved_CPG_R */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex30 - InU32_FirmWareVersion_CPG_R */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex31 - InU8_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex32 - InU8_reserved1 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex33 - InU16_radiation_index */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex34 - InU8_rtm_on_arm_fsm_state_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex35 - InU8_rtm_on_arm_ctrl_mode_cur */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex36 - InU8_ethercat_Link_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex37 - InU8_reserved2 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex38 - InU8_rtm_on_arm_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex39 - InU8_reserved3 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex40 - InU16_rtm_on_arm_radiation_index */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex41 - InU32_rtm_on_arm_not_ready_event */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex42 - InU32_rtm_on_arm_warning_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex43 - InU32_rtm_on_arm_minor_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex44 - InU32_rtm_on_arm_serious_interlock */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex45 - InU16_TotalStep_RTM_ON_ARM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex46 - InU16_CurrentStep_RTM_ON_ARM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex47 - InU16_ErrorCode_RTM_ON_ARM */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex48 - InB1_ON_DI_RTC_WD_OK_IN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex49 - InB1_ON_DI_Reserve0 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex50 - InB1_ON_DI_BSM_NOT_READY */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex51 - InB1_ON_DI_MV_TreatmentEN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex52 - InB1_ON_DI_DI_HVEN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex53 - InB1_ON_DI_Pulse_Inhibit */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex54 - InB1_ON_DI_KV_TreatmentEN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex55 - InB1_ON_DI_Power_cut_FB */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex56 - InB1_ON_DI_GATING_IN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex57 - InB1_ON_DI_Slipring_HVEN_IN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex58 - InB1_ON_DI_Slipring_KV_TreatmentEN_IN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex59 - InB1_ON_DI_Slipring_MV_TreatmentEN_IN */
-{ DEFTYPE_BIT4 , 0x04 , ACCESS_READ }, /* Subindex60 - InB4_ON_DI_reserve1 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex61 - InB1_ON_DO_reserve0 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex62 - InB1_ON_DO_MV_TreatmentEN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex63 - InB1_ON_DO_KV_TreatmentEN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex64 - InB1_ON_DO_Emergency */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex65 - InB1_ON_DO_Pulse_Inhibit */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex66 - InB1_ON_DO_HVEN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex67 - InB1_ON_DO_PowerCut */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex68 - InB1_ON_DO_reserve1 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex69 - InU8_ON_DO_reserve2 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex70 - InU8_OFF_reserve0 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex71 - InB1_OFF_DI_CITB_EMERGENCY2 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex72 - InB1_OFF_DI_UPS_LOAD_PORT */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex73 - InB1_OFF_DI_STAND_BREAKER1 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex74 - InB1_OFF_DI_STAND_EMERGENCY */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex75 - InB1_OFF_DI_TouchGuard */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex76 - InB1_OFF_DI_HvEn */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex77 - InB1_OFF_DI_MV_TreatmentEN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex78 - InB1_OFF_DI_KV_TreatmentEN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex79 - InB1_OFF_DI_STAND_BREAKER7 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex80 - InB1_OFF_DI_STAND_BREAKER3 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex81 - InB1_OFF_DI_UPS_ON_BYPASS */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex82 - InB1_OFF_DI_STAND_BREAKER5 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex83 - InB1_OFF_DI_CITB_EMERGENCY3 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex84 - InB1_OFF_DI_COVER3 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex85 - InB1_OFF_DI_POWER_CUT */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex86 - InB1_OFF_DI_STAND_BREAKER4 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex87 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR1 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex88 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR2 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex89 - InB1_OFF_DI_CITB_EMERGENCY1 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex90 - InB1_OFF_DI_CITB_SEARCH_TREATMENT_ROOM */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex91 - InB1_OFF_DI_CONTROL_ROOM_BREAKER1 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex92 - InB1_OFF_DI_UPS_ON_BATT */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex93 - InB1_OFF_DI_CONTROL_ROOM_BREAKER5 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex94 - InB1_OFF_DI_STAND_BREAKER6 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex95 - InB1_OFF_DI_CITB_EMERGENCY5 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex96 - InB1_OFF_DI_COVER1 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex97 - InB1_OFF_DI_STAND_RESERVE */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex98 - InB1_OFF_DI_TREATMENT_ROOM_DOOR_READY */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex99 - InB1_OFF_DI_COVER2 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex100 - InB1_OFF_DI_CONTROL_ROOM_BREAKER2 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex101 - InB1_OFF_DI_CONTROL_ROOM_BREAKER4 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex102 - InB1_OFF_DI_STAND_CONTACTOR2 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex103 - InB1_OFF_DI_STAND_CONTACTOR1 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex104 - InB1_OFF_DI_UPS_LOW_BATT */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex105 - InB1_OFF_DI_HvKey */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex106 - InB1_OFF_DI_COVER4 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex107 - InB1_OFF_DI_CITB_EMERGENCY4 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex108 - InB1_OFF_DI_CONTROL_ROOM_BREAKER3 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex109 - InB1_OFF_DI_STAND_BREAKER2 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex110 - InB1_OFF_RTC_WD_OK_IN */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex111 - InU16_OFF_mcp23017_di_reserve */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex112 - InB1_OFF_DI_GATING */
-{ DEFTYPE_BIT7 , 0x07 , ACCESS_READ }, /* Subindex113 - InB7_OFF_reserve1 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex114 - InU8_OFF_reserve2 */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex115 - InB1_OFF_DO_RTM_AutoPowerUp */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex116 - InB1_OFF_DO_SearchTreatmentRoomRelay */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex117 - InB1_OFF_DO_Laser */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex118 - InB1_OFF_DO_Power_CUT */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex119 - InB1_OFF_DO_STAND_RESERVE */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex120 - InB1_OFF_DO_TreatmentRoomLight */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex121 - InB1_OFF_DO_RadiationIndicator */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex122 - InB1_OFF_DO_ReadyIndicator */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex123 - InB1_OFF_DO_RTM_SystemShutDown */
-{ DEFTYPE_BIT7 , 0x07 , ACCESS_READ }, /* Subindex124 - InB7_OFF_reserve3 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex125 - InU16_OFF_mcp23017_do_reserve */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex126 - InB1_OFF_DO_SoftwareHvEn */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex127 - InB1_OFF_DO_SoftwareKVTreatmentEn */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex128 - InB1_OFF_DO_SoftwareMVTreatmentEn */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex129 - InB1_OFF_DO_ThreePhasePowerOn */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex130 - InB1_OFF_DO_softwareMoveEN */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex131 - InB1_OFF_DO_TreatmentMotionEnable */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex132 - InB1_OFF_DO_AsuMotionEnable */
-{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex133 - InB1_OFF_reserve4 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex134 - InU8_OFF_reserve5 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex135 - InU8_icm_fsm_state_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex136 - InU8_icm_ctrl_mode_cur */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex137 - InU16_reserved4 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex138 - InU8_icm_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex139 - InU8_reserved5 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex140 - InU16_icm_radiation_index */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex141 - InU32_icm_not_ready_event */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex142 - InU32_icm_warning_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex143 - InU32_icm_minor_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex144 - InU32_icm_serious_interlock */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex145 - InU16_TotalStep_ICM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex146 - InU16_CurrentStep_ICM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex147 - InU16_ErrorCode_ICM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex148 - InU8_bgm_fsm_state_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex149 - InU8_bgm_ctrl_mode_cur */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex150 - InU16_reserved6 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex151 - InU8_bgm_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex152 - InU8_reserved7 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex153 - InU16_bgm_radiation_index */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex154 - InU32_bgm_not_ready_event */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex155 - InU32_bgm_warning_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex156 - InU32_bgm_minor_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex157 - InU32_bgm_serious_interlock */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex158 - InU16_TotalStep_BGM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex159 - InU16_CurrentStep_BGM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex160 - InU16_ErrorCode_BGM */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex161 - InF_beam_on_time */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex162 - InF_primary_dose_current */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex163 - InF_primary_dose_rate_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex164 - InU8_primary_dose_fsm_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex165 - InU8_reserved8 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex166 - InU32_primary_dose_interlock */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex167 - InF_second_dose_current */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex168 - InF_secondry_dose_rate_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex169 - InU8_secondry_dose_fsm_rate */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex170 - InU8_reserved9 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex171 - InU32_secondry_dose_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex172 - InU32_afc_interlock */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex173 - InF_afc_position_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex174 - InU8_qam_fsm_state_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex175 - InU8_qam_ctrl_mode_cur */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex176 - InU16_reserved10 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex177 - InU8_qam_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex178 - InU8_reserved11 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex179 - InU16_qam_radiation_index */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex180 - InU32_qam_not_ready_event */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex181 - InU32_qam_warning_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex182 - InU32_qam_minor_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex183 - InU32_qam_serious_interlock */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex184 - InU16_TotalStep_QAM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex185 - InU16_CurrentStep_QAM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex186 - InU16_ErrorCode_QAM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex187 - InU8_rtm_off_fsm_state_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex188 - InU8_rtm_off_ctrl_mode_cur */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex189 - InU16_reserved12 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex190 - InU8_rtm_off_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex191 - InU8_reserved13 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex192 - InU16_rtm_off_radiation_index */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex193 - InU32_rtm_off_not_ready_event */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex194 - InU32_rtm_off_warning_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex195 - InU32_rtm_off_minor_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex196 - InU32_rtm_off_serious_interlock */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex197 - InU16_TotalStep_RTM_OFF_ARM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex198 - InU16_CurrentStep_RTM_OFF_ARM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex199 - InU16_ErrorCode_RTM_OFF_ARM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex200 - InU8_gmm_fsm_state_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex201 - InU8_gmm_ctrl_mode_cur */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex202 - InU16_reserved14 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex203 - InU8_gmm_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex204 - InU8_reserved15 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex205 - InU16_gmm_radiation_index */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex206 - InU32_gmm_not_ready_event */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex207 - InU32_gmm_warning_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex208 - InU32_gmm_minor_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex209 - InU32_gmm_serious_interlock */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex210 - InU16_TotalStep_GMM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex211 - InU16_CurrentStep_GMM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex212 - InU16_ErrorCode_GMM */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex213 - InU32_gmm_move_status */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex214 - InF_gmm_position_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex215 - InF_gmm_velocity_cur */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex216 - InU8_psm_fsm_state_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex217 - InU8_psm_ctrl_mode_cur */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex218 - InU16_reserved16 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex219 - InU8_psm_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex220 - InU8_reserved17 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex221 - InU16_psm_radiation_index */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex222 - InU32_psm_not_ready_event */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex223 - InU32_psm_warning_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex224 - InU32_psm_minor_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex225 - InU32_psm_serious_interlock */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex226 - InU16_TotalStep_PSM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex227 - InU16_CurrentStep_PSM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex228 - InU16_ErrorCode_PSM */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex229 - InU32_psm_move_status */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex230 - InF_psm_position_x_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex231 - InF_psm_position_y_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex232 - InF_psm_position_z_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex233 - InF_psm_position_x_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex234 - InF_psm_position_y_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex235 - InF_psm_position_z_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex236 - InF_psm_velocity_x_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex237 - InF_psm_velocity_y_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex238 - InF_psm_velocity_z_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex239 - InF_psm_velocity_x_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex240 - InF_psm_velocity_y_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex241 - InF_psm_velocity_z_r_cur */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex242 - InU8_function_button */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex243 - InU8_special_button */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex244 - InU16_data_valid_flag */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex245 - InUF_load_position_x_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex246 - InUF_load_position_y_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex247 - InUF_load_position_z_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex248 - InUF_load_position_x_r_tar */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex249 - InUF_load_position_y_r_tar */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex250 - InUF_load_position_z_r_tar */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex251 - InU8_trm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex10 - InU8_BoardID_primary_dose */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex11 - InU8_Reserved_primary_dose */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex12 - InU32_FirmWareVersion_primary_dose */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex13 - InU8_BoardID_second_dose */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex14 - InU8_Reserved_second_dose */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - InU32_FirmWareVersion_second_dose */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex16 - InU8_BoardID_AFC */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex17 - InU8_Reserved_AFC */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex18 - InU32_FirmWareVersion_AFC */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex19 - InU8_BoardID_QAM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex20 - InU8_Reserved_QAM */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex21 - InU32_FirmWareVersion_QAM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex22 - InU8_BoardID_RTM_OFF_ARM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex23 - InU8_Reserved_RTM_OFF_ARM */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex24 - InU32_FirmWareVersion_RTM_OFF_ARM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex25 - InU8_BoardID_PSM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex26 - InU8_Reserved_PSM */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex27 - InU32_FirmWareVersion_PSM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex28 - InU8_BoardID_GMM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex29 - InU8_Reserved_GMM */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex30 - InU32_FirmWareVersion_GMM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex31 - InU8_BoardID_FKP */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex32 - InU8_Reserved_FKP */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex33 - InU32_FirmWareVersion_FKP */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex34 - InU8_BoardID_CPG_L */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex35 - InU8_Reserved_CPG_L */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex36 - InU32_FirmWareVersion_CPG_L */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex37 - InU8_BoardID_CPG_R */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex38 - InU8_Reserved_CPG_R */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex39 - InU32_FirmWareVersion_CPG_R */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex40 - InU8_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex41 - InU8_reserved1 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex42 - InU16_radiation_index */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex43 - InU8_rtm_on_arm_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex44 - InU8_rtm_on_arm_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex45 - InU8_ethercat_Link_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex46 - InU8_reserved2 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex47 - InU8_rtm_on_arm_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex48 - InU8_reserved3 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex49 - InU16_rtm_on_arm_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex50 - InU32_rtm_on_arm_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex51 - InU32_rtm_on_arm_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex52 - InU32_rtm_on_arm_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex53 - InU32_rtm_on_arm_serious_interlock */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex54 - InU16_TotalStep_RTM_ON_ARM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex55 - InU16_CurrentStep_RTM_ON_ARM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex56 - InU16_ErrorCode_RTM_ON_ARM */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex57 - InB1_ON_DI_RTC_WD_OK_IN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex58 - InB1_ON_DI_Reserve0 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex59 - InB1_ON_DI_BSM_NOT_READY */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex60 - InB1_ON_DI_MV_TreatmentEN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex61 - InB1_ON_DI_DI_HVEN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex62 - InB1_ON_DI_Pulse_Inhibit */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex63 - InB1_ON_DI_KV_TreatmentEN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex64 - InB1_ON_DI_Power_cut_FB */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex65 - InB1_ON_DI_GATING_IN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex66 - InB1_ON_DI_Slipring_HVEN_IN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex67 - InB1_ON_DI_Slipring_KV_TreatmentEN_IN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex68 - InB1_ON_DI_Slipring_MV_TreatmentEN_IN */
+{ DEFTYPE_BIT4 , 0x04 , ACCESS_READ }, /* Subindex69 - InB4_ON_DI_reserve1 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex70 - InB1_ON_DO_reserve0 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex71 - InB1_ON_DO_MV_TreatmentEN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex72 - InB1_ON_DO_KV_TreatmentEN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex73 - InB1_ON_DO_Emergency */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex74 - InB1_ON_DO_Pulse_Inhibit */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex75 - InB1_ON_DO_HVEN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex76 - InB1_ON_DO_PowerCut */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex77 - InB1_ON_DO_reserve1 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex78 - InU8_ON_DO_reserve2 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex79 - InU8_OFF_reserve0 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex80 - InB1_OFF_DI_CITB_EMERGENCY2 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex81 - InB1_OFF_DI_UPS_LOAD_PORT */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex82 - InB1_OFF_DI_STAND_BREAKER1 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex83 - InB1_OFF_DI_STAND_EMERGENCY */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex84 - InB1_OFF_DI_TouchGuard */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex85 - InB1_OFF_DI_HvEn */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex86 - InB1_OFF_DI_MV_TreatmentEN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex87 - InB1_OFF_DI_KV_TreatmentEN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex88 - InB1_OFF_DI_STAND_BREAKER7 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex89 - InB1_OFF_DI_STAND_BREAKER3 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex90 - InB1_OFF_DI_UPS_ON_BYPASS */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex91 - InB1_OFF_DI_STAND_BREAKER5 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex92 - InB1_OFF_DI_CITB_EMERGENCY3 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex93 - InB1_OFF_DI_COVER3 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex94 - InB1_OFF_DI_POWER_CUT */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex95 - InB1_OFF_DI_STAND_BREAKER4 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex96 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR1 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex97 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR2 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex98 - InB1_OFF_DI_CITB_EMERGENCY1 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex99 - InB1_OFF_DI_CITB_SEARCH_TREATMENT_ROOM */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex100 - InB1_OFF_DI_CONTROL_ROOM_BREAKER1 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex101 - InB1_OFF_DI_UPS_ON_BATT */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex102 - InB1_OFF_DI_CONTROL_ROOM_BREAKER5 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex103 - InB1_OFF_DI_STAND_BREAKER6 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex104 - InB1_OFF_DI_CITB_EMERGENCY5 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex105 - InB1_OFF_DI_COVER1 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex106 - InB1_OFF_DI_STAND_RESERVE */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex107 - InB1_OFF_DI_TREATMENT_ROOM_DOOR_READY */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex108 - InB1_OFF_DI_COVER2 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex109 - InB1_OFF_DI_CONTROL_ROOM_BREAKER2 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex110 - InB1_OFF_DI_CONTROL_ROOM_BREAKER4 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex111 - InB1_OFF_DI_STAND_CONTACTOR2 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex112 - InB1_OFF_DI_STAND_CONTACTOR1 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex113 - InB1_OFF_DI_UPS_LOW_BATT */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex114 - InB1_OFF_DI_HvKey */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex115 - InB1_OFF_DI_COVER4 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex116 - InB1_OFF_DI_CITB_EMERGENCY4 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex117 - InB1_OFF_DI_CONTROL_ROOM_BREAKER3 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex118 - InB1_OFF_DI_STAND_BREAKER2 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex119 - InB1_OFF_RTC_WD_OK_IN */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex120 - InU16_OFF_mcp23017_di_reserve */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex121 - InB1_OFF_DI_GATING */
+{ DEFTYPE_BIT7 , 0x07 , ACCESS_READ }, /* Subindex122 - InB7_OFF_reserve1 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex123 - InU8_OFF_reserve2 */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex124 - InB1_OFF_DO_RTM_AutoPowerUp */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex125 - InB1_OFF_DO_SearchTreatmentRoomRelay */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex126 - InB1_OFF_DO_Laser */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex127 - InB1_OFF_DO_Power_CUT */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex128 - InB1_OFF_DO_STAND_RESERVE */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex129 - InB1_OFF_DO_TreatmentRoomLight */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex130 - InB1_OFF_DO_RadiationIndicator */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex131 - InB1_OFF_DO_ReadyIndicator */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex132 - InB1_OFF_DO_RTM_SystemShutDown */
+{ DEFTYPE_BIT7 , 0x07 , ACCESS_READ }, /* Subindex133 - InB7_OFF_reserve3 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex134 - InU16_OFF_mcp23017_do_reserve */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex135 - InB1_OFF_DO_SoftwareHvEn */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex136 - InB1_OFF_DO_SoftwareKVTreatmentEn */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex137 - InB1_OFF_DO_SoftwareMVTreatmentEn */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex138 - InB1_OFF_DO_ThreePhasePowerOn */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex139 - InB1_OFF_DO_softwareMoveEN */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex140 - InB1_OFF_DO_TreatmentMotionEnable */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex141 - InB1_OFF_DO_AsuMotionEnable */
+{ DEFTYPE_BOOLEAN , 0x01 , ACCESS_READ }, /* Subindex142 - InB1_OFF_reserve4 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex143 - InU8_OFF_reserve5 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex144 - InU8_icm_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex145 - InU8_icm_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex146 - InU16_reserved4 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex147 - InU8_icm_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex148 - InU8_reserved5 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex149 - InU16_icm_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex150 - InU32_icm_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex151 - InU32_icm_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex152 - InU32_icm_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex153 - InU32_icm_serious_interlock */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex154 - InU16_TotalStep_ICM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex155 - InU16_CurrentStep_ICM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex156 - InU16_ErrorCode_ICM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex157 - InU8_bgm_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex158 - InU8_bgm_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex159 - InU16_reserved6 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex160 - InU8_bgm_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex161 - InU8_reserved7 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex162 - InU16_bgm_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex163 - InU32_bgm_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex164 - InU32_bgm_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex165 - InU32_bgm_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex166 - InU32_bgm_serious_interlock */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex167 - InU16_TotalStep_BGM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex168 - InU16_CurrentStep_BGM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex169 - InU16_ErrorCode_BGM */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex170 - InF_beam_on_time */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex171 - InF_primary_dose_current */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex172 - InF_primary_dose_rate_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex173 - InU8_primary_dose_fsm_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex174 - InU8_reserved8 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex175 - InU32_primary_dose_interlock */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex176 - InF_second_dose_current */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex177 - InF_secondry_dose_rate_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex178 - InU8_secondry_dose_fsm_rate */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex179 - InU8_reserved9 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex180 - InU32_secondry_dose_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex181 - InU32_afc_interlock */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex182 - InF_afc_position_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex183 - InU8_qam_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex184 - InU8_qam_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex185 - InU16_reserved10 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex186 - InU8_qam_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex187 - InU8_reserved11 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex188 - InU16_qam_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex189 - InU32_qam_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex190 - InU32_qam_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex191 - InU32_qam_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex192 - InU32_qam_serious_interlock */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex193 - InU16_TotalStep_QAM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex194 - InU16_CurrentStep_QAM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex195 - InU16_ErrorCode_QAM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex196 - InU8_rtm_off_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex197 - InU8_rtm_off_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex198 - InU16_reserved12 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex199 - InU8_rtm_off_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex200 - InU8_reserved13 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex201 - InU16_rtm_off_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex202 - InU32_rtm_off_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex203 - InU32_rtm_off_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex204 - InU32_rtm_off_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex205 - InU32_rtm_off_serious_interlock */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex206 - InU16_TotalStep_RTM_OFF_ARM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex207 - InU16_CurrentStep_RTM_OFF_ARM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex208 - InU16_ErrorCode_RTM_OFF_ARM */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex209 - InU8_gmm_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex210 - InU8_gmm_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex211 - InU16_reserved14 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex212 - InU8_gmm_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex213 - InU8_reserved15 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex214 - InU16_gmm_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex215 - InU32_gmm_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex216 - InU32_gmm_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex217 - InU32_gmm_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex218 - InU32_gmm_serious_interlock */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex219 - InU16_TotalStep_GMM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex220 - InU16_CurrentStep_GMM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex221 - InU16_ErrorCode_GMM */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex222 - InU32_gmm_move_status */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex223 - InF_gmm_position_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex224 - InF_gmm_velocity_cur */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex225 - InU8_psm_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex226 - InU8_psm_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex227 - InU16_reserved16 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex228 - InU8_psm_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex229 - InU8_reserved17 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex230 - InU16_psm_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex231 - InU32_psm_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex232 - InU32_psm_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex233 - InU32_psm_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex234 - InU32_psm_serious_interlock */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex235 - InU16_TotalStep_PSM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex236 - InU16_CurrentStep_PSM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex237 - InU16_ErrorCode_PSM */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex238 - InU32_psm_move_status */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex239 - InF_psm_position_x_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex240 - InF_psm_position_y_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex241 - InF_psm_position_z_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex242 - InF_psm_position_x_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex243 - InF_psm_position_y_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex244 - InF_psm_position_z_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex245 - InF_psm_velocity_x_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex246 - InF_psm_velocity_y_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex247 - InF_psm_velocity_z_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex248 - InF_psm_velocity_x_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex249 - InF_psm_velocity_y_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex250 - InF_psm_velocity_z_r_cur */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex251 - InU8_function_button */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex252 - InU8_special_button */
 
 /**
 * \brief Object/Entry names
@@ -2070,6 +2140,15 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 "InU8_BoardID_BGM\000"
 "InU8_Reserved_BGM\000"
 "InU32_FirmWareVersion_BGM\000"
+"InU8_BoardID_primary_dose\000"
+"InU8_Reserved_primary_dose\000"
+"InU32_FirmWareVersion_primary_dose\000"
+"InU8_BoardID_second_dose\000"
+"InU8_Reserved_second_dose\000"
+"InU32_FirmWareVersion_second_dose\000"
+"InU8_BoardID_AFC\000"
+"InU8_Reserved_AFC\000"
+"InU32_FirmWareVersion_AFC\000"
 "InU8_BoardID_QAM\000"
 "InU8_Reserved_QAM\000"
 "InU32_FirmWareVersion_QAM\000"
@@ -2303,15 +2382,7 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 "InF_psm_velocity_y_r_cur\000"
 "InF_psm_velocity_z_r_cur\000"
 "InU8_function_button\000"
-"InU8_special_button\000"
-"InU16_data_valid_flag\000"
-"InUF_load_position_x_cur\000"
-"InUF_load_position_y_cur\000"
-"InUF_load_position_z_cur\000"
-"InUF_load_position_x_r_tar\000"
-"InUF_load_position_y_r_tar\000"
-"InUF_load_position_z_r_tar\000"
-"InU8_trm_require_state\000\377";
+"InU8_special_button\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -2329,250 +2400,251 @@ UINT32 InU32_FirmWareVersion_ICM; /* Subindex6 - InU32_FirmWareVersion_ICM */
 UINT8 InU8_BoardID_BGM; /* Subindex7 - InU8_BoardID_BGM */
 UINT8 InU8_Reserved_BGM; /* Subindex8 - InU8_Reserved_BGM */
 UINT32 InU32_FirmWareVersion_BGM; /* Subindex9 - InU32_FirmWareVersion_BGM */
-UINT8 InU8_BoardID_QAM; /* Subindex10 - InU8_BoardID_QAM */
-UINT8 InU8_Reserved_QAM; /* Subindex11 - InU8_Reserved_QAM */
-UINT32 InU32_FirmWareVersion_QAM; /* Subindex12 - InU32_FirmWareVersion_QAM */
-UINT8 InU8_BoardID_RTM_OFF_ARM; /* Subindex13 - InU8_BoardID_RTM_OFF_ARM */
-UINT8 InU8_Reserved_RTM_OFF_ARM; /* Subindex14 - InU8_Reserved_RTM_OFF_ARM */
-UINT32 InU32_FirmWareVersion_RTM_OFF_ARM; /* Subindex15 - InU32_FirmWareVersion_RTM_OFF_ARM */
-UINT8 InU8_BoardID_PSM; /* Subindex16 - InU8_BoardID_PSM */
-UINT8 InU8_Reserved_PSM; /* Subindex17 - InU8_Reserved_PSM */
-UINT32 InU32_FirmWareVersion_PSM; /* Subindex18 - InU32_FirmWareVersion_PSM */
-UINT8 InU8_BoardID_GMM; /* Subindex19 - InU8_BoardID_GMM */
-UINT8 InU8_Reserved_GMM; /* Subindex20 - InU8_Reserved_GMM */
-UINT32 InU32_FirmWareVersion_GMM; /* Subindex21 - InU32_FirmWareVersion_GMM */
-UINT8 InU8_BoardID_FKP; /* Subindex22 - InU8_BoardID_FKP */
-UINT8 InU8_Reserved_FKP; /* Subindex23 - InU8_Reserved_FKP */
-UINT32 InU32_FirmWareVersion_FKP; /* Subindex24 - InU32_FirmWareVersion_FKP */
-UINT8 InU8_BoardID_CPG_L; /* Subindex25 - InU8_BoardID_CPG_L */
-UINT8 InU8_Reserved_CPG_L; /* Subindex26 - InU8_Reserved_CPG_L */
-UINT32 InU32_FirmWareVersion_CPG_L; /* Subindex27 - InU32_FirmWareVersion_CPG_L */
-UINT8 InU8_BoardID_CPG_R; /* Subindex28 - InU8_BoardID_CPG_R */
-UINT8 InU8_Reserved_CPG_R; /* Subindex29 - InU8_Reserved_CPG_R */
-UINT32 InU32_FirmWareVersion_CPG_R; /* Subindex30 - InU32_FirmWareVersion_CPG_R */
-UINT8 InU8_beam_id; /* Subindex31 - InU8_beam_id */
-UINT8 InU8_reserved1; /* Subindex32 - InU8_reserved1 */
-UINT16 InU16_radiation_index; /* Subindex33 - InU16_radiation_index */
-UINT8 InU8_rtm_on_arm_fsm_state_current; /* Subindex34 - InU8_rtm_on_arm_fsm_state_current */
-UINT8 InU8_rtm_on_arm_ctrl_mode_cur; /* Subindex35 - InU8_rtm_on_arm_ctrl_mode_cur */
-UINT8 InU8_ethercat_Link_state; /* Subindex36 - InU8_ethercat_Link_state */
-UINT8 InU8_reserved2; /* Subindex37 - InU8_reserved2 */
-UINT8 InU8_rtm_on_arm_beam_id; /* Subindex38 - InU8_rtm_on_arm_beam_id */
-UINT8 InU8_reserved3; /* Subindex39 - InU8_reserved3 */
-UINT16 InU16_rtm_on_arm_radiation_index; /* Subindex40 - InU16_rtm_on_arm_radiation_index */
-UINT32 InU32_rtm_on_arm_not_ready_event; /* Subindex41 - InU32_rtm_on_arm_not_ready_event */
-UINT32 InU32_rtm_on_arm_warning_interlock; /* Subindex42 - InU32_rtm_on_arm_warning_interlock */
-UINT32 InU32_rtm_on_arm_minor_interlock; /* Subindex43 - InU32_rtm_on_arm_minor_interlock */
-UINT32 InU32_rtm_on_arm_serious_interlock; /* Subindex44 - InU32_rtm_on_arm_serious_interlock */
-UINT16 InU16_TotalStep_RTM_ON_ARM; /* Subindex45 - InU16_TotalStep_RTM_ON_ARM */
-UINT16 InU16_CurrentStep_RTM_ON_ARM; /* Subindex46 - InU16_CurrentStep_RTM_ON_ARM */
-UINT16 InU16_ErrorCode_RTM_ON_ARM; /* Subindex47 - InU16_ErrorCode_RTM_ON_ARM */
-BOOLEAN(InB1_ON_DI_RTC_WD_OK_IN); /* Subindex48 - InB1_ON_DI_RTC_WD_OK_IN */
-BOOLEAN(InB1_ON_DI_Reserve0); /* Subindex49 - InB1_ON_DI_Reserve0 */
-BOOLEAN(InB1_ON_DI_BSM_NOT_READY); /* Subindex50 - InB1_ON_DI_BSM_NOT_READY */
-BOOLEAN(InB1_ON_DI_MV_TreatmentEN); /* Subindex51 - InB1_ON_DI_MV_TreatmentEN */
-BOOLEAN(InB1_ON_DI_DI_HVEN); /* Subindex52 - InB1_ON_DI_DI_HVEN */
-BOOLEAN(InB1_ON_DI_Pulse_Inhibit); /* Subindex53 - InB1_ON_DI_Pulse_Inhibit */
-BOOLEAN(InB1_ON_DI_KV_TreatmentEN); /* Subindex54 - InB1_ON_DI_KV_TreatmentEN */
-BOOLEAN(InB1_ON_DI_Power_cut_FB); /* Subindex55 - InB1_ON_DI_Power_cut_FB */
-BOOLEAN(InB1_ON_DI_GATING_IN); /* Subindex56 - InB1_ON_DI_GATING_IN */
-BOOLEAN(InB1_ON_DI_Slipring_HVEN_IN); /* Subindex57 - InB1_ON_DI_Slipring_HVEN_IN */
-BOOLEAN(InB1_ON_DI_Slipring_KV_TreatmentEN_IN); /* Subindex58 - InB1_ON_DI_Slipring_KV_TreatmentEN_IN */
-BOOLEAN(InB1_ON_DI_Slipring_MV_TreatmentEN_IN); /* Subindex59 - InB1_ON_DI_Slipring_MV_TreatmentEN_IN */
-BIT4(InB4_ON_DI_reserve1); /* Subindex60 - InB4_ON_DI_reserve1 */
-BOOLEAN(InB1_ON_DO_reserve0); /* Subindex61 - InB1_ON_DO_reserve0 */
-BOOLEAN(InB1_ON_DO_MV_TreatmentEN); /* Subindex62 - InB1_ON_DO_MV_TreatmentEN */
-BOOLEAN(InB1_ON_DO_KV_TreatmentEN); /* Subindex63 - InB1_ON_DO_KV_TreatmentEN */
-BOOLEAN(InB1_ON_DO_Emergency); /* Subindex64 - InB1_ON_DO_Emergency */
-BOOLEAN(InB1_ON_DO_Pulse_Inhibit); /* Subindex65 - InB1_ON_DO_Pulse_Inhibit */
-BOOLEAN(InB1_ON_DO_HVEN); /* Subindex66 - InB1_ON_DO_HVEN */
-BOOLEAN(InB1_ON_DO_PowerCut); /* Subindex67 - InB1_ON_DO_PowerCut */
-BOOLEAN(InB1_ON_DO_reserve1); /* Subindex68 - InB1_ON_DO_reserve1 */
-UINT8 InU8_ON_DO_reserve2; /* Subindex69 - InU8_ON_DO_reserve2 */
-UINT8 InU8_OFF_reserve0; /* Subindex70 - InU8_OFF_reserve0 */
-BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY2); /* Subindex71 - InB1_OFF_DI_CITB_EMERGENCY2 */
-BOOLEAN(InB1_OFF_DI_UPS_LOAD_PORT); /* Subindex72 - InB1_OFF_DI_UPS_LOAD_PORT */
-BOOLEAN(InB1_OFF_DI_STAND_BREAKER1); /* Subindex73 - InB1_OFF_DI_STAND_BREAKER1 */
-BOOLEAN(InB1_OFF_DI_STAND_EMERGENCY); /* Subindex74 - InB1_OFF_DI_STAND_EMERGENCY */
-BOOLEAN(InB1_OFF_DI_TouchGuard); /* Subindex75 - InB1_OFF_DI_TouchGuard */
-BOOLEAN(InB1_OFF_DI_HvEn); /* Subindex76 - InB1_OFF_DI_HvEn */
-BOOLEAN(InB1_OFF_DI_MV_TreatmentEN); /* Subindex77 - InB1_OFF_DI_MV_TreatmentEN */
-BOOLEAN(InB1_OFF_DI_KV_TreatmentEN); /* Subindex78 - InB1_OFF_DI_KV_TreatmentEN */
-BOOLEAN(InB1_OFF_DI_STAND_BREAKER7); /* Subindex79 - InB1_OFF_DI_STAND_BREAKER7 */
-BOOLEAN(InB1_OFF_DI_STAND_BREAKER3); /* Subindex80 - InB1_OFF_DI_STAND_BREAKER3 */
-BOOLEAN(InB1_OFF_DI_UPS_ON_BYPASS); /* Subindex81 - InB1_OFF_DI_UPS_ON_BYPASS */
-BOOLEAN(InB1_OFF_DI_STAND_BREAKER5); /* Subindex82 - InB1_OFF_DI_STAND_BREAKER5 */
-BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY3); /* Subindex83 - InB1_OFF_DI_CITB_EMERGENCY3 */
-BOOLEAN(InB1_OFF_DI_COVER3); /* Subindex84 - InB1_OFF_DI_COVER3 */
-BOOLEAN(InB1_OFF_DI_POWER_CUT); /* Subindex85 - InB1_OFF_DI_POWER_CUT */
-BOOLEAN(InB1_OFF_DI_STAND_BREAKER4); /* Subindex86 - InB1_OFF_DI_STAND_BREAKER4 */
-BOOLEAN(InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR1); /* Subindex87 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR1 */
-BOOLEAN(InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR2); /* Subindex88 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR2 */
-BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY1); /* Subindex89 - InB1_OFF_DI_CITB_EMERGENCY1 */
-BOOLEAN(InB1_OFF_DI_CITB_SEARCH_TREATMENT_ROOM); /* Subindex90 - InB1_OFF_DI_CITB_SEARCH_TREATMENT_ROOM */
-BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER1); /* Subindex91 - InB1_OFF_DI_CONTROL_ROOM_BREAKER1 */
-BOOLEAN(InB1_OFF_DI_UPS_ON_BATT); /* Subindex92 - InB1_OFF_DI_UPS_ON_BATT */
-BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER5); /* Subindex93 - InB1_OFF_DI_CONTROL_ROOM_BREAKER5 */
-BOOLEAN(InB1_OFF_DI_STAND_BREAKER6); /* Subindex94 - InB1_OFF_DI_STAND_BREAKER6 */
-BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY5); /* Subindex95 - InB1_OFF_DI_CITB_EMERGENCY5 */
-BOOLEAN(InB1_OFF_DI_COVER1); /* Subindex96 - InB1_OFF_DI_COVER1 */
-BOOLEAN(InB1_OFF_DI_STAND_RESERVE); /* Subindex97 - InB1_OFF_DI_STAND_RESERVE */
-BOOLEAN(InB1_OFF_DI_TREATMENT_ROOM_DOOR_READY); /* Subindex98 - InB1_OFF_DI_TREATMENT_ROOM_DOOR_READY */
-BOOLEAN(InB1_OFF_DI_COVER2); /* Subindex99 - InB1_OFF_DI_COVER2 */
-BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER2); /* Subindex100 - InB1_OFF_DI_CONTROL_ROOM_BREAKER2 */
-BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER4); /* Subindex101 - InB1_OFF_DI_CONTROL_ROOM_BREAKER4 */
-BOOLEAN(InB1_OFF_DI_STAND_CONTACTOR2); /* Subindex102 - InB1_OFF_DI_STAND_CONTACTOR2 */
-BOOLEAN(InB1_OFF_DI_STAND_CONTACTOR1); /* Subindex103 - InB1_OFF_DI_STAND_CONTACTOR1 */
-BOOLEAN(InB1_OFF_DI_UPS_LOW_BATT); /* Subindex104 - InB1_OFF_DI_UPS_LOW_BATT */
-BOOLEAN(InB1_OFF_DI_HvKey); /* Subindex105 - InB1_OFF_DI_HvKey */
-BOOLEAN(InB1_OFF_DI_COVER4); /* Subindex106 - InB1_OFF_DI_COVER4 */
-BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY4); /* Subindex107 - InB1_OFF_DI_CITB_EMERGENCY4 */
-BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER3); /* Subindex108 - InB1_OFF_DI_CONTROL_ROOM_BREAKER3 */
-BOOLEAN(InB1_OFF_DI_STAND_BREAKER2); /* Subindex109 - InB1_OFF_DI_STAND_BREAKER2 */
-BOOLEAN(InB1_OFF_RTC_WD_OK_IN); /* Subindex110 - InB1_OFF_RTC_WD_OK_IN */
-UINT16 InU16_OFF_mcp23017_di_reserve; /* Subindex111 - InU16_OFF_mcp23017_di_reserve */
-BOOLEAN(InB1_OFF_DI_GATING); /* Subindex112 - InB1_OFF_DI_GATING */
-BIT7(InB7_OFF_reserve1); /* Subindex113 - InB7_OFF_reserve1 */
-UINT8 InU8_OFF_reserve2; /* Subindex114 - InU8_OFF_reserve2 */
-BOOLEAN(InB1_OFF_DO_RTM_AutoPowerUp); /* Subindex115 - InB1_OFF_DO_RTM_AutoPowerUp */
-BOOLEAN(InB1_OFF_DO_SearchTreatmentRoomRelay); /* Subindex116 - InB1_OFF_DO_SearchTreatmentRoomRelay */
-BOOLEAN(InB1_OFF_DO_Laser); /* Subindex117 - InB1_OFF_DO_Laser */
-BOOLEAN(InB1_OFF_DO_Power_CUT); /* Subindex118 - InB1_OFF_DO_Power_CUT */
-BOOLEAN(InB1_OFF_DO_STAND_RESERVE); /* Subindex119 - InB1_OFF_DO_STAND_RESERVE */
-BOOLEAN(InB1_OFF_DO_TreatmentRoomLight); /* Subindex120 - InB1_OFF_DO_TreatmentRoomLight */
-BOOLEAN(InB1_OFF_DO_RadiationIndicator); /* Subindex121 - InB1_OFF_DO_RadiationIndicator */
-BOOLEAN(InB1_OFF_DO_ReadyIndicator); /* Subindex122 - InB1_OFF_DO_ReadyIndicator */
-BOOLEAN(InB1_OFF_DO_RTM_SystemShutDown); /* Subindex123 - InB1_OFF_DO_RTM_SystemShutDown */
-BIT7(InB7_OFF_reserve3); /* Subindex124 - InB7_OFF_reserve3 */
-UINT16 InU16_OFF_mcp23017_do_reserve; /* Subindex125 - InU16_OFF_mcp23017_do_reserve */
-BOOLEAN(InB1_OFF_DO_SoftwareHvEn); /* Subindex126 - InB1_OFF_DO_SoftwareHvEn */
-BOOLEAN(InB1_OFF_DO_SoftwareKVTreatmentEn); /* Subindex127 - InB1_OFF_DO_SoftwareKVTreatmentEn */
-BOOLEAN(InB1_OFF_DO_SoftwareMVTreatmentEn); /* Subindex128 - InB1_OFF_DO_SoftwareMVTreatmentEn */
-BOOLEAN(InB1_OFF_DO_ThreePhasePowerOn); /* Subindex129 - InB1_OFF_DO_ThreePhasePowerOn */
-BOOLEAN(InB1_OFF_DO_softwareMoveEN); /* Subindex130 - InB1_OFF_DO_softwareMoveEN */
-BOOLEAN(InB1_OFF_DO_TreatmentMotionEnable); /* Subindex131 - InB1_OFF_DO_TreatmentMotionEnable */
-BOOLEAN(InB1_OFF_DO_AsuMotionEnable); /* Subindex132 - InB1_OFF_DO_AsuMotionEnable */
-BOOLEAN(InB1_OFF_reserve4); /* Subindex133 - InB1_OFF_reserve4 */
-UINT8 InU8_OFF_reserve5; /* Subindex134 - InU8_OFF_reserve5 */
-UINT8 InU8_icm_fsm_state_current; /* Subindex135 - InU8_icm_fsm_state_current */
-UINT8 InU8_icm_ctrl_mode_cur; /* Subindex136 - InU8_icm_ctrl_mode_cur */
-UINT16 InU16_reserved4; /* Subindex137 - InU16_reserved4 */
-UINT8 InU8_icm_beam_id; /* Subindex138 - InU8_icm_beam_id */
-UINT8 InU8_reserved5; /* Subindex139 - InU8_reserved5 */
-UINT16 InU16_icm_radiation_index; /* Subindex140 - InU16_icm_radiation_index */
-UINT32 InU32_icm_not_ready_event; /* Subindex141 - InU32_icm_not_ready_event */
-UINT32 InU32_icm_warning_interlock; /* Subindex142 - InU32_icm_warning_interlock */
-UINT32 InU32_icm_minor_interlock; /* Subindex143 - InU32_icm_minor_interlock */
-UINT32 InU32_icm_serious_interlock; /* Subindex144 - InU32_icm_serious_interlock */
-UINT16 InU16_TotalStep_ICM; /* Subindex145 - InU16_TotalStep_ICM */
-UINT16 InU16_CurrentStep_ICM; /* Subindex146 - InU16_CurrentStep_ICM */
-UINT16 InU16_ErrorCode_ICM; /* Subindex147 - InU16_ErrorCode_ICM */
-UINT8 InU8_bgm_fsm_state_current; /* Subindex148 - InU8_bgm_fsm_state_current */
-UINT8 InU8_bgm_ctrl_mode_cur; /* Subindex149 - InU8_bgm_ctrl_mode_cur */
-UINT16 InU16_reserved6; /* Subindex150 - InU16_reserved6 */
-UINT8 InU8_bgm_beam_id; /* Subindex151 - InU8_bgm_beam_id */
-UINT8 InU8_reserved7; /* Subindex152 - InU8_reserved7 */
-UINT16 InU16_bgm_radiation_index; /* Subindex153 - InU16_bgm_radiation_index */
-UINT32 InU32_bgm_not_ready_event; /* Subindex154 - InU32_bgm_not_ready_event */
-UINT32 InU32_bgm_warning_interlock; /* Subindex155 - InU32_bgm_warning_interlock */
-UINT32 InU32_bgm_minor_interlock; /* Subindex156 - InU32_bgm_minor_interlock */
-UINT32 InU32_bgm_serious_interlock; /* Subindex157 - InU32_bgm_serious_interlock */
-UINT16 InU16_TotalStep_BGM; /* Subindex158 - InU16_TotalStep_BGM */
-UINT16 InU16_CurrentStep_BGM; /* Subindex159 - InU16_CurrentStep_BGM */
-UINT16 InU16_ErrorCode_BGM; /* Subindex160 - InU16_ErrorCode_BGM */
-REAL32 InF_beam_on_time; /* Subindex161 - InF_beam_on_time */
-REAL32 InF_primary_dose_current; /* Subindex162 - InF_primary_dose_current */
-REAL32 InF_primary_dose_rate_current; /* Subindex163 - InF_primary_dose_rate_current */
-UINT8 InU8_primary_dose_fsm_state; /* Subindex164 - InU8_primary_dose_fsm_state */
-UINT8 InU8_reserved8; /* Subindex165 - InU8_reserved8 */
-UINT32 InU32_primary_dose_interlock; /* Subindex166 - InU32_primary_dose_interlock */
-REAL32 InF_second_dose_current; /* Subindex167 - InF_second_dose_current */
-REAL32 InF_secondry_dose_rate_current; /* Subindex168 - InF_secondry_dose_rate_current */
-UINT8 InU8_secondry_dose_fsm_rate; /* Subindex169 - InU8_secondry_dose_fsm_rate */
-UINT8 InU8_reserved9; /* Subindex170 - InU8_reserved9 */
-UINT32 InU32_secondry_dose_interlock; /* Subindex171 - InU32_secondry_dose_interlock */
-UINT32 InU32_afc_interlock; /* Subindex172 - InU32_afc_interlock */
-REAL32 InF_afc_position_current; /* Subindex173 - InF_afc_position_current */
-UINT8 InU8_qam_fsm_state_current; /* Subindex174 - InU8_qam_fsm_state_current */
-UINT8 InU8_qam_ctrl_mode_cur; /* Subindex175 - InU8_qam_ctrl_mode_cur */
-UINT16 InU16_reserved10; /* Subindex176 - InU16_reserved10 */
-UINT8 InU8_qam_beam_id; /* Subindex177 - InU8_qam_beam_id */
-UINT8 InU8_reserved11; /* Subindex178 - InU8_reserved11 */
-UINT16 InU16_qam_radiation_index; /* Subindex179 - InU16_qam_radiation_index */
-UINT32 InU32_qam_not_ready_event; /* Subindex180 - InU32_qam_not_ready_event */
-UINT32 InU32_qam_warning_interlock; /* Subindex181 - InU32_qam_warning_interlock */
-UINT32 InU32_qam_minor_interlock; /* Subindex182 - InU32_qam_minor_interlock */
-UINT32 InU32_qam_serious_interlock; /* Subindex183 - InU32_qam_serious_interlock */
-UINT16 InU16_TotalStep_QAM; /* Subindex184 - InU16_TotalStep_QAM */
-UINT16 InU16_CurrentStep_QAM; /* Subindex185 - InU16_CurrentStep_QAM */
-UINT16 InU16_ErrorCode_QAM; /* Subindex186 - InU16_ErrorCode_QAM */
-UINT8 InU8_rtm_off_fsm_state_current; /* Subindex187 - InU8_rtm_off_fsm_state_current */
-UINT8 InU8_rtm_off_ctrl_mode_cur; /* Subindex188 - InU8_rtm_off_ctrl_mode_cur */
-UINT16 InU16_reserved12; /* Subindex189 - InU16_reserved12 */
-UINT8 InU8_rtm_off_beam_id; /* Subindex190 - InU8_rtm_off_beam_id */
-UINT8 InU8_reserved13; /* Subindex191 - InU8_reserved13 */
-UINT16 InU16_rtm_off_radiation_index; /* Subindex192 - InU16_rtm_off_radiation_index */
-UINT32 InU32_rtm_off_not_ready_event; /* Subindex193 - InU32_rtm_off_not_ready_event */
-UINT32 InU32_rtm_off_warning_interlock; /* Subindex194 - InU32_rtm_off_warning_interlock */
-UINT32 InU32_rtm_off_minor_interlock; /* Subindex195 - InU32_rtm_off_minor_interlock */
-UINT32 InU32_rtm_off_serious_interlock; /* Subindex196 - InU32_rtm_off_serious_interlock */
-UINT16 InU16_TotalStep_RTM_OFF_ARM; /* Subindex197 - InU16_TotalStep_RTM_OFF_ARM */
-UINT16 InU16_CurrentStep_RTM_OFF_ARM; /* Subindex198 - InU16_CurrentStep_RTM_OFF_ARM */
-UINT16 InU16_ErrorCode_RTM_OFF_ARM; /* Subindex199 - InU16_ErrorCode_RTM_OFF_ARM */
-UINT8 InU8_gmm_fsm_state_current; /* Subindex200 - InU8_gmm_fsm_state_current */
-UINT8 InU8_gmm_ctrl_mode_cur; /* Subindex201 - InU8_gmm_ctrl_mode_cur */
-UINT16 InU16_reserved14; /* Subindex202 - InU16_reserved14 */
-UINT8 InU8_gmm_beam_id; /* Subindex203 - InU8_gmm_beam_id */
-UINT8 InU8_reserved15; /* Subindex204 - InU8_reserved15 */
-UINT16 InU16_gmm_radiation_index; /* Subindex205 - InU16_gmm_radiation_index */
-UINT32 InU32_gmm_not_ready_event; /* Subindex206 - InU32_gmm_not_ready_event */
-UINT32 InU32_gmm_warning_interlock; /* Subindex207 - InU32_gmm_warning_interlock */
-UINT32 InU32_gmm_minor_interlock; /* Subindex208 - InU32_gmm_minor_interlock */
-UINT32 InU32_gmm_serious_interlock; /* Subindex209 - InU32_gmm_serious_interlock */
-UINT16 InU16_TotalStep_GMM; /* Subindex210 - InU16_TotalStep_GMM */
-UINT16 InU16_CurrentStep_GMM; /* Subindex211 - InU16_CurrentStep_GMM */
-UINT16 InU16_ErrorCode_GMM; /* Subindex212 - InU16_ErrorCode_GMM */
-UINT32 InU32_gmm_move_status; /* Subindex213 - InU32_gmm_move_status */
-REAL32 InF_gmm_position_cur; /* Subindex214 - InF_gmm_position_cur */
-REAL32 InF_gmm_velocity_cur; /* Subindex215 - InF_gmm_velocity_cur */
-UINT8 InU8_psm_fsm_state_current; /* Subindex216 - InU8_psm_fsm_state_current */
-UINT8 InU8_psm_ctrl_mode_cur; /* Subindex217 - InU8_psm_ctrl_mode_cur */
-UINT16 InU16_reserved16; /* Subindex218 - InU16_reserved16 */
-UINT8 InU8_psm_beam_id; /* Subindex219 - InU8_psm_beam_id */
-UINT8 InU8_reserved17; /* Subindex220 - InU8_reserved17 */
-UINT16 InU16_psm_radiation_index; /* Subindex221 - InU16_psm_radiation_index */
-UINT32 InU32_psm_not_ready_event; /* Subindex222 - InU32_psm_not_ready_event */
-UINT32 InU32_psm_warning_interlock; /* Subindex223 - InU32_psm_warning_interlock */
-UINT32 InU32_psm_minor_interlock; /* Subindex224 - InU32_psm_minor_interlock */
-UINT32 InU32_psm_serious_interlock; /* Subindex225 - InU32_psm_serious_interlock */
-UINT16 InU16_TotalStep_PSM; /* Subindex226 - InU16_TotalStep_PSM */
-UINT16 InU16_CurrentStep_PSM; /* Subindex227 - InU16_CurrentStep_PSM */
-UINT16 InU16_ErrorCode_PSM; /* Subindex228 - InU16_ErrorCode_PSM */
-UINT32 InU32_psm_move_status; /* Subindex229 - InU32_psm_move_status */
-REAL32 InF_psm_position_x_cur; /* Subindex230 - InF_psm_position_x_cur */
-REAL32 InF_psm_position_y_cur; /* Subindex231 - InF_psm_position_y_cur */
-REAL32 InF_psm_position_z_cur; /* Subindex232 - InF_psm_position_z_cur */
-REAL32 InF_psm_position_x_r_cur; /* Subindex233 - InF_psm_position_x_r_cur */
-REAL32 InF_psm_position_y_r_cur; /* Subindex234 - InF_psm_position_y_r_cur */
-REAL32 InF_psm_position_z_r_cur; /* Subindex235 - InF_psm_position_z_r_cur */
-REAL32 InF_psm_velocity_x_cur; /* Subindex236 - InF_psm_velocity_x_cur */
-REAL32 InF_psm_velocity_y_cur; /* Subindex237 - InF_psm_velocity_y_cur */
-REAL32 InF_psm_velocity_z_cur; /* Subindex238 - InF_psm_velocity_z_cur */
-REAL32 InF_psm_velocity_x_r_cur; /* Subindex239 - InF_psm_velocity_x_r_cur */
-REAL32 InF_psm_velocity_y_r_cur; /* Subindex240 - InF_psm_velocity_y_r_cur */
-REAL32 InF_psm_velocity_z_r_cur; /* Subindex241 - InF_psm_velocity_z_r_cur */
-UINT8 InU8_function_button; /* Subindex242 - InU8_function_button */
-UINT8 InU8_special_button; /* Subindex243 - InU8_special_button */
-UINT16 InU16_data_valid_flag; /* Subindex244 - InU16_data_valid_flag */
-REAL32 InUF_load_position_x_cur; /* Subindex245 - InUF_load_position_x_cur */
-REAL32 InUF_load_position_y_cur; /* Subindex246 - InUF_load_position_y_cur */
-REAL32 InUF_load_position_z_cur; /* Subindex247 - InUF_load_position_z_cur */
-REAL32 InUF_load_position_x_r_tar; /* Subindex248 - InUF_load_position_x_r_tar */
-REAL32 InUF_load_position_y_r_tar; /* Subindex249 - InUF_load_position_y_r_tar */
-REAL32 InUF_load_position_z_r_tar; /* Subindex250 - InUF_load_position_z_r_tar */
-UINT8 InU8_trm_require_state; /* Subindex251 - InU8_trm_require_state */
+UINT8 InU8_BoardID_primary_dose; /* Subindex10 - InU8_BoardID_primary_dose */
+UINT8 InU8_Reserved_primary_dose; /* Subindex11 - InU8_Reserved_primary_dose */
+UINT32 InU32_FirmWareVersion_primary_dose; /* Subindex12 - InU32_FirmWareVersion_primary_dose */
+UINT8 InU8_BoardID_second_dose; /* Subindex13 - InU8_BoardID_second_dose */
+UINT8 InU8_Reserved_second_dose; /* Subindex14 - InU8_Reserved_second_dose */
+UINT32 InU32_FirmWareVersion_second_dose; /* Subindex15 - InU32_FirmWareVersion_second_dose */
+UINT8 InU8_BoardID_AFC; /* Subindex16 - InU8_BoardID_AFC */
+UINT8 InU8_Reserved_AFC; /* Subindex17 - InU8_Reserved_AFC */
+UINT32 InU32_FirmWareVersion_AFC; /* Subindex18 - InU32_FirmWareVersion_AFC */
+UINT8 InU8_BoardID_QAM; /* Subindex19 - InU8_BoardID_QAM */
+UINT8 InU8_Reserved_QAM; /* Subindex20 - InU8_Reserved_QAM */
+UINT32 InU32_FirmWareVersion_QAM; /* Subindex21 - InU32_FirmWareVersion_QAM */
+UINT8 InU8_BoardID_RTM_OFF_ARM; /* Subindex22 - InU8_BoardID_RTM_OFF_ARM */
+UINT8 InU8_Reserved_RTM_OFF_ARM; /* Subindex23 - InU8_Reserved_RTM_OFF_ARM */
+UINT32 InU32_FirmWareVersion_RTM_OFF_ARM; /* Subindex24 - InU32_FirmWareVersion_RTM_OFF_ARM */
+UINT8 InU8_BoardID_PSM; /* Subindex25 - InU8_BoardID_PSM */
+UINT8 InU8_Reserved_PSM; /* Subindex26 - InU8_Reserved_PSM */
+UINT32 InU32_FirmWareVersion_PSM; /* Subindex27 - InU32_FirmWareVersion_PSM */
+UINT8 InU8_BoardID_GMM; /* Subindex28 - InU8_BoardID_GMM */
+UINT8 InU8_Reserved_GMM; /* Subindex29 - InU8_Reserved_GMM */
+UINT32 InU32_FirmWareVersion_GMM; /* Subindex30 - InU32_FirmWareVersion_GMM */
+UINT8 InU8_BoardID_FKP; /* Subindex31 - InU8_BoardID_FKP */
+UINT8 InU8_Reserved_FKP; /* Subindex32 - InU8_Reserved_FKP */
+UINT32 InU32_FirmWareVersion_FKP; /* Subindex33 - InU32_FirmWareVersion_FKP */
+UINT8 InU8_BoardID_CPG_L; /* Subindex34 - InU8_BoardID_CPG_L */
+UINT8 InU8_Reserved_CPG_L; /* Subindex35 - InU8_Reserved_CPG_L */
+UINT32 InU32_FirmWareVersion_CPG_L; /* Subindex36 - InU32_FirmWareVersion_CPG_L */
+UINT8 InU8_BoardID_CPG_R; /* Subindex37 - InU8_BoardID_CPG_R */
+UINT8 InU8_Reserved_CPG_R; /* Subindex38 - InU8_Reserved_CPG_R */
+UINT32 InU32_FirmWareVersion_CPG_R; /* Subindex39 - InU32_FirmWareVersion_CPG_R */
+UINT8 InU8_beam_id; /* Subindex40 - InU8_beam_id */
+UINT8 InU8_reserved1; /* Subindex41 - InU8_reserved1 */
+UINT16 InU16_radiation_index; /* Subindex42 - InU16_radiation_index */
+UINT8 InU8_rtm_on_arm_fsm_state_current; /* Subindex43 - InU8_rtm_on_arm_fsm_state_current */
+UINT8 InU8_rtm_on_arm_ctrl_mode_cur; /* Subindex44 - InU8_rtm_on_arm_ctrl_mode_cur */
+UINT8 InU8_ethercat_Link_state; /* Subindex45 - InU8_ethercat_Link_state */
+UINT8 InU8_reserved2; /* Subindex46 - InU8_reserved2 */
+UINT8 InU8_rtm_on_arm_beam_id; /* Subindex47 - InU8_rtm_on_arm_beam_id */
+UINT8 InU8_reserved3; /* Subindex48 - InU8_reserved3 */
+UINT16 InU16_rtm_on_arm_radiation_index; /* Subindex49 - InU16_rtm_on_arm_radiation_index */
+UINT32 InU32_rtm_on_arm_not_ready_event; /* Subindex50 - InU32_rtm_on_arm_not_ready_event */
+UINT32 InU32_rtm_on_arm_warning_interlock; /* Subindex51 - InU32_rtm_on_arm_warning_interlock */
+UINT32 InU32_rtm_on_arm_minor_interlock; /* Subindex52 - InU32_rtm_on_arm_minor_interlock */
+UINT32 InU32_rtm_on_arm_serious_interlock; /* Subindex53 - InU32_rtm_on_arm_serious_interlock */
+UINT16 InU16_TotalStep_RTM_ON_ARM; /* Subindex54 - InU16_TotalStep_RTM_ON_ARM */
+UINT16 InU16_CurrentStep_RTM_ON_ARM; /* Subindex55 - InU16_CurrentStep_RTM_ON_ARM */
+UINT16 InU16_ErrorCode_RTM_ON_ARM; /* Subindex56 - InU16_ErrorCode_RTM_ON_ARM */
+BOOLEAN(InB1_ON_DI_RTC_WD_OK_IN); /* Subindex57 - InB1_ON_DI_RTC_WD_OK_IN */
+BOOLEAN(InB1_ON_DI_Reserve0); /* Subindex58 - InB1_ON_DI_Reserve0 */
+BOOLEAN(InB1_ON_DI_BSM_NOT_READY); /* Subindex59 - InB1_ON_DI_BSM_NOT_READY */
+BOOLEAN(InB1_ON_DI_MV_TreatmentEN); /* Subindex60 - InB1_ON_DI_MV_TreatmentEN */
+BOOLEAN(InB1_ON_DI_DI_HVEN); /* Subindex61 - InB1_ON_DI_DI_HVEN */
+BOOLEAN(InB1_ON_DI_Pulse_Inhibit); /* Subindex62 - InB1_ON_DI_Pulse_Inhibit */
+BOOLEAN(InB1_ON_DI_KV_TreatmentEN); /* Subindex63 - InB1_ON_DI_KV_TreatmentEN */
+BOOLEAN(InB1_ON_DI_Power_cut_FB); /* Subindex64 - InB1_ON_DI_Power_cut_FB */
+BOOLEAN(InB1_ON_DI_GATING_IN); /* Subindex65 - InB1_ON_DI_GATING_IN */
+BOOLEAN(InB1_ON_DI_Slipring_HVEN_IN); /* Subindex66 - InB1_ON_DI_Slipring_HVEN_IN */
+BOOLEAN(InB1_ON_DI_Slipring_KV_TreatmentEN_IN); /* Subindex67 - InB1_ON_DI_Slipring_KV_TreatmentEN_IN */
+BOOLEAN(InB1_ON_DI_Slipring_MV_TreatmentEN_IN); /* Subindex68 - InB1_ON_DI_Slipring_MV_TreatmentEN_IN */
+BIT4(InB4_ON_DI_reserve1); /* Subindex69 - InB4_ON_DI_reserve1 */
+BOOLEAN(InB1_ON_DO_reserve0); /* Subindex70 - InB1_ON_DO_reserve0 */
+BOOLEAN(InB1_ON_DO_MV_TreatmentEN); /* Subindex71 - InB1_ON_DO_MV_TreatmentEN */
+BOOLEAN(InB1_ON_DO_KV_TreatmentEN); /* Subindex72 - InB1_ON_DO_KV_TreatmentEN */
+BOOLEAN(InB1_ON_DO_Emergency); /* Subindex73 - InB1_ON_DO_Emergency */
+BOOLEAN(InB1_ON_DO_Pulse_Inhibit); /* Subindex74 - InB1_ON_DO_Pulse_Inhibit */
+BOOLEAN(InB1_ON_DO_HVEN); /* Subindex75 - InB1_ON_DO_HVEN */
+BOOLEAN(InB1_ON_DO_PowerCut); /* Subindex76 - InB1_ON_DO_PowerCut */
+BOOLEAN(InB1_ON_DO_reserve1); /* Subindex77 - InB1_ON_DO_reserve1 */
+UINT8 InU8_ON_DO_reserve2; /* Subindex78 - InU8_ON_DO_reserve2 */
+UINT8 InU8_OFF_reserve0; /* Subindex79 - InU8_OFF_reserve0 */
+BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY2); /* Subindex80 - InB1_OFF_DI_CITB_EMERGENCY2 */
+BOOLEAN(InB1_OFF_DI_UPS_LOAD_PORT); /* Subindex81 - InB1_OFF_DI_UPS_LOAD_PORT */
+BOOLEAN(InB1_OFF_DI_STAND_BREAKER1); /* Subindex82 - InB1_OFF_DI_STAND_BREAKER1 */
+BOOLEAN(InB1_OFF_DI_STAND_EMERGENCY); /* Subindex83 - InB1_OFF_DI_STAND_EMERGENCY */
+BOOLEAN(InB1_OFF_DI_TouchGuard); /* Subindex84 - InB1_OFF_DI_TouchGuard */
+BOOLEAN(InB1_OFF_DI_HvEn); /* Subindex85 - InB1_OFF_DI_HvEn */
+BOOLEAN(InB1_OFF_DI_MV_TreatmentEN); /* Subindex86 - InB1_OFF_DI_MV_TreatmentEN */
+BOOLEAN(InB1_OFF_DI_KV_TreatmentEN); /* Subindex87 - InB1_OFF_DI_KV_TreatmentEN */
+BOOLEAN(InB1_OFF_DI_STAND_BREAKER7); /* Subindex88 - InB1_OFF_DI_STAND_BREAKER7 */
+BOOLEAN(InB1_OFF_DI_STAND_BREAKER3); /* Subindex89 - InB1_OFF_DI_STAND_BREAKER3 */
+BOOLEAN(InB1_OFF_DI_UPS_ON_BYPASS); /* Subindex90 - InB1_OFF_DI_UPS_ON_BYPASS */
+BOOLEAN(InB1_OFF_DI_STAND_BREAKER5); /* Subindex91 - InB1_OFF_DI_STAND_BREAKER5 */
+BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY3); /* Subindex92 - InB1_OFF_DI_CITB_EMERGENCY3 */
+BOOLEAN(InB1_OFF_DI_COVER3); /* Subindex93 - InB1_OFF_DI_COVER3 */
+BOOLEAN(InB1_OFF_DI_POWER_CUT); /* Subindex94 - InB1_OFF_DI_POWER_CUT */
+BOOLEAN(InB1_OFF_DI_STAND_BREAKER4); /* Subindex95 - InB1_OFF_DI_STAND_BREAKER4 */
+BOOLEAN(InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR1); /* Subindex96 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR1 */
+BOOLEAN(InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR2); /* Subindex97 - InB1_OFF_DI_CITB_TREATMENT_ROOM_DOOR2 */
+BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY1); /* Subindex98 - InB1_OFF_DI_CITB_EMERGENCY1 */
+BOOLEAN(InB1_OFF_DI_CITB_SEARCH_TREATMENT_ROOM); /* Subindex99 - InB1_OFF_DI_CITB_SEARCH_TREATMENT_ROOM */
+BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER1); /* Subindex100 - InB1_OFF_DI_CONTROL_ROOM_BREAKER1 */
+BOOLEAN(InB1_OFF_DI_UPS_ON_BATT); /* Subindex101 - InB1_OFF_DI_UPS_ON_BATT */
+BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER5); /* Subindex102 - InB1_OFF_DI_CONTROL_ROOM_BREAKER5 */
+BOOLEAN(InB1_OFF_DI_STAND_BREAKER6); /* Subindex103 - InB1_OFF_DI_STAND_BREAKER6 */
+BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY5); /* Subindex104 - InB1_OFF_DI_CITB_EMERGENCY5 */
+BOOLEAN(InB1_OFF_DI_COVER1); /* Subindex105 - InB1_OFF_DI_COVER1 */
+BOOLEAN(InB1_OFF_DI_STAND_RESERVE); /* Subindex106 - InB1_OFF_DI_STAND_RESERVE */
+BOOLEAN(InB1_OFF_DI_TREATMENT_ROOM_DOOR_READY); /* Subindex107 - InB1_OFF_DI_TREATMENT_ROOM_DOOR_READY */
+BOOLEAN(InB1_OFF_DI_COVER2); /* Subindex108 - InB1_OFF_DI_COVER2 */
+BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER2); /* Subindex109 - InB1_OFF_DI_CONTROL_ROOM_BREAKER2 */
+BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER4); /* Subindex110 - InB1_OFF_DI_CONTROL_ROOM_BREAKER4 */
+BOOLEAN(InB1_OFF_DI_STAND_CONTACTOR2); /* Subindex111 - InB1_OFF_DI_STAND_CONTACTOR2 */
+BOOLEAN(InB1_OFF_DI_STAND_CONTACTOR1); /* Subindex112 - InB1_OFF_DI_STAND_CONTACTOR1 */
+BOOLEAN(InB1_OFF_DI_UPS_LOW_BATT); /* Subindex113 - InB1_OFF_DI_UPS_LOW_BATT */
+BOOLEAN(InB1_OFF_DI_HvKey); /* Subindex114 - InB1_OFF_DI_HvKey */
+BOOLEAN(InB1_OFF_DI_COVER4); /* Subindex115 - InB1_OFF_DI_COVER4 */
+BOOLEAN(InB1_OFF_DI_CITB_EMERGENCY4); /* Subindex116 - InB1_OFF_DI_CITB_EMERGENCY4 */
+BOOLEAN(InB1_OFF_DI_CONTROL_ROOM_BREAKER3); /* Subindex117 - InB1_OFF_DI_CONTROL_ROOM_BREAKER3 */
+BOOLEAN(InB1_OFF_DI_STAND_BREAKER2); /* Subindex118 - InB1_OFF_DI_STAND_BREAKER2 */
+BOOLEAN(InB1_OFF_RTC_WD_OK_IN); /* Subindex119 - InB1_OFF_RTC_WD_OK_IN */
+UINT16 InU16_OFF_mcp23017_di_reserve; /* Subindex120 - InU16_OFF_mcp23017_di_reserve */
+BOOLEAN(InB1_OFF_DI_GATING); /* Subindex121 - InB1_OFF_DI_GATING */
+BIT7(InB7_OFF_reserve1); /* Subindex122 - InB7_OFF_reserve1 */
+UINT8 InU8_OFF_reserve2; /* Subindex123 - InU8_OFF_reserve2 */
+BOOLEAN(InB1_OFF_DO_RTM_AutoPowerUp); /* Subindex124 - InB1_OFF_DO_RTM_AutoPowerUp */
+BOOLEAN(InB1_OFF_DO_SearchTreatmentRoomRelay); /* Subindex125 - InB1_OFF_DO_SearchTreatmentRoomRelay */
+BOOLEAN(InB1_OFF_DO_Laser); /* Subindex126 - InB1_OFF_DO_Laser */
+BOOLEAN(InB1_OFF_DO_Power_CUT); /* Subindex127 - InB1_OFF_DO_Power_CUT */
+BOOLEAN(InB1_OFF_DO_STAND_RESERVE); /* Subindex128 - InB1_OFF_DO_STAND_RESERVE */
+BOOLEAN(InB1_OFF_DO_TreatmentRoomLight); /* Subindex129 - InB1_OFF_DO_TreatmentRoomLight */
+BOOLEAN(InB1_OFF_DO_RadiationIndicator); /* Subindex130 - InB1_OFF_DO_RadiationIndicator */
+BOOLEAN(InB1_OFF_DO_ReadyIndicator); /* Subindex131 - InB1_OFF_DO_ReadyIndicator */
+BOOLEAN(InB1_OFF_DO_RTM_SystemShutDown); /* Subindex132 - InB1_OFF_DO_RTM_SystemShutDown */
+BIT7(InB7_OFF_reserve3); /* Subindex133 - InB7_OFF_reserve3 */
+UINT16 InU16_OFF_mcp23017_do_reserve; /* Subindex134 - InU16_OFF_mcp23017_do_reserve */
+BOOLEAN(InB1_OFF_DO_SoftwareHvEn); /* Subindex135 - InB1_OFF_DO_SoftwareHvEn */
+BOOLEAN(InB1_OFF_DO_SoftwareKVTreatmentEn); /* Subindex136 - InB1_OFF_DO_SoftwareKVTreatmentEn */
+BOOLEAN(InB1_OFF_DO_SoftwareMVTreatmentEn); /* Subindex137 - InB1_OFF_DO_SoftwareMVTreatmentEn */
+BOOLEAN(InB1_OFF_DO_ThreePhasePowerOn); /* Subindex138 - InB1_OFF_DO_ThreePhasePowerOn */
+BOOLEAN(InB1_OFF_DO_softwareMoveEN); /* Subindex139 - InB1_OFF_DO_softwareMoveEN */
+BOOLEAN(InB1_OFF_DO_TreatmentMotionEnable); /* Subindex140 - InB1_OFF_DO_TreatmentMotionEnable */
+BOOLEAN(InB1_OFF_DO_AsuMotionEnable); /* Subindex141 - InB1_OFF_DO_AsuMotionEnable */
+BOOLEAN(InB1_OFF_reserve4); /* Subindex142 - InB1_OFF_reserve4 */
+UINT8 InU8_OFF_reserve5; /* Subindex143 - InU8_OFF_reserve5 */
+UINT8 InU8_icm_fsm_state_current; /* Subindex144 - InU8_icm_fsm_state_current */
+UINT8 InU8_icm_ctrl_mode_cur; /* Subindex145 - InU8_icm_ctrl_mode_cur */
+UINT16 InU16_reserved4; /* Subindex146 - InU16_reserved4 */
+UINT8 InU8_icm_beam_id; /* Subindex147 - InU8_icm_beam_id */
+UINT8 InU8_reserved5; /* Subindex148 - InU8_reserved5 */
+UINT16 InU16_icm_radiation_index; /* Subindex149 - InU16_icm_radiation_index */
+UINT32 InU32_icm_not_ready_event; /* Subindex150 - InU32_icm_not_ready_event */
+UINT32 InU32_icm_warning_interlock; /* Subindex151 - InU32_icm_warning_interlock */
+UINT32 InU32_icm_minor_interlock; /* Subindex152 - InU32_icm_minor_interlock */
+UINT32 InU32_icm_serious_interlock; /* Subindex153 - InU32_icm_serious_interlock */
+UINT16 InU16_TotalStep_ICM; /* Subindex154 - InU16_TotalStep_ICM */
+UINT16 InU16_CurrentStep_ICM; /* Subindex155 - InU16_CurrentStep_ICM */
+UINT16 InU16_ErrorCode_ICM; /* Subindex156 - InU16_ErrorCode_ICM */
+UINT8 InU8_bgm_fsm_state_current; /* Subindex157 - InU8_bgm_fsm_state_current */
+UINT8 InU8_bgm_ctrl_mode_cur; /* Subindex158 - InU8_bgm_ctrl_mode_cur */
+UINT16 InU16_reserved6; /* Subindex159 - InU16_reserved6 */
+UINT8 InU8_bgm_beam_id; /* Subindex160 - InU8_bgm_beam_id */
+UINT8 InU8_reserved7; /* Subindex161 - InU8_reserved7 */
+UINT16 InU16_bgm_radiation_index; /* Subindex162 - InU16_bgm_radiation_index */
+UINT32 InU32_bgm_not_ready_event; /* Subindex163 - InU32_bgm_not_ready_event */
+UINT32 InU32_bgm_warning_interlock; /* Subindex164 - InU32_bgm_warning_interlock */
+UINT32 InU32_bgm_minor_interlock; /* Subindex165 - InU32_bgm_minor_interlock */
+UINT32 InU32_bgm_serious_interlock; /* Subindex166 - InU32_bgm_serious_interlock */
+UINT16 InU16_TotalStep_BGM; /* Subindex167 - InU16_TotalStep_BGM */
+UINT16 InU16_CurrentStep_BGM; /* Subindex168 - InU16_CurrentStep_BGM */
+UINT16 InU16_ErrorCode_BGM; /* Subindex169 - InU16_ErrorCode_BGM */
+REAL32 InF_beam_on_time; /* Subindex170 - InF_beam_on_time */
+REAL32 InF_primary_dose_current; /* Subindex171 - InF_primary_dose_current */
+REAL32 InF_primary_dose_rate_current; /* Subindex172 - InF_primary_dose_rate_current */
+UINT8 InU8_primary_dose_fsm_state; /* Subindex173 - InU8_primary_dose_fsm_state */
+UINT8 InU8_reserved8; /* Subindex174 - InU8_reserved8 */
+UINT32 InU32_primary_dose_interlock; /* Subindex175 - InU32_primary_dose_interlock */
+REAL32 InF_second_dose_current; /* Subindex176 - InF_second_dose_current */
+REAL32 InF_secondry_dose_rate_current; /* Subindex177 - InF_secondry_dose_rate_current */
+UINT8 InU8_secondry_dose_fsm_rate; /* Subindex178 - InU8_secondry_dose_fsm_rate */
+UINT8 InU8_reserved9; /* Subindex179 - InU8_reserved9 */
+UINT32 InU32_secondry_dose_interlock; /* Subindex180 - InU32_secondry_dose_interlock */
+UINT32 InU32_afc_interlock; /* Subindex181 - InU32_afc_interlock */
+REAL32 InF_afc_position_current; /* Subindex182 - InF_afc_position_current */
+UINT8 InU8_qam_fsm_state_current; /* Subindex183 - InU8_qam_fsm_state_current */
+UINT8 InU8_qam_ctrl_mode_cur; /* Subindex184 - InU8_qam_ctrl_mode_cur */
+UINT16 InU16_reserved10; /* Subindex185 - InU16_reserved10 */
+UINT8 InU8_qam_beam_id; /* Subindex186 - InU8_qam_beam_id */
+UINT8 InU8_reserved11; /* Subindex187 - InU8_reserved11 */
+UINT16 InU16_qam_radiation_index; /* Subindex188 - InU16_qam_radiation_index */
+UINT32 InU32_qam_not_ready_event; /* Subindex189 - InU32_qam_not_ready_event */
+UINT32 InU32_qam_warning_interlock; /* Subindex190 - InU32_qam_warning_interlock */
+UINT32 InU32_qam_minor_interlock; /* Subindex191 - InU32_qam_minor_interlock */
+UINT32 InU32_qam_serious_interlock; /* Subindex192 - InU32_qam_serious_interlock */
+UINT16 InU16_TotalStep_QAM; /* Subindex193 - InU16_TotalStep_QAM */
+UINT16 InU16_CurrentStep_QAM; /* Subindex194 - InU16_CurrentStep_QAM */
+UINT16 InU16_ErrorCode_QAM; /* Subindex195 - InU16_ErrorCode_QAM */
+UINT8 InU8_rtm_off_fsm_state_current; /* Subindex196 - InU8_rtm_off_fsm_state_current */
+UINT8 InU8_rtm_off_ctrl_mode_cur; /* Subindex197 - InU8_rtm_off_ctrl_mode_cur */
+UINT16 InU16_reserved12; /* Subindex198 - InU16_reserved12 */
+UINT8 InU8_rtm_off_beam_id; /* Subindex199 - InU8_rtm_off_beam_id */
+UINT8 InU8_reserved13; /* Subindex200 - InU8_reserved13 */
+UINT16 InU16_rtm_off_radiation_index; /* Subindex201 - InU16_rtm_off_radiation_index */
+UINT32 InU32_rtm_off_not_ready_event; /* Subindex202 - InU32_rtm_off_not_ready_event */
+UINT32 InU32_rtm_off_warning_interlock; /* Subindex203 - InU32_rtm_off_warning_interlock */
+UINT32 InU32_rtm_off_minor_interlock; /* Subindex204 - InU32_rtm_off_minor_interlock */
+UINT32 InU32_rtm_off_serious_interlock; /* Subindex205 - InU32_rtm_off_serious_interlock */
+UINT16 InU16_TotalStep_RTM_OFF_ARM; /* Subindex206 - InU16_TotalStep_RTM_OFF_ARM */
+UINT16 InU16_CurrentStep_RTM_OFF_ARM; /* Subindex207 - InU16_CurrentStep_RTM_OFF_ARM */
+UINT16 InU16_ErrorCode_RTM_OFF_ARM; /* Subindex208 - InU16_ErrorCode_RTM_OFF_ARM */
+UINT8 InU8_gmm_fsm_state_current; /* Subindex209 - InU8_gmm_fsm_state_current */
+UINT8 InU8_gmm_ctrl_mode_cur; /* Subindex210 - InU8_gmm_ctrl_mode_cur */
+UINT16 InU16_reserved14; /* Subindex211 - InU16_reserved14 */
+UINT8 InU8_gmm_beam_id; /* Subindex212 - InU8_gmm_beam_id */
+UINT8 InU8_reserved15; /* Subindex213 - InU8_reserved15 */
+UINT16 InU16_gmm_radiation_index; /* Subindex214 - InU16_gmm_radiation_index */
+UINT32 InU32_gmm_not_ready_event; /* Subindex215 - InU32_gmm_not_ready_event */
+UINT32 InU32_gmm_warning_interlock; /* Subindex216 - InU32_gmm_warning_interlock */
+UINT32 InU32_gmm_minor_interlock; /* Subindex217 - InU32_gmm_minor_interlock */
+UINT32 InU32_gmm_serious_interlock; /* Subindex218 - InU32_gmm_serious_interlock */
+UINT16 InU16_TotalStep_GMM; /* Subindex219 - InU16_TotalStep_GMM */
+UINT16 InU16_CurrentStep_GMM; /* Subindex220 - InU16_CurrentStep_GMM */
+UINT16 InU16_ErrorCode_GMM; /* Subindex221 - InU16_ErrorCode_GMM */
+UINT32 InU32_gmm_move_status; /* Subindex222 - InU32_gmm_move_status */
+REAL32 InF_gmm_position_cur; /* Subindex223 - InF_gmm_position_cur */
+REAL32 InF_gmm_velocity_cur; /* Subindex224 - InF_gmm_velocity_cur */
+UINT8 InU8_psm_fsm_state_current; /* Subindex225 - InU8_psm_fsm_state_current */
+UINT8 InU8_psm_ctrl_mode_cur; /* Subindex226 - InU8_psm_ctrl_mode_cur */
+UINT16 InU16_reserved16; /* Subindex227 - InU16_reserved16 */
+UINT8 InU8_psm_beam_id; /* Subindex228 - InU8_psm_beam_id */
+UINT8 InU8_reserved17; /* Subindex229 - InU8_reserved17 */
+UINT16 InU16_psm_radiation_index; /* Subindex230 - InU16_psm_radiation_index */
+UINT32 InU32_psm_not_ready_event; /* Subindex231 - InU32_psm_not_ready_event */
+UINT32 InU32_psm_warning_interlock; /* Subindex232 - InU32_psm_warning_interlock */
+UINT32 InU32_psm_minor_interlock; /* Subindex233 - InU32_psm_minor_interlock */
+UINT32 InU32_psm_serious_interlock; /* Subindex234 - InU32_psm_serious_interlock */
+UINT16 InU16_TotalStep_PSM; /* Subindex235 - InU16_TotalStep_PSM */
+UINT16 InU16_CurrentStep_PSM; /* Subindex236 - InU16_CurrentStep_PSM */
+UINT16 InU16_ErrorCode_PSM; /* Subindex237 - InU16_ErrorCode_PSM */
+UINT32 InU32_psm_move_status; /* Subindex238 - InU32_psm_move_status */
+REAL32 InF_psm_position_x_cur; /* Subindex239 - InF_psm_position_x_cur */
+REAL32 InF_psm_position_y_cur; /* Subindex240 - InF_psm_position_y_cur */
+REAL32 InF_psm_position_z_cur; /* Subindex241 - InF_psm_position_z_cur */
+REAL32 InF_psm_position_x_r_cur; /* Subindex242 - InF_psm_position_x_r_cur */
+REAL32 InF_psm_position_y_r_cur; /* Subindex243 - InF_psm_position_y_r_cur */
+REAL32 InF_psm_position_z_r_cur; /* Subindex244 - InF_psm_position_z_r_cur */
+REAL32 InF_psm_velocity_x_cur; /* Subindex245 - InF_psm_velocity_x_cur */
+REAL32 InF_psm_velocity_y_cur; /* Subindex246 - InF_psm_velocity_y_cur */
+REAL32 InF_psm_velocity_z_cur; /* Subindex247 - InF_psm_velocity_z_cur */
+REAL32 InF_psm_velocity_x_r_cur; /* Subindex248 - InF_psm_velocity_x_r_cur */
+REAL32 InF_psm_velocity_y_r_cur; /* Subindex249 - InF_psm_velocity_y_r_cur */
+REAL32 InF_psm_velocity_z_r_cur; /* Subindex250 - InF_psm_velocity_z_r_cur */
+UINT8 InU8_function_button; /* Subindex251 - InU8_function_button */
+UINT8 InU8_special_button; /* Subindex252 - InU8_special_button */
 } OBJ_STRUCT_PACKED_END
-__attribute__((aligned(1), packed))TOBJ6000;
+__attribute__((aligned(1), packed)) TOBJ6000;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
 
 /**
@@ -2580,7 +2652,7 @@ __attribute__((aligned(1), packed))TOBJ6000;
 */
 PROTO TOBJ6000 InputData0x6000
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={251,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+={252,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -2612,6 +2684,20 @@ PROTO TOBJ6000 InputData0x6000
 * SubIndex 10 - InU16_TotalStep_CPG_R<br>
 * SubIndex 11 - InU16_CurrentStep_CPG_R<br>
 * SubIndex 12 - InU16_ErrorCode_CPG_R<br>
+* SubIndex 13 - InU16_data_valid_flag<br>
+* SubIndex 14 - InUF_load_position_x_cur<br>
+* SubIndex 15 - InUF_load_position_y_cur<br>
+* SubIndex 16 - InUF_load_position_z_cur<br>
+* SubIndex 17 - InUF_load_position_x_r_cur<br>
+* SubIndex 18 - InUF_load_position_y_r_cur<br>
+* SubIndex 19 - InUF_load_position_z_r_cur<br>
+* SubIndex 20 - InUF_position_x_tar<br>
+* SubIndex 21 - InUF_position_y_tar<br>
+* SubIndex 22 - InUF_position_z_tar<br>
+* SubIndex 23 - InUF_position_x_r_tar<br>
+* SubIndex 24 - InUF_position_y_r_tar<br>
+* SubIndex 25 - InUF_position_z_r_tar<br>
+* SubIndex 26 - InU8_trm_require_state<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6010[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -2626,7 +2712,21 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6010[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex9 - InU32_CpgButtonFaultMask_R */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex10 - InU16_TotalStep_CPG_R */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex11 - InU16_CurrentStep_CPG_R */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }}; /* Subindex12 - InU16_ErrorCode_CPG_R */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex12 - InU16_ErrorCode_CPG_R */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex13 - InU16_data_valid_flag */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex14 - InUF_load_position_x_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex15 - InUF_load_position_y_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex16 - InUF_load_position_z_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex17 - InUF_load_position_x_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex18 - InUF_load_position_y_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex19 - InUF_load_position_z_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex20 - InUF_position_x_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex21 - InUF_position_y_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex22 - InUF_position_z_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex23 - InUF_position_x_r_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex24 - InUF_position_y_r_tar */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex25 - InUF_position_z_r_tar */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex26 - InU8_trm_require_state */
 
 /**
 * \brief Object/Entry names
@@ -2643,7 +2743,21 @@ OBJCONST UCHAR OBJMEM aName0x6010[] = "InputData\000"
 "InU32_CpgButtonFaultMask_R\000"
 "InU16_TotalStep_CPG_R\000"
 "InU16_CurrentStep_CPG_R\000"
-"InU16_ErrorCode_CPG_R\000\377";
+"InU16_ErrorCode_CPG_R\000"
+"InU16_data_valid_flag\000"
+"InUF_load_position_x_cur\000"
+"InUF_load_position_y_cur\000"
+"InUF_load_position_z_cur\000"
+"InUF_load_position_x_r_cur\000"
+"InUF_load_position_y_r_cur\000"
+"InUF_load_position_z_r_cur\000"
+"InUF_position_x_tar\000"
+"InUF_position_y_tar\000"
+"InUF_position_z_tar\000"
+"InUF_position_x_r_tar\000"
+"InUF_position_y_r_tar\000"
+"InUF_position_z_r_tar\000"
+"InU8_trm_require_state\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -2664,6 +2778,20 @@ UINT32 InU32_CpgButtonFaultMask_R; /* Subindex9 - InU32_CpgButtonFaultMask_R */
 UINT16 InU16_TotalStep_CPG_R; /* Subindex10 - InU16_TotalStep_CPG_R */
 UINT16 InU16_CurrentStep_CPG_R; /* Subindex11 - InU16_CurrentStep_CPG_R */
 UINT16 InU16_ErrorCode_CPG_R; /* Subindex12 - InU16_ErrorCode_CPG_R */
+UINT16 InU16_data_valid_flag; /* Subindex13 - InU16_data_valid_flag */
+REAL32 InUF_load_position_x_cur; /* Subindex14 - InUF_load_position_x_cur */
+REAL32 InUF_load_position_y_cur; /* Subindex15 - InUF_load_position_y_cur */
+REAL32 InUF_load_position_z_cur; /* Subindex16 - InUF_load_position_z_cur */
+REAL32 InUF_load_position_x_r_cur; /* Subindex17 - InUF_load_position_x_r_cur */
+REAL32 InUF_load_position_y_r_cur; /* Subindex18 - InUF_load_position_y_r_cur */
+REAL32 InUF_load_position_z_r_cur; /* Subindex19 - InUF_load_position_z_r_cur */
+REAL32 InUF_position_x_tar; /* Subindex20 - InUF_position_x_tar */
+REAL32 InUF_position_y_tar; /* Subindex21 - InUF_position_y_tar */
+REAL32 InUF_position_z_tar; /* Subindex22 - InUF_position_z_tar */
+REAL32 InUF_position_x_r_tar; /* Subindex23 - InUF_position_x_r_tar */
+REAL32 InUF_position_y_r_tar; /* Subindex24 - InUF_position_y_r_tar */
+REAL32 InUF_position_z_r_tar; /* Subindex25 - InUF_position_z_r_tar */
+UINT8 InU8_trm_require_state; /* Subindex26 - InU8_trm_require_state */
 } OBJ_STRUCT_PACKED_END
 __attribute__((aligned(1), packed)) TOBJ6010;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -2673,7 +2801,7 @@ __attribute__((aligned(1), packed)) TOBJ6010;
 */
 PROTO TOBJ6010 InputData0x6010
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={12,0,0,0,0,0,0,0,0,0,0,0,0}
+={26,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -2709,48 +2837,50 @@ PROTO TOBJ6010 InputData0x6010
 * SubIndex 14 - OutU16_rtm_on_plc_info<br>
 * SubIndex 15 - OutU32_rtm_on_interlock_override<br>
 * SubIndex 16 - OutU32_rtm_on_unready_override<br>
-* SubIndex 17 - OutU8_icm_require_state<br>
-* SubIndex 18 - OutU8_icm_require_ctrl_mode<br>
-* SubIndex 19 - OutU16_ct_status<br>
-* SubIndex 20 - OutF_gantry_velocity_prepare<br>
-* SubIndex 21 - OutU32_icm_interlock_override<br>
-* SubIndex 22 - OutU32_icm_unready_override<br>
-* SubIndex 23 - OutU8_bgm_require_state<br>
-* SubIndex 24 - OutU8_bgm_require_ctrl_mode<br>
-* SubIndex 25 - OutU32_bgm_interlock_override<br>
-* SubIndex 26 - OutU32_bgm_unready_override<br>
-* SubIndex 27 - OutU8_qam_require_state<br>
-* SubIndex 28 - OutU8_qam_require_ctrl_mode<br>
-* SubIndex 29 - OutU32_qam_interlock_override<br>
-* SubIndex 30 - OutU32_qam_unready_override<br>
-* SubIndex 31 - OutU8_bsm_require_state<br>
-* SubIndex 32 - OutU8_bsm_require_ctrl_mode<br>
-* SubIndex 33 - OutU32_bsm_interlock_override<br>
-* SubIndex 34 - OutU32_bsm_unready_override<br>
-* SubIndex 35 - OutU8_rtm_off_require_state<br>
-* SubIndex 36 - OutU8_rtm_off_require_ctrl_mode<br>
-* SubIndex 37 - OutU16_rtm_off_plc_info<br>
-* SubIndex 38 - OutU32_rtm_off_interlock_override<br>
-* SubIndex 39 - OutU32_rtm_off_unready_override<br>
-* SubIndex 40 - OutU8_led_belt<br>
-* SubIndex 41 - OutU8_reserved2<br>
-* SubIndex 42 - OutU32_rtm_off_search_timeout<br>
-* SubIndex 43 - OutU8_gmm_require_state<br>
-* SubIndex 44 - OutU8_gmm_require_ctrl_mode<br>
-* SubIndex 45 - OutU32_gmm_interlock_override<br>
-* SubIndex 46 - OutU32_gmm_unready_override<br>
-* SubIndex 47 - OutU8_psm_require_state<br>
-* SubIndex 48 - OutU8_psm_require_ctrl_mode<br>
-* SubIndex 49 - OutU32_psm_interlock_override<br>
-* SubIndex 50 - OutU32_psm_unready_override<br>
-* SubIndex 51 - OutU16_fkp_year<br>
-* SubIndex 52 - OutU8_fkp_month<br>
-* SubIndex 53 - OutU8_fkp_day<br>
-* SubIndex 54 - OutU8_fkp_hour<br>
-* SubIndex 55 - OutU8_fkp_minute<br>
-* SubIndex 56 - OutU8_fkp_totalFractions<br>
-* SubIndex 57 - OutU8_fkp_fractions<br>
-* SubIndex 58 - OutU8_reserved3<br>
+* SubIndex 17 - OutU32_rtm_on_treatment_mode<br>
+* SubIndex 18 - OutU8_icm_require_state<br>
+* SubIndex 19 - OutU8_icm_require_ctrl_mode<br>
+* SubIndex 20 - OutU16_ct_status<br>
+* SubIndex 21 - OutF_gantry_velocity_prepare<br>
+* SubIndex 22 - OutU32_icm_interlock_override<br>
+* SubIndex 23 - OutU32_icm_unready_override<br>
+* SubIndex 24 - OutU8_bgm_require_state<br>
+* SubIndex 25 - OutU8_bgm_require_ctrl_mode<br>
+* SubIndex 26 - OutU32_bgm_interlock_override<br>
+* SubIndex 27 - OutU32_bgm_unready_override<br>
+* SubIndex 28 - OutU8_qam_require_state<br>
+* SubIndex 29 - OutU8_qam_require_ctrl_mode<br>
+* SubIndex 30 - OutU32_qam_interlock_override<br>
+* SubIndex 31 - OutU32_qam_unready_override<br>
+* SubIndex 32 - OutU8_bsm_require_state<br>
+* SubIndex 33 - OutU8_bsm_require_ctrl_mode<br>
+* SubIndex 34 - OutU32_bsm_interlock_override<br>
+* SubIndex 35 - OutU32_bsm_unready_override<br>
+* SubIndex 36 - OutU8_rtm_off_require_state<br>
+* SubIndex 37 - OutU8_rtm_off_require_ctrl_mode<br>
+* SubIndex 38 - OutU16_rtm_off_plc_info<br>
+* SubIndex 39 - OutU32_rtm_off_interlock_override<br>
+* SubIndex 40 - OutU32_rtm_off_unready_override<br>
+* SubIndex 41 - OutU8_led_belt<br>
+* SubIndex 42 - OutU8_reserved2<br>
+* SubIndex 43 - OutU32_rtm_off_search_timeout<br>
+* SubIndex 44 - OutU32_rtm_off_treatment_mode<br>
+* SubIndex 45 - OutU8_gmm_require_state<br>
+* SubIndex 46 - OutU8_gmm_require_ctrl_mode<br>
+* SubIndex 47 - OutU32_gmm_interlock_override<br>
+* SubIndex 48 - OutU32_gmm_unready_override<br>
+* SubIndex 49 - OutU8_psm_require_state<br>
+* SubIndex 50 - OutU8_psm_require_ctrl_mode<br>
+* SubIndex 51 - OutU32_psm_interlock_override<br>
+* SubIndex 52 - OutU32_psm_unready_override<br>
+* SubIndex 53 - OutU16_fkp_year<br>
+* SubIndex 54 - OutU8_fkp_month<br>
+* SubIndex 55 - OutU8_fkp_day<br>
+* SubIndex 56 - OutU8_fkp_hour<br>
+* SubIndex 57 - OutU8_fkp_minute<br>
+* SubIndex 58 - OutU8_fkp_totalFractions<br>
+* SubIndex 59 - OutU8_fkp_fractions<br>
+* SubIndex 60 - OutU8_reserved3<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -2770,48 +2900,50 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex14 - OutU16_rtm_on_plc_info */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - OutU32_rtm_on_interlock_override */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex16 - OutU32_rtm_on_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex17 - OutU8_icm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex18 - OutU8_icm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex19 - OutU16_ct_status */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex20 - OutF_gantry_velocity_prepare */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex21 - OutU32_icm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex22 - OutU32_icm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex23 - OutU8_bgm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex24 - OutU8_bgm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex25 - OutU32_bgm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex26 - OutU32_bgm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex27 - OutU8_qam_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex28 - OutU8_qam_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex29 - OutU32_qam_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex30 - OutU32_qam_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex31 - OutU8_bsm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex32 - OutU8_bsm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex33 - OutU32_bsm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex34 - OutU32_bsm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex35 - OutU8_rtm_off_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex36 - OutU8_rtm_off_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex37 - OutU16_rtm_off_plc_info */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex38 - OutU32_rtm_off_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex39 - OutU32_rtm_off_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex40 - OutU8_led_belt */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex41 - OutU8_reserved2 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex42 - OutU32_rtm_off_search_timeout */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex43 - OutU8_gmm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex44 - OutU8_gmm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex45 - OutU32_gmm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex46 - OutU32_gmm_unready_override */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex47 - OutU8_psm_require_state */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex48 - OutU8_psm_require_ctrl_mode */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex49 - OutU32_psm_interlock_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex50 - OutU32_psm_unready_override */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex51 - OutU16_fkp_year */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex52 - OutU8_fkp_month */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex53 - OutU8_fkp_day */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex54 - OutU8_fkp_hour */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex55 - OutU8_fkp_minute */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex56 - OutU8_fkp_totalFractions */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex57 - OutU8_fkp_fractions */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex58 - OutU8_reserved3 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex17 - OutU32_rtm_on_treatment_mode */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex18 - OutU8_icm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex19 - OutU8_icm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex20 - OutU16_ct_status */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex21 - OutF_gantry_velocity_prepare */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex22 - OutU32_icm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex23 - OutU32_icm_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex24 - OutU8_bgm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex25 - OutU8_bgm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex26 - OutU32_bgm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex27 - OutU32_bgm_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex28 - OutU8_qam_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex29 - OutU8_qam_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex30 - OutU32_qam_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex31 - OutU32_qam_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex32 - OutU8_bsm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex33 - OutU8_bsm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex34 - OutU32_bsm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex35 - OutU32_bsm_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex36 - OutU8_rtm_off_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex37 - OutU8_rtm_off_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex38 - OutU16_rtm_off_plc_info */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex39 - OutU32_rtm_off_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex40 - OutU32_rtm_off_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex41 - OutU8_led_belt */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex42 - OutU8_reserved2 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex43 - OutU32_rtm_off_search_timeout */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex44 - OutU32_rtm_off_treatment_mode */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex45 - OutU8_gmm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex46 - OutU8_gmm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex47 - OutU32_gmm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex48 - OutU32_gmm_unready_override */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex49 - OutU8_psm_require_state */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex50 - OutU8_psm_require_ctrl_mode */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex51 - OutU32_psm_interlock_override */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex52 - OutU32_psm_unready_override */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex53 - OutU16_fkp_year */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex54 - OutU8_fkp_month */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex55 - OutU8_fkp_day */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex56 - OutU8_fkp_hour */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex57 - OutU8_fkp_minute */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex58 - OutU8_fkp_totalFractions */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex59 - OutU8_fkp_fractions */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex60 - OutU8_reserved3 */
 
 /**
 * \brief Object/Entry names
@@ -2833,6 +2965,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU16_rtm_on_plc_info\000"
 "OutU32_rtm_on_interlock_override\000"
 "OutU32_rtm_on_unready_override\000"
+"OutU32_rtm_on_treatment_mode\000"
 "OutU8_icm_require_state\000"
 "OutU8_icm_require_ctrl_mode\000"
 "OutU16_ct_status\000"
@@ -2859,6 +2992,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU8_led_belt\000"
 "OutU8_reserved2\000"
 "OutU32_rtm_off_search_timeout\000"
+"OutU32_rtm_off_treatment_mode\000"
 "OutU8_gmm_require_state\000"
 "OutU8_gmm_require_ctrl_mode\000"
 "OutU32_gmm_interlock_override\000"
@@ -2899,50 +3033,52 @@ UINT8 OutU8_rtm_on_require_ctrl_mode; /* Subindex13 - OutU8_rtm_on_require_ctrl_
 UINT16 OutU16_rtm_on_plc_info; /* Subindex14 - OutU16_rtm_on_plc_info */
 UINT32 OutU32_rtm_on_interlock_override; /* Subindex15 - OutU32_rtm_on_interlock_override */
 UINT32 OutU32_rtm_on_unready_override; /* Subindex16 - OutU32_rtm_on_unready_override */
-UINT8 OutU8_icm_require_state; /* Subindex17 - OutU8_icm_require_state */
-UINT8 OutU8_icm_require_ctrl_mode; /* Subindex18 - OutU8_icm_require_ctrl_mode */
-UINT16 OutU16_ct_status; /* Subindex19 - OutU16_ct_status */
-REAL32 OutF_gantry_velocity_prepare; /* Subindex20 - OutF_gantry_velocity_prepare */
-UINT32 OutU32_icm_interlock_override; /* Subindex21 - OutU32_icm_interlock_override */
-UINT32 OutU32_icm_unready_override; /* Subindex22 - OutU32_icm_unready_override */
-UINT8 OutU8_bgm_require_state; /* Subindex23 - OutU8_bgm_require_state */
-UINT8 OutU8_bgm_require_ctrl_mode; /* Subindex24 - OutU8_bgm_require_ctrl_mode */
-UINT32 OutU32_bgm_interlock_override; /* Subindex25 - OutU32_bgm_interlock_override */
-UINT32 OutU32_bgm_unready_override; /* Subindex26 - OutU32_bgm_unready_override */
-UINT8 OutU8_qam_require_state; /* Subindex27 - OutU8_qam_require_state */
-UINT8 OutU8_qam_require_ctrl_mode; /* Subindex28 - OutU8_qam_require_ctrl_mode */
-UINT32 OutU32_qam_interlock_override; /* Subindex29 - OutU32_qam_interlock_override */
-UINT32 OutU32_qam_unready_override; /* Subindex30 - OutU32_qam_unready_override */
-UINT8 OutU8_bsm_require_state; /* Subindex31 - OutU8_bsm_require_state */
-UINT8 OutU8_bsm_require_ctrl_mode; /* Subindex32 - OutU8_bsm_require_ctrl_mode */
-UINT32 OutU32_bsm_interlock_override; /* Subindex33 - OutU32_bsm_interlock_override */
-UINT32 OutU32_bsm_unready_override; /* Subindex34 - OutU32_bsm_unready_override */
-UINT8 OutU8_rtm_off_require_state; /* Subindex35 - OutU8_rtm_off_require_state */
-UINT8 OutU8_rtm_off_require_ctrl_mode; /* Subindex36 - OutU8_rtm_off_require_ctrl_mode */
-UINT16 OutU16_rtm_off_plc_info; /* Subindex37 - OutU16_rtm_off_plc_info */
-UINT32 OutU32_rtm_off_interlock_override; /* Subindex38 - OutU32_rtm_off_interlock_override */
-UINT32 OutU32_rtm_off_unready_override; /* Subindex39 - OutU32_rtm_off_unready_override */
-UINT8 OutU8_led_belt; /* Subindex40 - OutU8_led_belt */
-UINT8 OutU8_reserved2; /* Subindex41 - OutU8_reserved2 */
-UINT32 OutU32_rtm_off_search_timeout; /* Subindex42 - OutU32_rtm_off_search_timeout */
-UINT8 OutU8_gmm_require_state; /* Subindex43 - OutU8_gmm_require_state */
-UINT8 OutU8_gmm_require_ctrl_mode; /* Subindex44 - OutU8_gmm_require_ctrl_mode */
-UINT32 OutU32_gmm_interlock_override; /* Subindex45 - OutU32_gmm_interlock_override */
-UINT32 OutU32_gmm_unready_override; /* Subindex46 - OutU32_gmm_unready_override */
-UINT8 OutU8_psm_require_state; /* Subindex47 - OutU8_psm_require_state */
-UINT8 OutU8_psm_require_ctrl_mode; /* Subindex48 - OutU8_psm_require_ctrl_mode */
-UINT32 OutU32_psm_interlock_override; /* Subindex49 - OutU32_psm_interlock_override */
-UINT32 OutU32_psm_unready_override; /* Subindex50 - OutU32_psm_unready_override */
-UINT16 OutU16_fkp_year; /* Subindex51 - OutU16_fkp_year */
-UINT8 OutU8_fkp_month; /* Subindex52 - OutU8_fkp_month */
-UINT8 OutU8_fkp_day; /* Subindex53 - OutU8_fkp_day */
-UINT8 OutU8_fkp_hour; /* Subindex54 - OutU8_fkp_hour */
-UINT8 OutU8_fkp_minute; /* Subindex55 - OutU8_fkp_minute */
-UINT8 OutU8_fkp_totalFractions; /* Subindex56 - OutU8_fkp_totalFractions */
-UINT8 OutU8_fkp_fractions; /* Subindex57 - OutU8_fkp_fractions */
-UINT8 OutU8_reserved3; /* Subindex58 - OutU8_reserved3 */
+UINT32 OutU32_rtm_on_treatment_mode; /* Subindex17 - OutU32_rtm_on_treatment_mode */
+UINT8 OutU8_icm_require_state; /* Subindex18 - OutU8_icm_require_state */
+UINT8 OutU8_icm_require_ctrl_mode; /* Subindex19 - OutU8_icm_require_ctrl_mode */
+UINT16 OutU16_ct_status; /* Subindex20 - OutU16_ct_status */
+REAL32 OutF_gantry_velocity_prepare; /* Subindex21 - OutF_gantry_velocity_prepare */
+UINT32 OutU32_icm_interlock_override; /* Subindex22 - OutU32_icm_interlock_override */
+UINT32 OutU32_icm_unready_override; /* Subindex23 - OutU32_icm_unready_override */
+UINT8 OutU8_bgm_require_state; /* Subindex24 - OutU8_bgm_require_state */
+UINT8 OutU8_bgm_require_ctrl_mode; /* Subindex25 - OutU8_bgm_require_ctrl_mode */
+UINT32 OutU32_bgm_interlock_override; /* Subindex26 - OutU32_bgm_interlock_override */
+UINT32 OutU32_bgm_unready_override; /* Subindex27 - OutU32_bgm_unready_override */
+UINT8 OutU8_qam_require_state; /* Subindex28 - OutU8_qam_require_state */
+UINT8 OutU8_qam_require_ctrl_mode; /* Subindex29 - OutU8_qam_require_ctrl_mode */
+UINT32 OutU32_qam_interlock_override; /* Subindex30 - OutU32_qam_interlock_override */
+UINT32 OutU32_qam_unready_override; /* Subindex31 - OutU32_qam_unready_override */
+UINT8 OutU8_bsm_require_state; /* Subindex32 - OutU8_bsm_require_state */
+UINT8 OutU8_bsm_require_ctrl_mode; /* Subindex33 - OutU8_bsm_require_ctrl_mode */
+UINT32 OutU32_bsm_interlock_override; /* Subindex34 - OutU32_bsm_interlock_override */
+UINT32 OutU32_bsm_unready_override; /* Subindex35 - OutU32_bsm_unready_override */
+UINT8 OutU8_rtm_off_require_state; /* Subindex36 - OutU8_rtm_off_require_state */
+UINT8 OutU8_rtm_off_require_ctrl_mode; /* Subindex37 - OutU8_rtm_off_require_ctrl_mode */
+UINT16 OutU16_rtm_off_plc_info; /* Subindex38 - OutU16_rtm_off_plc_info */
+UINT32 OutU32_rtm_off_interlock_override; /* Subindex39 - OutU32_rtm_off_interlock_override */
+UINT32 OutU32_rtm_off_unready_override; /* Subindex40 - OutU32_rtm_off_unready_override */
+UINT8 OutU8_led_belt; /* Subindex41 - OutU8_led_belt */
+UINT8 OutU8_reserved2; /* Subindex42 - OutU8_reserved2 */
+UINT32 OutU32_rtm_off_search_timeout; /* Subindex43 - OutU32_rtm_off_search_timeout */
+UINT32 OutU32_rtm_off_treatment_mode; /* Subindex44 - OutU32_rtm_off_treatment_mode */
+UINT8 OutU8_gmm_require_state; /* Subindex45 - OutU8_gmm_require_state */
+UINT8 OutU8_gmm_require_ctrl_mode; /* Subindex46 - OutU8_gmm_require_ctrl_mode */
+UINT32 OutU32_gmm_interlock_override; /* Subindex47 - OutU32_gmm_interlock_override */
+UINT32 OutU32_gmm_unready_override; /* Subindex48 - OutU32_gmm_unready_override */
+UINT8 OutU8_psm_require_state; /* Subindex49 - OutU8_psm_require_state */
+UINT8 OutU8_psm_require_ctrl_mode; /* Subindex50 - OutU8_psm_require_ctrl_mode */
+UINT32 OutU32_psm_interlock_override; /* Subindex51 - OutU32_psm_interlock_override */
+UINT32 OutU32_psm_unready_override; /* Subindex52 - OutU32_psm_unready_override */
+UINT16 OutU16_fkp_year; /* Subindex53 - OutU16_fkp_year */
+UINT8 OutU8_fkp_month; /* Subindex54 - OutU8_fkp_month */
+UINT8 OutU8_fkp_day; /* Subindex55 - OutU8_fkp_day */
+UINT8 OutU8_fkp_hour; /* Subindex56 - OutU8_fkp_hour */
+UINT8 OutU8_fkp_minute; /* Subindex57 - OutU8_fkp_minute */
+UINT8 OutU8_fkp_totalFractions; /* Subindex58 - OutU8_fkp_totalFractions */
+UINT8 OutU8_fkp_fractions; /* Subindex59 - OutU8_fkp_fractions */
+UINT8 OutU8_reserved3; /* Subindex60 - OutU8_reserved3 */
 } OBJ_STRUCT_PACKED_END
-__attribute__((aligned(1), packed))TOBJ7010;
+__attribute__((aligned(1), packed)) TOBJ7010;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
 
 /**
@@ -2950,7 +3086,7 @@ __attribute__((aligned(1), packed))TOBJ7010;
 */
 PROTO TOBJ7010 OutputData0x7010
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={58,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+={60,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -2964,21 +3100,21 @@ PROTO TOBJ7010 OutputData0x7010
 #ifdef _OBJD_
 TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1601 */
-{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 58 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 60 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
 /* Object 0x1A00 */
-{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 251 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 252 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
 /* Object 0x1A01 */
-{NULL , NULL ,  0x1A01 , {DEFTYPE_PDOMAPPING , 12 | (OBJCODE_REC << 8)} , asEntryDesc0x1A01 , aName0x1A01 , &InputDataProcessDataMapping0x1A01 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1A01 , {DEFTYPE_PDOMAPPING , 26 | (OBJCODE_REC << 8)} , asEntryDesc0x1A01 , aName0x1A01 , &InputDataProcessDataMapping0x1A01 , NULL , NULL , 0x0000 },
 /* Object 0x1C12 */
 {NULL , NULL ,  0x1C12 , {DEFTYPE_UNSIGNED16 , 1 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C12 , aName0x1C12 , &sRxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x1C13 */
 {NULL , NULL ,  0x1C13 , {DEFTYPE_UNSIGNED16 , 2 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C13 , aName0x1C13 , &sTxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x6000 */
-{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 251 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 252 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
 /* Object 0x6010 */
-{NULL , NULL ,  0x6010 , {DEFTYPE_RECORD , 12 | (OBJCODE_REC << 8)} , asEntryDesc0x6010 , aName0x6010 , &InputData0x6010 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x6010 , {DEFTYPE_RECORD , 26 | (OBJCODE_REC << 8)} , asEntryDesc0x6010 , aName0x6010 , &InputData0x6010 , NULL , NULL , 0x0000 },
 /* Object 0x7010 */
-{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 58 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 60 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
 {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL}};
 #endif    //#ifdef _OBJD_
 

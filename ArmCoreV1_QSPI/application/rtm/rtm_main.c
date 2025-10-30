@@ -66,6 +66,15 @@ typedef struct
     uint8_t board_id_bgm;
     uint8_t reserved_bgm;
     uint32_t firmware_version_bgm;
+    uint8_t board_id_primary_dose;
+    uint8_t reserved_primary_dose;
+    uint32_t firmware_version_primary_dose;
+    uint8_t board_id_second_dose;
+    uint8_t reserved_second_dose;
+    uint32_t firmware_version_second_dose;
+    uint8_t board_id_AFC;
+    uint8_t reserved_AFC;
+    uint32_t firmware_version_AFC;
     uint8_t board_id_qam;
     uint8_t reserved_qam;
     uint32_t firmware_version_qam;
@@ -119,16 +128,16 @@ void module_versions_get(app_rtm_main_t *self, module_versions_t *module_version
         return;
     }
     module_versions->board_id_rtm_on_arm = *(uint8_t *)&(self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx);
-    module_versions->firmware_version_rtm_on_arm = self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx.FirmWareVersion;
+    module_versions->firmware_version_rtm_on_arm = self->rtm_module_info[RTM_MODULE_RTM_ON_ARM].heartbeat_info_rx->FirmWareVersion;
 
     module_versions->board_id_icm = *(uint8_t *)&(self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx);
-    module_versions->firmware_version_icm = self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx.FirmWareVersion;
+    module_versions->firmware_version_icm = self->rtm_module_info[RTM_MODULE_ICM].heartbeat_info_rx->FirmWareVersion;
 
     module_versions->board_id_bgm = *(uint8_t *)&(self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx);
-    module_versions->firmware_version_bgm = self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx.FirmWareVersion;
+    module_versions->firmware_version_bgm = self->rtm_module_info[RTM_MODULE_BGM].heartbeat_info_rx->FirmWareVersion;
 
     module_versions->board_id_qam = *(uint8_t *)&(self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx);
-    module_versions->firmware_version_qam = self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx.FirmWareVersion;
+    module_versions->firmware_version_qam = self->rtm_module_info[RTM_MODULE_QAM].heartbeat_info_rx->FirmWareVersion;
 }
 #define RTM_MAIN_THREAD_CYCLE_MS (1)
 static void app_rtm_main_thread(void *argument)
@@ -176,6 +185,7 @@ static void app_rtm_main_thread(void *argument)
                     self->PLC_info = *(uint16_t *)&(queue_frame.payload.data[3]);
                     self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[5]);
                     self->unready_override = *(uint32_t *)&(queue_frame.payload.data[9]);
+                    self->treatment_mode = *(uint32_t *)&(queue_frame.payload.data[13]);                  
                     break;
                 }
                 case OUTPUT_FAULT_CLEAR_CMD: /*故障清除*/
@@ -665,12 +675,6 @@ static void ethercat_input_data_6000_distribute(rtm_module_info_t *const self, T
     case INPUT_RTM_OFF_ARM_BUTTON_CMD:
         memcpy(&input_data->InU8_function_button, queue_frame->payload.data + 1, len);
         break;
-    case INPUT_RTM_OFF_ARM_TRM_REQUIRE_CMD:
-        memcpy(&input_data->InU8_trm_require_state, queue_frame->payload.data + 1, len);
-        break;
-    case INPUT_PSM_SETUP_POSITION_CMD:
-        memcpy(&input_data->InU16_data_valid_flag, queue_frame->payload.data + 1, len);
-        break;
     default:
         break;
     }
@@ -702,6 +706,12 @@ static void ethercat_input_data_6010_distribute(rtm_module_info_t *const self, T
         break;
     case INPUT_CPG_R_STATE_CMD:
         memcpy(&input_data->InU32_CpgButtonFaultMask_R, queue_frame->payload.data + 1, len);
+        break;
+    case INPUT_RTM_OFF_ARM_TRM_REQUIRE_CMD:
+        memcpy(&input_data->InU8_trm_require_state, queue_frame->payload.data + 1, len);
+        break;
+    case INPUT_PSM_SETUP_POSITION_CMD:
+        memcpy(&input_data->InU16_data_valid_flag, queue_frame->payload.data + 1, len);
         break;
     default:
         break;
@@ -831,7 +841,7 @@ int32_t uart_protocol_heartbeat_rx_callback(struct uart_protocol *const self,
         LOG_E("%s heartbeat rx len err!\r\n", rtm_module_info->module_name);
     }
 
-    memcpy(&(rtm_module_info->heartbeat_info_rx), heartbeat, sizeof(heartbeat_t));
+    memcpy(rtm_module_info->heartbeat_info_rx, heartbeat, sizeof(heartbeat_t));
 
     app_rtm_thread_flag_set(rtm_module_info->module_thread_flags);
     return 0;

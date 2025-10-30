@@ -122,7 +122,7 @@ extern "C"
         module_tx_state_t tx_disable;
         uint32_t ID;
         osPriority_t module_priority;
-        heartbeat_t heartbeat_info_rx; // receive heartbeat info
+        heartbeat_t heartbeat_info_rx[4]; // receive heartbeat info
         heartbeat_t heartbeat_info_tx; // send heartbeat info
 
         uart_protocol_t uart_protocol;
@@ -137,6 +137,12 @@ extern "C"
 #define ETHERCAT_OP_STATE_BIT (0)
         manage_info_t manage_info;
     } rtm_ethercat_info_t;
+
+    enum treatment_mode_state
+    {
+        TREATMENT_MODE_NORMAL = 0,
+        TREATMENT_MODE_PLAN_QA = 0x8E73B4F1,
+    };
 
     typedef struct app_rtm_main
     {
@@ -163,6 +169,8 @@ extern "C"
         uint16_t PLC_info;
         uint32_t interlock_override;
         uint32_t unready_override;
+        uint32_t treatment_mode;
+
         uint8_t beamID;
 
         uint8_t icm_current_state;
