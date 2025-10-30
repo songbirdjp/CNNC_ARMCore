@@ -571,6 +571,7 @@ PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 * SubIndex 250 - Reference to 0x6000.250<br>
 * SubIndex 251 - Reference to 0x6000.251<br>
 * SubIndex 252 - Reference to 0x6000.252<br>
+* SubIndex 253 - Reference to 0x6000.253<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -825,7 +826,8 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1A00[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex249 - Reference to 0x6000.249 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex250 - Reference to 0x6000.250 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex251 - Reference to 0x6000.251 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex252 - Reference to 0x6000.252 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex252 - Reference to 0x6000.252 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex253 - Reference to 0x6000.253 */
 
 /**
 * \brief Object/Entry names
@@ -1082,7 +1084,8 @@ OBJCONST UCHAR OBJMEM aName0x1A00[] = "InputData process data mapping\000"
 "SubIndex 249\000"
 "SubIndex 250\000"
 "SubIndex 251\000"
-"SubIndex 252\000\377";
+"SubIndex 252\000"
+"SubIndex 253\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -1343,6 +1346,7 @@ UINT32 SI249; /* Subindex249 - Reference to 0x6000.249 */
 UINT32 SI250; /* Subindex250 - Reference to 0x6000.250 */
 UINT32 SI251; /* Subindex251 - Reference to 0x6000.251 */
 UINT32 SI252; /* Subindex252 - Reference to 0x6000.252 */
+UINT32 SI253; /* Subindex253 - Reference to 0x6000.253 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1A00;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -1352,7 +1356,7 @@ TOBJ1A00;
 */
 PROTO TOBJ1A00 InputDataProcessDataMapping0x1A00
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={252,0x60000108,0x60000208,0x60000320,0x60000408,0x60000508,0x60000620,0x60000708,0x60000808,0x60000920,0x60000A08,0x60000B08,0x60000C20,0x60000D08,0x60000E08,0x60000F20,0x60001008,0x60001108,0x60001220,0x60001308,0x60001408,0x60001520,0x60001608,0x60001708,0x60001820,0x60001908,0x60001A08,0x60001B20,0x60001C08,0x60001D08,0x60001E20,0x60001F08,0x60002008,0x60002120,0x60002208,0x60002308,0x60002420,0x60002508,0x60002608,0x60002720,0x60002808,0x60002908,0x60002A10,0x60002B08,0x60002C08,0x60002D08,0x60002E08,0x60002F08,0x60003008,0x60003110,0x60003220,0x60003320,0x60003420,0x60003520,0x60003610,0x60003710,0x60003810,0x60003901,0x60003A01,0x60003B01,0x60003C01,0x60003D01,0x60003E01,0x60003F01,0x60004001,0x60004101,0x60004201,0x60004301,0x60004401,0x60004504,0x60004601,0x60004701,0x60004801,0x60004901,0x60004A01,0x60004B01,0x60004C01,0x60004D01,0x60004E08,0x60004F08,0x60005001,0x60005101,0x60005201,0x60005301,0x60005401,0x60005501,0x60005601,0x60005701,0x60005801,0x60005901,0x60005A01,0x60005B01,0x60005C01,0x60005D01,0x60005E01,0x60005F01,0x60006001,0x60006101,0x60006201,0x60006301,0x60006401,0x60006501,0x60006601,0x60006701,0x60006801,0x60006901,0x60006A01,0x60006B01,0x60006C01,0x60006D01,0x60006E01,0x60006F01,0x60007001,0x60007101,0x60007201,0x60007301,0x60007401,0x60007501,0x60007601,0x60007701,0x60007810,0x60007901,0x60007A07,0x60007B08,0x60007C01,0x60007D01,0x60007E01,0x60007F01,0x60008001,0x60008101,0x60008201,0x60008301,0x60008401,0x60008507,0x60008610,0x60008701,0x60008801,0x60008901,0x60008A01,0x60008B01,0x60008C01,0x60008D01,0x60008E01,0x60008F08,0x60009008,0x60009108,0x60009210,0x60009308,0x60009408,0x60009510,0x60009620,0x60009720,0x60009820,0x60009920,0x60009A10,0x60009B10,0x60009C10,0x60009D08,0x60009E08,0x60009F10,0x6000A008,0x6000A108,0x6000A210,0x6000A320,0x6000A420,0x6000A520,0x6000A620,0x6000A710,0x6000A810,0x6000A910,0x6000AA20,0x6000AB20,0x6000AC20,0x6000AD08,0x6000AE08,0x6000AF20,0x6000B020,0x6000B120,0x6000B208,0x6000B308,0x6000B420,0x6000B520,0x6000B620,0x6000B708,0x6000B808,0x6000B910,0x6000BA08,0x6000BB08,0x6000BC10,0x6000BD20,0x6000BE20,0x6000BF20,0x6000C020,0x6000C110,0x6000C210,0x6000C310,0x6000C408,0x6000C508,0x6000C610,0x6000C708,0x6000C808,0x6000C910,0x6000CA20,0x6000CB20,0x6000CC20,0x6000CD20,0x6000CE10,0x6000CF10,0x6000D010,0x6000D108,0x6000D208,0x6000D310,0x6000D408,0x6000D508,0x6000D610,0x6000D720,0x6000D820,0x6000D920,0x6000DA20,0x6000DB10,0x6000DC10,0x6000DD10,0x6000DE20,0x6000DF20,0x6000E020,0x6000E108,0x6000E208,0x6000E310,0x6000E408,0x6000E508,0x6000E610,0x6000E720,0x6000E820,0x6000E920,0x6000EA20,0x6000EB10,0x6000EC10,0x6000ED10,0x6000EE20,0x6000EF20,0x6000F020,0x6000F120,0x6000F220,0x6000F320,0x6000F420,0x6000F520,0x6000F620,0x6000F720,0x6000F820,0x6000F920,0x6000FA20,0x6000FB08,0x6000FC08}
+={253,0x60000108,0x60000208,0x60000320,0x60000408,0x60000508,0x60000620,0x60000708,0x60000808,0x60000920,0x60000A08,0x60000B08,0x60000C20,0x60000D08,0x60000E08,0x60000F20,0x60001008,0x60001108,0x60001220,0x60001308,0x60001408,0x60001520,0x60001608,0x60001708,0x60001820,0x60001908,0x60001A08,0x60001B20,0x60001C08,0x60001D08,0x60001E20,0x60001F08,0x60002008,0x60002120,0x60002208,0x60002308,0x60002420,0x60002508,0x60002608,0x60002720,0x60002808,0x60002908,0x60002A10,0x60002B08,0x60002C08,0x60002D08,0x60002E08,0x60002F08,0x60003008,0x60003110,0x60003220,0x60003320,0x60003420,0x60003520,0x60003610,0x60003710,0x60003810,0x60003901,0x60003A01,0x60003B01,0x60003C01,0x60003D01,0x60003E01,0x60003F01,0x60004001,0x60004101,0x60004201,0x60004301,0x60004401,0x60004504,0x60004601,0x60004701,0x60004801,0x60004901,0x60004A01,0x60004B01,0x60004C01,0x60004D01,0x60004E08,0x60004F08,0x60005001,0x60005101,0x60005201,0x60005301,0x60005401,0x60005501,0x60005601,0x60005701,0x60005801,0x60005901,0x60005A01,0x60005B01,0x60005C01,0x60005D01,0x60005E01,0x60005F01,0x60006001,0x60006101,0x60006201,0x60006301,0x60006401,0x60006501,0x60006601,0x60006701,0x60006801,0x60006901,0x60006A01,0x60006B01,0x60006C01,0x60006D01,0x60006E01,0x60006F01,0x60007001,0x60007101,0x60007201,0x60007301,0x60007401,0x60007501,0x60007601,0x60007701,0x60007810,0x60007901,0x60007A07,0x60007B08,0x60007C01,0x60007D01,0x60007E01,0x60007F01,0x60008001,0x60008101,0x60008201,0x60008301,0x60008401,0x60008507,0x60008610,0x60008701,0x60008801,0x60008901,0x60008A01,0x60008B01,0x60008C01,0x60008D01,0x60008E01,0x60008F08,0x60009008,0x60009108,0x60009210,0x60009308,0x60009408,0x60009510,0x60009620,0x60009720,0x60009820,0x60009920,0x60009A10,0x60009B10,0x60009C10,0x60009D08,0x60009E08,0x60009F10,0x6000A008,0x6000A108,0x6000A210,0x6000A320,0x6000A420,0x6000A520,0x6000A620,0x6000A710,0x6000A810,0x6000A910,0x6000AA20,0x6000AB20,0x6000AC20,0x6000AD08,0x6000AE08,0x6000AF20,0x6000B020,0x6000B120,0x6000B208,0x6000B308,0x6000B420,0x6000B520,0x6000B620,0x6000B708,0x6000B808,0x6000B910,0x6000BA08,0x6000BB08,0x6000BC10,0x6000BD20,0x6000BE20,0x6000BF20,0x6000C020,0x6000C110,0x6000C210,0x6000C310,0x6000C408,0x6000C508,0x6000C610,0x6000C708,0x6000C808,0x6000C910,0x6000CA20,0x6000CB20,0x6000CC20,0x6000CD20,0x6000CE10,0x6000CF10,0x6000D010,0x6000D120,0x6000D208,0x6000D308,0x6000D410,0x6000D508,0x6000D608,0x6000D710,0x6000D820,0x6000D920,0x6000DA20,0x6000DB20,0x6000DC10,0x6000DD10,0x6000DE10,0x6000DF20,0x6000E020,0x6000E120,0x6000E208,0x6000E308,0x6000E410,0x6000E508,0x6000E608,0x6000E710,0x6000E820,0x6000E920,0x6000EA20,0x6000EB20,0x6000EC10,0x6000ED10,0x6000EE10,0x6000EF20,0x6000F020,0x6000F120,0x6000F220,0x6000F320,0x6000F420,0x6000F520,0x6000F620,0x6000F720,0x6000F820,0x6000F920,0x6000FA20,0x6000FB20,0x6000FC08,0x6000FD08}
 #endif
 ;
 /** @}*/
@@ -1827,50 +1831,51 @@ PROTO TOBJ1C13 sTxPDOassign
 * SubIndex 206 - InU16_TotalStep_RTM_OFF_ARM<br>
 * SubIndex 207 - InU16_CurrentStep_RTM_OFF_ARM<br>
 * SubIndex 208 - InU16_ErrorCode_RTM_OFF_ARM<br>
-* SubIndex 209 - InU8_gmm_fsm_state_current<br>
-* SubIndex 210 - InU8_gmm_ctrl_mode_cur<br>
-* SubIndex 211 - InU16_reserved14<br>
-* SubIndex 212 - InU8_gmm_beam_id<br>
-* SubIndex 213 - InU8_reserved15<br>
-* SubIndex 214 - InU16_gmm_radiation_index<br>
-* SubIndex 215 - InU32_gmm_not_ready_event<br>
-* SubIndex 216 - InU32_gmm_warning_interlock<br>
-* SubIndex 217 - InU32_gmm_minor_interlock<br>
-* SubIndex 218 - InU32_gmm_serious_interlock<br>
-* SubIndex 219 - InU16_TotalStep_GMM<br>
-* SubIndex 220 - InU16_CurrentStep_GMM<br>
-* SubIndex 221 - InU16_ErrorCode_GMM<br>
-* SubIndex 222 - InU32_gmm_move_status<br>
-* SubIndex 223 - InF_gmm_position_cur<br>
-* SubIndex 224 - InF_gmm_velocity_cur<br>
-* SubIndex 225 - InU8_psm_fsm_state_current<br>
-* SubIndex 226 - InU8_psm_ctrl_mode_cur<br>
-* SubIndex 227 - InU16_reserved16<br>
-* SubIndex 228 - InU8_psm_beam_id<br>
-* SubIndex 229 - InU8_reserved17<br>
-* SubIndex 230 - InU16_psm_radiation_index<br>
-* SubIndex 231 - InU32_psm_not_ready_event<br>
-* SubIndex 232 - InU32_psm_warning_interlock<br>
-* SubIndex 233 - InU32_psm_minor_interlock<br>
-* SubIndex 234 - InU32_psm_serious_interlock<br>
-* SubIndex 235 - InU16_TotalStep_PSM<br>
-* SubIndex 236 - InU16_CurrentStep_PSM<br>
-* SubIndex 237 - InU16_ErrorCode_PSM<br>
-* SubIndex 238 - InU32_psm_move_status<br>
-* SubIndex 239 - InF_psm_position_x_cur<br>
-* SubIndex 240 - InF_psm_position_y_cur<br>
-* SubIndex 241 - InF_psm_position_z_cur<br>
-* SubIndex 242 - InF_psm_position_x_r_cur<br>
-* SubIndex 243 - InF_psm_position_y_r_cur<br>
-* SubIndex 244 - InF_psm_position_z_r_cur<br>
-* SubIndex 245 - InF_psm_velocity_x_cur<br>
-* SubIndex 246 - InF_psm_velocity_y_cur<br>
-* SubIndex 247 - InF_psm_velocity_z_cur<br>
-* SubIndex 248 - InF_psm_velocity_x_r_cur<br>
-* SubIndex 249 - InF_psm_velocity_y_r_cur<br>
-* SubIndex 250 - InF_psm_velocity_z_r_cur<br>
-* SubIndex 251 - InU8_function_button<br>
-* SubIndex 252 - InU8_special_button<br>
+* SubIndex 209 - InU32_rtm_off_search_timeout_cur<br>
+* SubIndex 210 - InU8_gmm_fsm_state_current<br>
+* SubIndex 211 - InU8_gmm_ctrl_mode_cur<br>
+* SubIndex 212 - InU16_reserved14<br>
+* SubIndex 213 - InU8_gmm_beam_id<br>
+* SubIndex 214 - InU8_reserved15<br>
+* SubIndex 215 - InU16_gmm_radiation_index<br>
+* SubIndex 216 - InU32_gmm_not_ready_event<br>
+* SubIndex 217 - InU32_gmm_warning_interlock<br>
+* SubIndex 218 - InU32_gmm_minor_interlock<br>
+* SubIndex 219 - InU32_gmm_serious_interlock<br>
+* SubIndex 220 - InU16_TotalStep_GMM<br>
+* SubIndex 221 - InU16_CurrentStep_GMM<br>
+* SubIndex 222 - InU16_ErrorCode_GMM<br>
+* SubIndex 223 - InU32_gmm_move_status<br>
+* SubIndex 224 - InF_gmm_position_cur<br>
+* SubIndex 225 - InF_gmm_velocity_cur<br>
+* SubIndex 226 - InU8_psm_fsm_state_current<br>
+* SubIndex 227 - InU8_psm_ctrl_mode_cur<br>
+* SubIndex 228 - InU16_reserved16<br>
+* SubIndex 229 - InU8_psm_beam_id<br>
+* SubIndex 230 - InU8_reserved17<br>
+* SubIndex 231 - InU16_psm_radiation_index<br>
+* SubIndex 232 - InU32_psm_not_ready_event<br>
+* SubIndex 233 - InU32_psm_warning_interlock<br>
+* SubIndex 234 - InU32_psm_minor_interlock<br>
+* SubIndex 235 - InU32_psm_serious_interlock<br>
+* SubIndex 236 - InU16_TotalStep_PSM<br>
+* SubIndex 237 - InU16_CurrentStep_PSM<br>
+* SubIndex 238 - InU16_ErrorCode_PSM<br>
+* SubIndex 239 - InU32_psm_move_status<br>
+* SubIndex 240 - InF_psm_position_x_cur<br>
+* SubIndex 241 - InF_psm_position_y_cur<br>
+* SubIndex 242 - InF_psm_position_z_cur<br>
+* SubIndex 243 - InF_psm_position_x_r_cur<br>
+* SubIndex 244 - InF_psm_position_y_r_cur<br>
+* SubIndex 245 - InF_psm_position_z_r_cur<br>
+* SubIndex 246 - InF_psm_velocity_x_cur<br>
+* SubIndex 247 - InF_psm_velocity_y_cur<br>
+* SubIndex 248 - InF_psm_velocity_z_cur<br>
+* SubIndex 249 - InF_psm_velocity_x_r_cur<br>
+* SubIndex 250 - InF_psm_velocity_y_r_cur<br>
+* SubIndex 251 - InF_psm_velocity_z_r_cur<br>
+* SubIndex 252 - InU8_function_button<br>
+* SubIndex 253 - InU8_special_button<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -2082,50 +2087,51 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex206 - InU16_TotalStep_RTM_OFF_ARM */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex207 - InU16_CurrentStep_RTM_OFF_ARM */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex208 - InU16_ErrorCode_RTM_OFF_ARM */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex209 - InU8_gmm_fsm_state_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex210 - InU8_gmm_ctrl_mode_cur */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex211 - InU16_reserved14 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex212 - InU8_gmm_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex213 - InU8_reserved15 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex214 - InU16_gmm_radiation_index */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex215 - InU32_gmm_not_ready_event */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex216 - InU32_gmm_warning_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex217 - InU32_gmm_minor_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex218 - InU32_gmm_serious_interlock */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex219 - InU16_TotalStep_GMM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex220 - InU16_CurrentStep_GMM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex221 - InU16_ErrorCode_GMM */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex222 - InU32_gmm_move_status */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex223 - InF_gmm_position_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex224 - InF_gmm_velocity_cur */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex225 - InU8_psm_fsm_state_current */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex226 - InU8_psm_ctrl_mode_cur */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex227 - InU16_reserved16 */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex228 - InU8_psm_beam_id */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex229 - InU8_reserved17 */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex230 - InU16_psm_radiation_index */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex231 - InU32_psm_not_ready_event */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex232 - InU32_psm_warning_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex233 - InU32_psm_minor_interlock */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex234 - InU32_psm_serious_interlock */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex235 - InU16_TotalStep_PSM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex236 - InU16_CurrentStep_PSM */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex237 - InU16_ErrorCode_PSM */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex238 - InU32_psm_move_status */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex239 - InF_psm_position_x_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex240 - InF_psm_position_y_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex241 - InF_psm_position_z_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex242 - InF_psm_position_x_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex243 - InF_psm_position_y_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex244 - InF_psm_position_z_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex245 - InF_psm_velocity_x_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex246 - InF_psm_velocity_y_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex247 - InF_psm_velocity_z_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex248 - InF_psm_velocity_x_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex249 - InF_psm_velocity_y_r_cur */
-{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex250 - InF_psm_velocity_z_r_cur */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex251 - InU8_function_button */
-{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex252 - InU8_special_button */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex209 - InU32_rtm_off_search_timeout_cur */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex210 - InU8_gmm_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex211 - InU8_gmm_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex212 - InU16_reserved14 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex213 - InU8_gmm_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex214 - InU8_reserved15 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex215 - InU16_gmm_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex216 - InU32_gmm_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex217 - InU32_gmm_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex218 - InU32_gmm_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex219 - InU32_gmm_serious_interlock */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex220 - InU16_TotalStep_GMM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex221 - InU16_CurrentStep_GMM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex222 - InU16_ErrorCode_GMM */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex223 - InU32_gmm_move_status */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex224 - InF_gmm_position_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex225 - InF_gmm_velocity_cur */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex226 - InU8_psm_fsm_state_current */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex227 - InU8_psm_ctrl_mode_cur */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex228 - InU16_reserved16 */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex229 - InU8_psm_beam_id */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex230 - InU8_reserved17 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex231 - InU16_psm_radiation_index */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex232 - InU32_psm_not_ready_event */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex233 - InU32_psm_warning_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex234 - InU32_psm_minor_interlock */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex235 - InU32_psm_serious_interlock */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex236 - InU16_TotalStep_PSM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex237 - InU16_CurrentStep_PSM */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex238 - InU16_ErrorCode_PSM */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex239 - InU32_psm_move_status */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex240 - InF_psm_position_x_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex241 - InF_psm_position_y_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex242 - InF_psm_position_z_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex243 - InF_psm_position_x_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex244 - InF_psm_position_y_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex245 - InF_psm_position_z_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex246 - InF_psm_velocity_x_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex247 - InF_psm_velocity_y_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex248 - InF_psm_velocity_z_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex249 - InF_psm_velocity_x_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex250 - InF_psm_velocity_y_r_cur */
+{ DEFTYPE_REAL32 , 0x20 , ACCESS_READ }, /* Subindex251 - InF_psm_velocity_z_r_cur */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex252 - InU8_function_button */
+{ DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }}; /* Subindex253 - InU8_special_button */
 
 /**
 * \brief Object/Entry names
@@ -2339,6 +2345,7 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 "InU16_TotalStep_RTM_OFF_ARM\000"
 "InU16_CurrentStep_RTM_OFF_ARM\000"
 "InU16_ErrorCode_RTM_OFF_ARM\000"
+"InU32_rtm_off_search_timeout_cur\000"
 "InU8_gmm_fsm_state_current\000"
 "InU8_gmm_ctrl_mode_cur\000"
 "InU16_reserved14\000"
@@ -2599,50 +2606,51 @@ UINT32 InU32_rtm_off_serious_interlock; /* Subindex205 - InU32_rtm_off_serious_i
 UINT16 InU16_TotalStep_RTM_OFF_ARM; /* Subindex206 - InU16_TotalStep_RTM_OFF_ARM */
 UINT16 InU16_CurrentStep_RTM_OFF_ARM; /* Subindex207 - InU16_CurrentStep_RTM_OFF_ARM */
 UINT16 InU16_ErrorCode_RTM_OFF_ARM; /* Subindex208 - InU16_ErrorCode_RTM_OFF_ARM */
-UINT8 InU8_gmm_fsm_state_current; /* Subindex209 - InU8_gmm_fsm_state_current */
-UINT8 InU8_gmm_ctrl_mode_cur; /* Subindex210 - InU8_gmm_ctrl_mode_cur */
-UINT16 InU16_reserved14; /* Subindex211 - InU16_reserved14 */
-UINT8 InU8_gmm_beam_id; /* Subindex212 - InU8_gmm_beam_id */
-UINT8 InU8_reserved15; /* Subindex213 - InU8_reserved15 */
-UINT16 InU16_gmm_radiation_index; /* Subindex214 - InU16_gmm_radiation_index */
-UINT32 InU32_gmm_not_ready_event; /* Subindex215 - InU32_gmm_not_ready_event */
-UINT32 InU32_gmm_warning_interlock; /* Subindex216 - InU32_gmm_warning_interlock */
-UINT32 InU32_gmm_minor_interlock; /* Subindex217 - InU32_gmm_minor_interlock */
-UINT32 InU32_gmm_serious_interlock; /* Subindex218 - InU32_gmm_serious_interlock */
-UINT16 InU16_TotalStep_GMM; /* Subindex219 - InU16_TotalStep_GMM */
-UINT16 InU16_CurrentStep_GMM; /* Subindex220 - InU16_CurrentStep_GMM */
-UINT16 InU16_ErrorCode_GMM; /* Subindex221 - InU16_ErrorCode_GMM */
-UINT32 InU32_gmm_move_status; /* Subindex222 - InU32_gmm_move_status */
-REAL32 InF_gmm_position_cur; /* Subindex223 - InF_gmm_position_cur */
-REAL32 InF_gmm_velocity_cur; /* Subindex224 - InF_gmm_velocity_cur */
-UINT8 InU8_psm_fsm_state_current; /* Subindex225 - InU8_psm_fsm_state_current */
-UINT8 InU8_psm_ctrl_mode_cur; /* Subindex226 - InU8_psm_ctrl_mode_cur */
-UINT16 InU16_reserved16; /* Subindex227 - InU16_reserved16 */
-UINT8 InU8_psm_beam_id; /* Subindex228 - InU8_psm_beam_id */
-UINT8 InU8_reserved17; /* Subindex229 - InU8_reserved17 */
-UINT16 InU16_psm_radiation_index; /* Subindex230 - InU16_psm_radiation_index */
-UINT32 InU32_psm_not_ready_event; /* Subindex231 - InU32_psm_not_ready_event */
-UINT32 InU32_psm_warning_interlock; /* Subindex232 - InU32_psm_warning_interlock */
-UINT32 InU32_psm_minor_interlock; /* Subindex233 - InU32_psm_minor_interlock */
-UINT32 InU32_psm_serious_interlock; /* Subindex234 - InU32_psm_serious_interlock */
-UINT16 InU16_TotalStep_PSM; /* Subindex235 - InU16_TotalStep_PSM */
-UINT16 InU16_CurrentStep_PSM; /* Subindex236 - InU16_CurrentStep_PSM */
-UINT16 InU16_ErrorCode_PSM; /* Subindex237 - InU16_ErrorCode_PSM */
-UINT32 InU32_psm_move_status; /* Subindex238 - InU32_psm_move_status */
-REAL32 InF_psm_position_x_cur; /* Subindex239 - InF_psm_position_x_cur */
-REAL32 InF_psm_position_y_cur; /* Subindex240 - InF_psm_position_y_cur */
-REAL32 InF_psm_position_z_cur; /* Subindex241 - InF_psm_position_z_cur */
-REAL32 InF_psm_position_x_r_cur; /* Subindex242 - InF_psm_position_x_r_cur */
-REAL32 InF_psm_position_y_r_cur; /* Subindex243 - InF_psm_position_y_r_cur */
-REAL32 InF_psm_position_z_r_cur; /* Subindex244 - InF_psm_position_z_r_cur */
-REAL32 InF_psm_velocity_x_cur; /* Subindex245 - InF_psm_velocity_x_cur */
-REAL32 InF_psm_velocity_y_cur; /* Subindex246 - InF_psm_velocity_y_cur */
-REAL32 InF_psm_velocity_z_cur; /* Subindex247 - InF_psm_velocity_z_cur */
-REAL32 InF_psm_velocity_x_r_cur; /* Subindex248 - InF_psm_velocity_x_r_cur */
-REAL32 InF_psm_velocity_y_r_cur; /* Subindex249 - InF_psm_velocity_y_r_cur */
-REAL32 InF_psm_velocity_z_r_cur; /* Subindex250 - InF_psm_velocity_z_r_cur */
-UINT8 InU8_function_button; /* Subindex251 - InU8_function_button */
-UINT8 InU8_special_button; /* Subindex252 - InU8_special_button */
+UINT32 InU32_rtm_off_search_timeout_cur; /* Subindex209 - InU32_rtm_off_search_timeout_cur */
+UINT8 InU8_gmm_fsm_state_current; /* Subindex210 - InU8_gmm_fsm_state_current */
+UINT8 InU8_gmm_ctrl_mode_cur; /* Subindex211 - InU8_gmm_ctrl_mode_cur */
+UINT16 InU16_reserved14; /* Subindex212 - InU16_reserved14 */
+UINT8 InU8_gmm_beam_id; /* Subindex213 - InU8_gmm_beam_id */
+UINT8 InU8_reserved15; /* Subindex214 - InU8_reserved15 */
+UINT16 InU16_gmm_radiation_index; /* Subindex215 - InU16_gmm_radiation_index */
+UINT32 InU32_gmm_not_ready_event; /* Subindex216 - InU32_gmm_not_ready_event */
+UINT32 InU32_gmm_warning_interlock; /* Subindex217 - InU32_gmm_warning_interlock */
+UINT32 InU32_gmm_minor_interlock; /* Subindex218 - InU32_gmm_minor_interlock */
+UINT32 InU32_gmm_serious_interlock; /* Subindex219 - InU32_gmm_serious_interlock */
+UINT16 InU16_TotalStep_GMM; /* Subindex220 - InU16_TotalStep_GMM */
+UINT16 InU16_CurrentStep_GMM; /* Subindex221 - InU16_CurrentStep_GMM */
+UINT16 InU16_ErrorCode_GMM; /* Subindex222 - InU16_ErrorCode_GMM */
+UINT32 InU32_gmm_move_status; /* Subindex223 - InU32_gmm_move_status */
+REAL32 InF_gmm_position_cur; /* Subindex224 - InF_gmm_position_cur */
+REAL32 InF_gmm_velocity_cur; /* Subindex225 - InF_gmm_velocity_cur */
+UINT8 InU8_psm_fsm_state_current; /* Subindex226 - InU8_psm_fsm_state_current */
+UINT8 InU8_psm_ctrl_mode_cur; /* Subindex227 - InU8_psm_ctrl_mode_cur */
+UINT16 InU16_reserved16; /* Subindex228 - InU16_reserved16 */
+UINT8 InU8_psm_beam_id; /* Subindex229 - InU8_psm_beam_id */
+UINT8 InU8_reserved17; /* Subindex230 - InU8_reserved17 */
+UINT16 InU16_psm_radiation_index; /* Subindex231 - InU16_psm_radiation_index */
+UINT32 InU32_psm_not_ready_event; /* Subindex232 - InU32_psm_not_ready_event */
+UINT32 InU32_psm_warning_interlock; /* Subindex233 - InU32_psm_warning_interlock */
+UINT32 InU32_psm_minor_interlock; /* Subindex234 - InU32_psm_minor_interlock */
+UINT32 InU32_psm_serious_interlock; /* Subindex235 - InU32_psm_serious_interlock */
+UINT16 InU16_TotalStep_PSM; /* Subindex236 - InU16_TotalStep_PSM */
+UINT16 InU16_CurrentStep_PSM; /* Subindex237 - InU16_CurrentStep_PSM */
+UINT16 InU16_ErrorCode_PSM; /* Subindex238 - InU16_ErrorCode_PSM */
+UINT32 InU32_psm_move_status; /* Subindex239 - InU32_psm_move_status */
+REAL32 InF_psm_position_x_cur; /* Subindex240 - InF_psm_position_x_cur */
+REAL32 InF_psm_position_y_cur; /* Subindex241 - InF_psm_position_y_cur */
+REAL32 InF_psm_position_z_cur; /* Subindex242 - InF_psm_position_z_cur */
+REAL32 InF_psm_position_x_r_cur; /* Subindex243 - InF_psm_position_x_r_cur */
+REAL32 InF_psm_position_y_r_cur; /* Subindex244 - InF_psm_position_y_r_cur */
+REAL32 InF_psm_position_z_r_cur; /* Subindex245 - InF_psm_position_z_r_cur */
+REAL32 InF_psm_velocity_x_cur; /* Subindex246 - InF_psm_velocity_x_cur */
+REAL32 InF_psm_velocity_y_cur; /* Subindex247 - InF_psm_velocity_y_cur */
+REAL32 InF_psm_velocity_z_cur; /* Subindex248 - InF_psm_velocity_z_cur */
+REAL32 InF_psm_velocity_x_r_cur; /* Subindex249 - InF_psm_velocity_x_r_cur */
+REAL32 InF_psm_velocity_y_r_cur; /* Subindex250 - InF_psm_velocity_y_r_cur */
+REAL32 InF_psm_velocity_z_r_cur; /* Subindex251 - InF_psm_velocity_z_r_cur */
+UINT8 InU8_function_button; /* Subindex252 - InU8_function_button */
+UINT8 InU8_special_button; /* Subindex253 - InU8_special_button */
 } OBJ_STRUCT_PACKED_END
 TOBJ6000;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -2652,7 +2660,7 @@ TOBJ6000;
 */
 PROTO TOBJ6000 InputData0x6000
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={252,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+={253,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -3102,7 +3110,7 @@ TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1601 */
 {NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 60 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
 /* Object 0x1A00 */
-{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 252 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 253 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
 /* Object 0x1A01 */
 {NULL , NULL ,  0x1A01 , {DEFTYPE_PDOMAPPING , 26 | (OBJCODE_REC << 8)} , asEntryDesc0x1A01 , aName0x1A01 , &InputDataProcessDataMapping0x1A01 , NULL , NULL , 0x0000 },
 /* Object 0x1C12 */
@@ -3110,7 +3118,7 @@ TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1C13 */
 {NULL , NULL ,  0x1C13 , {DEFTYPE_UNSIGNED16 , 2 | (OBJCODE_ARR << 8)} , asEntryDesc0x1C13 , aName0x1C13 , &sTxPDOassign , NULL , NULL , 0x0000 },
 /* Object 0x6000 */
-{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 252 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 253 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
 /* Object 0x6010 */
 {NULL , NULL ,  0x6010 , {DEFTYPE_RECORD , 26 | (OBJCODE_REC << 8)} , asEntryDesc0x6010 , aName0x6010 , &InputData0x6010 , NULL , NULL , 0x0000 },
 /* Object 0x7010 */
