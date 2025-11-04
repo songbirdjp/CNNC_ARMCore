@@ -7125,7 +7125,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 							</DataType>
 							<DataType>
 								<Name>DT7010</Name>
-								<BitSize>1048</BitSize>
+								<BitSize>1016</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -7298,9 +7298,9 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 								</SubItem>
 								<SubItem>
 									<SubIdx>17</SubIdx>
-									<Name>OutU32_rtm_on_treatment_mode</Name>
-									<Type>UDINT</Type>
-									<BitSize>32</BitSize>
+									<Name>OutU16_rtm_on_treatment_mode</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
 									<BitOffs>240</BitOffs>
 									<Flags>
 										<Access>ro</Access>
@@ -7311,7 +7311,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_icm_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>272</BitOffs>
+									<BitOffs>256</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7321,7 +7321,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_icm_require_ctrl_mode</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>280</BitOffs>
+									<BitOffs>264</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7331,7 +7331,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU16_ct_status</Name>
 									<Type>UINT</Type>
 									<BitSize>16</BitSize>
-									<BitOffs>288</BitOffs>
+									<BitOffs>272</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7341,7 +7341,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutF_gantry_velocity_prepare</Name>
 									<Type>REAL</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>304</BitOffs>
+									<BitOffs>288</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7351,7 +7351,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_icm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>336</BitOffs>
+									<BitOffs>320</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7361,7 +7361,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_icm_unready_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>368</BitOffs>
+									<BitOffs>352</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7371,7 +7371,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_bgm_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>400</BitOffs>
+									<BitOffs>384</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7381,7 +7381,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_bgm_require_ctrl_mode</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>408</BitOffs>
+									<BitOffs>392</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7391,7 +7391,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_bgm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>416</BitOffs>
+									<BitOffs>400</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7401,7 +7401,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_bgm_unready_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>448</BitOffs>
+									<BitOffs>432</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7411,7 +7411,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_qam_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>480</BitOffs>
+									<BitOffs>464</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7421,7 +7421,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_qam_require_ctrl_mode</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>488</BitOffs>
+									<BitOffs>472</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7431,7 +7431,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_qam_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>496</BitOffs>
+									<BitOffs>480</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7441,7 +7441,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_qam_unready_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>528</BitOffs>
+									<BitOffs>512</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7451,7 +7451,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_bsm_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>560</BitOffs>
+									<BitOffs>544</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7461,7 +7461,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_bsm_require_ctrl_mode</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>568</BitOffs>
+									<BitOffs>552</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7471,7 +7471,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_bsm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>576</BitOffs>
+									<BitOffs>560</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7481,7 +7481,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_bsm_unready_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>608</BitOffs>
+									<BitOffs>592</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7491,7 +7491,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_rtm_off_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>640</BitOffs>
+									<BitOffs>624</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7501,7 +7501,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_rtm_off_require_ctrl_mode</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>648</BitOffs>
+									<BitOffs>632</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7511,7 +7511,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU16_rtm_off_plc_info</Name>
 									<Type>UINT</Type>
 									<BitSize>16</BitSize>
-									<BitOffs>656</BitOffs>
+									<BitOffs>640</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7521,7 +7521,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_rtm_off_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>672</BitOffs>
+									<BitOffs>656</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7531,7 +7531,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_rtm_off_unready_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>704</BitOffs>
+									<BitOffs>688</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7541,7 +7541,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_led_belt</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>736</BitOffs>
+									<BitOffs>720</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7551,7 +7551,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_reserved2</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>744</BitOffs>
+									<BitOffs>728</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7561,17 +7561,17 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_rtm_off_search_timeout</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>752</BitOffs>
+									<BitOffs>736</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
 								</SubItem>
 								<SubItem>
 									<SubIdx>44</SubIdx>
-									<Name>OutU32_rtm_off_treatment_mode</Name>
-									<Type>UDINT</Type>
-									<BitSize>32</BitSize>
-									<BitOffs>784</BitOffs>
+									<Name>OutU16_rtm_off_treatment_mode</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
+									<BitOffs>768</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7581,7 +7581,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_gmm_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>816</BitOffs>
+									<BitOffs>784</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7591,7 +7591,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_gmm_require_ctrl_mode</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>824</BitOffs>
+									<BitOffs>792</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7601,7 +7601,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_gmm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>832</BitOffs>
+									<BitOffs>800</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7611,7 +7611,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_gmm_unready_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>864</BitOffs>
+									<BitOffs>832</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7621,7 +7621,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_psm_require_state</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>896</BitOffs>
+									<BitOffs>864</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7631,7 +7631,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_psm_require_ctrl_mode</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>904</BitOffs>
+									<BitOffs>872</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7641,7 +7641,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_psm_interlock_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>912</BitOffs>
+									<BitOffs>880</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7651,7 +7651,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU32_psm_unready_override</Name>
 									<Type>UDINT</Type>
 									<BitSize>32</BitSize>
-									<BitOffs>944</BitOffs>
+									<BitOffs>912</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7661,7 +7661,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU16_fkp_year</Name>
 									<Type>UINT</Type>
 									<BitSize>16</BitSize>
-									<BitOffs>976</BitOffs>
+									<BitOffs>944</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7671,7 +7671,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_fkp_month</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>992</BitOffs>
+									<BitOffs>960</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7681,7 +7681,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_fkp_day</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>1000</BitOffs>
+									<BitOffs>968</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7691,7 +7691,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_fkp_hour</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>1008</BitOffs>
+									<BitOffs>976</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7701,7 +7701,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_fkp_minute</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>1016</BitOffs>
+									<BitOffs>984</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7711,7 +7711,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_fkp_totalFractions</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>1024</BitOffs>
+									<BitOffs>992</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7721,7 +7721,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_fkp_fractions</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>1032</BitOffs>
+									<BitOffs>1000</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7731,7 +7731,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<Name>OutU8_reserved3</Name>
 									<Type>USINT</Type>
 									<BitSize>8</BitSize>
-									<BitOffs>1040</BitOffs>
+									<BitOffs>1008</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -7984,7 +7984,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 017</Name>
 										<Info>
-											<DefaultData>20111070</DefaultData>
+											<DefaultData>10111070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -8146,7 +8146,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 									<SubItem>
 										<Name>SubIndex 044</Name>
 										<Info>
-											<DefaultData>202C1070</DefaultData>
+											<DefaultData>102C1070</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -10129,7 +10129,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 								<Index>#x7010</Index>
 								<Name>OutputData</Name>
 								<Type>DT7010</Type>
-								<BitSize>1048</BitSize>
+								<BitSize>1016</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
@@ -10147,7 +10147,7 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 				<Fmmu>MBoxState</Fmmu>
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1000" ControlByte="#x26" Enable="1">MBoxOut</Sm>
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1080" ControlByte="#x22" Enable="1">MBoxIn</Sm>
-				<Sm DefaultSize="129" StartAddress="#x1100" ControlByte="#x64" Enable="1">Outputs</Sm>
+				<Sm DefaultSize="125" StartAddress="#x1100" ControlByte="#x64" Enable="1">Outputs</Sm>
 				<Sm DefaultSize="503" StartAddress="#x1400" ControlByte="#x20" Enable="1">Inputs</Sm>
 				<RxPdo Fixed="true" Mandatory="true" Sm="2">
 					<Index>#x1601</Index>
@@ -10267,9 +10267,9 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 					<Entry>
 						<Index>#x7010</Index>
 						<SubIndex>17</SubIndex>
-						<BitLen>32</BitLen>
-						<Name>OutU32_rtm_on_treatment_mode</Name>
-						<DataType>UDINT</DataType>
+						<BitLen>16</BitLen>
+						<Name>OutU16_rtm_on_treatment_mode</Name>
+						<DataType>UINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>
@@ -10456,9 +10456,9 @@ bit3~7:每个单板的唯一硬件ID，从0起始；</Comment>
 					<Entry>
 						<Index>#x7010</Index>
 						<SubIndex>44</SubIndex>
-						<BitLen>32</BitLen>
-						<Name>OutU32_rtm_off_treatment_mode</Name>
-						<DataType>UDINT</DataType>
+						<BitLen>16</BitLen>
+						<Name>OutU16_rtm_off_treatment_mode</Name>
+						<DataType>UINT</DataType>
 					</Entry>
 					<Entry>
 						<Index>#x7010</Index>

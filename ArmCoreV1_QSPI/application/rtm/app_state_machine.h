@@ -128,7 +128,8 @@ extern "C"
         uint32_t icm_fault : 1;
         uint32_t bgm_fault : 1;
         uint32_t qam_fault : 1;
-        uint32_t reserved : 19;
+        uint32_t rtm_off_mv_TreatmentEn : 1;
+        uint32_t reserved : 18;
         uint32_t RTC_WD_OK : 1;
     } app_interlock_table_t;
 

@@ -185,7 +185,7 @@ static void app_rtm_main_thread(void *argument)
                     self->PLC_info = *(uint16_t *)&(queue_frame.payload.data[3]);
                     self->interlock_override = *(uint32_t *)&(queue_frame.payload.data[5]);
                     self->unready_override = *(uint32_t *)&(queue_frame.payload.data[9]);
-                    self->treatment_mode = *(uint32_t *)&(queue_frame.payload.data[13]);                  
+                    self->treatment_mode = *(uint16_t *)&(queue_frame.payload.data[13]);                  
                     break;
                 }
                 case OUTPUT_FAULT_CLEAR_CMD: /*故障清除*/
@@ -217,6 +217,10 @@ static void app_rtm_main_thread(void *argument)
                 {
                     self->beamID = *(uint8_t *)&(queue_frame.payload.data[1]);
                     break;
+                }
+                case INPUT_RTM_OFF_MV_TREATMENT_EN_STATE_CMD: /*RTM_OFF_MV_TREATMENT_EN_STATE*/
+                {
+                    self->rtm_off_mv_treatment_state = *(uint8_t *)&(queue_frame.payload.data[1]);
                 }
                 default:
                     break;

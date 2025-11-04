@@ -299,7 +299,7 @@ TOBJ1601;
 */
 PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={60,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100910,0x70100A08,0x70100B08,0x70100C08,0x70100D08,0x70100E10,0x70100F20,0x70101020,0x70101120,0x70101208,0x70101308,0x70101410,0x70101520,0x70101620,0x70101720,0x70101808,0x70101908,0x70101A20,0x70101B20,0x70101C08,0x70101D08,0x70101E20,0x70101F20,0x70102008,0x70102108,0x70102220,0x70102320,0x70102408,0x70102508,0x70102610,0x70102720,0x70102820,0x70102908,0x70102A08,0x70102B20,0x70102C20,0x70102D08,0x70102E08,0x70102F20,0x70103020,0x70103108,0x70103208,0x70103320,0x70103420,0x70103510,0x70103608,0x70103708,0x70103808,0x70103908,0x70103A08,0x70103B08,0x70103C08}
+={60,0x70100108,0x70100208,0x70100320,0x70100408,0x70100508,0x70100610,0x70100708,0x70100808,0x70100910,0x70100A08,0x70100B08,0x70100C08,0x70100D08,0x70100E10,0x70100F20,0x70101020,0x70101110,0x70101208,0x70101308,0x70101410,0x70101520,0x70101620,0x70101720,0x70101808,0x70101908,0x70101A20,0x70101B20,0x70101C08,0x70101D08,0x70101E20,0x70101F20,0x70102008,0x70102108,0x70102220,0x70102320,0x70102408,0x70102508,0x70102610,0x70102720,0x70102820,0x70102908,0x70102A08,0x70102B20,0x70102C10,0x70102D08,0x70102E08,0x70102F20,0x70103020,0x70103108,0x70103208,0x70103320,0x70103420,0x70103510,0x70103608,0x70103708,0x70103808,0x70103908,0x70103A08,0x70103B08,0x70103C08}
 #endif
 ;
 /** @}*/
@@ -2845,7 +2845,7 @@ PROTO TOBJ6010 InputData0x6010
 * SubIndex 14 - OutU16_rtm_on_plc_info<br>
 * SubIndex 15 - OutU32_rtm_on_interlock_override<br>
 * SubIndex 16 - OutU32_rtm_on_unready_override<br>
-* SubIndex 17 - OutU32_rtm_on_treatment_mode<br>
+* SubIndex 17 - OutU16_rtm_on_treatment_mode<br>
 * SubIndex 18 - OutU8_icm_require_state<br>
 * SubIndex 19 - OutU8_icm_require_ctrl_mode<br>
 * SubIndex 20 - OutU16_ct_status<br>
@@ -2872,7 +2872,7 @@ PROTO TOBJ6010 InputData0x6010
 * SubIndex 41 - OutU8_led_belt<br>
 * SubIndex 42 - OutU8_reserved2<br>
 * SubIndex 43 - OutU32_rtm_off_search_timeout<br>
-* SubIndex 44 - OutU32_rtm_off_treatment_mode<br>
+* SubIndex 44 - OutU16_rtm_off_treatment_mode<br>
 * SubIndex 45 - OutU8_gmm_require_state<br>
 * SubIndex 46 - OutU8_gmm_require_ctrl_mode<br>
 * SubIndex 47 - OutU32_gmm_interlock_override<br>
@@ -2908,7 +2908,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex14 - OutU16_rtm_on_plc_info */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex15 - OutU32_rtm_on_interlock_override */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex16 - OutU32_rtm_on_unready_override */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex17 - OutU32_rtm_on_treatment_mode */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex17 - OutU16_rtm_on_treatment_mode */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex18 - OutU8_icm_require_state */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex19 - OutU8_icm_require_ctrl_mode */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex20 - OutU16_ct_status */
@@ -2935,7 +2935,7 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex41 - OutU8_led_belt */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex42 - OutU8_reserved2 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex43 - OutU32_rtm_off_search_timeout */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex44 - OutU32_rtm_off_treatment_mode */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex44 - OutU16_rtm_off_treatment_mode */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex45 - OutU8_gmm_require_state */
 { DEFTYPE_UNSIGNED8 , 0x08 , ACCESS_READ }, /* Subindex46 - OutU8_gmm_require_ctrl_mode */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex47 - OutU32_gmm_interlock_override */
@@ -2973,7 +2973,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU16_rtm_on_plc_info\000"
 "OutU32_rtm_on_interlock_override\000"
 "OutU32_rtm_on_unready_override\000"
-"OutU32_rtm_on_treatment_mode\000"
+"OutU16_rtm_on_treatment_mode\000"
 "OutU8_icm_require_state\000"
 "OutU8_icm_require_ctrl_mode\000"
 "OutU16_ct_status\000"
@@ -3000,7 +3000,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU8_led_belt\000"
 "OutU8_reserved2\000"
 "OutU32_rtm_off_search_timeout\000"
-"OutU32_rtm_off_treatment_mode\000"
+"OutU16_rtm_off_treatment_mode\000"
 "OutU8_gmm_require_state\000"
 "OutU8_gmm_require_ctrl_mode\000"
 "OutU32_gmm_interlock_override\000"
@@ -3041,7 +3041,7 @@ UINT8 OutU8_rtm_on_require_ctrl_mode; /* Subindex13 - OutU8_rtm_on_require_ctrl_
 UINT16 OutU16_rtm_on_plc_info; /* Subindex14 - OutU16_rtm_on_plc_info */
 UINT32 OutU32_rtm_on_interlock_override; /* Subindex15 - OutU32_rtm_on_interlock_override */
 UINT32 OutU32_rtm_on_unready_override; /* Subindex16 - OutU32_rtm_on_unready_override */
-UINT32 OutU32_rtm_on_treatment_mode; /* Subindex17 - OutU32_rtm_on_treatment_mode */
+UINT16 OutU16_rtm_on_treatment_mode; /* Subindex17 - OutU16_rtm_on_treatment_mode */
 UINT8 OutU8_icm_require_state; /* Subindex18 - OutU8_icm_require_state */
 UINT8 OutU8_icm_require_ctrl_mode; /* Subindex19 - OutU8_icm_require_ctrl_mode */
 UINT16 OutU16_ct_status; /* Subindex20 - OutU16_ct_status */
@@ -3068,7 +3068,7 @@ UINT32 OutU32_rtm_off_unready_override; /* Subindex40 - OutU32_rtm_off_unready_o
 UINT8 OutU8_led_belt; /* Subindex41 - OutU8_led_belt */
 UINT8 OutU8_reserved2; /* Subindex42 - OutU8_reserved2 */
 UINT32 OutU32_rtm_off_search_timeout; /* Subindex43 - OutU32_rtm_off_search_timeout */
-UINT32 OutU32_rtm_off_treatment_mode; /* Subindex44 - OutU32_rtm_off_treatment_mode */
+UINT16 OutU16_rtm_off_treatment_mode; /* Subindex44 - OutU16_rtm_off_treatment_mode */
 UINT8 OutU8_gmm_require_state; /* Subindex45 - OutU8_gmm_require_state */
 UINT8 OutU8_gmm_require_ctrl_mode; /* Subindex46 - OutU8_gmm_require_ctrl_mode */
 UINT32 OutU32_gmm_interlock_override; /* Subindex47 - OutU32_gmm_interlock_override */

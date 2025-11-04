@@ -75,6 +75,7 @@ extern "C"
         INPUT_FKP_STATE_CMD = 0x6A,
         INPUT_CPG_L_STATE_CMD = 0x6B,
         INPUT_CPG_R_STATE_CMD = 0x6C,
+        INPUT_RTM_OFF_MV_TREATMENT_EN_STATE_CMD = 0x6D,
         INPUT_PSM_CURRENT_STATE_CMD = 0x71,
         INPUT_PSM_INFO_CMD = 0x72,
         INPUT_PSM_SETUP_POSITION_CMD = 0x74,
@@ -123,7 +124,7 @@ extern "C"
         uint32_t ID;
         osPriority_t module_priority;
         heartbeat_t heartbeat_info_rx[4]; // receive heartbeat info
-        heartbeat_t heartbeat_info_tx; // send heartbeat info
+        heartbeat_t heartbeat_info_tx;    // send heartbeat info
 
         uart_protocol_t uart_protocol;
         osMessageQueueId_t module_queue;
@@ -141,9 +142,13 @@ extern "C"
     enum treatment_mode_state
     {
         TREATMENT_MODE_NORMAL = 0,
-        TREATMENT_MODE_PLAN_QA = 0x8E73B4F1,
+        TREATMENT_MODE_AUTO = 1,
     };
-
+    enum mv_treatment_en_state
+    {
+        MV_TREATMENT_EN_OFF = 0,
+        MV_TREATMENT_EN_ON = 1,
+    };
     typedef struct app_rtm_main
     {
 #define RTM_MAIN_INIT_STATE_BIT (0) /* 初始化状态,下列任意一个状态置位，该位将被置位 */
@@ -169,8 +174,8 @@ extern "C"
         uint16_t PLC_info;
         uint32_t interlock_override;
         uint32_t unready_override;
-        uint32_t treatment_mode;
-
+        uint16_t treatment_mode;
+        uint8_t rtm_off_mv_treatment_state;
         uint8_t beamID;
 
         uint8_t icm_current_state;

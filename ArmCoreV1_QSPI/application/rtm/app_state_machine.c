@@ -309,6 +309,12 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
         self->interlock_table.minor_interlock.RTC_WD_OK = 0;
     }
 
+    if ((app_rtm->rtm_off_mv_treatment_state == MV_TREATMENT_EN_ON) &&
+        (app_rtm->treatment_mode == TREATMENT_MODE_NORMAL))
+    {
+        self->interlock_table.minor_interlock.rtm_off_mv_TreatmentEn = 1;
+    }
+    
     if ((getElapsedTime(self->cur_time, self->last_time) > RTM_ERROR_WAIT_TIME) || (retval == 0))
     {
         if (self->fault_clear_flag == 1) // 清除故障
