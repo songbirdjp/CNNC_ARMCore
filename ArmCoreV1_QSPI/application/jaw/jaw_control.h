@@ -25,12 +25,13 @@ typedef enum {
     MANUAL_START,//111
     MANUAL_END,//112
     POWER_SAVE,//113
-    SHUTDOWN//114
+    SHUTDOWN,//114
+    ERROR_STATE//115
 } JawCtlFsm;
 
 typedef enum {
     CMD_POS_KP_MODE,       
-    CMD_POS_KI_MODE,        
+    CMD_POS_KI_MODE,       
     CMD_POS_KD_MODE,        
     CMD_SPD_KP_MODE,       
     CMD_SPD_KI_MODE,        
@@ -68,7 +69,11 @@ typedef struct
     int16_t encoderDelta32;
     uint32_t encoderTotalCnt;
     uint16_t preparePos;
-    uint16_t posInPlan;
+  //  uint16_t posInPlan;
+    uint16_t crtPlanPos;
+    int8_t newSign;
+    int8_t lastSign;
+    int8_t dirChangeFlag;
     uint16_t manualPos;
     //uint16_t realPlanCmd;
     SVG_Type fSVG;

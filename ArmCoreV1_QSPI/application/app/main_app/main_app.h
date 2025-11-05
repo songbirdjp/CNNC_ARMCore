@@ -43,8 +43,7 @@ enum serverFsmStates {
     FSM_POWERSAVE,//14
     FSM_TERMINATE,//15
     FSM_INTERRUPT,//16
-    ERROR_STATE,//17
-    UART_DEBUG,//18
+    UART_DEBUG,//17
     TOTAL_FSM
 };
 #ifdef __cplusplus

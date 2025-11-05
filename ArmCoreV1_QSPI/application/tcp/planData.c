@@ -93,21 +93,23 @@ int8_t planDataCheck(uint8_t *pSDBeamStart)
             pBeamData += sizeof(beamStruct.riStruct.leafTarget);//skip leaf pos * 80
             pBeamData += sizeof(beamStruct.riStruct.bigLeafTarget2) + sizeof(beamStruct.riStruct.carrierTarget); //skip (2th big leaf + carrier pos)
             jawTarget[X] = (pBeamData[1] << 8) + pBeamData[0];
-            jawTarget[Y] = (pBeamData[3] << 8) + pBeamData[2];
-         //   LOG_I("%d xJawTarget %d\r\n", ri, jawTarget[0]);
+          //  jawTarget[Y] = (pBeamData[3] << 8) + pBeamData[2];
+         //   LOG_I("%d xJawTarget %d\r\n", ri, jawTarget[X]);
             if((max/325/0.44*0.213 - jawTarget[X]/2.5/ENCODER_CNT_PER_MM) > 59)
             {
                 LOG_I("Xjaw can't mask leaf end %d %d %d %d!\r\n",beamID,radiationID, jawTarget[X], max);
                 interlockFeedback.jawInterlock[X] |= 0x10;
                 return -1;
             }
-            for(uint8_t m = 0; m < XY; m++){
-                jawTarget[m] /= 2.5;
-                if(planJawPosCheck(jawTarget[m], 0, m, (uint16_t)MAX_PREPARE_INPOS) == -1){
-                    LOG_E("jaw%d pos invalid %d %d!\r\n",m,beamID,radiationID);
+            #if 0
+            for(j = 0; j < XY; j++){
+                jawTarget[j] /= 2.5;
+                if(planJawPosCheck(jawTarget[j], 0, j, (uint16_t)MAX_PREPARE_INPOS) == -1){
+                    LOG_E("jaw%d pos invalid %d %d %d!\r\n",j,beamID,radiationID,jawTarget[j]);
                     return -1;
                 }  
             } 
+            #endif
             pBeamData += (sizeof(SD_RI_DATA) - offsetof(SD_RI_DATA, jawTarget[X]));
         }
     }
@@ -336,7 +338,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 #ifndef TEST
         make_para_for_fpga(data);
         plcSetJawParam(data);
-		if(data[80] == 80)  carrierFollowFlag = 1;//enable carrier following function
+		if((data[80] & 0x60) == 0x40)  carrierFollowFlag = 1;//enable carrier following function
 		else	carrierFollowFlag = 0;
 #endif
     }
@@ -358,14 +360,9 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             LOG_E("recv error #4: crc error: %x %x!!! \r\n", crcInData, crcCal);
             return -1;
         }
-/*
+
         pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
-        if(planDataCheck(pSDRAM) < 0){
-            secondPosFeedback.errorCode = 0xf7;
-            LOG_E("recv error #7: plan error!!!\r\n");
-            return -1;
-        }
-		if(carrierFollowFlag == 1)  calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);*/
+		if(carrierFollowFlag == 1)  calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);
         secondPosFeedback.errorCode = 0xF0; //ok
     }
     else{
@@ -526,4 +523,5 @@ void planDataInit(void)
     activeSendData[0].tcpData = feedback;
     sendStructInfo.pActiveSend = activeSendData;
     sendStructInfo.sendItemNum = sizeof(activeSendData)/sizeof(APP_DATA_SEND);
+    carrierFollowFlag = 1;
 }

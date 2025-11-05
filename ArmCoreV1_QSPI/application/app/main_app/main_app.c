@@ -107,7 +107,7 @@ static int8_t realtime_ethercat_data_process(void)
 {
     static uint16_t oldState, oldPlanCmd, oldRadiationIndex, oldBeamIndex, oldErrState;
     struct JawFlagType JawState;
-    static uint8_t cnt;
+    static uint16_t cnt;
     uint16_t errReset;
 
     TOBJ7010 recv_data = {0};
@@ -134,8 +134,9 @@ static int8_t realtime_ethercat_data_process(void)
     memcpy(&send->InU16_LeafCrtControlMode, &recv->OutU16_LeafControlModeSetting, sizeof(uint16_t) * 4);//control mode feedback
 #endif
     send->InU16_PlanCmdFB = recv->OutU16_PlanCmd;
+	send->InU16_FaultInfo1 &= 0xff00; 
     send->InU16_FaultInfo1 |= rtFeedback.faultInfo1;
-    if(cnt++ >= 100){
+    if(cnt++ >= 200){
         if((send->InU16_FaultInfo1 & 0x800) == 0x800)   send->InU16_FaultInfo1 &= ~0x800;
         else    send->InU16_FaultInfo1 |= 0x800;  
         cnt = 0;
@@ -170,6 +171,8 @@ static int8_t realtime_ethercat_data_process(void)
         uint16_t state[2];
         state[0] = state[1] = stateCmd;
         messageToJawTask(JawState, COMMAND, XY, state);
+        rtFeedback.MlcCurFsm &= 0x00ff;
+        rtFeedback.MlcCurFsm |= (stateCmd << 8);
 
         if(stateCmd == FSM_MANUAL)
         {

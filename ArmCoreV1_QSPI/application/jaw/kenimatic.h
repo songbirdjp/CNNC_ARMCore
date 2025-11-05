@@ -101,8 +101,24 @@ typedef struct SVG_Type
     unsigned short endLimits;
 } SVG_Type;
 
+typedef struct SVG_Motion_Param
+{
+    double v_max; 
+    double a_start_max;
+    double a_end_max;
+    double v_start;
+    double v_end;
+    double T1;
+    double T2;
+    double T3;
+    double T4;
+    double T5;
+    double T6;
+    double T7;
+}SVG_Motion_Param;
+
 void initSVG(struct SVG_Type* inst, uint8_t axes);
-int8_t SVG(struct SVG_Type* inst);
+int8_t SVG(struct SVG_Type* inst, uint8_t axes);
 float PositionPIDCtrl(uint32_t current_position, uint32_t _setPosition, PID_TypeDef *PID_parameters);
 float SpeedPIDCtrl(float actualSpeed, float _setSpeed, PID_TypeDef *PID_parameters);
 

@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include "ulog.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -9,14 +9,18 @@ extern "C" {
 #endif
 
 #define EXT_SDRAM_ADDR      ((uint32_t)0xC0000000)
-#define SDRAM_BANK1_ADDR    (EXT_SDRAM_ADDR)        /* TODO: need delete later */
 
-#define SDRAM_ID_W9825G6KH
+// #define SDRAM_ID_W9825G6KH
 #ifdef SDRAM_ID_W9825G6KH
 #define USING_MDMA_FOR_FMC
 #define SDRAM_BANK1_DEVICE_NAME    "W9825G6KH"
 #define SDRAM_BANK1_ADDR           EXT_SDRAM_ADDR
 #define SDRAM_BANK1_SIZE           (32 * 1024 * 1024)
+#else
+#define USING_MDMA_FOR_FMC
+#define SDRAM_BANK1_DEVICE_NAME    "IS42S16320F"
+#define SDRAM_BANK1_ADDR           EXT_SDRAM_ADDR
+#define SDRAM_BANK1_SIZE           (64 * 1024 * 1024)
 #endif
 
 #define DEVICE_NAME_LENGTH      16
@@ -30,11 +34,14 @@ struct dev_sdram
 #endif
     int8_t (*open)(struct dev_sdram *sdram);
     int8_t (*close)(struct dev_sdram *sdram);
-    int8_t (*read)(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, uint16_t len);
-    int8_t (*write)(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, uint16_t len);
+    int8_t (*read)(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, uint16_t len, uint32_t timeout);
+    int8_t (*write)(struct dev_sdram *sdram, uint32_t offset, uint8_t *data, uint16_t len, uint32_t timeout);
     int8_t (*ioctl)(struct dev_sdram *sdram, uint8_t cmd, void *arg);
 };
 
+int8_t bank1_sdram_init(void);
+int8_t sdram_write(uint32_t offset, uint8_t *buf, uint16_t len, uint32_t timeout);
+int8_t sdram_read(uint32_t offset, uint8_t *buf, uint16_t len, uint32_t timeout);
 
 #ifdef __cplusplus
 }
