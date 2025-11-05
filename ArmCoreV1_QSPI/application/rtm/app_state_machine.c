@@ -109,7 +109,7 @@ static State_t module_ct_ready(void *self, Event_t const *const e);
 static State_t module_ct_work(void *self, Event_t const *const e);
 static State_t module_kv_complete(void *self, Event_t const *const e);
 static State_t module_kv_terminate(void *self, Event_t const *const e);
-static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock_table, uint8_t state, void *arg)
+static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock_table, uint8_t state, void *arg, uint32_t time_out)
 {
     int32_t retval = 0;
     app_rtm_main_t *app_rtm = (app_rtm_main_t *)arg;
@@ -312,10 +312,22 @@ static int32_t fault_check(rtm_fault_check_t *self, interlock_table_t *interlock
     if ((app_rtm->rtm_off_mv_treatment_state == MV_TREATMENT_EN_ON) &&
         (app_rtm->treatment_mode == TREATMENT_MODE_NORMAL))
     {
-        self->interlock_table.minor_interlock.rtm_off_mv_TreatmentEn = 1;
+        if ((state == STATE_MACHINE_IDLE) || (state == STATE_MACHINE_PRELIMINARY))
+        {
+            self->interlock_table.minor_interlock.rtm_off_mv_TreatmentEn = 1;
+            retval = -1;
+        }
+        else
+        {
+            self->interlock_table.minor_interlock.rtm_off_mv_TreatmentEn = 0;
+        }
     }
-    
-    if ((getElapsedTime(self->cur_time, self->last_time) > RTM_ERROR_WAIT_TIME) || (retval == 0))
+    else
+    {
+        self->interlock_table.minor_interlock.rtm_off_mv_TreatmentEn = 0;
+    }
+
+    if ((getElapsedTime(self->cur_time, self->last_time) > time_out) || (retval == 0))
     {
         if (self->fault_clear_flag == 1) // 清除故障
         {
@@ -484,7 +496,8 @@ static State_t module_init(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_INIT,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             cur_time = osKernelGetTickCount();
@@ -636,7 +649,8 @@ static State_t module_idle(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_IDLE,
-                                   rtm);
+                                   rtm,
+                                   200);
         status = HANDLED();
         break;
     }
@@ -873,7 +887,8 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_PRELIMINARY,
-                                   rtm);
+                                   rtm,
+                                   200);
         if (check_finish == 0)
         {
             if (fault_override(rtm) == NO_FAULT)
@@ -983,7 +998,8 @@ static State_t module_mv_prepare(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_PREPARE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -1117,7 +1133,8 @@ static State_t module_mv_ready(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_READY,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -1247,7 +1264,8 @@ static State_t module_mv_work(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_WORK,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -1370,7 +1388,8 @@ static State_t module_mv_complete(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_COMPLETE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         status = HANDLED();
         break;
     }
@@ -1469,7 +1488,8 @@ static State_t module_mv_interrupt(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_INTERRUPT,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -1591,7 +1611,8 @@ static State_t module_mv_terminate(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_TERMINATE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         status = HANDLED();
         break;
     }
@@ -1670,7 +1691,8 @@ static State_t module_kv_terminate(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_TERMINATE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             status = TRAN(&system_systemOn);
@@ -1776,7 +1798,8 @@ static State_t module_kv_preliminary(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_KV_PRELIMINARY,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -1922,7 +1945,8 @@ static State_t module_kv_prepare(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_KV_PREPARE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -2047,7 +2071,8 @@ static State_t module_surview_ready(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_SURVIEW_READY,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -2172,7 +2197,8 @@ static State_t module_surview_work(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_SURVIEW_WORK,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -2297,7 +2323,8 @@ static State_t module_ct_ready(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_CT_READY,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -2424,7 +2451,8 @@ static State_t module_ct_work(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_CT_WORK,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             int32_t fault_flag = fault_override(rtm);
@@ -2540,7 +2568,8 @@ static State_t module_kv_complete(void *self, Event_t const *const e)
         check_finish = fault_check(&rtm->fault_check,
                                    &rtm->interlock_table,
                                    STATE_MACHINE_KV_COMPLETE,
-                                   rtm);
+                                   rtm,
+                                   RTM_ERROR_WAIT_TIME);
         status = HANDLED();
         break;
     }

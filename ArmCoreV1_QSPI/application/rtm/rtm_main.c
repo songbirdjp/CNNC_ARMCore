@@ -221,6 +221,7 @@ static void app_rtm_main_thread(void *argument)
                 case INPUT_RTM_OFF_MV_TREATMENT_EN_STATE_CMD: /*RTM_OFF_MV_TREATMENT_EN_STATE*/
                 {
                     self->rtm_off_mv_treatment_state = *(uint8_t *)&(queue_frame.payload.data[1]);
+                    break;
                 }
                 default:
                     break;
