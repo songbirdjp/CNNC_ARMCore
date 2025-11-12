@@ -1514,3 +1514,10 @@ int8_t rtm_status_test(uint8_t argc, uint8_t **argv)
 }
 MSH_CMD_EXPORT_ALIAS(rtm_status_test, rtm_status_test, rtm status test);
 #endif
+static int8_t auto_state_get(int argc, char *argv[])
+{
+    LOG_I("PLC Auto state: %d, mv treatment state: %d\r\n", app_rtm.treatment_mode, app_rtm.rtm_off_mv_treatment_state);
+    return 0;
+}
+
+MSH_CMD_EXPORT_ALIAS(auto_state_get, auto_state_get, auto state get);
