@@ -1,93 +1,242 @@
-#include "w5500_port.h"
-#include "socket.h"
 #include "tcp_tasks.h"
-#include <stdbool.h>
+#include "w5500_port.h"
 #include "init_call.h"
-#include <stdio.h>
+#include "ulog.h"
 
-#define SOCK_TCPS   0
+#define MAX_CLIENT_NUM   (0)
 
-#ifndef IS_TCP_SERVER
-static uint8_t remote_ip[4] = {192, 168, 10, 110};
-static uint16_t remote_port = 8000;
-
-static uint8_t *remote_ip_get(void)
+struct socket_info
 {
-    return remote_ip;
-}
+    int8_t sn;
+    uint8_t local_type;     /* 0: client, 1: service */
+    uint8_t connect_status; /* 0: not connected, 1: connected */
+    uint8_t reserved;
+    struct
+    {
+        uint8_t protocol;   /* tcp、udp、raw */
+        uint8_t ip[4];
+        uint16_t port;
+    }net_info;
 
-static uint16_t remote_port_get(void)
-{
-    return remote_port;
-}
-#endif
-
-static wiz_NetInfo local_net_info = {
-        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x70},
-        .ip =  {192, 168, 10, 70},
-        .sn =  {255, 255, 255, 0},
-        .gw =  {192, 168, 10, 1},
-        .dns = {180, 76, 76, 76},
-        .dhcp = NETINFO_DHCP
+    uint8_t name[16];       /* socket name for remote */
+    int8_t (*callback_period)(uint8_t sn);
 };
+
+static struct socket_info socket_info[MAX_SOCKET_NUM] = 
+{
+    /* client sn must assign by user */
+    // [0] = {0, 0, 0, 0, .net_info = {Sn_MR_TCP, {192, 168, 10, 95}, 8123}, TCP_CLIENT_NAME, NULL},
+    // [1] = {1, 0, 0, 0, .net_info = {Sn_MR_TCP, {192, 168, 10, 95}, 8125}, TCP_CLIENT_NAME, NULL},
+
+    /* service sn is assigned by w5500 */
+    [MAX_CLIENT_NUM + 0] = {-1, 1, 0, 0, .net_info = {Sn_MR_TCP, {0}, 80}, {0}, NULL},
+    [MAX_CLIENT_NUM + 1] = {-1, 1, 0, 0, .net_info = {Sn_MR_TCP, {0}, 80}, {0}, NULL},
+    [MAX_CLIENT_NUM + 2] = {-1, 1, 0, 0, .net_info = {Sn_MR_TCP, {0}, 80}, {0}, NULL},
+    [MAX_CLIENT_NUM + 3] = {-1, 1, 0, 0, .net_info = {Sn_MR_TCP, {0}, 80}, {0}, NULL},
+    [MAX_CLIENT_NUM + 4] = {-1, 1, 0, 0, .net_info = {Sn_MR_TCP, {0}, 80}, {0}, NULL},
+    [MAX_CLIENT_NUM + 5] = {-1, 1, 0, 0, .net_info = {Sn_MR_TCP, {0}, 80}, {0}, NULL},
+    [MAX_CLIENT_NUM + 6] = {-1, 1, 0, 0, .net_info = {Sn_MR_TCP, {0}, 80}, {0}, NULL},
+    [MAX_CLIENT_NUM + 7] = {-1, 1, 0, 0, .net_info = {Sn_MR_TCP, {0}, 80}, {0}, NULL},
+};
+
+static wiz_NetInfo local_net_info = 
+{
+    .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x70},
+    .ip =  {192, 168, 10, 70},
+    .sn =  {255, 255, 255, 0},
+    .gw =  {192, 168, 10, 1},
+    .dns = {180, 76, 76, 76},
+    .dhcp = NETINFO_DHCP
+};
+
+
+/*********************************************************************************************************************/
+/* private code, user should not modify it */
+__attribute__((weak)) int8_t socket_connect_event_cb(uint8_t sn, uint8_t connect_status)
+{
+    return 0;
+}
+
+static int8_t (*callback_period[MAX_SOCKET_NUM])(uint8_t sn) = {NULL};
+static int8_t (*callback_period_get(uint8_t *name))(uint8_t sn)
+{
+    if (memcmp(name, TCP_CLIENT_NAME, strlen(TCP_CLIENT_NAME)) == 0)
+    {
+        return callback_period[0];
+    }
+    else if (memcmp(name, TCP_SHELL_NAME, strlen(TCP_SHELL_NAME)) == 0)
+    {
+        return callback_period[1];
+    }
+    else if (memcmp(name, TCP_SERVICE_NAME, strlen(TCP_SERVICE_NAME)) == 0)
+    {
+        return callback_period[2];
+    }
+    else if (memcmp(name, TCP_CONTROLLER_NAME, strlen(TCP_CONTROLLER_NAME)) == 0)
+    {
+        return callback_period[3];
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+static osMessageQueueId_t tcp_rx_queueHandle = NULL;
+static osMutexId_t tcp_access_mutexHandle = NULL;
+static struct socket_info *socket_info_get(uint8_t sn)
+{
+    if (sn >= MAX_SOCKET_NUM)
+    {
+        return NULL;
+    }
+
+    return &socket_info[sn];
+}
+static int8_t socket_connect_process(uint8_t sn)
+{
+    uint8_t ip[4] = {0};
+    uint16_t port = 0;
+    struct socket_info *info = NULL;
+
+    getsockopt(sn, SO_DESTIP, ip);
+    getsockopt(sn, SO_DESTPORT, &port);
+
+    uint8_t i = 0;
+    for (i = 0; i < MAX_SOCKET_NUM; i++)
+    {
+        info = socket_info_get(i);
+        if (info->local_type == 0 && memcmp(ip, info->net_info.ip, sizeof(ip)) == 0 && port == info->net_info.port) /* local is client */
+        {
+            info->callback_period = callback_period_get(TCP_CLIENT_NAME);
+            break;
+        }
+        else if (info->local_type == 1 && info->sn == sn)
+        {
+            break;
+        }
+    }
+    if (i == MAX_SOCKET_NUM)
+    {
+#if 0
+        for (i = 0; i < MAX_SOCKET_NUM; i++)
+        {
+            info = socket_info_get(i);
+            if (info->local_type == 1 && info->connect_status == 0 && info->name[0] == 0)
+            {
+                break;
+            }
+        }
+        if (i == MAX_SOCKET_NUM)
+        {
+            return -1;
+        }
+#endif
+        return -1;
+    }
+
+    info->sn = sn;
+    info->connect_status = 1;
+
+    return socket_connect_event_cb(sn, 1);
+}
+static int8_t socket_disconnect_process(uint8_t sn)
+{
+    uint8_t ip[4] = {0};
+    uint16_t port = 0;
+    struct socket_info *info = NULL;
+
+    getsockopt(sn, SO_DESTIP, ip);
+    getsockopt(sn, SO_DESTPORT, &port);
+
+    uint8_t i = 0;
+    for (i = 0; i < MAX_SOCKET_NUM; i++)
+    {
+        info = socket_info_get(i);
+        if (info->local_type == 0 && memcmp(ip, info->net_info.ip, sizeof(ip)) == 0 && port == info->net_info.port) /* local is client */
+        {
+            info->sn = sn;
+            info->connect_status = 0;
+            info->callback_period = NULL;
+            break;
+        }
+        else if (info->local_type == 1 && info->sn == sn)
+        {
+            info->sn = -1;
+            info->connect_status = 0;
+            info->callback_period = NULL;
+            memset(info->net_info.ip, 0, sizeof(info->net_info.ip));
+            memset(info->name, 0, sizeof(info->name));
+            break;
+        }
+    }
+    if (i == MAX_SOCKET_NUM)
+    {
+        return -1;
+    }
+
+    return socket_connect_event_cb(sn, 0);
+}
+static int8_t socket_data_receive_process(uint8_t sn, uint8_t *buf, uint16_t len)
+{
+    int8_t ret = 0;
+    struct tcp_data recv = {0};
+
+    recv.sn = sn;
+    recv.len = len;
+    memcpy(recv.buf, buf, len);
+
+    ret = osMessageQueuePut(tcp_rx_queueHandle, &recv, 0, 100);
+    if (ret != osOK)
+    {
+        LOG_E("tcp rx queue put err: %d\r\n", ret);
+        return ret;
+    }
+
+    return 0;
+}
 
 static wiz_NetInfo *local_netinfo_get(void)
 {
     return &local_net_info;
 }
 
-static TCP_DATA_t recvInfo = {0};
-static volatile uint8_t tcp_link_state = false;
+static volatile uint8_t tcp_link_state = PHY_LINK_OFF;
 static uint8_t tcp_link_status_get(void)
 {
     return tcp_link_state;
 }
-int32_t checkWsHsStatus(uint8_t sn)
-{
-    return client[sn].connectStatus;
-}
-int32_t get_sn(int8_t *sn, uint8_t type)
-{
-    uint8_t itemCnt = 0;
-    if (sn == NULL || type == 0)
-    {
-        return -1;
-    }
-    else
-    {
-        for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
-        {
-            if(client[i].clientType == type)
-            {
-                sn[i] = client[i].socketNum;
-                itemCnt++;
-            }
-            else
-            {
-                sn[i] = -1;
-            }
-        }
-        if(itemCnt == 0)
-        {
-            return -2;
-        }
-    }
-    return 0;
-}
-
-static void (*fun_ptr)(uint8_t sn);
 
 static void tcp_establish_cb(uint8_t sn)
 {
-    if (fun_ptr != NULL)
+    if (socket_info_get(sn)->callback_period != NULL)
     {
-        fun_ptr(sn);
+        socket_info_get(sn)->callback_period(sn);
     }
 }
 
-int8_t tcp_establish_cb_register(void (*fun_cb)(uint8_t sn))
+int8_t tcp_establish_cb_register(uint8_t *name, int8_t (*fun_cb)(uint8_t sn))
 {
-    fun_ptr = fun_cb;
+    if (memcmp(name, TCP_CLIENT_NAME, strlen(TCP_CLIENT_NAME)) == 0)
+    {
+        callback_period[0] = fun_cb;
+    }
+    else if (memcmp(name, TCP_SHELL_NAME, strlen(TCP_SHELL_NAME)) == 0)
+    {
+        callback_period[1] = fun_cb;
+    }
+    else if (memcmp(name, TCP_SERVICE_NAME, strlen(TCP_SERVICE_NAME)) == 0)
+    {
+        callback_period[2] = fun_cb;
+    }
+    else if (memcmp(name, TCP_CONTROLLER_NAME, strlen(TCP_CONTROLLER_NAME)) == 0)
+    {
+        callback_period[3] = fun_cb;
+    }
+    else
+    {
+        return -1;
+    }
 
     return 0;
 }
@@ -102,32 +251,16 @@ uint8_t tcp_socket_state_get(uint8_t sn)
     return getSn_SR(sn);
 }
 
-#ifdef IS_TCP_SERVER
-CLIENT_INFO client[MAX_CLIENT_NUM] = {-1};
-
-static void tcp_server_init(void)
-{
-    for (uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
-    {
-        client[i].socketNum = -1;
-        client[i].clientType = 0;
-    }
-}
-
-void clearClientInfo(uint8_t s)
-{
-    client[s].connectStatus = 0;
-    client[s].clientType = 0;
-    client[s].socketNum = -1;
-    client[s].loopCnt = 0; 
-}
-
-static int8_t do_tcp_server_send(uint8_t sn)
+static int8_t do_tcp_server(uint8_t sn)
 {
     int8_t ret = 0;
+    struct socket_info *info = socket_info_get(sn);
 
     switch (getSn_SR(sn))
     {
+    case SOCK_CLOSED:
+        ret = socket(sn, info->net_info.protocol, info->net_info.port, SF_TCP_NODELAY);
+        break;
     case SOCK_INIT:
         ret = listen(sn);
         break;
@@ -135,60 +268,51 @@ static int8_t do_tcp_server_send(uint8_t sn)
         tcp_establish_cb(sn); // period feedback here
         break;
     case SOCK_CLOSE_WAIT:
-        osDelay(500);
+        // ret = info->net_info.protocol == Sn_MR_TCP ? disconnect(sn) : close(sn);
         ret = disconnect(sn);
         break;
-    case SOCK_CLOSED:
-        clearClientInfo(sn);
-        ret = socket(sn, Sn_MR_TCP, 80, 0);
+    default:
         break;
-    default:    break;
     }
 
     return ret;
 }
-#else 
 static int8_t do_tcp_client(uint8_t sn)
 {
     int8_t ret = 0;
+    struct socket_info *info = socket_info_get(sn);
 
-    switch (getSn_SR(sn))                  /*获取socket的状态*/
+    switch (getSn_SR(info->sn))
     {
-        case SOCK_CLOSED:/*socket处于关闭状态*/
-            ret = socket(sn, Sn_MR_TCP, 8123, Sn_MR_ND);
-            if (ret < 0)
-            {
-                printf("tcp socket err:%d\r\n", ret);
-            }
-            break;
-            
-        case SOCK_INIT:                      /*socket处于初始化状态*/
-            ret = connect(sn, remote_ip, remote_port);/*socket连接服务器*/
-            if (ret != SOCK_OK)
-            {
-                printf("tcp connect err:%d\r\n", ret);
-            }
-            break;
-
-        case SOCK_ESTABLISHED:               /*socket处于连接建立状态*/
-            tcp_establish_cb(sn);
-            break;
-
-        case SOCK_CLOSE_WAIT:        /*socket处于等待关闭状态*/
-            close(sn);
-            printf("SOCK_CLOSE_WAIT\r\n");
-            break;
+    case SOCK_CLOSED:
+        ret = socket(info->sn, info->net_info.protocol, info->net_info.port, SF_TCP_NODELAY);
+        if (ret < 0)
+        {
+            LOG_E("tcp socket err: %d\r\n", ret);
+        }
+        break;
+    case SOCK_INIT:
+        ret = connect(info->sn, info->net_info.ip, info->net_info.port);
+        if (ret != SOCK_OK)
+        {
+            LOG_E("tcp connect err: %d\r\n", ret);
+        }
+        break;
+    case SOCK_ESTABLISHED:
+        tcp_establish_cb(info->sn);
+        break;
+    case SOCK_CLOSE_WAIT:
+        ret = info->net_info.protocol == Sn_MR_TCP ? disconnect(info->sn) : close(info->sn);
+        break;
+    default:
+        break;
     }
 
     return ret;
 }
-#endif
 
-static uint8_t socket_num_get(void)
-{
-    return SOCK_TCPS;
-}
 
+static uint8_t recv_buf[DATA_BUF_SIZE] = {0};
 static int8_t tcp_init(osMessageQueueId_t queue)
 {
     int8_t ret = 0;
@@ -196,19 +320,17 @@ static int8_t tcp_init(osMessageQueueId_t queue)
     ret = device_w5500_init(local_netinfo_get(), DEVICE_NAME_DEFAULT);
     if (ret != 0)
     {
-        printf("device w5500 init err\r\n");
+        LOG_E("device w5500 init err: %d\r\n", ret);
         return ret;
     }
 
-    device_w5500_interrupt_init(MAX_CLIENT_NUM);
+    device_w5500_interrupt_init(MAX_SOCKET_NUM);
 
-    device_w5500_rx_buffer_init(recvInfo.gDATABUF, sizeof(recvInfo.gDATABUF));
+    device_w5500_rx_buffer_init(recv_buf, sizeof(recv_buf));
 
     device_w5500_rx_queue_init(queue);
 
-#ifdef IS_TCP_SERVER
-    tcp_server_init();
-#endif
+    device_w5500_register_interrupt_callback(socket_connect_process, socket_disconnect_process, socket_data_receive_process);
 
     return 0;
 }
@@ -216,23 +338,19 @@ static int8_t tcp_init(osMessageQueueId_t queue)
 static uint8_t tcp_link_detect(void)
 {
     uint8_t ret = device_w5500_phy_link_status_get();
-    tcp_link_state =  (ret == PHY_LINK_OFF) ? false : true;
+    tcp_link_state =  (ret == PHY_LINK_OFF) ? PHY_LINK_OFF : PHY_LINK_ON;
     return tcp_link_state;
 }
 
 static int8_t tcp_link_state_recover(void)
 {
-#ifdef IS_TCP_SERVER
     int8_t ret = 0;
-    for (uint8_t sn = 0; sn < MAX_CLIENT_NUM; sn++)
+    for (uint8_t sn = 0; sn < MAX_SOCKET_NUM; sn++)
     {
         ret |= device_w5500_link_state_recover(sn);
-		clearClientInfo(sn);
     }
+
     return ret;
-#else
-    return device_w5500_link_state_recover(socket_num_get());
-#endif
 }
 
 static int8_t tcp_data_recv_with_block(void)
@@ -240,67 +358,52 @@ static int8_t tcp_data_recv_with_block(void)
     return device_w5500_data_recv_with_block();
 }
 
-/*
- * tcp init
-*/
-
-static osMessageQueueId_t tcp_rx_queueHandle = NULL;
-static osMutexId_t tcp_access_mutexHandle = NULL;
-
-static void TCPSendTask(void *argument)
+static void tcp_send_entry(void *argument)
 {
-  /* USER CODE BEGIN TCPSendTask */
-
     int8_t ret = 0;
 
-    ret = tcp_init(tcp_rx_queueHandle);
+    ret = tcp_init(NULL);
     if (ret != 0)
     {
-        printf("tcp init err\r\n");
-        return;
+        LOG_E("tcp init err: %d\r\n", ret);
+        osThreadExit();
     }
-    /* Infinite loop */
-    for(;;)
+
+    for (;;)
     {
         osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
 
-        while(tcp_link_detect() == false)
+        while(tcp_link_detect() == 0)
         {
-            // printf("tcp link off\r\n");
+            // LOG_E("tcp link off\r\n");
 
             tcp_link_state_recover();
 
             osDelay(100);
         }
- 
-    #ifdef IS_TCP_SERVER
-        for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
+
+        for(uint8_t i = 0; i < MAX_SOCKET_NUM; i++)
         {
-            ret = do_tcp_server_send(i);
+            ret = i < MAX_CLIENT_NUM ? do_tcp_client(i) : do_tcp_server(i);
             if (ret < 0)
             {
-                printf("do_tcp_server_send err:%d sn = %d\r\n", ret, i);
+                LOG_E("do tcp sn[%d] err: %d\r\n", i, ret);
             }
         }
-    #else
-        ret = do_tcp_client(socket_num_get());
-    #endif
+
         osMutexRelease(tcp_access_mutexHandle);
 
         osDelay(1);
     }
-  /* USER CODE END TCPSendTask */
 }
 
 static void tcp_recv_entry(void *argument)
 {
-  /* USER CODE BEGIN tcp_recv_entry */
-  /* Infinite loop */
-  int32_t ret = 0;
+    int32_t ret = 0;
 
-  for(;;)
-  {
-        while(tcp_link_status_get() == false)
+    for(;;)
+    {
+        while(tcp_link_status_get() == 0)
         {
             osDelay(100);
         }
@@ -308,43 +411,25 @@ static void tcp_recv_entry(void *argument)
         ret = tcp_data_recv_with_block();
         if (ret < 0)
         {
-            printf("tcp recv data err:%d\r\n", ret);
+            LOG_E("tcp data recv with block err: %d\r\n", ret);
         }
 
         osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
-
         ret = device_w5500_irq_process();
         if (ret < 0)
         {
-            printf("irq process err:%d\r\n", ret);
+            LOG_E("irq process err: %d\r\n", ret);
         }
-
         osMutexRelease(tcp_access_mutexHandle);
-
-  }
-  /* USER CODE END tcp_recv_entry */
+    }
 }
 
 static int8_t tcp_thread_init(void)
 {
-    osThreadAttr_t tcp_irq_thread_attributes = {
-    .name = "tcp_irq_thread",
-    .stack_size = 1024 * 4,
-    .priority = (osPriority_t) osPriorityAboveNormal,
-    };
-     osThreadAttr_t tcp_send_attributes = {
-    .name = "tcp_send_thread",
-    .stack_size = 2048 * 4,
-    .priority = (osPriority_t) osPriorityNormal,
-    };
     osMutexAttr_t tcp_access_mutex_attributes = {
-    .name = "tcp_access_mutex",
-    .attr_bits = osMutexRecursive | osMutexPrioInherit
+        .name = "tcp_access_mutex",
+        .attr_bits = osMutexRecursive | osMutexPrioInherit
     };
-    osMessageQueueAttr_t tcp_rx_queue_attributes = {
-    .name = "tcp_rx_queue"
-    };
-
     tcp_access_mutexHandle = osMutexNew(&tcp_access_mutex_attributes);
     if (tcp_access_mutexHandle == NULL)
     {
@@ -352,31 +437,42 @@ static int8_t tcp_thread_init(void)
         return -1;
     }
 
-    tcp_rx_queueHandle = osMessageQueueNew (3, sizeof(TCP_DATA_t), &tcp_rx_queue_attributes);
+    tcp_rx_queueHandle = osMessageQueueNew (3, sizeof(struct tcp_data), NULL);
     if (tcp_rx_queueHandle == NULL)
     {
         printf("queue tcp rx create failed\r\n");
-        return -1;
+        return -2;
     }
 
+    osThreadAttr_t tcp_irq_thread_attributes = {
+        .name = "tcp_irq_thread",
+        .stack_size = 1024 * 4,
+        .priority = (osPriority_t) osPriorityAboveNormal,
+    };
     osThreadId_t tcp_irq_threadHandle = osThreadNew(tcp_recv_entry, NULL, &tcp_irq_thread_attributes);
     if (tcp_irq_threadHandle == NULL)
     {
         printf("thread tcp irq create failed\r\n");
-        return -1;
+        return -3;
     }
-    osThreadId_t tcp_sendHandle = osThreadNew(TCPSendTask, NULL, &tcp_send_attributes);
+
+     osThreadAttr_t tcp_send_attributes = {
+        .name = "tcp_send_thread",
+        .stack_size = 2048 * 4,
+        .priority = (osPriority_t) osPriorityNormal,
+    };
+    osThreadId_t tcp_sendHandle = osThreadNew(tcp_send_entry, NULL, &tcp_send_attributes);
     if (tcp_sendHandle == NULL)
     {
         printf("thread tcp create failed\r\n");
-        return -1;
+        return -4;
     }
 
     return 0;
 }
 INIT_APP_EXPORT(tcp_thread_init);
 
-osStatus_t tcp_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
+osStatus_t tcp_data_recv_get_with_block(struct tcp_data *buf, uint32_t timeout)
 {
     return osMessageQueueGet(tcp_rx_queueHandle, buf, 0, timeout);
 }
@@ -388,10 +484,171 @@ int32_t tcp_data_send(uint8_t s, uint8_t *buf, uint16_t len)
     int32_t ret = send(s, buf, len);
     if (ret <= SOCK_BUSY)
     {
-        printf("tcp send err:%d\r\n", ret);
+        LOG_E("tcp send err: %d\r\n", ret);
     }
 
     osMutexRelease(tcp_access_mutexHandle);
 
     return ret;
 }
+
+
+static struct socket_info *socket_info_get_by_name(uint8_t *name)
+{
+    struct socket_info *info = NULL;
+
+    uint8_t i = 0;
+    for (i = 0; i < MAX_SOCKET_NUM; i++)
+    {
+        info = socket_info_get(i);
+        if (memcmp(info->name, name, strlen(name)) == 0)
+        {
+            break;
+        }
+    }
+    if (i == MAX_SOCKET_NUM)
+    {
+        return NULL;
+    }
+
+    return info;
+}
+static struct socket_info *socket_info_get_by_sn(uint8_t sn)
+{
+    struct socket_info *info = NULL;
+
+    uint8_t i = 0;
+    for (i = 0; i < MAX_SOCKET_NUM; i++)
+    {
+        info = socket_info_get(i);
+        if (info->sn == sn)
+        {
+            break;
+        }
+    }
+    if (i == MAX_SOCKET_NUM)
+    {
+        return NULL;
+    }
+
+    return info;
+}
+
+uint8_t *socket_name_get_by_sn(uint8_t sn)
+{
+    struct socket_info *info = socket_info_get_by_sn(sn);
+    if (info == NULL)
+    {
+        return NULL;
+    }
+
+    return (info->name);
+}
+
+int8_t socket_server_info_set_by_ws(uint8_t s, uint8_t *name, uint8_t connection, uint8_t multi_enable)
+{
+    int8_t ret = 0;
+    struct socket_info *info = NULL;
+
+    if (connection == 0)    /* disconnect */
+    {
+        info = socket_info_get_by_sn(s);
+        if (info == NULL)
+        {
+            return -1;
+        }
+
+        info->sn = -1;
+        info->connect_status = 0;
+        info->callback_period = NULL;
+        memset(info->net_info.ip, 0, sizeof(info->net_info.ip));
+        memset(info->name, 0, sizeof(info->name));
+
+        // info->net_info.protocol == Sn_MR_TCP ? disconnect(s) : close(s);
+    }
+    else
+    {
+        info = socket_info_get_by_name(name);
+        if (info == NULL)   /* socket name not exist */
+        {
+            info = socket_info_get_by_sn(s);
+            if (info == NULL)
+            {
+                uint8_t i = 0;
+                for (i = 0; i < MAX_SOCKET_NUM; i++)
+                {
+                    info = socket_info_get(i);
+                    if (info->local_type == 1 && info->connect_status == 0) /* search an empty socket info */
+                    {
+                        break;
+                    }
+                }
+                if (i == MAX_SOCKET_NUM)
+                {
+                    return -1;
+                }
+            }
+        }
+        else
+        {
+            if (multi_enable == 0)
+            {
+                if (info->sn != s && info->sn != -1 && info->connect_status == 1)
+                {
+                    info->net_info.protocol == Sn_MR_TCP ? disconnect(info->sn) : close(info->sn);  /* disconnect old socket */
+                }
+            }
+            else
+            {
+                if (info->sn != s && info->sn != -1 && info->connect_status == 1)
+                {
+                    uint8_t i = 0;
+                    for (i = 0; i < MAX_SOCKET_NUM; i++)
+                    {
+                        info = socket_info_get(i);
+                        if (info->local_type == 1 && info->connect_status == 0)
+                        {
+                            break;
+                        }
+                    }
+                    if (i == MAX_SOCKET_NUM)
+                    {
+                        return -1;
+                    }
+                }
+            }
+        }
+
+        info->sn = s;
+        info->connect_status = 1;
+        info->callback_period = callback_period_get(name);
+        memset(info->name, 0, sizeof(info->name));
+        memcpy(info->name, name, strlen(name));
+        getsockopt(s, SO_DESTIP, info->net_info.ip);
+    }
+
+    return 0;
+}
+
+#ifndef TCP_TASK_TEST
+#include "shell.h"
+static int8_t socket_info_output(uint8_t argc, uint8_t **argv)
+{
+    struct socket_info *info = NULL;
+
+    LOG_I("name\t sn\t local_type\t connect_status\t protocol\t ip\t\t port\r\n");
+
+    for (uint8_t i = 0; i < MAX_SOCKET_NUM; i++)
+    {
+        info = socket_info_get(i);
+
+        LOG_I("%s\t %d\t     %d\t             %d\t            %d\t         %d.%d.%d.%d\t %d\r\n", 
+                info->name, info->sn, info->local_type, info->connect_status, info->net_info.protocol, 
+                info->net_info.ip[0], info->net_info.ip[1], info->net_info.ip[2], info->net_info.ip[3], 
+                info->net_info.port);
+    }
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(socket_info_output, socket_info_output, output socket info);
+#endif

@@ -339,7 +339,7 @@ void app_data_record_thread(void *arg)
     app_data_record_t *self = (app_data_record_t *)arg;
     uint8_t dataBuf[MAX_DATA_LEN] = {0};
     uint32_t len = 0;
-    int8_t sn[MAX_CLIENT_NUM] = {0};
+    // int8_t sn[MAX_SOCKET_NUM] = {0};
     while (1)
     {
         uint32_t ret = osThreadFlagsWait(TID_FLAG, osFlagsWaitAny, 1000);
@@ -347,11 +347,11 @@ void app_data_record_thread(void *arg)
         // {
         //     continue;
         // }
-        int32_t retval = get_sn(sn, RAM_DATA);
-        if (retval != 0)
-        {
-            continue;
-        }
+        // int32_t retval = get_sn(sn, RAM_DATA);
+        // if (retval != 0)
+        // {
+        //     continue;
+        // }
         while (1)
         {
             ret = data_fifo_get(&self->data_fifo, dataBuf, &len);
@@ -359,13 +359,13 @@ void app_data_record_thread(void *arg)
             {
                 break;
             }
-            for (uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
+            for (uint8_t i = 0; i < MAX_SOCKET_NUM; i++)
             {
-                if (sn[i] == -1)
-                {
-                    continue;
-                }
-                self->sn = sn[i];
+                // if (sn[i] == -1)
+                // {
+                //     continue;
+                // }
+                // self->sn = sn[i];
                 ret = ws_send(self->sn, dataBuf, len, true, false, WDT_BINDATA);
                 if (ret != 0)
                 {

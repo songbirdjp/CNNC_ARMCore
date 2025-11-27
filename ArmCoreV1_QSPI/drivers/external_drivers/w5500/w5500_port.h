@@ -1,7 +1,7 @@
 #ifndef __W5500_PORT_H__
 #define __W5500_PORT_H__
 
-#include "wizchip_conf.h"
+#include "socket.h"
 #include "cmsis_os2.h"
 
 #ifdef __cplusplus
@@ -19,6 +19,7 @@ uint8_t device_w5500_phy_link_status_get(void);
 int8_t device_w5500_link_state_recover(uint8_t sn);
 int8_t device_w5500_data_recv_with_block(void);
 int32_t device_w5500_irq_process(void);
+int8_t device_w5500_register_interrupt_callback(int8_t (*connect_cb)(uint8_t sn), int8_t (*disconnect_cb)(uint8_t sn), int8_t (*recv_cb)(uint8_t sn, uint8_t *buf, uint16_t len));
 
 #ifdef __cplusplus
 }
