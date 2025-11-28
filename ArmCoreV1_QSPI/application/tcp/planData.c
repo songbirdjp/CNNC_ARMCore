@@ -338,7 +338,10 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 #ifndef TEST
         make_para_for_fpga(data);
         plcSetJawParam(data);
-		if((data[80] & 0x60) == 0x40)  carrierFollowFlag = 1;//enable carrier following function
+		if((data[80] & 0x60) == 0x40){
+           carrierFollowFlag = 1;//enable carrier following function 
+           plcSetCarrierParam(data);
+        }  
 		else	carrierFollowFlag = 0;
 #endif
     }
@@ -361,8 +364,14 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             return -1;
         }
 
-        pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
-		if(carrierFollowFlag == 1)  calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);
+      //  pSDRAM = (__IO uint8_t *) (SDRAM_BANK1_ADDR);
+        if(carrierFollowFlag == 1)  osEventFlagsSet(carrier_cal_eventHandle, 1);
+           // calCarrierTrajectory(pSDRAM, rtBeamData.totalBeam);
+        // if(planDataCheck(pSDRAM) < 0){
+        //     secondPosFeedback.errorCode = 0xf7;
+        //     LOG_E("recv error #7: plan error!!!\r\n");
+        //     return -1;
+        // }
         secondPosFeedback.errorCode = 0xF0; //ok
     }
     else{
@@ -392,7 +401,13 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
         LOG_E("Error: Invalid beam/RI index %d,%d,%d\r\n",rtBeamData.totalBeam,beamIndex,RIIndex);
         return 0;
     }
-   // LOG_I("BEAM%d.RI%d\r\n", beamIndex, RIIndex);
+
+    if((carrierFollowFlag) && (!rtBeamData.carrierCalFinish))
+    {
+       // LOG_E("Error: carrier pos not finish! %d,%d\r\n",carrierFollowFlag, rtBeamData.carrierCalFinish);
+        return 0;
+    }
+  //  LOG_I("%d.%d\r\n", beamIndex, RIIndex);
 #if 0
     for(uint8_t i = 1; i < beamIndex; i++)
     {
@@ -488,6 +503,7 @@ void clearPlan(void)
 
     rtBeamData.totalBeam = 0;															
     rtBeamData.beamIndex = 0;
+    rtBeamData.carrierCalFinish = 0;
     memset(rtBeamData.totalRIInBeam, 0, sizeof(rtBeamData.totalRIInBeam));
     memset(rtBeamData.oneBeamSize, 0, sizeof(rtBeamData.oneBeamSize));
 }

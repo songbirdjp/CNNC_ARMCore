@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 enum carrierPosType {MAX,MIN,CAL_RESULT};
+enum deviceType {MLC,XJAW,YJAW};
 
 typedef struct {
     uint8_t carrierPosMaxL;//[MAX_CP_IN_BEAM];
@@ -28,7 +29,19 @@ typedef struct {
     uint8_t retCode;
 }CARRIER_PERIOD_INFO;
 
+typedef struct {
+    uint16_t encodeLeafRange;
+    uint16_t carrierNegLim;
+    uint16_t leafNCarMinDist;
+    uint16_t leafRangeOffset;
+    uint16_t encodeLeafMax;
+    float calibrationCoef[9];
+}CARRIER_PARAM_SETTING;
+
+extern osEventFlagsId_t carrier_cal_eventHandle;
+
 void calCarrierTrajectory(uint8_t *pSDStart, uint8_t totalBeam);
+void plcSetCarrierParam(uint8_t *pData);
 
 #ifdef __cplusplus
 }

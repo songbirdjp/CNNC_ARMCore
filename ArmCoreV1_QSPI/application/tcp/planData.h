@@ -43,6 +43,7 @@ typedef struct {
     uint32_t oneBeamSize[MAX_BEAM_NUM];
     uint16_t beamIndex;
     uint16_t radiationIndex;
+    bool carrierCalFinish;
    // uint16_t errReset;
 }BEAM_DATA;
 

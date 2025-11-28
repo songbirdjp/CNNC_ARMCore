@@ -681,10 +681,10 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axes)
                 if((jawControlByAxes[axes].dirChangeFlag < 0) && (jawControlByAxes[axes].fSVG.Done == 0))
                     jawControlByAxes[axes].fSVG.EStop = 1;
                    
-                rtFeedback.jawInfo[axes] &= ~0x04;
+             //   rtFeedback.jawInfo[axes] &= ~0x04;
                   //  jawControlByAxes[axes].fSVG.StartPosition = (double)rtFeedback.jawRTPos[axes] / ENCODER_CNT_PER_MM; // ENC: 2000
-                if(axes == X)
-                    LOG_I("Jaw%d direction %d target pos %lf(%u)\r\n", axes,jawControlByAxes[axes].dirChangeFlag, jawControlByAxes[axes].fSVG.TargetPosition,enc);
+             //   if(axes == X)
+                //    LOG_I("Jaw%d direction %d target pos %lf(%u)\r\n", axes,jawControlByAxes[axes].dirChangeFlag, jawControlByAxes[axes].fSVG.TargetPosition,enc);
                     //   LOG_I("start %lf(%d) end %lf(%d)\r\n", 
                //     jawControlByAxes[axes].fSVG.StartPosition, rtFeedback.jawRTPos[axes],jawControlByAxes[axes].fSVG.TargetPosition,enc);
                 //    jawControlByAxes[axes].fSVG.Start = 1;
@@ -693,17 +693,22 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axes)
                 jawControlByAxes[axes].location_timer = 0;
                 jawControlByAxes[axes].startMovingFlag = 1;
                 jawControlByAxes[axes].crtPlanPos = enc;
+                motorEnable(axes);
             }
             else if(checkRet == 0){
-                //if(axes == X)   LOG_I("jaw%d short move %u-%u, skip new CP\r\n",axes,jawControlByAxes[axes].crtPlanPos, enc);
+              //  if(jawControlByAxes[axes].newSign == 0){
+                //     jawControlByAxes[axes].dirChangeFlag = 2;
+                 //    LOG_I("target no change\r\n");
+               // }
+               // if(axes == X)   LOG_I("jaw%d short move %u-%u, skip new CP\r\n",axes,jawControlByAxes[axes].crtPlanPos, enc);
             }  
             else LOG_E("jaw%d invalid work pos %d\r\n", axes, enc);
         }
         else if(pFlag->stateCmd[axes] > 0){
+            rtFeedback.jawInfo[axes] &= 0xf0;
             motorCtrlByPWM(0, axes);
             motorDisable(axes);
             motorParamInit(axes);
-            motorEnable(axes);
             LOG_I("Jaw%d state %d\r\n", axes, pFlag->stateCmd[axes]);
         }  
         break;
@@ -866,15 +871,15 @@ void movement_calculation_task(void)
             {
                 if(jawControlByAxes[axes].MotorState == SERVO)
                 {
-                    if((jawControlByAxes[axes].dirChangeFlag == 1) || ((jawControlByAxes[axes].dirChangeFlag == -1) && (jawControlByAxes[axes].fSVG.Done == 1)))
+                    if((jawControlByAxes[axes].dirChangeFlag == -1) && (jawControlByAxes[axes].fSVG.Done == 1))
                     {
                         uint16_t enc = (uint16_t)(jawControlByAxes[axes].fSVG.TargetPosition*ENCODER_CNT_PER_MM);
                         int8_t checkRet = planJawPosCheck(enc, rtFeedback.jawRTPos[axes], axes, (uint16_t)MAX_PREPARE_INPOS);
                         if(checkRet > 0)  //if new pos is too close(<0.1mm) to actual pos
                         { // get new plan cmd
                             jawControlByAxes[axes].fSVG.StartPosition = (double)rtFeedback.jawRTPos[axes] / ENCODER_CNT_PER_MM; // ENC: 2000
-                            if(axes == X)   LOG_I("jaw%d start %lf(%d) end %lf\r\n", 
-                            axes,jawControlByAxes[axes].fSVG.StartPosition, rtFeedback.jawRTPos[axes],jawControlByAxes[axes].fSVG.TargetPosition);
+                         //   if(axes == X)   LOG_I("jaw%d start %lf(%d) end %lf\r\n", 
+                          //  axes,jawControlByAxes[axes].fSVG.StartPosition, rtFeedback.jawRTPos[axes],jawControlByAxes[axes].fSVG.TargetPosition);
                             jawControlByAxes[axes].fSVG.Start = 1;
                             jawControlByAxes[axes].fSVG.Enable = 1;
                             jawControlByAxes[axes].lastSign = jawControlByAxes[axes].newSign;
@@ -882,9 +887,45 @@ void movement_calculation_task(void)
                         }
                         else if(checkRet == 0) {
                             jawControlByAxes[axes].crtPlanPos = enc; 
-                            if(axes == X) LOG_I("jaw%d no move %lf(%u)-%u\r\n", axes,jawControlByAxes[axes].fSVG.TargetPosition,enc,rtFeedback.jawRTPos[axes]);
+                          //  if(axes == X) LOG_I("jaw%d no move %lf(%u)-%u\r\n", axes,jawControlByAxes[axes].fSVG.TargetPosition,enc,rtFeedback.jawRTPos[axes]);
                         }
                     }
+                    else if(jawControlByAxes[axes].dirChangeFlag == 1){
+                        uint16_t enc = (uint16_t)(jawControlByAxes[axes].fSVG.TargetPosition*ENCODER_CNT_PER_MM);
+                        int8_t checkRet = planJawPosCheck(enc, rtFeedback.jawRTPos[axes], axes, (uint16_t)MAX_PREPARE_INPOS);
+                        if(checkRet > 0)  //if new pos is too close(<0.1mm) to actual pos
+                        { // get new plan cmd
+                            jawControlByAxes[axes].fSVG.StartPosition = (double)rtFeedback.jawRTPos[axes] / ENCODER_CNT_PER_MM; // ENC: 2000
+                         //   if(axes == X)   LOG_I("jaw%d start %lf(%d) end %lf\r\n", 
+                          //  axes,jawControlByAxes[axes].fSVG.StartPosition, rtFeedback.jawRTPos[axes],jawControlByAxes[axes].fSVG.TargetPosition);
+                            jawControlByAxes[axes].fSVG.Start = 1;
+                            jawControlByAxes[axes].fSVG.Enable = 1;
+                            jawControlByAxes[axes].lastSign = jawControlByAxes[axes].newSign;
+                            jawControlByAxes[axes].dirChangeFlag = 0;
+                        }
+                        else if(checkRet == 0) {
+                            jawControlByAxes[axes].crtPlanPos = enc; 
+                          //  if(axes == X) LOG_I("jaw%d no move %lf(%u)-%u\r\n", axes,jawControlByAxes[axes].fSVG.TargetPosition,enc,rtFeedback.jawRTPos[axes]);
+                        }
+                    }
+             /*       else if(jawControlByAxes[axes].dirChangeFlag == 2){
+                        uint16_t enc = (uint16_t)(jawControlByAxes[axes].fSVG.TargetPosition*ENCODER_CNT_PER_MM);
+                        int8_t checkRet = planJawPosCheck(enc, rtFeedback.jawRTPos[axes], axes, (uint16_t)MAX_PREPARE_INPOS);
+                        if(checkRet > 0)  //if new pos is too close(<0.1mm) to actual pos
+                        { // get new plan cmd
+                            jawControlByAxes[axes].fSVG.StartPosition = (double)rtFeedback.jawRTPos[axes] / ENCODER_CNT_PER_MM; // ENC: 2000
+                         //   if(axes == X)   LOG_I("jaw%d start %lf(%d) end %lf\r\n", 
+                          //  axes,jawControlByAxes[axes].fSVG.StartPosition, rtFeedback.jawRTPos[axes],jawControlByAxes[axes].fSVG.TargetPosition);
+                            jawControlByAxes[axes].fSVG.Start = 1;
+                            jawControlByAxes[axes].fSVG.Enable = 1;
+                         //   jawControlByAxes[axes].lastSign = jawControlByAxes[axes].newSign;
+                          //  jawControlByAxes[axes].dirChangeFlag = 0;
+                        }
+                        else if(checkRet == 0) {
+                            jawControlByAxes[axes].crtPlanPos = enc; 
+                          //  if(axes == X) LOG_I("jaw%d no move %lf(%u)-%u\r\n", axes,jawControlByAxes[axes].fSVG.TargetPosition,enc,rtFeedback.jawRTPos[axes]);
+                        }
+                    }*/
                 }
                 ret = PID(axes); 
 
@@ -989,7 +1030,7 @@ void movement_calculation_task(void)
                     rtFeedback.jawInfo[axes] |= 0x40;
                     cmd = FSM_INTERRUPT;
                     messageToJawTask(JawFinishStep, COMMAND, axes, &cmd);
-                    LOG_I("Jaw%d dual channel diff is too high %d\r\n",axes, diff);
+                  //  LOG_I("Jaw%d dual channel diff is too high %d\r\n",axes, diff);
                 }
             } 
         }
