@@ -15,7 +15,7 @@
 #include "sys_cfg.h"
 
 #define RTM_ERROR_WAIT_TIME (50)
-#define RTM_INIT_WAIT_TIME (20000)
+#define RTM_INIT_WAIT_TIME (60000)
 static int32_t stateMachine_ctor(StateMachine_t *self,
                                  StateHandler_t initial)
 {
@@ -453,6 +453,7 @@ static State_t module_init(void *self, Event_t const *const e)
         uint32_t ret = osThreadFlagsGet();
 
         rtm->ErrorCode = APP_RTM_THREAD_FLAG_ALL ^ ret;
+        rtm->CurrentStep = countOnes(osThreadFlagsGet());
         // if(ret & APP_RTM_THREAD_FLAG_ETHERCAT_READY)
         // {
         rtm->rtm_module_info[RTM_MODULE_RTM_ON_PLC].tx_disable = MODULE_TX_ENABLE;
@@ -510,13 +511,13 @@ static State_t module_init(void *self, Event_t const *const e)
             }
             else
             {
+                rtm->CurrentStep = countOnes(osThreadFlagsGet());
                 if (app_rtm_thread_flag_get(1) > 0)
                 {
                     status = TRAN(&system_systemOn);
                 }
                 else
                 {
-                    rtm->CurrentStep = countOnes(osThreadFlagsGet());
                     status = HANDLED();
                 }
             }
