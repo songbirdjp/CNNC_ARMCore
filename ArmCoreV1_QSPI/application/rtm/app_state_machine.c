@@ -889,7 +889,7 @@ static State_t module_mv_preliminary(void *self, Event_t const *const e)
                                    &rtm->interlock_table,
                                    STATE_MACHINE_PRELIMINARY,
                                    rtm,
-                                   200);
+                                   RTM_ERROR_WAIT_TIME);
         if (check_finish == 0)
         {
             if (fault_override(rtm) == NO_FAULT)
