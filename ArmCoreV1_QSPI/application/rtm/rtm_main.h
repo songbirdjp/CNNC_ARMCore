@@ -175,6 +175,8 @@ extern "C"
         uint32_t interlock_override;
         uint32_t unready_override;
         uint16_t treatment_mode;
+
+        uint8_t rtm_off_current_state;
         uint8_t rtm_off_mv_treatment_state;
         uint8_t beamID;
 
