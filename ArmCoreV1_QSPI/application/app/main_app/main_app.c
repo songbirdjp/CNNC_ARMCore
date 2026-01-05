@@ -19,7 +19,7 @@
 #define DATA_PROCESS_LAN_EVENT    (1<<1)
 #define DATA_PROCESS_TCP_EVENT    (1<<2)
 static osEventFlagsId_t data_process_eventHandle = NULL;
-static uint16_t planCmd, stateCmd;
+static uint16_t planCmd, stateCmdMlc, stateCmdJaw;
 
 static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
 {
@@ -51,8 +51,9 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
           //  LOG_E("car %d\r\n",rtFeedback.rtPosUpload[82]);
             rtFeedback.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
             rtFeedback.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
+          //  rtFeedback.MlcCurFsm &= 0xff00;
             rtFeedback.MlcCurFsm = recvBuf[FPGA_RT_UPLOAD_START+168];//RT 168
-          //  LOG_I("sta: %d %d %d %d\r\n", rtFeedback.faultInfo1,rtFeedback.faultInfo2, rtFeedback.MlcCurFsm,recvBuf[FPGA_RT_UPLOAD_START+169]);
+        //    LOG_I("sta: %d %d %d %d\r\n", rtFeedback.faultInfo1,rtFeedback.faultInfo2, rtFeedback.MlcCurFsm,recvBuf[FPGA_RT_UPLOAD_START+169]);
           //  rtFeedback.jawTowardPos[X] = (recvBuf[170 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 171];//RT 170 - 171
          //   rtFeedback.jawTowardPos[Y] = (recvBuf[172 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 173];//RT 172 - 173
             memcpy(&rtFeedback.jawTowardPos[X], &recvBuf[FPGA_RT_UPLOAD_START+170], 4);
@@ -79,7 +80,9 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
             memcpy(rtFeedback.rtPosUpload, &recvBuf[FPGA_RT_UPLOAD_START], 166);
             rtFeedback.faultInfo1 = recvBuf[FPGA_RT_UPLOAD_START+166];//RT 166
             rtFeedback.faultInfo2 = recvBuf[FPGA_RT_UPLOAD_START+167];//RT 167
+           // rtFeedback.MlcCurFsm &= 0xff00;
             rtFeedback.MlcCurFsm = recvBuf[FPGA_RT_UPLOAD_START+168];//RT 168
+          //  LOG_I("MLC state: %d\r\n",  rtFeedback.MlcCurFsm);
            // rtFeedback.jawTowardPos[X] = (recvBuf[170 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 171];//RT 170 - 171
           //  rtFeedback.jawTowardPos[Y] = (recvBuf[172 + FPGA_RT_UPLOAD_START] << 8) + recvBuf[FPGA_RT_UPLOAD_START + 173];//RT 172 - 173
             memcpy(&rtFeedback.jawTowardPos[X], &recvBuf[FPGA_RT_UPLOAD_START+170], 4);
@@ -90,6 +93,8 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
             // }
             memcpy(interlockFeedback.leafNcarInterlock, &recvBuf[FPGA_NRT_UPLOAD_START], 166);
             memcpy(&interlockFeedback.versionFPGA, &recvBuf[FPGA_NRT_UPLOAD_START + 166], 4);
+          //   LOG_I("car limit tri 0x%x 0x%x 0x%x 0x%x 0x%x\r\n",
+           //      interlockFeedback.leafNcarInterlock[78],interlockFeedback.leafNcarInterlock[79],interlockFeedback.leafNcarInterlock[80],interlockFeedback.leafNcarInterlock[81],interlockFeedback.leafNcarInterlock[82]);
         //    interlockFeedback.versionFPGA = 
         //        (recvBuf[FPGA_NRT_UPLOAD_START + 166]<<24)+(recvBuf[FPGA_NRT_UPLOAD_START + 167]<<16)+(recvBuf[FPGA_NRT_UPLOAD_START + 168]<<8)+recvBuf[FPGA_NRT_UPLOAD_START + 169];
         //    LOG_I("ver %x\r\n",interlockFeedback.versionFPGA);       
@@ -105,7 +110,7 @@ static int8_t non_realtime_fpga_data_process(uint8_t *recvBuf)
 #include "jaw_control.h"
 static int8_t realtime_ethercat_data_process(void)
 {
-    static uint16_t oldState, oldPlanCmd, oldRadiationIndex, oldBeamIndex, oldErrState;
+    static uint16_t oldMlcState, oldJawState, oldPlanCmd, oldRadiationIndex, oldBeamIndex, oldErrState;
     struct JawFlagType JawState;
     static uint16_t cnt;
     uint16_t errReset;
@@ -127,11 +132,13 @@ static int8_t realtime_ethercat_data_process(void)
     memcpy(send, recv, sizeof(UINT16) * 8);
 #else
     cnt++;
-    send->InU16_CrtFsmState = rtFeedback.MlcCurFsm;
-    send->InU16_BeamIndexFB = oldBeamIndex;
-    send->InU16_RidiationIndexFB = oldRadiationIndex;
-    send->InU16_BankIndexFB = BANK_NO;
-    memcpy(&send->InU16_LeafCrtControlMode, &recv->OutU16_LeafControlModeSetting, sizeof(uint16_t) * 4);//control mode feedback
+    send->InU16_MlcFsmState = rtFeedback.MlcCurFsm;
+    send->InU16_JawFsmState = rtFeedback.jawCurFsm;
+   // send->InU16_BeamIndexFB = oldBeamIndex;
+   // send->InU16_RidiationIndexFB = oldRadiationIndex;
+   // send->InU16_BankIndexFB = BANK_NO;
+    memcpy(&send->InU16_BeamIndexFB, &recv->OutU16_BeamIndex, sizeof(uint16_t) * 7);
+   // memcpy(&send->InU16_LeafCrtControlMode, &recv->OutU16_LeafControlModeSetting, sizeof(uint16_t) * 4);//control mode feedback
 #endif
     send->InU16_PlanCmdFB = recv->OutU16_PlanCmd;
 	send->InU16_FaultInfo1 &= 0xff00; 
@@ -155,26 +162,30 @@ static int8_t realtime_ethercat_data_process(void)
    // LOG_E("self %d %d\r\n",rtFeedback.jawRTPos[X],rtFeedback.jawRTPos[Y]);
     send->InU16_JawInfo = ((rtFeedback.jawInfo[Y]&0x0f)<< 4) + (rtFeedback.jawInfo[X]&0x0f);
 
-    stateCmd = recv->OutU16_FsmStateSetting;   //save rt cmd
+    stateCmdMlc = recv->OutU16_MlcFsmSetting;   //save rt cmd
+    stateCmdJaw = recv->OutU16_JawFsmSetting;   //save rt cmd
     rtBeamData.beamIndex = recv->OutU16_BeamIndex;
     rtBeamData.radiationIndex = recv->OutU16_RidiationIndex;
     planCmd = recv->OutU16_PlanCmd;
     errReset = recv->OutU16_ErrReset; /* Subindex12 - OutU16_ErrReset */
 
-    if(oldState != stateCmd)
+    if(oldMlcState != stateCmdMlc)
     {
-        LOG_I("fsm state: %d -> %d\r\n",oldState,stateCmd);
-        uint8_t newState = stateCmd;
+        LOG_I("mlc fsm state: %d -> %d\r\n",oldMlcState,stateCmdMlc);
+        
+        uint8_t newState = stateCmdMlc;
         make_cmd_to_fpga(CMD_STA_REQ, &newState);
-        oldState = stateCmd;
+        oldMlcState = stateCmdMlc;
+    }
 
+    if(oldJawState != stateCmdJaw)
+    {
+        LOG_I("jaw fsm state: %d -> %d\r\n",oldJawState,stateCmdJaw);
         uint16_t state[2];
-        state[0] = state[1] = stateCmd;
+        state[0] = state[1] = stateCmdJaw;
         messageToJawTask(JawState, COMMAND, XY, state);
-        rtFeedback.MlcCurFsm &= 0x00ff;
-        rtFeedback.MlcCurFsm |= (stateCmd << 8);
 
-        if(stateCmd == FSM_MANUAL)
+        if(stateCmdJaw == FSM_MANUAL)
         {
             uint16_t pos = 0;
             if(recv->OutU16_JawXControlModeSetting == 2){
@@ -186,6 +197,7 @@ static int8_t realtime_ethercat_data_process(void)
                 messageToJawTask(JawState, PLAN_DATA, Y, &pos);
             }
         }
+        oldJawState = stateCmdJaw;
     }
 
     if(oldPlanCmd != planCmd)
@@ -203,7 +215,7 @@ static int8_t realtime_ethercat_data_process(void)
             oldBeamIndex = oldRadiationIndex = 0;
         break;
         case CLOSE_PLAN://clear plan
-            if(stateCmd == FSM_IDLE){
+            if(stateCmdJaw == FSM_IDLE){
                 clearPlan();
                 oldBeamIndex = 0;
                 oldRadiationIndex = 0;
@@ -215,18 +227,19 @@ static int8_t realtime_ethercat_data_process(void)
     }
     if(oldErrState != errReset)
     {
-        if(errReset == 1){
-            uint16_t state[2];
-            state[0] = state[1] = FSM_IDLE;
-            messageToJawTask(JawState, COMMAND, XY, state);
+        if(errReset == 1)
+        {
+            rtFeedback.jawInfo[X] &= 0x0f;
+            rtFeedback.jawInfo[Y] &= 0x0f;
+            interlockFeedback.jawInterlock[X] = interlockFeedback.jawInterlock[Y] = 0;
         }
         oldErrState = errReset;
     }
-    if(((stateCmd == FSM_IDLE)||(stateCmd == FSM_SERVO))&&(rtBeamData.beamIndex > 0))
+    if(((stateCmdJaw == FSM_IDLE)||(stateCmdJaw == FSM_SERVO))&&(rtBeamData.beamIndex > 0))
     {
         if((oldBeamIndex != rtBeamData.beamIndex) || (oldRadiationIndex != rtBeamData.radiationIndex))
         {
-           // LOG_I("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
+          //  LOG_I("RI: %d.%d -> %d.%d\r\n",oldBeamIndex,oldRadiationIndex,rtBeamData.beamIndex,rtBeamData.radiationIndex);
             if(sendCPtoDevice(rtBeamData.beamIndex, rtBeamData.radiationIndex, JawState))
             {
                 oldRadiationIndex = rtBeamData.radiationIndex;

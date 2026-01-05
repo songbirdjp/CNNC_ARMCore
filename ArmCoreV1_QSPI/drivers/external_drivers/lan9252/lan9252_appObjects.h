@@ -46,6 +46,7 @@
 * SubIndex 10 - Reference to 0x7010.10<br>
 * SubIndex 11 - Reference to 0x7010.11<br>
 * SubIndex 12 - Reference to 0x7010.12<br>
+* SubIndex 13 - Reference to 0x7010.13<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
@@ -60,7 +61,8 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x1601[] = {
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex9 - Reference to 0x7010.9 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex10 - Reference to 0x7010.10 */
 { DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex11 - Reference to 0x7010.11 */
-{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex12 - Reference to 0x7010.12 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }, /* Subindex12 - Reference to 0x7010.12 */
+{ DEFTYPE_UNSIGNED32 , 0x20 , ACCESS_READ }}; /* Subindex13 - Reference to 0x7010.13 */
 
 /**
 * \brief Object/Entry names
@@ -77,7 +79,8 @@ OBJCONST UCHAR OBJMEM aName0x1601[] = "OutputData process data mapping\000"
 "SubIndex 009\000"
 "SubIndex 010\000"
 "SubIndex 011\000"
-"SubIndex 012\000\377";
+"SubIndex 012\000"
+"SubIndex 013\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -98,6 +101,7 @@ UINT32 SI9; /* Subindex9 - Reference to 0x7010.9 */
 UINT32 SI10; /* Subindex10 - Reference to 0x7010.10 */
 UINT32 SI11; /* Subindex11 - Reference to 0x7010.11 */
 UINT32 SI12; /* Subindex12 - Reference to 0x7010.12 */
+UINT32 SI13; /* Subindex13 - Reference to 0x7010.13 */
 } OBJ_STRUCT_PACKED_END
 TOBJ1601;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -107,7 +111,7 @@ TOBJ1601;
 */
 PROTO TOBJ1601 OutputDataProcessDataMapping0x1601
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={12,0x70100110,0x70100210,0x70100310,0x70100410,0x70100510,0x70100610,0x70100710,0x70100810,0x70100910,0x70100A10,0x70100B10,0x70100C10}
+={13,0x70100110,0x70100210,0x70100310,0x70100410,0x70100510,0x70100610,0x70100710,0x70100810,0x70100910,0x70100A10,0x70100B10,0x70100C10,0x70100D10}
 #endif
 ;
 /** @}*/
@@ -244,7 +248,7 @@ TOBJ1A00;
 */
 PROTO TOBJ1A00 InputDataProcessDataMapping0x1A00
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={23,0x60000110,0x60000210,0x60000310,0x60000410,0x60000510,0x60000610,0x60000710,0x60000810,0x60000910,0x60000A10,0x60000B10,0x60000C10,0x60000D40,0x60000EF0,0x000000F0,0x000000F0,0x000000F0,0x000000F0,0x00000070,0x60000F10,0x60001020,0x60001110,0x60001220}
+={23,0x60000110,0x60000210,0x60000310,0x60000410,0x60000510,0x60000610,0x60000710,0x60000810,0x60000910,0x60000A10,0x60000B10,0x60000C10,0x60000D40,0x60000EF0,0x000000F0,0x000000F0,0x000000F0,0x000000F0,0x00000070,0x60000F10,0x60001020,0x60001110,0x60001210}
 #endif
 ;
 /** @}*/
@@ -362,7 +366,7 @@ PROTO TOBJ1C13 sTxPDOassign
 * \brief Object entry descriptions<br>
 * <br>
 * SubIndex 0<br>
-* SubIndex 1 - InU16_CrtFsmState<br>
+* SubIndex 1 - InU16_MlcFsmState<br>
 * SubIndex 2 - InU16_BeamIndexFB<br>
 * SubIndex 3 - InU16_BankIndexFB<br>
 * SubIndex 4 - InU16_RidiationIndexFB<br>
@@ -379,11 +383,11 @@ PROTO TOBJ1C13 sTxPDOassign
 * SubIndex 15 - InU16_CarCrtPos<br>
 * SubIndex 16 - InAU16_JawCrtPos<br>
 * SubIndex 17 - InU16_JawInfo<br>
-* SubIndex 18 - InAU16_Reserve2<br>
+* SubIndex 18 - InU16_JawFsmState<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex1 - InU16_CrtFsmState */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex1 - InU16_MlcFsmState */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex2 - InU16_BeamIndexFB */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex3 - InU16_BankIndexFB */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex4 - InU16_RidiationIndexFB */
@@ -400,13 +404,13 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x6000[] = {
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex15 - InU16_CarCrtPos */
 { DEFTYPE_UNICODE_STRING , 0x20 , ACCESS_READ }, /* Subindex16 - InAU16_JawCrtPos */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex17 - InU16_JawInfo */
-{ DEFTYPE_UNICODE_STRING , 0x20 , ACCESS_READ }}; /* Subindex18 - InAU16_Reserve2 */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }}; /* Subindex18 - InU16_JawFsmState */
 
 /**
 * \brief Object/Entry names
 */
 OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
-"InU16_CrtFsmState\000"
+"InU16_MlcFsmState\000"
 "InU16_BeamIndexFB\000"
 "InU16_BankIndexFB\000"
 "InU16_RidiationIndexFB\000"
@@ -423,7 +427,7 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 "InU16_CarCrtPos\000"
 "InAU16_JawCrtPos\000"
 "InU16_JawInfo\000"
-"InAU16_Reserve2\000\377";
+"InU16_JawFsmState\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -432,7 +436,7 @@ OBJCONST UCHAR OBJMEM aName0x6000[] = "InputData\000"
 */
 typedef struct OBJ_STRUCT_PACKED_START {
 UINT16 u16SubIndex0;
-UINT16 InU16_CrtFsmState; /* Subindex1 - InU16_CrtFsmState */
+UINT16 InU16_MlcFsmState; /* Subindex1 - InU16_MlcFsmState */
 UINT16 InU16_BeamIndexFB; /* Subindex2 - InU16_BeamIndexFB */
 UINT16 InU16_BankIndexFB; /* Subindex3 - InU16_BankIndexFB */
 UINT16 InU16_RidiationIndexFB; /* Subindex4 - InU16_RidiationIndexFB */
@@ -449,7 +453,7 @@ UINT16 InAU16_LeafCrtPos[82]; /* Subindex14 - InAU16_LeafCrtPos */
 UINT16 InU16_CarCrtPos; /* Subindex15 - InU16_CarCrtPos */
 UINT16 InAU16_JawCrtPos[2]; /* Subindex16 - InAU16_JawCrtPos */
 UINT16 InU16_JawInfo; /* Subindex17 - InU16_JawInfo */
-UINT16 InAU16_Reserve2[2]; /* Subindex18 - InAU16_Reserve2 */
+UINT16 InU16_JawFsmState; /* Subindex18 - InU16_JawFsmState */
 } OBJ_STRUCT_PACKED_END
 __attribute__((aligned(1), packed))TOBJ6000;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -459,7 +463,7 @@ __attribute__((aligned(1), packed))TOBJ6000;
 */
 PROTO TOBJ6000 InputData0x6000
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={18,0,0,0,0,0,0,0,0,0,0,0,0,{0x0000,0x0000,0x0000,0x0000},{0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000},0,{0x0000,0x0000},0,{0x0000,0x0000}}
+={18,0,0,0,0,0,0,0,0,0,0,0,0,{0x0000,0x0000,0x0000,0x0000},{0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000},0,{0x0000,0x0000},0,0}
 #endif
 ;
 /** @}*/
@@ -479,7 +483,7 @@ PROTO TOBJ6000 InputData0x6000
 * \brief Object entry descriptions<br>
 * <br>
 * SubIndex 0<br>
-* SubIndex 1 - OutU16_FsmStateSetting<br>
+* SubIndex 1 - OutU16_MlcFsmSetting<br>
 * SubIndex 2 - OutU16_BeamIndex<br>
 * SubIndex 3 - OutU16_BankIndex<br>
 * SubIndex 4 - OutU16_RidiationIndex<br>
@@ -491,10 +495,11 @@ PROTO TOBJ6000 InputData0x6000
 * SubIndex 10 - OutU16_JawXPositionSetting<br>
 * SubIndex 11 - OutU16_JawYPositionSetting<br>
 * SubIndex 12 - OutU16_ErrReset<br>
+* SubIndex 13 - OutU16_JawFsmSetting<br>
 */
 OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED8 , 0x8 , ACCESS_READ },
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex1 - OutU16_FsmStateSetting */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex1 - OutU16_MlcFsmSetting */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex2 - OutU16_BeamIndex */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex3 - OutU16_BankIndex */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex4 - OutU16_RidiationIndex */
@@ -505,13 +510,14 @@ OBJCONST TSDOINFOENTRYDESC    OBJMEM asEntryDesc0x7010[] = {
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex9 - OutU16_PlanCmd */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex10 - OutU16_JawXPositionSetting */
 { DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex11 - OutU16_JawYPositionSetting */
-{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }}; /* Subindex12 - OutU16_ErrReset */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }, /* Subindex12 - OutU16_ErrReset */
+{ DEFTYPE_UNSIGNED16 , 0x10 , ACCESS_READ }}; /* Subindex13 - OutU16_JawFsmSetting */
 
 /**
 * \brief Object/Entry names
 */
 OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
-"OutU16_FsmStateSetting\000"
+"OutU16_MlcFsmSetting\000"
 "OutU16_BeamIndex\000"
 "OutU16_BankIndex\000"
 "OutU16_RidiationIndex\000"
@@ -522,7 +528,8 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 "OutU16_PlanCmd\000"
 "OutU16_JawXPositionSetting\000"
 "OutU16_JawYPositionSetting\000"
-"OutU16_ErrReset\000\377";
+"OutU16_ErrReset\000"
+"OutU16_JawFsmSetting\000\377";
 #endif //#ifdef _OBJD_
 
 #ifndef _LAN9252_APP_OBJECTS_H_
@@ -531,7 +538,7 @@ OBJCONST UCHAR OBJMEM aName0x7010[] = "OutputData\000"
 */
 typedef struct OBJ_STRUCT_PACKED_START {
 UINT16 u16SubIndex0;
-UINT16 OutU16_FsmStateSetting; /* Subindex1 - OutU16_FsmStateSetting */
+UINT16 OutU16_MlcFsmSetting; /* Subindex1 - OutU16_MlcFsmSetting */
 UINT16 OutU16_BeamIndex; /* Subindex2 - OutU16_BeamIndex */
 UINT16 OutU16_BankIndex; /* Subindex3 - OutU16_BankIndex */
 UINT16 OutU16_RidiationIndex; /* Subindex4 - OutU16_RidiationIndex */
@@ -543,6 +550,7 @@ UINT16 OutU16_PlanCmd; /* Subindex9 - OutU16_PlanCmd */
 UINT16 OutU16_JawXPositionSetting; /* Subindex10 - OutU16_JawXPositionSetting */
 UINT16 OutU16_JawYPositionSetting; /* Subindex11 - OutU16_JawYPositionSetting */
 UINT16 OutU16_ErrReset; /* Subindex12 - OutU16_ErrReset */
+UINT16 OutU16_JawFsmSetting; /* Subindex13 - OutU16_JawFsmSetting */
 } OBJ_STRUCT_PACKED_END
 __attribute__((aligned(1), packed))TOBJ7010;
 #endif //#ifndef _LAN9252_APP_OBJECTS_H_
@@ -552,7 +560,7 @@ __attribute__((aligned(1), packed))TOBJ7010;
 */
 PROTO TOBJ7010 OutputData0x7010
 #if defined(_LAN9252_APP_) && (_LAN9252_APP_ == 1)
-={12,0,0,0,0,0,0,0,0,0,0,0,0}
+={13,0,0,0,0,0,0,0,0,0,0,0,0,0}
 #endif
 ;
 /** @}*/
@@ -566,7 +574,7 @@ PROTO TOBJ7010 OutputData0x7010
 #ifdef _OBJD_
 TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x1601 */
-{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 12 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x1601 , {DEFTYPE_PDOMAPPING , 13 | (OBJCODE_REC << 8)} , asEntryDesc0x1601 , aName0x1601 , &OutputDataProcessDataMapping0x1601 , NULL , NULL , 0x0000 },
 /* Object 0x1A00 */
 {NULL , NULL ,  0x1A00 , {DEFTYPE_PDOMAPPING , 23 | (OBJCODE_REC << 8)} , asEntryDesc0x1A00 , aName0x1A00 , &InputDataProcessDataMapping0x1A00 , NULL , NULL , 0x0000 },
 /* Object 0x1C12 */
@@ -576,7 +584,7 @@ TOBJECT    OBJMEM ApplicationObjDic[] = {
 /* Object 0x6000 */
 {NULL , NULL ,  0x6000 , {DEFTYPE_RECORD , 18 | (OBJCODE_REC << 8)} , asEntryDesc0x6000 , aName0x6000 , &InputData0x6000 , NULL , NULL , 0x0000 },
 /* Object 0x7010 */
-{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 12 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
+{NULL , NULL ,  0x7010 , {DEFTYPE_RECORD , 13 | (OBJCODE_REC << 8)} , asEntryDesc0x7010 , aName0x7010 , &OutputData0x7010 , NULL , NULL , 0x0000 },
 {NULL,NULL, 0xFFFF, {0, 0}, NULL, NULL, NULL, NULL}};
 #endif    //#ifdef _OBJD_
 

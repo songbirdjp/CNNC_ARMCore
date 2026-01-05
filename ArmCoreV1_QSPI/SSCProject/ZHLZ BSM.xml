@@ -184,7 +184,7 @@
 							</DataType>
 							<DataType>
 								<Name>DT1601</Name>
-								<BitSize>400</BitSize>
+								<BitSize>432</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -323,6 +323,17 @@
 									<Comment>Reference to 0x7010.12</Comment>
 									<BitSize>32</BitSize>
 									<BitOffs>368</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>13</SubIdx>
+									<Name>SubIndex 013</Name>
+									<Type>UDINT</Type>
+									<Comment>Reference to 0x7010.13</Comment>
+									<BitSize>32</BitSize>
+									<BitOffs>400</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -961,7 +972,7 @@
 							</DataType>
 							<DataType>
 								<Name>DT6000</Name>
-								<BitSize>1680</BitSize>
+								<BitSize>1664</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -974,7 +985,7 @@
 								</SubItem>
 								<SubItem>
 									<SubIdx>1</SubIdx>
-									<Name>InU16_CrtFsmState</Name>
+									<Name>InU16_MlcFsmState</Name>
 									<Type>UINT</Type>
 									<BitSize>16</BitSize>
 									<BitOffs>16</BitOffs>
@@ -1144,9 +1155,9 @@
 								</SubItem>
 								<SubItem>
 									<SubIdx>18</SubIdx>
-									<Name>InAU16_Reserve2</Name>
-									<Type>ARRAY [0..1] OF UINT</Type>
-									<BitSize>32</BitSize>
+									<Name>InU16_JawFsmState</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
 									<BitOffs>1648</BitOffs>
 									<Flags>
 										<Access>ro</Access>
@@ -1155,7 +1166,7 @@
 							</DataType>
 							<DataType>
 								<Name>DT7010</Name>
-								<BitSize>208</BitSize>
+								<BitSize>224</BitSize>
 								<SubItem>
 									<SubIdx>0</SubIdx>
 									<Name>SubIndex 000</Name>
@@ -1168,7 +1179,7 @@
 								</SubItem>
 								<SubItem>
 									<SubIdx>1</SubIdx>
-									<Name>OutU16_FsmStateSetting</Name>
+									<Name>OutU16_MlcFsmSetting</Name>
 									<Type>UINT</Type>
 									<BitSize>16</BitSize>
 									<BitOffs>16</BitOffs>
@@ -1282,6 +1293,16 @@
 									<Type>UINT</Type>
 									<BitSize>16</BitSize>
 									<BitOffs>192</BitOffs>
+									<Flags>
+										<Access>ro</Access>
+									</Flags>
+								</SubItem>
+								<SubItem>
+									<SubIdx>13</SubIdx>
+									<Name>OutU16_JawFsmSetting</Name>
+									<Type>UINT</Type>
+									<BitSize>16</BitSize>
+									<BitOffs>208</BitOffs>
 									<Flags>
 										<Access>ro</Access>
 									</Flags>
@@ -1427,12 +1448,12 @@
 								<Index>#x1601</Index>
 								<Name>OutputData process data mapping</Name>
 								<Type>DT1601</Type>
-								<BitSize>400</BitSize>
+								<BitSize>432</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
 										<Info>
-											<DefaultData>0C</DefaultData>
+											<DefaultData>0D</DefaultData>
 										</Info>
 									</SubItem>
 									<SubItem>
@@ -1505,6 +1526,12 @@
 										<Name>SubIndex 012</Name>
 										<Info>
 											<DefaultData>100C1070</DefaultData>
+										</Info>
+									</SubItem>
+									<SubItem>
+										<Name>SubIndex 013</Name>
+										<Info>
+											<DefaultData>100D1070</DefaultData>
 										</Info>
 									</SubItem>
 								</Info>
@@ -1656,7 +1683,7 @@
 									<SubItem>
 										<Name>SubIndex 023</Name>
 										<Info>
-											<DefaultData>20120060</DefaultData>
+											<DefaultData>10120060</DefaultData>
 										</Info>
 									</SubItem>
 								</Info>
@@ -1807,7 +1834,7 @@
 								<Index>#x6000</Index>
 								<Name>InputData</Name>
 								<Type>DT6000</Type>
-								<BitSize>1680</BitSize>
+								<BitSize>1664</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
@@ -1821,12 +1848,12 @@
 								<Index>#x7010</Index>
 								<Name>OutputData</Name>
 								<Type>DT7010</Type>
-								<BitSize>208</BitSize>
+								<BitSize>224</BitSize>
 								<Info>
 									<SubItem>
 										<Name>SubIndex 000</Name>
 										<Info>
-											<DefaultData>0C</DefaultData>
+											<DefaultData>0D</DefaultData>
 										</Info>
 									</SubItem>
 								</Info>
@@ -1839,8 +1866,8 @@
 				<Fmmu>MBoxState</Fmmu>
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1000" ControlByte="#x26" Enable="1">MBoxOut</Sm>
 				<Sm MinSize="#x22" MaxSize="#x100" DefaultSize="#x80" StartAddress="#x1080" ControlByte="#x22" Enable="1">MBoxIn</Sm>
-				<Sm DefaultSize="24" StartAddress="#x1100" ControlByte="#x64" Enable="1">Outputs</Sm>
-				<Sm DefaultSize="208" StartAddress="#x1400" ControlByte="#x20" Enable="1">Inputs</Sm>
+				<Sm DefaultSize="26" StartAddress="#x1100" ControlByte="#x64" Enable="1">Outputs</Sm>
+				<Sm DefaultSize="206" StartAddress="#x1400" ControlByte="#x20" Enable="1">Inputs</Sm>
 				<RxPdo Fixed="true" Mandatory="true" Sm="2">
 					<Index>#x1601</Index>
 					<Name>OutputData process data mapping</Name>
@@ -1848,7 +1875,7 @@
 						<Index>#x7010</Index>
 						<SubIndex>1</SubIndex>
 						<BitLen>16</BitLen>
-						<Name>OutU16_FsmStateSetting</Name>
+						<Name>OutU16_MlcFsmSetting</Name>
 						<DataType>UINT</DataType>
 					</Entry>
 					<Entry>
@@ -1928,6 +1955,13 @@
 						<Name>OutU16_ErrReset</Name>
 						<DataType>UINT</DataType>
 					</Entry>
+					<Entry>
+						<Index>#x7010</Index>
+						<SubIndex>13</SubIndex>
+						<BitLen>16</BitLen>
+						<Name>OutU16_JawFsmSetting</Name>
+						<DataType>UINT</DataType>
+					</Entry>
 				</RxPdo>
 				<TxPdo Fixed="true" Mandatory="true" Sm="3">
 					<Index>#x1A00</Index>
@@ -1936,7 +1970,7 @@
 						<Index>#x6000</Index>
 						<SubIndex>1</SubIndex>
 						<BitLen>16</BitLen>
-						<Name>InU16_CrtFsmState</Name>
+						<Name>InU16_MlcFsmState</Name>
 						<DataType>UINT</DataType>
 					</Entry>
 					<Entry>
@@ -2079,9 +2113,9 @@
 					<Entry>
 						<Index>#x6000</Index>
 						<SubIndex>18</SubIndex>
-						<BitLen>32</BitLen>
-						<Name>InAU16_Reserve2</Name>
-						<DataType>ARRAY [0..1] OF UINT</DataType>
+						<BitLen>16</BitLen>
+						<Name>InU16_JawFsmState</Name>
+						<DataType>UINT</DataType>
 					</Entry>
 				</TxPdo>
 				<Mailbox DataLinkLayer="true">

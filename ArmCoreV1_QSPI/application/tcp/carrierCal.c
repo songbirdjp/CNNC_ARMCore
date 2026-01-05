@@ -40,8 +40,8 @@ void carrierParamInit(void)
 
 uint16_t Iso2Encoder(enum deviceType device, float fX)//mm -> cnt
 {
-    float fA, fB, fC, fDelta;
-    float posIso2Mlc = 0.0;
+    double fA, fB, fC, fDelta;
+    double posIso2Mlc = 0.0;
     uint16_t intPos = 0;
 
     fA = carrierPar.calibrationCoef[device*3 + 0];
@@ -69,9 +69,9 @@ uint16_t Iso2Encoder(enum deviceType device, float fX)//mm -> cnt
     return intPos;
 }
 
-float Encoder2Iso(enum deviceType device, uint16_t fX)//cnt -> mm
+double Encoder2Iso(enum deviceType device, uint16_t fX)//cnt -> mm
 {
-    float fA, fB, fC, posMlc2Iso = 0;
+    double fA, fB, fC, posMlc2Iso = 0;
 
     fA = carrierPar.calibrationCoef[device*3 + 0];
     fB = carrierPar.calibrationCoef[device*3 + 1];
@@ -86,6 +86,7 @@ void plcSetCarrierParam(uint8_t *pData)
 {
     uint16_t leafMinParam, leafMaxParam;
     uint16_t value = 0;
+    int64_t calibCoef[CAL_PAR_NUM] = {0};
 
     leafMinParam = (pData[41] << 8) + pData[40];
     leafMaxParam = (pData[43] << 8) + pData[42];
@@ -99,10 +100,12 @@ void plcSetCarrierParam(uint8_t *pData)
     carrierPar.encodeLeafMax = carrierPar.encodeLeafRange + carrierPar.leafNCarMinDist;
   //  for(uint8_t i = 0; i < 36; i++) LOG_I("%d ", pData[696+i]);
   //  LOG_I("\r\n");
-    memcpy(&carrierPar.calibrationCoef[0], &pData[696], 9*sizeof(float));
+   // memcpy(&carrierPar.calibrationCoef[0], &pData[696], 9*sizeof(uint64_t));
+    memcpy(calibCoef, &pData[696], CAL_PAR_NUM*sizeof(uint64_t));
+    for(uint8_t i = 0; i < CAL_PAR_NUM; i++)    carrierPar.calibrationCoef[i] = (double)(calibCoef[i] / 1e12);
     yjaw_40p_enc = Iso2Encoder(YJAW, YJAW_40P_ISO_COOR);
     plcSetFinish = 1;
-    LOG_I("carrier param:%u,%u,%u,%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f,%u\r\n",carrierPar.encodeLeafRange,carrierPar.carrierNegLim,
+    LOG_I("carrier param:%u,%u,%u,%u,%u,%.12f,%.12f,%.12f,%.12f,%.12f,%.12f,%.12f,%.12f,%.12f,%u\r\n",carrierPar.encodeLeafRange,carrierPar.carrierNegLim,
         carrierPar.leafNCarMinDist,carrierPar.leafRangeOffset,carrierPar.encodeLeafMax,carrierPar.calibrationCoef[0],
         carrierPar.calibrationCoef[1],carrierPar.calibrationCoef[2],carrierPar.calibrationCoef[3],carrierPar.calibrationCoef[4],
         carrierPar.calibrationCoef[5],carrierPar.calibrationCoef[6],carrierPar.calibrationCoef[7],carrierPar.calibrationCoef[8],yjaw_40p_enc);
@@ -338,7 +341,6 @@ CARRIER_PERIOD_INFO findFarmostPos(uint16_t startRI, uint16_t pauseRI, int8_t di
             middlePosF = (float_t)rdCarrierPosFromSDRAM(i, MAX);
             speedArry[iArry] = (startPosF - middlePosF) / (float_t)iArry;//should reach
         }
-        #if 1
 // LOG_I("%d %f %f\r\n", i, speedArry[iArry], fastest.speed);
         if ((speedArry[iArry] - fastest.speed) > 1e-6)//find the farmost period in this direction
         {
@@ -349,7 +351,6 @@ CARRIER_PERIOD_INFO findFarmostPos(uint16_t startRI, uint16_t pauseRI, int8_t di
      //  if(dir > 0) startPosF = (float_t)rdCarrierPosFromSDRAM(startRI, MAX);
       // else if(dir < 0) startPosF = (float_t)rdCarrierPosFromSDRAM(startRI, MIN);
         }
-      #endif
     }
 #endif
     return fastest;
@@ -401,7 +402,7 @@ uint16_t calculateOneMovement(uint16_t startRI, int8_t dir, uint16_t totalRI)//c
 uint16_t findDirection(uint16_t startRI, uint16_t totalRI)
 {
     uint16_t intersectMin, minInterRI = startRI, intersectMax, maxInterRI = startRI, pauseRI = 0,i;
-    uint16_t posMin, posMax, carrierPos = 0;
+    uint16_t posMin, posMax, carrierPos = 0, calStartPos = 0;;
     float speed = 0.0;
 
     intersectMin =  rdCarrierPosFromSDRAM(startRI, MIN);
@@ -427,25 +428,32 @@ uint16_t findDirection(uint16_t startRI, uint16_t totalRI)
                     if(carrierPosCal.preparePos == 0)  carrierPosCal.preparePos = intersectMax;
                     carrierPosCal.carrierPos = carrierPosCal.preparePos;
                     wrCarrierPos2SDRAM(i, carrierPosCal.carrierPos);
-                 //  LOG_I("init carrierPosCal.carrierPos[%d]:%u\n", i, carrierPosCal.carrierPos[i]);
+                 //   LOG_I("init carrierPosCal.carrierPos[%d]:%u\n", i, carrierPosCal.carrierPos);
                   //  LOG_I("%d,%u\r\n", i, carrierPosCal.carrierPos);
                 }
                 carrierPosCal.preparePos = 0;
+                calStartPos = carrierPosCal.preparePos;
             }
             else {//later stages
                 uint16_t startPos = rdCarrierPosFromSDRAM(startRI, CAL_RESULT);
                 LOG_I("run to next stage start pos %d[%d] -> %d[%d]\r\n", startPos, startRI, intersectMax, maxInterRI);
-                speed = (float)(intersectMax - startPos) / (maxInterRI - startRI);
-                for (i = startRI+1; i <= maxInterRI; i++) {
-                    carrierPos = rdCarrierPosFromSDRAM(i, MAX);
-                    if (carrierPos == intersectMax) wrCarrierPos2SDRAM(i, intersectMax);
-                    else{
-                        carrierPos = startPos + speed*(i - startRI) + 0.5;
-                        wrCarrierPos2SDRAM(i, carrierPos);
-                    }   
-                    //carrierPosCal.carrierPos[i] = carrierPosCal.carrierPos[startRI] + speed*(i - startRI) + 0.5;
+                if(startRI == maxInterRI)
+                {
+                    calStartPos = startPos;
+                }
+                else{
+                    speed = (float)(intersectMax - startPos) / (maxInterRI - startRI);
+                    for (i = startRI+1; i <= maxInterRI; i++) {
+                        carrierPos = rdCarrierPosFromSDRAM(i, MAX);
+                        if (carrierPos == intersectMax) wrCarrierPos2SDRAM(i, intersectMax);
+                        else{
+                            carrierPos = startPos + speed*(i - startRI) + 0.5;
+                            wrCarrierPos2SDRAM(i, carrierPos);
+                        }   
        // LOG_I("init carrierPosCal.carrierPos[%d]:%u\n", i, carrierPosCal.carrierPos[i]);
                   //  LOG_I("%d,%u\r\n", i, carrierPos);
+                    }
+                    calStartPos = intersectMax;
                 }
             }
             LOG_I("Forward out-of-range ri %d min pos %u, start ri %d init pos %u\r\n", ri, posMin, maxInterRI, intersectMax);
@@ -463,26 +471,33 @@ uint16_t findDirection(uint16_t startRI, uint16_t totalRI)
                     if(carrierPosCal.preparePos == 0)  carrierPosCal.preparePos = intersectMin;
                     carrierPosCal.carrierPos = carrierPosCal.preparePos;
                     wrCarrierPos2SDRAM(i, carrierPosCal.carrierPos);
-       // LOG_I("init carrierPosCal.carrierPos[%d]:%u\n", i, carrierPosCal.carrierPos);
+                   // LOG_I("init carrierPosCal.carrierPos[%d]:%u\n", i, carrierPosCal.carrierPos);
                  //   LOG_I("%d,%u\r\n", i, carrierPosCal.carrierPos);
                 }
                 carrierPosCal.preparePos = 0;
+                calStartPos = carrierPosCal.preparePos;
             }
             else {//later stages
                 uint16_t startPos = rdCarrierPosFromSDRAM(startRI, CAL_RESULT);
                 LOG_I("run to next stage start pos %d[%d] -> %d[%d]\r\n", startPos, startRI, intersectMin, minInterRI);
-                speed = (float)(intersectMin - startPos) / (minInterRI - startRI);
-                for (i = startRI + 1; i <= minInterRI; i++) {
-                    carrierPos = rdCarrierPosFromSDRAM(i, MIN);
-                  //  LOG_I("carrierPos 111 %d\r\n", carrierPos);
-                    if(carrierPos == intersectMin) wrCarrierPos2SDRAM(i, intersectMin);
-                    else{
-                        carrierPos = startPos + speed*(i - startRI) + 0.5;
-                        wrCarrierPos2SDRAM(i, carrierPos);
-                       // LOG_I("carrierPos 222 %d\r\n", carrierPos);
-                    }   
+                if(startRI == maxInterRI)
+                {
+                    calStartPos = startPos;
+                }
+                else{
+                    speed = (float)(intersectMin - startPos) / (minInterRI - startRI);
+                    for (i = startRI + 1; i <= minInterRI; i++) {
+                        carrierPos = rdCarrierPosFromSDRAM(i, MIN);
+                        if(carrierPos == intersectMin) wrCarrierPos2SDRAM(i, intersectMin);
+                        else{
+                            carrierPos = startPos + speed*(i - startRI) + 0.5;
+                            wrCarrierPos2SDRAM(i, carrierPos);
+                       // LOG_I("carrierPos %d\r\n", carrierPos);
+                        }   
       //  LOG_I("init carrierPosCal.carrierPos[%d]:%u\n", i, carrierPosCal.carrierPos[i]);
                   //  LOG_I("%d,%u\r\n", i, carrierPos);
+                    }
+                    calStartPos = intersectMin;
                 }
             }
             LOG_I("Backward out-of-range ri %d max pos %u, start ri %d init pos %u\r\n", ri, posMax, minInterRI, intersectMin);
@@ -637,7 +652,8 @@ void calCarrierTrajectory(uint8_t *pSDStart, uint8_t totalBeam)
                     interlockFeedback.jawInterlock[X] |= 0x10;
                 }
             }
-            if((uint16_t)(jawTarget[Y]/2.5) < yjaw_40p_enc)
+            uint16_t yJawPlan = (uint16_t)(jawTarget[Y]/2.5 + 0.5);
+            if((yjaw_40p_enc - yJawPlan) > 5)
             {
                 LOG_I("Yjaw out of 40P %d %d %d!\r\n",beamBufIndex,ri, jawTarget[Y]);
                 interlockFeedback.jawInterlock[Y] |= 0x10;

@@ -121,6 +121,7 @@ void messageToJawTask(struct JawFlagType source, uint16_t signalType, uint8_t ax
         case COMMAND:
             if(axes == XY)
             {
+                rtFeedback.jawCurFsm = value[X];
                 source.stateCmd[X] = value[X];
                 source.stateCmd[Y] = value[Y];
             }
@@ -192,8 +193,8 @@ void yjaw_EncZ_callback(void)
     }
     else if(jawControlByAxes[axes].MotorState == UART_DEBUG){
         value = getEncodeValue(axes)/4;
-      //  LOG_I("%d,%d\r\n",value,secondPosFeedback.jawSecondPos[axes]);
-        LOG_I("%d,",value);
+      printf("%d,%d\r\n",value,secondPosFeedback.jawSecondPos[axes]);
+     //   LOG_I("%d,",value);
       //  LOG_I("%d,",secondPosFeedback.jawSecondPos[axes]);
     }
 }
@@ -204,7 +205,7 @@ void xjaw_EncZ_callback(void)
     uint16_t value = 0;
     uint8_t axes = X;
     static uint8_t cnt = 0;
-
+   
     if(jawControlByAxes[axes].MotorState == INIT_END)
     {
      //   LOG_I("%d\r\n",secondPosFeedback.jawSecondPos[axes]);
@@ -214,8 +215,8 @@ void xjaw_EncZ_callback(void)
     }
     else if(jawControlByAxes[axes].MotorState == UART_DEBUG){
         value = getEncodeValue(axes)/4;
-     //   LOG_I("%d,%d\r\n",value,secondPosFeedback.jawSecondPos[axes]);
-       LOG_I("%d,",value);
+        printf("%d,%d\r\n",value,secondPosFeedback.jawSecondPos[axes]);
+      // printf("%d\r\n",value);
       //  LOG_I("%d,",secondPosFeedback.jawSecondPos[axes]);
     }
 }
@@ -258,6 +259,11 @@ void yjaw_limitSwitch_callback(void)
     // {
     //     if(jawControlByAxes[axes].MotorState > INIT_END)   interlockFeedback.jawInterlock[axes] &= ~0x200;//bit 9           
     // } 
+}
+
+uint16_t second2Encoder(uint8_t axes)
+{
+    return (paraK[axes]*secondPosFeedback.jawSecondPos[axes] + paraB[axes]);
 }
 
 void xjaw_limitSwitch_callback(void)
@@ -430,6 +436,7 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axes)
     case FSM_PREPARE:
         jawControlByAxes[axes].MotorState = PREPARE_START;
         break;
+    case FSM_READY:     return;
     case FSM_SERVO:
         jawControlByAxes[axes].MotorState = SERVO;
         break;
@@ -448,8 +455,6 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axes)
         break;
     case FSM_INTERRUPT:
         jawControlByAxes[axes].MotorState = ERROR_STATE;
-        rtFeedback.MlcCurFsm &= 0x00ff;
-        rtFeedback.MlcCurFsm |= (pFlag->stateCmd[axes] << 8);
         break;
     case UART_DEBUG:
         jawControlByAxes[axes].MotorState = UART_DEBUG;
@@ -657,6 +662,8 @@ void JawCtrlLoop(struct JawFlagType *pFlag, uint8_t axes)
     case SERVO:
         if(pFlag->cmdPos[axes] > 0)
         {
+          //  if(pFlag->cmdPos[axes] == Y) LOG_I("servo %d\r\n", pFlag->cmdPos[axes]);
+            jawControlByAxes[axes].preparePos = pFlag->cmdPos[axes];//new prepare aim pos after interrupt 
             posInPlan = pFlag->cmdPos[axes]; // get RI for servo
             enc = posInPlan/2.5;
             double diff = jawControlByAxes[axes].fSVG.TargetPosition - rtFeedback.jawRTPos[axes]/ENCODER_CNT_PER_MM;
@@ -730,8 +737,12 @@ int8_t doubleLoopPID(uint8_t axes)
     uint16_t crtPos = rtFeedback.jawRTPos[axes];
     int8_t ret = SVG(&jawControlByAxes[axes].fSVG, axes);
     uint16_t pulse = (uint16_t)(jawControlByAxes[axes].fSVG.Position * ENCODER_CNT_PER_MM + 0.5); //jawControlByAxes[axes].fSVG.moveDirection
-      //  LOG_I("pos:%d %lf\r\n",pulse, jawControlByAxes[axesType].fSVG.Position);
-   
+     //   LOG_I("pos:%d %d\r\n",pulse, ret);
+    if(ret < 0)
+    {
+        ret = 0;//SVG error don't change FSM
+      //  LOG_E("jaw%d SVG Warn %d\r\n",axes, jawControlByAxes[axes].fSVG.Status);
+    } 
     float posLoopOutput = PositionPIDCtrl(crtPos, pulse, &motor_pid_pos[axes]);
     float actSpeed = (float)jawControlByAxes[axes].encoderDelta32/ ENCODER_PULSES_PER_TURN * 250 * 60; // rpm
     // LOG_I("dlt %f ", (float)encoderDelta);
@@ -749,6 +760,7 @@ int8_t doubleLoopPID(uint8_t axes)
             {
                 rtFeedback.jawInfo[axes] &= ~0x20;
                 rtFeedback.jawInfo[axes] |= 0x04; //jaw prepare done flag set, but still moving
+               // if(axes == X)   LOG_I("prepare done set %x, diff %d\r\n", rtFeedback.jawInfo[axes], diff);
             }
             else    rtFeedback.jawInfo[axes] |= 0x20;
         }
@@ -1023,15 +1035,21 @@ void movement_calculation_task(void)
             
             if(jawControlByAxes[axes].MotorState > INIT_END)
             {
-                uint16_t sec2Enc = paraK[axes]*secondPosFeedback.jawSecondPos[axes] + paraB[axes];
+                uint16_t sec2Enc = second2Encoder(axes);
                 int16_t diff = rtFeedback.jawRTPos[axes] - sec2Enc;
+             //   if(axes == Y)   LOG_I("Jaw%d dual channel diff %d %d\r\n",axes, abs(diff),secondPosFeedback.jawSecondPos[axes]);
                 if( abs(diff) > MAX_TWO_CHANNEL_DIFF ){
                     interlockFeedback.jawInterlock[axes] |= 0x40;//bit 6
                     rtFeedback.jawInfo[axes] |= 0x40;
                     cmd = FSM_INTERRUPT;
                     messageToJawTask(JawFinishStep, COMMAND, axes, &cmd);
-                  //  LOG_I("Jaw%d dual channel diff is too high %d\r\n",axes, diff);
+                   // LOG_I("Jaw%d dual channel diff is too high %d\r\n",axes, diff);
                 }
+              //  else{
+                 //  interlockFeedback.jawInterlock[axes] &= ~0x40;//bit 6
+                 //   rtFeedback.jawInfo[axes] &= ~0x40; 
+                  //  LOG_I("Jaw%d dual channel diff OK %x\r\n",axes, interlockFeedback.jawInterlock[axes]);
+               // }
             } 
         }
         if((jawControlByAxes[X].startMovingFlag) || (jawControlByAxes[Y].startMovingFlag))

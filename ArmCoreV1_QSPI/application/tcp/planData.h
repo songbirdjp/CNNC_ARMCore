@@ -55,6 +55,7 @@ typedef struct {
     uint16_t jawRTPos[2];
     uint16_t jawInfo[2];
     uint16_t jawTowardPos[2];
+    uint16_t jawCurFsm;
 }REALTIME_FEEDBACK;
 
 typedef struct {

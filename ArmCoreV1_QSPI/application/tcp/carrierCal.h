@@ -14,6 +14,8 @@ extern "C" {
 enum carrierPosType {MAX,MIN,CAL_RESULT};
 enum deviceType {MLC,XJAW,YJAW};
 
+#define CAL_PAR_NUM 9
+
 typedef struct {
     uint8_t carrierPosMaxL;//[MAX_CP_IN_BEAM];
     uint8_t carrierPosMaxH;
@@ -35,7 +37,7 @@ typedef struct {
     uint16_t leafNCarMinDist;
     uint16_t leafRangeOffset;
     uint16_t encodeLeafMax;
-    float calibrationCoef[9];
+    double calibrationCoef[CAL_PAR_NUM];
 }CARRIER_PARAM_SETTING;
 
 extern osEventFlagsId_t carrier_cal_eventHandle;

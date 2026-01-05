@@ -25,7 +25,7 @@ INTERLOCK_FEEDBACK interlockFeedback;
 SECOND_POS_FEEDBACK secondPosFeedback;
 static FRAME_HEAD frameHead;
 static FRAME_END frameEnd;
-static bool carrierFollowFlag;
+static bool carrierFollowFlag, beamRecvNotFinish;
 
 static APP_DATA_SEND activeSendData[] = {
     {"tcpFeedback", 0, TCP_SEND_PERIOD, WDT_BINDATA, CONTROLLER, NULL, NULL},
@@ -219,8 +219,16 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
 
         if (frameHead.packIndexInOneBeam == 1)
         {
+            if(beamRecvNotFinish) {
+                secondPosFeedback.errorCode = 0xf7;
+               // LOG_E("recv error #7: last beam not finish!\r\n");
+                return -1;
+            } 
+            else    beamRecvNotFinish = 1;
+
             if (++rtBeamData.totalBeam > MAX_BEAM_NUM){
                 --rtBeamData.totalBeam;
+				secondPosFeedback.errorCode = 0xf8;
                 LOG_E("recv error #8: beam sum %d > 50, will not save!\r\n",rtBeamData.totalBeam);
                 return -1;
             } 
@@ -290,6 +298,7 @@ int8_t nrtRecvParamAndPlan(APP_DATA_RECV* info)//return( <0:error =0:parameter >
             rtBeamData.oneBeamSize[beamBufIndex] =
                      4 + RT_SDRAM_PAYLOAD_LEN
                      * rtBeamData.totalRIInBeam[beamBufIndex];
+            beamRecvNotFinish = 0;
          //   if (rtBeamData.totalBeam >= MAX_BEAM_NUM) LOG_E("Warn: beam > 30, will not be sent to FPGA!\r\n");
             LOG_I("Beam %d transfer finish, ri is %d, size is %d\r\n",
                    rtBeamData.beamIndex, rtBeamData.totalRIInBeam[beamBufIndex], rtBeamData.oneBeamSize[beamBufIndex]);
@@ -398,7 +407,7 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
   //  rtBeamData.totalRIInBeam[1] = 0x704;
     if((beamIndex <= 0) || (RIIndex <= 0)/* || (RIIndex > rtBeamData.totalRIInBeam[beamIndex])*/)
     {
-        LOG_E("Error: Invalid beam/RI index %d,%d,%d\r\n",rtBeamData.totalBeam,beamIndex,RIIndex);
+      //  LOG_E("Error: Invalid beam/RI index %d,%d,%d\r\n",rtBeamData.totalBeam,beamIndex,RIIndex);
         return 0;
     }
 
@@ -504,6 +513,8 @@ void clearPlan(void)
     rtBeamData.totalBeam = 0;															
     rtBeamData.beamIndex = 0;
     rtBeamData.carrierCalFinish = 0;
+    interlockFeedback.jawInterlock[X] &= ~0x10;
+    interlockFeedback.jawInterlock[Y] &= ~0x10;
     memset(rtBeamData.totalRIInBeam, 0, sizeof(rtBeamData.totalRIInBeam));
     memset(rtBeamData.oneBeamSize, 0, sizeof(rtBeamData.oneBeamSize));
 }
@@ -540,4 +551,5 @@ void planDataInit(void)
     sendStructInfo.pActiveSend = activeSendData;
     sendStructInfo.sendItemNum = sizeof(activeSendData)/sizeof(APP_DATA_SEND);
     carrierFollowFlag = 1;
+    beamRecvNotFinish = 0;
 }

@@ -689,8 +689,8 @@ int32_t tcp_recv_process(TCP_DATA_t *recvData)
 				clearClientInfo(s);
                 uint8_t closeFrame[] = {0x88, 0x02, 0x03, 0xe8}; // status code:1000    close normal
                 ws_send(s, closeFrame, sizeof(closeFrame), true, false, WDT_NULL);
-                osDelay(10);
-                disconnect(s);
+             //   osDelay(10);
+                close(s);
                 if(client[s].clientType == SERVICE) serviceNumber--;
                 break;	
             case WDT_PING:	
