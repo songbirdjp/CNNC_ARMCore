@@ -26,7 +26,7 @@ int8_t wwdg_init(void)
     HAL_StatusTypeDef status = HAL_OK;
 
     MX_WWDG1_Init();
-    
+
     status = HAL_WWDG_RegisterCallback(&hwwdg1, HAL_WWDG_EWI_CB_ID, wwdg_refresh);
     if (status != HAL_OK)
     {
@@ -36,5 +36,3 @@ int8_t wwdg_init(void)
     return 0;
 }
 INIT_BOARD_EXPORT(wwdg_init);
-
-  

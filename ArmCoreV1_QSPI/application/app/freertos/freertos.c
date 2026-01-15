@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2026 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -22,7 +22,6 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-#include "ulog.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -133,7 +132,7 @@ void vApplicationStackOverflowHook(xTaskHandle xTask, signed char *pcTaskName)
    configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
    called if a stack overflow is detected. */
 
-   LOG_E("%s stack over flow\r\n", pcTaskName);
+   printf("%s stack over flow\r\n", pcTaskName);
 }
 /* USER CODE END 4 */
 
@@ -151,7 +150,7 @@ void vApplicationMallocFailedHook(void)
    to query the size of free heap space that remains (although it does not
    provide information on how the remaining heap might be fragmented). */
 
-   LOG_E("malloc failed, thread name: %s\r\n", osThreadGetName(osThreadGetId()));
+   printf("malloc failed, thread name: %s\r\n", osThreadGetName(osThreadGetId()));
 }
 /* USER CODE END 5 */
 
@@ -205,14 +204,10 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-   // osDelay(1000);//delay 1s
     HAL_GPIO_WritePin(GPIOG, GPIO_PIN_9, GPIO_PIN_SET);//watchdog signal 2
     /* Infinite loop */
-    //  motorEnable(1);
-    //  motorCtrlByPWM(100, 1);
 
-    uint8_t count = 0;
-    // uint16_t crtPos;
+    uint32_t count = 0;
     for(;;)
     {
         HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_7);//watchdog signal 1
@@ -222,8 +217,6 @@ void StartDefaultTask(void *argument)
         if (count++ % 5 == 0)
         {
             HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
-            // crtPos = getEncodeValue(1);
-            // LOG_I("crt pos: %ld\r\n", crtPos);
         }
     }
   /* USER CODE END StartDefaultTask */

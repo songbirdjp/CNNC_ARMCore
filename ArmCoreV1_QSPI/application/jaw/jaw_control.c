@@ -140,31 +140,40 @@ void messageToJawTask(struct JawFlagType source, uint16_t signalType, uint8_t ax
     osMessageQueuePut(motor_signal_queueHandle, &source, 0, 0);
 }
 
+// void getEncodeTotalValue(uint8_t axes)
+// {
+//     __IO uint16_t crtEncoder = 0;
+//     int16_t encoderDelta16 = 0;
+
+//     if(jawControlByAxes[axes].encoderTotalCnt >= 0)
+//     {
+//         crtEncoder = getEncodeValue(axes);
+//         encoderDelta16 = crtEncoder - jawControlByAxes[axes].encoderLast16;
+//         if(abs(encoderDelta16) > ENCODER_PULSES_PER_TURN) 
+//         {
+//             if(encoderDelta16 < 0)    jawControlByAxes[axes].encoderTotalCnt += 0x10000;//overflow
+//             else    jawControlByAxes[axes].encoderTotalCnt -= 0x10000;//underflow
+//         }
+//         jawControlByAxes[axes].encoderTotalCnt += encoderDelta16;
+//         jawControlByAxes[axes].encoderLast16 = crtEncoder;
+//         jawControlByAxes[axes].encoderDelta32 = (jawControlByAxes[axes].encoderTotalCnt - jawControlByAxes[axes].encoderLast32)/4;//use for speed cal
+//         jawControlByAxes[axes].encoderLast32 = jawControlByAxes[axes].encoderTotalCnt;
+//         rtFeedback.jawRTPos[axes] = jawControlByAxes[axes].encoderTotalCnt;
+//     } 
+// }
 void getEncodeTotalValue(uint8_t axes)
 {
-    __IO uint16_t crtEncoder = 0;
-    int16_t encoderDelta16 = 0;
+    uint16_t crtEncoder = getEncodeValue(axes);
+    int16_t encoderDelta16 = (int16_t)(crtEncoder - jawControlByAxes[axes].encoderLast16);
 
-    if(jawControlByAxes[axes].encoderTotalCnt > 0)
-    {
-        crtEncoder = getEncodeValue(axes);
-        encoderDelta16 = crtEncoder - jawControlByAxes[axes].encoderLast16;
-       // if(encoderDelta16 == 0) return;
-        if(abs(encoderDelta16) > ENCODER_PULSES_PER_TURN) 
-        {
-            if(encoderDelta16 < 0)    jawControlByAxes[axes].encoderTotalCnt += 0x10000;//overflow
-            else    jawControlByAxes[axes].encoderTotalCnt -= 0x10000;//underflow
-        }
-        jawControlByAxes[axes].encoderTotalCnt += encoderDelta16;
-        jawControlByAxes[axes].encoderLast16 = crtEncoder;
-        jawControlByAxes[axes].encoderDelta32 = (jawControlByAxes[axes].encoderTotalCnt - jawControlByAxes[axes].encoderLast32)/4;//use for speed cal
-        jawControlByAxes[axes].encoderLast32 = jawControlByAxes[axes].encoderTotalCnt;
-        rtFeedback.jawRTPos[axes] = jawControlByAxes[axes].encoderTotalCnt/4;
+    jawControlByAxes[axes].encoderTotalCnt += encoderDelta16;
 
-        //LOG_I("enc32 %d\r\n", jawControlByAxes[axes].encoderDelta32);
-    } 
+    jawControlByAxes[axes].encoderLast16 = crtEncoder;
+
+    jawControlByAxes[axes].encoderDelta32 = encoderDelta16; 
+
+    rtFeedback.jawRTPos[axes] = jawControlByAxes[axes].encoderTotalCnt;
 }
-
 uint8_t setEncodeTotalValue(uint16_t setValue, uint8_t axes)
 {
     jawControlByAxes[axes].encoderTotalCnt = setValue*4;
@@ -834,39 +843,91 @@ int8_t PID(uint8_t axes)
     return ret;
 }
 
+// void JAWCtrlTask(void *argument)
+// {
+//     /* USER CODE BEGIN JAWCtrlTask */
+//     struct JawFlagType JawRecvCmd;
+   
+//     memset(&JawRecvCmd, 0, sizeof(struct JawFlagType));
+//     osMessageQueuePut(motor_signal_queueHandle, &JawRecvCmd, 0, 0);
+//     jawDeviceInit();
+
+//     /* Infinite loop */
+//     for (;;)
+//     {
+//         osMessageQueueGet(motor_signal_queueHandle, &JawRecvCmd, 0, osWaitForever);
+      
+//         switch(JawRecvCmd.axes)
+//         {
+//             case X:
+//                 JawCtrlLoop(&JawRecvCmd, X);
+//             break;
+//             case Y:
+//                 JawCtrlLoop(&JawRecvCmd, Y);
+//             break;
+//             case XY:
+//                 JawCtrlLoop(&JawRecvCmd, X);
+//                 JawCtrlLoop(&JawRecvCmd, Y);
+//             break;
+//             default: break;
+//         }
+//         // osDelay(1);
+//     }
+//     /* USER CODE END JAWCtrlTask */
+// }
+#include"tim.h"
 void JAWCtrlTask(void *argument)
 {
     /* USER CODE BEGIN JAWCtrlTask */
     struct JawFlagType JawRecvCmd;
    
-    memset(&JawRecvCmd, 0, sizeof(struct JawFlagType));
-    osMessageQueuePut(motor_signal_queueHandle, &JawRecvCmd, 0, 0);
+    // memset(&JawRecvCmd, 0, sizeof(struct JawFlagType));
+    // osMessageQueuePut(motor_signal_queueHandle, &JawRecvCmd, 0, 0);
     jawDeviceInit();
-
+    motorEnable(Y);
     /* Infinite loop */
+    __HAL_TIM_SET_COUNTER(&htim5, 32767);
+    
+    static float currentDuty = 5.0f;
+
     for (;;)
     {
-        osMessageQueueGet(motor_signal_queueHandle, &JawRecvCmd, 0, osWaitForever);
-      
-        switch(JawRecvCmd.axes)
+        // osMessageQueueGet(motor_signal_queueHandle, &JawRecvCmd, 0, osWaitForever);
+        motorCtrlByPWM(-95, Y); // 正转
+        osDelay(500);
+        
+        motorCtrlByPWM(0.0, Y); // 停止
+        osDelay(500);
+
+        motorCtrlByPWM(+95,Y); // 反转
+        osDelay(500);
+
+        motorCtrlByPWM(0.0,Y); // 停止
+        osDelay(500);
+
+        currentDuty += 5.0f;
+        if (currentDuty > 100.0f)
         {
-            case X:
-                JawCtrlLoop(&JawRecvCmd, X);
-            break;
-            case Y:
-                JawCtrlLoop(&JawRecvCmd, Y);
-            break;
-            case XY:
-                JawCtrlLoop(&JawRecvCmd, X);
-                JawCtrlLoop(&JawRecvCmd, Y);
-            break;
-            default: break;
+            currentDuty = 5.0f;
         }
+        // switch(JawRecvCmd.axes)
+        // {
+        //     case X:
+        //         JawCtrlLoop(&JawRecvCmd, X);
+        //     break;
+        //     case Y:
+        //         JawCtrlLoop(&JawRecvCmd, Y);
+        //     break;
+        //     case XY:
+        //         JawCtrlLoop(&JawRecvCmd, X);
+        //         JawCtrlLoop(&JawRecvCmd, Y);
+        //     break;
+        //     default: break;
+        // }
         // osDelay(1);
     }
     /* USER CODE END JAWCtrlTask */
 }
-
 void movement_calculation_task(void)
 {
     uint16_t cmd;

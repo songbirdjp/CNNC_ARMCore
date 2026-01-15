@@ -3,7 +3,6 @@
 #include "cJSON.h"
 #include "json_struct.h"
 #include "FreeRTOS.h"
-#include "task.h"
 #include "shell.h"
 #include "init_call.h"
 #include "utilities.h"
@@ -15,8 +14,8 @@ static int8_t board_cfg_read(uint8_t *buf, uint16_t len)
 
     while (len > 0)
     {
-        size = len > BYTE_LEN_PER_LINE? BYTE_LEN_PER_LINE : len;
-        
+        size = len > BYTE_LEN_PER_LINE ? BYTE_LEN_PER_LINE : len;
+
         ret = device_fram_read(offset, buf, size, 1000);
         if (ret != 0)
         {
@@ -40,8 +39,8 @@ static int8_t board_cfg_write(uint8_t *buf, uint16_t len)
 
     while (length > 0)
     {
-        size = length > BYTE_LEN_PER_LINE? BYTE_LEN_PER_LINE : length;
-        
+        size = length > BYTE_LEN_PER_LINE ? BYTE_LEN_PER_LINE : length;
+
         ret = device_fram_write(offset, buf, size, 1000);
         if (ret != 0)
         {
@@ -60,8 +59,8 @@ static int8_t board_cfg_write(uint8_t *buf, uint16_t len)
     uint8_t buffer[BYTE_LEN_PER_LINE] = {0};
     while (length > 0)
     {
-        size = length > BYTE_LEN_PER_LINE? BYTE_LEN_PER_LINE : length;
-        
+        size = length > BYTE_LEN_PER_LINE ? BYTE_LEN_PER_LINE : length;
+
         ret = device_fram_read(offset, buffer, size, 1000);
         if (ret != 0)
         {
@@ -87,7 +86,7 @@ static int8_t board_cfg_update(uint8_t argc, char **argv)
 {
     uint16_t len = strlen(argv[1]);
     printf("len: %u\r\n", len);
-    
+
     board_cfg_write(argv[1], strlen(argv[1]));
 
     return 0;
@@ -230,7 +229,7 @@ static int16_t json_to_struct(cJSON *root, void *cfg)
 
         case cJSON_Raw:
             break;
-        
+
         default:
             break;
         }
@@ -434,7 +433,7 @@ static int8_t board_cfg_update_local(uint16_t offset, uint8_t *buf, uint16_t len
     while (len > 0)
     {
         size = len > BYTE_LEN_PER_LINE? BYTE_LEN_PER_LINE : len;
-        
+
         ret = device_fram_write(0 + offset, buf, size, 1000);
         if (ret != 0)
         {

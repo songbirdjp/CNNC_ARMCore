@@ -1,7 +1,7 @@
 #ifndef __SHELL_H__
 #define __SHELL_H__
 
-#include "stdint.h"
+#include <stdint.h>
 
 #ifdef __plusplus
 extern "C" {

@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2026 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -25,9 +25,8 @@
 #include "iwdg.h"
 #include "lptim.h"
 #include "mdma.h"
-#include "memorymap.h"
 #include "rtc.h"
-#include "spi.h"				
+#include "spi.h"
 #include "tim.h"
 #include "gpio.h"
 #include "fmc.h"
@@ -39,6 +38,8 @@
 #include "console.h"
 #include "sys_cfg.h"
 #include "init_call.h"
+#include "hw_crc.h"
+#include "hw_sys_state.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +60,17 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+#if configAPPLICATION_ALLOCATED_HEAP
+uint8_t ucHeap[configTOTAL_HEAP_SIZE] = {0};
+#ifdef USE_FreeRTOS_HEAP_5
+static HeapRegion_t xHeapRegions[] = 
+{
+    { ucHeap, configTOTAL_HEAP_SIZE },
+    { (uint8_t *)0xC0000000, 0x4000000},
+    { NULL,   0                     }
+};
+#endif
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -79,6 +90,7 @@ static void vector_table_init(void)
     SCB->VTOR = (uint32_t)&__isr_vector_start;
 }
 
+#if 0
 static void cmd_rtc_test(uint8_t argc, uint8_t **argv)
 {
     uint32_t bkp_data = 0;
@@ -157,7 +169,7 @@ static void rdp_test(uint8_t argc, uint8_t **argv)
 }
 MSH_CMD_EXPORT_ALIAS(rdp_test, rdp_test, rtc rdp);
 
-int8_t fpu_test(uint8_t argc, uint8_t **argv)
+static int8_t fpu_test(uint8_t argc, uint8_t **argv)
 {
 
     if (argc != 2)
@@ -188,12 +200,159 @@ int8_t fpu_test(uint8_t argc, uint8_t **argv)
         end += __HAL_TIM_GET_AUTORELOAD(&htim2);
     }
     printf("time:%u\r\n", end - start);
-    
+
     printf("%f\r\n", f);
 
     return 0;
 }
 MSH_CMD_EXPORT_ALIAS(fpu_test, fpu_test, test fpu);
+
+static uint32_t itcm[1024] __attribute__((section(".ram_itcm"))) = {0};
+static uint32_t dtcm[1024] __attribute__((section(".ram_dtcm"))) = {0};
+static uint32_t sdram[1024] __attribute__((section(".sdram_ext"))) = {0};
+static uint32_t sram[1024] = {0};
+#include "utilities.h"
+static int8_t ram_speed_test(uint8_t argc, uint8_t **argv)
+{
+    uint32_t loop = atoi(argv[1]);
+    struct system_time begin = {0};
+    struct system_time end = {0};
+
+    /* 1. itcm */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        itcm[i % 1024] = i;
+        itcm[i % 1024 + 1] = i + 1;
+        itcm[i % 1024 + 2] = i + 2;
+        itcm[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("itcm time: %u us\r\n", time_diff_us(&begin, &end));
+
+    osDelay(100);
+
+    /* 2. dtcm */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        dtcm[i % 1024] = i;
+        dtcm[i % 1024 + 1] = i + 1;
+        dtcm[i % 1024 + 2] = i + 2;
+        dtcm[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("dtcm time: %u us\r\n", time_diff_us(&begin, &end));
+
+    osDelay(100);
+
+    /* 3. sdram */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        sdram[i % 1024] = i;
+        sdram[i % 1024 + 1] = i + 1;
+        sdram[i % 1024 + 2] = i + 2;
+        sdram[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("sdram time: %u us\r\n", time_diff_us(&begin, &end));
+
+    osDelay(100);
+
+    /* 4. sram */
+    system_time_get(&begin);
+    for (int i = 0; i < loop; i+=4)
+    {
+        sram[i % 1024] = i;
+        sram[i % 1024 + 1] = i + 1;
+        sram[i % 1024 + 2] = i + 2;
+        sram[i % 1024 + 3] = i + 3;
+    }
+    system_time_get(&end);
+    printf("sram time: %u us\r\n", time_diff_us(&begin, &end));
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(ram_speed_test, ram_speed_test, test ram);
+
+static int8_t hw_crc_test(uint8_t argc, uint8_t **argv)
+{
+    uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
+    uint32_t res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
+
+    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc8 res = %#x\r\n", res);
+
+    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc16 res = %#x\r\n", res);
+
+    res = hardware_crc_calculate(CRC32, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
+
+    res = hardware_crc_calculate(CRC8, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc8 res = %#x\r\n", res);
+
+    res = hardware_crc_calculate(CRC16, buf, sizeof(buf)/sizeof(buf[0]));
+    printf("crc16 res = %#x\r\n", res);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(hw_crc_test, hw_crc_test, test crc);
+
+static int8_t ext_sdram_test(uint8_t argc, uint8_t **argv)
+{
+    uint16_t *ext_sdram_array = (uint16_t *)pvPortMalloc(1024 * 1024 * 32 - 16);
+    if (ext_sdram_array == NULL)
+    {
+        printf("malloc error\r\n");
+        return -1;
+    }
+
+    printf("ext sdram malloc ok: %p\r\n", ext_sdram_array);
+
+    for (int i = 0; i < 1024; i++)
+    {
+        if (i % 16 == 0 && i != 0)
+        {
+            printf("\r\n");
+        }
+        printf("%.4x ", ext_sdram_array[i]);
+    }
+
+    printf("\r\n");
+
+    for (int i = 0; i < 1024; i++)
+    {
+        ext_sdram_array[i] = i;
+    }
+
+    for (int i = 0; i < 1024; i++)
+    {
+        if (i % 16 == 0 && i != 0)
+        {
+            printf("\r\n");
+        }
+        printf("%.4x ", ext_sdram_array[i]);
+    }
+
+    printf("\r\n");
+
+    vPortFree(ext_sdram_array);
+
+    return 0;
+}
+MSH_CMD_EXPORT_ALIAS(ext_sdram_test, ext_sdram_test, test ext_sdram);
+#endif
+
+static int8_t system_heap_init(void)
+{
+#ifdef USE_FreeRTOS_HEAP_5
+    vPortDefineHeapRegions (xHeapRegions);
+#endif
+    return 0;
+}
 /* USER CODE END 0 */
 
 /**
@@ -247,10 +406,8 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM8_Init();
   MX_TIM5_Init();
-  MX_TIM15_Init();			 
-  MX_SPI2_Init();
-  MX_SPI3_Init();				 
-	MX_SPI4_Init();			 
+  MX_TIM15_Init();
+  MX_SPI4_Init();
   /* USER CODE BEGIN 2 */
 #ifdef configGENERATE_RUN_TIME_STATS
   HAL_TIM_Base_Start_IT(&htim6);
@@ -258,12 +415,16 @@ int main(void)
 
   bank1_sdram_init();
 
+  system_heap_init();
+
   /* Console initialize */
-  device_console_init(CONSOLE_NAME_DEFAULT);
+  device_console_init();
   system_info_print();
-  system_fun_init(); 
+  system_fun_init();
 
 //   printf("----this is bootloader----\r\n");
+
+  system_reset_status_check();
 
   printf("Init ok\r\n");
 
@@ -280,40 +441,10 @@ int main(void)
   app_valid_check_and_jump();
 #endif
 
-#if 0
-    uint8_t buf[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06};
-    hardware_crc_config(CRC32);
-    uint32_t res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
-
-    hardware_crc_config(CRC8);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc8 res = %#x\r\n", res);
-
-    hardware_crc_config(CRC16);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc16 res = %#x\r\n", res);
-
-    hardware_crc_config(CRC32);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc32 res = %#x\r\n", res^0xFFFFFFFF);
-
-    hardware_crc_config(CRC8);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc8 res = %#x\r\n", res);
-
-    hardware_crc_config(CRC16);
-    res = hardware_crc_calculate(buf, sizeof(buf)/sizeof(buf[0]));
-    printf("crc16 res = %#x\r\n", res);
-    
-#endif
-
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();
-
-  /* Call init function for freertos objects (in cmsis_os2.c) */
+  osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
   MX_FREERTOS_Init();
 
   /* Start scheduler */
@@ -419,9 +550,9 @@ void PeriphCommonClock_Config(void)
   */
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_OSPI|RCC_PERIPHCLK_SPI6
                               |RCC_PERIPHCLK_ADC|RCC_PERIPHCLK_LPTIM1
-							  |RCC_PERIPHCLK_SPI3|RCC_PERIPHCLK_SPI2
+                              |RCC_PERIPHCLK_SPI3|RCC_PERIPHCLK_SPI2
                               |RCC_PERIPHCLK_SPI1|RCC_PERIPHCLK_SPI4
-								|RCC_PERIPHCLK_USART1;					
+                              |RCC_PERIPHCLK_USART1;
   PeriphClkInitStruct.PLL2.PLL2M = 5;
   PeriphClkInitStruct.PLL2.PLL2N = 96;
   PeriphClkInitStruct.PLL2.PLL2P = 5;
@@ -437,10 +568,10 @@ void PeriphCommonClock_Config(void)
   PeriphClkInitStruct.PLL3.PLL3R = 2;
   PeriphClkInitStruct.PLL3.PLL3RGE = RCC_PLL3VCIRANGE_2;
   PeriphClkInitStruct.PLL3.PLL3VCOSEL = RCC_PLL3VCOWIDE;
-  PeriphClkInitStruct.PLL3.PLL3FRACN = 0;								 
+  PeriphClkInitStruct.PLL3.PLL3FRACN = 0;
   PeriphClkInitStruct.OspiClockSelection = RCC_OSPICLKSOURCE_PLL2;
   PeriphClkInitStruct.Spi123ClockSelection = RCC_SPI123CLKSOURCE_PLL3;
-	PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_PLL3;																
+  PeriphClkInitStruct.Spi45ClockSelection = RCC_SPI45CLKSOURCE_PLL3;
   PeriphClkInitStruct.Usart16ClockSelection = RCC_USART16910CLKSOURCE_PLL2;
   PeriphClkInitStruct.Lptim1ClockSelection = RCC_LPTIM1CLKSOURCE_PLL2;
   PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
@@ -469,8 +600,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

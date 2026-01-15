@@ -21,6 +21,8 @@ static __IO uint8_t* pSDRAMCAL;
 static uint16_t *feedback, feedback16Len;
 BEAM_DATA rtBeamData;
 REALTIME_FEEDBACK rtFeedback;
+uint16_t jawPlanPos[2] = {0, 0};
+uint16_t jawPlanMotionTime = 0;
 INTERLOCK_FEEDBACK interlockFeedback;
 SECOND_POS_FEEDBACK secondPosFeedback;
 static FRAME_HEAD frameHead;
@@ -472,6 +474,9 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
     messageToJawTask(JawPos, PLAN_DATA, XY, pos);
     
     pBeamData += 4;//skip X/Y Jaw pos
+    jawPlanPos[X] = pos[X];
+    jawPlanPos[Y] = pos[Y];
+    jawPlanMotionTime = (pBeamData[17] << 8) + pBeamData[16];
     memmove(&send_buf[166], pBeamData, 18);
   //  LOG_I("car pos %x %x\r\n", send_buf[164], send_buf[165]);
     make_cmd_to_fpga(CMD_TAR_SET, send_buf);

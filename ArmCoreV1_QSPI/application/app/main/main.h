@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2025 STMicroelectronics.
+  * Copyright (c) 2026 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -60,28 +60,18 @@ void Error_Handler(void);
 #define LAN9252_IRQ_Pin GPIO_PIN_3
 #define LAN9252_IRQ_GPIO_Port GPIOE
 #define LAN9252_IRQ_EXTI_IRQn EXTI3_IRQn
-#define LAN9252_SYNC0_Pin GPIO_PIN_13
-#define LAN9252_SYNC0_GPIO_Port GPIOC
-#define LAN9252_SYNC0_EXTI_IRQn EXTI15_10_IRQn
+#define LAN9252_SYNC1_Pin GPIO_PIN_13
+#define LAN9252_SYNC1_GPIO_Port GPIOC
+#define LAN9252_SYNC1_EXTI_IRQn EXTI15_10_IRQn
 #define CHIP_RUN_LED_Pin GPIO_PIN_1
 #define CHIP_RUN_LED_GPIO_Port GPIOC
 #define SYSTEM_STATE_Pin GPIO_PIN_2
 #define SYSTEM_STATE_GPIO_Port GPIOC
-#define MotorYA_Pin GPIO_PIN_2
-#define MotorYA_GPIO_Port GPIOA
-#define MotorYB_Pin GPIO_PIN_3
-#define MotorYB_GPIO_Port GPIOA
 #define YBrake_Pin GPIO_PIN_5
 #define YBrake_GPIO_Port GPIOC
-#define MotorXB_Pin GPIO_PIN_0
-#define MotorXB_GPIO_Port GPIOB
-#define MotorXA_Pin GPIO_PIN_1
-#define MotorXA_GPIO_Port GPIOB
-#define LAN9252_SYNC1_Pin GPIO_PIN_2
-#define LAN9252_SYNC1_GPIO_Port GPIOB
-#define LAN9252_SYNC1_EXTI_IRQn EXTI2_IRQn
-#define LAN9252_CSn_Pin GPIO_PIN_11
-#define LAN9252_CSn_GPIO_Port GPIOE
+#define LAN9252_SYNC0_Pin GPIO_PIN_2
+#define LAN9252_SYNC0_GPIO_Port GPIOB
+#define LAN9252_SYNC0_EXTI_IRQn EXTI2_IRQn
 #define EncYZ_Pin GPIO_PIN_10
 #define EncYZ_GPIO_Port GPIOB
 #define EncYZ_EXTI_IRQn EXTI15_10_IRQn
@@ -101,17 +91,11 @@ void Error_Handler(void);
 #define EncXZ_Pin GPIO_PIN_8
 #define EncXZ_GPIO_Port GPIOA
 #define EncXZ_EXTI_IRQn EXTI9_5_IRQn
-#define nFaultX_Pin GPIO_PIN_15
-#define nFaultX_GPIO_Port GPIOA
-#define nFaultX_EXTI_IRQn EXTI15_10_IRQn
 #define W5500_RSTn_Pin GPIO_PIN_3
 #define W5500_RSTn_GPIO_Port GPIOD
 #define W5500_INTn_Pin GPIO_PIN_4
 #define W5500_INTn_GPIO_Port GPIOD
 #define W5500_INTn_EXTI_IRQn EXTI4_IRQn
-#define nFaultY_Pin GPIO_PIN_6
-#define nFaultY_GPIO_Port GPIOD
-#define nFaultY_EXTI_IRQn EXTI9_5_IRQn
 #define WATCHDOG2_Pin GPIO_PIN_7
 #define WATCHDOG2_GPIO_Port GPIOD
 #define WATCHDOG1_Pin GPIO_PIN_9

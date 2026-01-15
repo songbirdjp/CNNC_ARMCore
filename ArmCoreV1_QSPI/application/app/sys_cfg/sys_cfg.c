@@ -24,13 +24,14 @@ struct sys_info *system_info_get(void)
 void system_info_print(void)
 {
     struct sys_info *sys_info = system_info_get();
-    
+
     printf("\r\n************************************\r\n");
 
     printf("fw version: %s\r\n", sys_info->fw_version);
     printf("compile time: %s\r\n", sys_info->compile_time);
     printf("git branch: %s\r\n", GIT_BRANCH);
     printf("git hash: %s\r\n", GIT_HASH);
+    printf("git tag: %s\r\n", GIT_TAG);
     printf("mcu clock:%.2f M\r\n", HAL_RCC_GetSysClockFreq()/1000000.0);
 
     printf("stm32 uid:%#.8x%.8x%.8x\r\n", HAL_GetUIDw2(), HAL_GetUIDw1(), HAL_GetUIDw0());
@@ -133,7 +134,7 @@ int8_t system_encrypt_init(void)
     for (uint32_t i = 0; i < sizeof(info->uid_cryptogram) + sizeof(info->uid_cryptogram_valid); i += 32)
     {
         status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, (uint32_t)info + offset + i, info_buf.uid_cryptogram + i); /* flash word == 256bit == 32bytes */
-        if (status != HAL_OK) 
+        if (status != HAL_OK)
         {
             printf("flash write err:%d\r\n", status);
             return -3;
@@ -141,7 +142,7 @@ int8_t system_encrypt_init(void)
     }
 
     status = HAL_FLASH_Lock();
-    if (status != HAL_OK) 
+    if (status != HAL_OK)
     {
         printf("flash lock err:%d\r\n", status);
         return -4;

@@ -116,6 +116,7 @@ typedef enum {
 // #define USING_ULOG_TIMESTAMP    /* use timestamp log */
 // #define USING_ULOG_LEVEL_TAG    /* use level tag log */
 #define USING_ULOG_CONSOLE      /* use console log */
+// #define USING_ULOG_SDRAM        /* use sdram log */
 // #define USING_ULOG_FRAM         /* use fram log */
 // #define USING_ULOG_FLASH        /* use flash log */
 

@@ -1,5 +1,5 @@
 #include "shell.h"
-#include "stddef.h"
+#include <stddef.h>
 #include "utilities.h"
 
 typedef int (*fun_ptr)(int8_t argc, uint8_t **argv);
@@ -36,7 +36,7 @@ static int8_t shell_cmd_exec(uint8_t *cmd, uint16_t length)
     {
         return -1;
     }
-    
+
     fun = shell_cmd_fun_find(cmd, cmd_len);
     if (fun == NULL)
     {

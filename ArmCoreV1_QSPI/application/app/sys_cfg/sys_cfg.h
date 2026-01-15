@@ -1,7 +1,7 @@
 #ifndef __SYS_CFG_H__
 #define __SYS_CFG_H__
 
-#include "stdint.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

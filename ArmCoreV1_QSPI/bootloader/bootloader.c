@@ -1,5 +1,6 @@
 #include "bootloader.h"
 #include "hw_crc.h"
+#include "hw_bkp_reg.h"
 
 /*
  *  1. Set the vector table offset to the specified value.
@@ -77,7 +78,7 @@ struct code_info
     uint32_t info_len;              /* info长度 */
     uint32_t patch_flag;            /* 补丁标志 */
     struct patch_info patch[4];     /* 补丁信息 */
-    uint8_t  code_name[16];         /* code名称 */
+    uint8_t  code_name[32];         /* code名称 */
     uint32_t code_type;             /* code类型：0：全包  1：差分包 */
     uint32_t code_offset;           /* code起始地址，相对于info的偏移 */
     uint32_t boot_offset;           /* 引导程序起始地址，相对于code的偏移 */
@@ -86,7 +87,6 @@ struct code_info
     uint32_t info_crc;              /* info crc */
 };
 
-#include "crc.h"
 static int8_t info_magic_number_check(uint32_t magic_number)
 {
     // uint32_t cpuid = *((volatile uint32_t *)0xE000ed00);    /* 0x411fc272 */
@@ -114,21 +114,14 @@ static int8_t info_crc_check(struct code_info *info)
     {
         return -1;
     }
-#if 0
-    HAL_StatusTypeDef status = hardware_crc_config(CRC32);
-    if (status != HAL_OK)
-    {
-        printf("hardware_crc_config error:%d\r\n", status);
-        return -2;
-    }
-#endif
+
     uint32_t res = hardware_crc_calculate(CRC32, info, info->info_len - sizeof (info->info_crc));
     res ^= 0xFFFFFFFF;
 
     if (res != info->info_crc)
     {
         printf("info crc check err, cal_crc = %#.8x, info crc = %#.8x\r\n", res, info->info_crc);
-        return -3;
+        return -2;
     }
 
     return 0;
@@ -330,7 +323,6 @@ static int8_t patch_execute(struct code_info *info)
 
     uint32_t flag = info->patch_flag;
     uint32_t crc = 0;
-    HAL_StatusTypeDef status = HAL_OK;
 
     if (flag & 0x0F)
     {
@@ -338,21 +330,13 @@ static int8_t patch_execute(struct code_info *info)
         {
             if (flag & (1 << i))
             {
-                #if 0
-                status = hardware_crc_config(CRC32);
-                if (status != HAL_OK)
-                {
-                    printf("hardware_crc_config error:%d\r\n", status);
-                    return -2;
-                }
-#endif
                 crc = hardware_crc_calculate(CRC32, info->patch[i].patch_addr, info->patch[i].patch_len);
                 crc ^= 0xFFFFFFFF;
 
                 if (crc != info->patch[i].patch_crc)
                 {
                     printf("info crc check err, crc = %#.8x, patch[%d] crc = %#.8x\r\n", crc, i, info->patch[i].patch_crc);
-                    return -3;
+                    return -2;
                 }
                 else
                 {
@@ -405,67 +389,6 @@ static int8_t jump_to_addr(uint32_t addr)
     {
         return -3;
     }
-
-    return 0;
-}
-
-enum bkp_reg
-{
-/*RTC_BKP_DR0  (0x00u)  -> used for reboot time count */    REG_REBOOT_TIMES = 0,
-/*RTC_BKP_DR1  (0x01u)  -> used for upgrade flag */         REG_UPGRADE_FLAG,
-/*RTC_BKP_DR2  (0x02u)  -> */                               REG_VALID_MAX
-/*RTC_BKP_DR3  (0x03u)  -> */
-/*RTC_BKP_DR4  (0x04u)  -> */
-/*RTC_BKP_DR5  (0x05u)  -> */
-/*RTC_BKP_DR6  (0x06u)  -> */
-/*RTC_BKP_DR7  (0x07u)  -> */
-/*RTC_BKP_DR8  (0x08u)  -> */
-/*RTC_BKP_DR9  (0x09u)  -> */
-/*RTC_BKP_DR10 (0x0Au)  -> */
-/*RTC_BKP_DR11 (0x0Bu)  -> */
-/*RTC_BKP_DR12 (0x0Cu)  -> */
-/*RTC_BKP_DR13 (0x0Du)  -> */
-/*RTC_BKP_DR14 (0x0Eu)  -> */
-/*RTC_BKP_DR15 (0x0Fu)  -> */
-/*RTC_BKP_DR16 (0x10u)  -> */
-/*RTC_BKP_DR17 (0x11u)  -> */
-/*RTC_BKP_DR18 (0x12u)  -> */
-/*RTC_BKP_DR19 (0x13u)  -> */
-/*RTC_BKP_DR20 (0x14u)  -> */
-/*RTC_BKP_DR21 (0x15u)  -> */
-/*RTC_BKP_DR22 (0x16u)  -> */
-/*RTC_BKP_DR23 (0x17u)  -> */
-/*RTC_BKP_DR24 (0x18u)  -> */
-/*RTC_BKP_DR25 (0x19u)  -> */
-/*RTC_BKP_DR26 (0x1Au)  -> */
-/*RTC_BKP_DR27 (0x1Bu)  -> */
-/*RTC_BKP_DR28 (0x1Cu)  -> */
-/*RTC_BKP_DR29 (0x1Du)  -> */
-/*RTC_BKP_DR30 (0x1Eu)  -> */
-/*RTC_BKP_DR31 (0x1Fu)  -> */
-};
-
-#include "rtc.h"
-static int8_t bkp_reg_write(enum bkp_reg reg, uint32_t value)
-{
-    if (reg >= REG_VALID_MAX)
-    {
-        return -1;
-    }
-
-    HAL_RTCEx_BKUPWrite(&hrtc, reg, value);
-
-    return 0;
-}
-
-static int8_t bkp_reg_read(enum bkp_reg reg, uint32_t *value)
-{
-    if (reg >= REG_VALID_MAX)
-    {
-        return -1;
-    }
-
-    *value = HAL_RTCEx_BKUPRead(&hrtc, reg);
 
     return 0;
 }
@@ -721,13 +644,6 @@ static int8_t upgrade_info_crc_update(struct code_info *info)
     }
 
     /* 3. calculate crc of info */
-  /*  HAL_StatusTypeDef status = hardware_crc_config(CRC32);
-    if (status != HAL_OK)
-    {
-        printf("hardware_crc_config error:%d\r\n", status);
-        return -2;
-    }*/
-
     uint32_t res = hardware_crc_calculate(CRC32, info, info->info_len - sizeof (info->info_crc));
     info->info_crc = res^0xFFFFFFFF;
     printf("crc32 res = %#x\r\n", info->info_crc);

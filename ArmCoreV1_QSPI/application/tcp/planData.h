@@ -101,6 +101,8 @@ typedef struct {
 
 extern BEAM_DATA rtBeamData;
 extern REALTIME_FEEDBACK rtFeedback;
+extern uint16_t jawPlanPos[2];
+extern uint16_t jawPlanMotionTime;
 extern INTERLOCK_FEEDBACK interlockFeedback;
 extern SECOND_POS_FEEDBACK secondPosFeedback;
 

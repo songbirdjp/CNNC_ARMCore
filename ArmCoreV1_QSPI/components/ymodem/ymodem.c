@@ -928,7 +928,7 @@ static void ymodem_thread_entry(void *argument)
         case 2:
             SerialUpload(para.offset, para.size);
             break;
-        
+
         default:
             printf("Invalid argument\r\n");
             break;

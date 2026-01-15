@@ -188,7 +188,7 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
     //
     sock_io_mode |= ((flag & SF_IO_NONBLOCK) << sn);
     sock_is_sending &= ~(1<<sn);
-    sock_in_use |= (1<<sn);    
+    sock_in_use |= (1<<sn);
     sock_remained_size[sn] = 0;
     //M20150601 : repalce 0 with PACK_COMPLETED
     //sock_pack_info[sn] = 0;
@@ -316,6 +316,8 @@ int8_t disconnect(uint8_t sn)
             close(sn);
             return SOCKERR_TIMEOUT;
         }
+
+        osDelay(100);
     }
     return SOCK_OK;
 }

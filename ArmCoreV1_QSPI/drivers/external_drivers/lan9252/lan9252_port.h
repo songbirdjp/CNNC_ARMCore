@@ -1,7 +1,7 @@
 #ifndef __LAN9252_PORT_H__
 #define __LAN9252_PORT_H__
 
-#include "stdint.h"
+#include <stdint.h>
 #include "cmsis_os2.h"
 
 #ifdef __cplusplus
@@ -11,14 +11,14 @@ extern "C" {
 #define DEVICE_NAME_OSPI1_DEFAULT       "octospi1"
 
 #define LAN9252_INTn_Pin                GPIO_PIN_3
-#define LAN9252_SYN0_INTn_Pin           GPIO_PIN_13
-#define LAN9252_SYN1_INTn_Pin           GPIO_PIN_2
+#define LAN9252_SYN0_INTn_Pin           GPIO_PIN_2
+#define LAN9252_SYN1_INTn_Pin           GPIO_PIN_13
 #define LAN9252_INTN_NAME               "GPIOE_3"
-#define LAN9252_SYNC0_IRQ_NAME          "GPIOC_13"
-#define LAN9252_SYNC1_IRQ_NAME          "GPIOB_2"
+#define LAN9252_SYNC0_IRQ_NAME          "GPIOB_2"
+#define LAN9252_SYNC1_IRQ_NAME          "GPIOC_13"
 #define LAN9252_INTN_LINE_NAME          "irq_line_3"
-#define LAN9252_SYNC0_IRQ_LINE_NAME     "irq_line_13"
-#define LAN9252_SYNC1_IRQ_LINE_NAME     "irq_line_2"
+#define LAN9252_SYNC0_IRQ_LINE_NAME     "irq_line_2"
+#define LAN9252_SYNC1_IRQ_LINE_NAME     "irq_line_13"
 #define LAN9252_IRQ_LINE_NAME           LAN9252_INTN_LINE_NAME" "LAN9252_SYNC0_IRQ_LINE_NAME" "LAN9252_SYNC1_IRQ_LINE_NAME
 
 #define LAN9252_IRQ_EVENT               (1<<0)

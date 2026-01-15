@@ -1,6 +1,5 @@
 #include "pid_ctrl.h"
 #include "arm_math.h"
-#include "cmsis_os2.h"
 #include "FreeRTOS.h"
 
 int8_t pid_para_init(struct pid_instance *pid)
@@ -39,11 +38,11 @@ int8_t pid_cal(struct pid_instance *pid, float error, float *result)
     float32_t val_cal = arm_pid_f32(pid_ctrl, error);
 
     /* 进行输出限幅 */
-    if (val_cal > pid->max_output) 
+    if (val_cal > pid->max_output)
     {
         val_cal = pid->max_output;
-    } 
-    else if (val_cal < pid->min_output) 
+    }
+    else if (val_cal < pid->min_output)
     {
         val_cal = pid->min_output;
     }
@@ -69,13 +68,12 @@ int8_t pid_state_reset(struct pid_instance *pid)
 
 #ifndef PID_TEST
 #include "shell.h"
-#include "cmsis_os2.h"
 #include <stdlib.h>
 
 #define OUTPUT_MAX 100
 #define OUTPUT_MIN 0
 
-static int8_t pid_control(uint8_t argc, char *argv[]) 
+static int8_t pid_control(uint8_t argc, char *argv[])
 {
     if (argc != 5)
     {
@@ -107,7 +105,7 @@ static int8_t pid_control(uint8_t argc, char *argv[])
     float32_t error = r - y;          // 计算偏差
     float32_t diff = 0;
 
-    while (1) 
+    while (1)
     {
         printf("error:%f, output:%f\n", error, output);
 

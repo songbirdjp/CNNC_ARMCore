@@ -1525,7 +1525,6 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
     stateTrans <<= 4;
     stateTrans += alControl;
 
-   // LOG_I("stateTrans: 0x%x\r\n",stateTrans);
     /* check the SYNCM settings depending on the state transition */
     switch ( stateTrans )
     {
@@ -2617,8 +2616,6 @@ void ECAT_Main(void)
 
     if ( bMbxRunning )
     {
-       // LOG_I("11111\r\n");
-        
         /* Slave is at least in PREOP, Mailbox is running */
 
 /*ECATCHANGE_START(V5.13) MBX1*/
@@ -2632,6 +2629,7 @@ void ECAT_Main(void)
     /* Read AL Event-Register from ESC */
     ALEventReg = HW_GetALEventRegister();
     ALEventReg = SWAPWORD(ALEventReg);
+
 
     if ((ALEventReg & AL_CONTROL_EVENT) && !bEcatWaitForAlControlRes)
     {

@@ -2,11 +2,14 @@
 ```
 ArmCoreV1_QSPI
 ├─ .cproject
-├─ .gitignore
 ├─ .mxproject
 ├─ .project
 ├─ application
 │  ├─ adc
+│  │  ├─ ad7927_app.c
+│  │  ├─ ad7927_app.h
+│  │  ├─ ad7927_read.c
+│  │  ├─ ad7927_read.h
 │  │  ├─ adc_port.c
 │  │  └─ adc_port.h
 │  ├─ app
@@ -48,13 +51,25 @@ ArmCoreV1_QSPI
 │  │  ├─ fpga_port.h
 │  │  ├─ fpga_rw.c
 │  │  └─ fpga_rw.h
+│  ├─ jaw
+│  │  ├─ jaw_control.c
+│  │  ├─ jaw_control.h
+│  │  ├─ jaw_drv.c
+│  │  ├─ jaw_drv.h
+│  │  ├─ kenimatic.c
+│  │  └─ kenimatic.h
+│  ├─ log
+│  │  ├─ sys_log.c
+│  │  └─ sys_log.h
 │  ├─ system_common
-│  │  ├─ memorymap.c
-│  │  ├─ memorymap.h
 │  │  ├─ syscall.h
 │  │  ├─ syscalls.c
 │  │  └─ sysmem.c
 │  └─ tcp
+│     ├─ carrierCal.c
+│     ├─ carrierCal.h
+│     ├─ planData.c
+│     ├─ planData.h
 │     ├─ tcp_tasks.c
 │     ├─ tcp_tasks.h
 │     ├─ websocket.c
@@ -80,7 +95,6 @@ ArmCoreV1_QSPI
 │  ├─ bootloader.h
 │  └─ CMakeLists.txt
 ├─ CMakeLists.txt
-├─ CMakeLists_template.txt
 ├─ components
 │  ├─ cjson
 │  │  ├─ cJSON.c
@@ -118,21 +132,36 @@ ArmCoreV1_QSPI
 │  ├─ gpio_imitate
 │  │  ├─ gpio_imitate.c
 │  │  └─ gpio_imitate.h
+│  ├─ hw_bkp_reg
+│  │  ├─ hw_bkp_reg.c
+│  │  └─ hw_bkp_reg.h
 │  ├─ hw_crc
 │  │  ├─ hw_crc.c
 │  │  └─ hw_crc.h
+│  ├─ hw_ramecc
+│  │  ├─ hw_ramecc.c
+│  │  └─ hw_ramecc.h
 │  ├─ hw_semaphore
 │  │  ├─ hw_semaphore.c
 │  │  └─ hw_semaphore.h
+│  ├─ hw_sys_state
+│  │  ├─ hw_sys_state.c
+│  │  └─ hw_sys_state.h
 │  ├─ hw_wwdg
 │  │  ├─ hw_wwdg.c
 │  │  └─ hw_wwdg.h
+│  ├─ os_tools
+│  │  ├─ os_tool.c
+│  │  └─ os_tool.h
 │  ├─ pid_ctrl
 │  │  ├─ pid_ctrl.c
 │  │  └─ pid_ctrl.h
 │  ├─ shell
 │  │  ├─ shell.c
 │  │  └─ shell.h
+│  ├─ timestamp
+│  │  ├─ timestamp.c
+│  │  └─ timestamp.h
 │  ├─ uart_frame
 │  │  ├─ frame_format.c
 │  │  ├─ frame_format.h
@@ -149,9 +178,6 @@ ArmCoreV1_QSPI
 │     └─ ymodem.h
 ├─ config.cmake
 ├─ config.h.in
-├─ Core
-│  ├─ Inc
-│  └─ Src
 ├─ drivers
 │  ├─ CMakeLists.txt
 │  ├─ external_drivers
@@ -231,6 +257,11 @@ ArmCoreV1_QSPI
 │     │  ├─ drv_gpio.h
 │     │  ├─ gpio.c
 │     │  └─ gpio.h
+│     ├─ i2c
+│     │  ├─ drv_i2c.c
+│     │  ├─ drv_i2c.h
+│     │  ├─ i2c.c
+│     │  └─ i2c.h
 │     ├─ iwdg
 │     │  ├─ iwdg.c
 │     │  └─ iwdg.h
@@ -245,6 +276,9 @@ ArmCoreV1_QSPI
 │     │  ├─ drv_octospi.h
 │     │  ├─ octospi.c
 │     │  └─ octospi.h
+│     ├─ ramecc
+│     │  ├─ ramecc.c
+│     │  └─ ramecc.h
 │     ├─ rtc
 │     │  ├─ rtc.c
 │     │  └─ rtc.h
@@ -264,9 +298,14 @@ ArmCoreV1_QSPI
 │     └─ wwdg
 │        ├─ wwdg.c
 │        └─ wwdg.h
+├─ EcScript
 ├─ EcScript.exe
 ├─ ETHERCAT_CNNCPM.ioc
+├─ file_reorganize
 ├─ file_reorganize.exe
+├─ file_time_update
+├─ file_time_update.exe
+├─ info_generation
 ├─ info_generation.exe
 ├─ libraries
 │  ├─ CMakeLists.txt
@@ -336,9 +375,12 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_iwdg.h
 │     │  ├─ stm32h7xx_hal_lptim.h
 │     │  ├─ stm32h7xx_hal_mdma.h
+│     │  ├─ stm32h7xx_hal_nand.h
+│     │  ├─ stm32h7xx_hal_nor.h
 │     │  ├─ stm32h7xx_hal_ospi.h
 │     │  ├─ stm32h7xx_hal_pwr.h
 │     │  ├─ stm32h7xx_hal_pwr_ex.h
+│     │  ├─ stm32h7xx_hal_ramecc.h
 │     │  ├─ stm32h7xx_hal_rcc.h
 │     │  ├─ stm32h7xx_hal_rcc_ex.h
 │     │  ├─ stm32h7xx_hal_rtc.h
@@ -346,6 +388,7 @@ ArmCoreV1_QSPI
 │     │  ├─ stm32h7xx_hal_sdram.h
 │     │  ├─ stm32h7xx_hal_spi.h
 │     │  ├─ stm32h7xx_hal_spi_ex.h
+│     │  ├─ stm32h7xx_hal_sram.h
 │     │  ├─ stm32h7xx_hal_tim.h
 │     │  ├─ stm32h7xx_hal_tim_ex.h
 │     │  ├─ stm32h7xx_hal_uart.h
@@ -394,9 +437,12 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_iwdg.c
 │        ├─ stm32h7xx_hal_lptim.c
 │        ├─ stm32h7xx_hal_mdma.c
+│        ├─ stm32h7xx_hal_nand.c
+│        ├─ stm32h7xx_hal_nor.c
 │        ├─ stm32h7xx_hal_ospi.c
 │        ├─ stm32h7xx_hal_pwr.c
 │        ├─ stm32h7xx_hal_pwr_ex.c
+│        ├─ stm32h7xx_hal_ramecc.c
 │        ├─ stm32h7xx_hal_rcc.c
 │        ├─ stm32h7xx_hal_rcc_ex.c
 │        ├─ stm32h7xx_hal_rtc.c
@@ -404,12 +450,14 @@ ArmCoreV1_QSPI
 │        ├─ stm32h7xx_hal_sdram.c
 │        ├─ stm32h7xx_hal_spi.c
 │        ├─ stm32h7xx_hal_spi_ex.c
+│        ├─ stm32h7xx_hal_sram.c
 │        ├─ stm32h7xx_hal_tim.c
 │        ├─ stm32h7xx_hal_tim_ex.c
 │        ├─ stm32h7xx_hal_uart.c
 │        ├─ stm32h7xx_hal_uart_ex.c
 │        ├─ stm32h7xx_hal_wwdg.c
 │        └─ stm32h7xx_ll_fmc.c
+├─ makefile_update
 ├─ makefile_update.exe
 ├─ Middlewares
 │  ├─ CMakeLists.txt
@@ -546,31 +594,31 @@ ArmCoreV1_QSPI
 ├─ SSCProject
 │  ├─ lan9252_app.xlsx
 │  ├─ PIC32 EtherCAT Slave.esp
-│  ├─ PIC32 EtherCAT Slave.xml
-│  └─ Src
-│     ├─ applInterface.h
-│     ├─ coeappl.c
-│     ├─ coeappl.h
-│     ├─ ecatappl.c
-│     ├─ ecatappl.h
-│     ├─ ecatcoe.c
-│     ├─ ecatcoe.h
-│     ├─ ecatslv.c
-│     ├─ ecatslv.h
-│     ├─ ecat_def.h
-│     ├─ esc.h
-│     ├─ lan9252_app.c
-│     ├─ lan9252_app.h
-│     ├─ lan9252_appObjects.h
-│     ├─ mailbox.c
-│     ├─ mailbox.h
-│     ├─ objdef.c
-│     ├─ objdef.h
-│     ├─ sdoserv.c
-│     └─ sdoserv.h
+│  ├─ Src
+│  │  ├─ applInterface.h
+│  │  ├─ coeappl.c
+│  │  ├─ coeappl.h
+│  │  ├─ ecatappl.c
+│  │  ├─ ecatappl.h
+│  │  ├─ ecatcoe.c
+│  │  ├─ ecatcoe.h
+│  │  ├─ ecatslv.c
+│  │  ├─ ecatslv.h
+│  │  ├─ ecat_def.h
+│  │  ├─ esc.h
+│  │  ├─ lan9252_app.c
+│  │  ├─ lan9252_app.h
+│  │  ├─ lan9252_appObjects.h
+│  │  ├─ mailbox.c
+│  │  ├─ mailbox.h
+│  │  ├─ objdef.c
+│  │  ├─ objdef.h
+│  │  ├─ sdoserv.c
+│  │  └─ sdoserv.h
+│  └─ ZHLZ BSM.xml
 ├─ st_link.cfg
 └─ 使用说明
-   ├─ ARM CORE固件模块复用使用指南V1.1.pdf
+   ├─ ARM CORE固件模块复用使用指南V1.2.pdf
    └─ 工程修改说明
       ├─ demo1
       │  ├─ Demo1.md

@@ -1,7 +1,7 @@
 #include "fram_port.h"
 #include "drv_spi.h"
 #include "shell.h"
-#include "stdarg.h"
+#include <stdarg.h>
 #include "init_call.h"
 #include "ulog.h"
 
@@ -288,12 +288,12 @@ static int8_t device_fram_init(uint8_t *device_name)
         printf("ptr is null\r\n");
         return -1;
     }
-   
+
     ret = spi_init(device_fram_get(), device_name, SPI_MASTER);
     if (ret != 0)
     {
         printf("device fram init err:%d\r\n", ret);
-        return ret;        
+        return ret;
     }
 
 #ifdef USING_SPI_OPTION_FUNCTION
@@ -401,7 +401,7 @@ static int8_t device_fram_test(void)
     }
     printf("\r\n");
 }
-MSH_CMD_EXPORT_ALIAS(device_fram_test, fram_test,  fram function test);
+MSH_CMD_EXPORT_ALIAS(device_fram_test, fram_test, fram function test);
 #endif
 struct fram_log
 {
@@ -468,7 +468,7 @@ static int8_t fram_log_info_self_detect(void)
     else
     {
         memcpy(fram_log_info_get(), &data, sizeof(struct fram_log));
-    }    
+    }
 
     return ret;
 }
@@ -508,7 +508,7 @@ int8_t fram_log_write(uint8_t *buf, uint16_t len)
 
     if (len > BYTE_LEN_PER_LINE)
     {
-       // printf("write len err:%d\r\n", len);
+        printf("write len err:%d\r\n", len);
         return -3;
     }
 
@@ -579,7 +579,7 @@ void fram_log_test(void)
 
     struct fram_log *fram_log_info = fram_log_info_get();
     printf("addr_start:%x, line_num:%d, addr_offset:%x\r\n", fram_log_info->log_addr_start, fram_log_info->log_line_num, fram_log_info->log_addr_offset);
-    
+
     ret = fram_log_info_set(8, 1);
     if (ret != 0)
     {
@@ -627,12 +627,13 @@ MSH_CMD_EXPORT_ALIAS(fram_log_test_2, fram_log_test_2, fram log record test2);
 
 static int8_t fram_log_init(void)
 {
-#ifdef USING_ULOG_FLASH
+#ifdef USING_ULOG_FRAM
     struct ulog_write_func_info info = {
         .func_init = NULL,//fram_log_info_self_detect,
         .func_callback = fram_log_write,
-        .index = 1};
-    
+        .index = 1,
+        .level = ULOG_INFO_LEVEL};
+
     int8_t ret = ulog_write_func_register(&info);
     if (ret != 0)
     {

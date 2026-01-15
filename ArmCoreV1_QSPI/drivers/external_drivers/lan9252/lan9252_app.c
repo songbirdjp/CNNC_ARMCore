@@ -22,9 +22,8 @@
 ------
 -----------------------------------------------------------------------------------------*/
 #include "ecat_def.h"
-#include <stdio.h>
+
 #include "applInterface.h"
-#include "ulog.h"
 
 #define _LAN9252_APP_ 1
 #include "lan9252_app.h"
@@ -324,7 +323,7 @@ void APPL_OutputMapping(UINT16* pData)
     stat = osMessageQueuePut(lan9252_app_ops_get()->pdo_output_queue, pData, 0, 1000);
     if (stat != osOK)
     {
-        LOG_E("lan9252 queue put err:%d\r\n", stat);
+        printf("lan9252 queue put err:%d\r\n", stat);
     }
 
     if (lan9252_app_ops_get()->pdo_output_event != NULL)
@@ -335,13 +334,13 @@ void APPL_OutputMapping(UINT16* pData)
 #if 0
     for (int i = 1; i <= nPdOutputSize / 2; i++)
     {
-        LOG_I("%.4x  ", *pData++);
+        printf("%.4x  ", *pData++);
         if (i%8==0)
         {
-            LOG_I("\r\n");
+            printf("\r\n");
         }
     }
-    LOG_I("\r\n----------------------------------------------------\r\n");
+    printf("\r\n----------------------------------------------------\r\n");
 
 #endif
 #endif
@@ -475,12 +474,12 @@ int8_t lan9252_app_ops_init(void)
 
     if (lan9252_app_ops.pdo_output_queue == NULL || lan9252_app_ops.pdo_output_update_mutex == NULL || lan9252_app_ops.pdo_input_update_mutex == NULL)
     {
-        LOG_E("create fail\r\n");
+        printf("create fail\r\n");
         return -2;
     }
-    
+
     lan9252_app_ops.appl_output_update = appl_output_update;
-    
+
     return 0;
 }
 

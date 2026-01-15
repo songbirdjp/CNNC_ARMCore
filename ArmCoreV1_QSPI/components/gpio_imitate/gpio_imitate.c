@@ -44,7 +44,7 @@ static int8_t gpio_imitate_init(void)
 
     return 0;
 }
-INIT_APP_EXPORT(gpio_imitate_init);
+// INIT_APP_EXPORT(gpio_imitate_init);
 
 static int8_t gpio_array_generate(uint8_t *buf, uint16_t len, uint32_t pin, uint32_t *gen_buf)
 {
@@ -129,7 +129,7 @@ int8_t gpio_imitate_start(uint8_t *gpio_pin, uint8_t *buf, uint16_t len)
 #endif
 
     /* 3. start dma transfer with tim7 period */
-    /* TODO: must wait for dma transfer complete, but not implement here, add mutex if necessary */
+    /* NOTE: must wait for dma transfer complete, but not implement here, add mutex if necessary */
     status = HAL_TIM_Base_Stop(&htim7);
     if (status != HAL_OK)
     {

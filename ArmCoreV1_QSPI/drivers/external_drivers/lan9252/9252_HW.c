@@ -64,7 +64,6 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 
 #include "ecatappl.h"
 #include "tim.h"
-#include "ulog.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Internal Type Defines
@@ -175,7 +174,7 @@ UINT8 LAN9252_Init(void)
     // do
     // {
     //     data = PDIReadLAN9252DirectReg( LAN9252_BYTE_ORDER_REG);
-    //     LOG_I("read test byte reg (0x64), readData is: 0x%x\r\n", data);
+    //     printf("read test byte reg (0x64), readData is: 0x%x\r\n", data);
     //     HAL_Delay(1);
     // }while(0x87654321 != data);
 
@@ -191,7 +190,7 @@ UINT8 LAN9252_Init(void)
 
     sqi_disable();  /* reset sqi mode */
 
-#ifdef USING_SQI_CMD    
+#ifdef USING_SQI_CMD
     sqi_enable();
 #endif
 
@@ -199,7 +198,7 @@ UINT8 LAN9252_Init(void)
     do
     {
         data = PDIReadLAN9252DirectReg( LAN9252_BYTE_ORDER_REG);
-        LOG_I("read test byte reg (0x64), readData is: 0x%x\r\n", data);
+        printf("read test byte reg (0x64), readData is: 0x%x\r\n", data);
         HAL_Delay(1);
     }while(0x87654321 != data);
 
@@ -207,7 +206,7 @@ UINT8 LAN9252_Init(void)
     do
     {
         data = PDIReadLAN9252DirectReg( LAN9252_HW_CFG);
-        LOG_I("read hw cfg ready reg (0x74), readData is: 0x%x\r\n", data);
+        printf("read hw cfg ready reg (0x74), readData is: 0x%x\r\n", data);
         HAL_Delay(1);
     }while(!(data & (1 << 27)));
 
@@ -215,7 +214,7 @@ UINT8 LAN9252_Init(void)
     {
         intMask = 0x93;
         HW_EscWriteWord(intMask, ESC_AL_EVENTMASK_OFFSET);
-       
+
         intMask = 0;
         HW_EscReadWord(intMask, ESC_AL_EVENTMASK_OFFSET);
     } while (intMask != 0x93);
@@ -225,7 +224,7 @@ UINT8 LAN9252_Init(void)
     //Wrte 0x54 - 0x00000101
     data = 0x00000101;
     PDIWriteLAN9252DirectReg(data, LAN9252_CSR_INT_CONF);
-    
+
     //Write in Interrupt Enable register -->
     //Write 0x5c - 0x00000001
     data = 0x00000001;
@@ -243,10 +242,10 @@ UINT8 LAN9252_Init(void)
     PDI_Timer_Interrupt();
     HW_ResetALEventMask(0);
     // PDI_IRQ_Interrupt();
-    
+
     /* enable all interrupts */
     // PDI_Enable_Global_interrupt();
-   
+
     return 0;
 
 }

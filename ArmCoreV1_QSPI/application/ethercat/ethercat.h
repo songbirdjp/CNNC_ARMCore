@@ -1,9 +1,8 @@
 #ifndef __ETHERCAT_H__
 #define __ETHERCAT_H__
 
-#include "stdint.h"
+#include <stdint.h>
 #include "cmsis_os2.h"
-#include <stdio.h>
 
 #ifdef __cpuluplus
 extern "C" {
@@ -15,6 +14,7 @@ int8_t ethercat_recv_data_update_with_block(uint32_t timeout);
 int8_t ethercat_send_data_update(uint16_t *buf, uint16_t len);
 uint16_t *ethercat_recv_data_get(uint16_t *buf, uint16_t len);
 uint16_t *ethercat_send_data_get(uint16_t *buf, uint16_t len);
+int8_t ethercat_hw_reinit(int8_t (*wdt_reset_fun)(void));
 
 #ifdef __cpuluplus
 }

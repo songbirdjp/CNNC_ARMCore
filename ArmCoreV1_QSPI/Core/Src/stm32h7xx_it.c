@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2024 STMicroelectronics.
+  * Copyright (c) 2026 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -61,6 +61,16 @@ extern DMA_HandleTypeDef hdma_adc3;
 extern SDRAM_HandleTypeDef hsdram1;
 extern MDMA_HandleTypeDef hmdma_mdma_channel3_sw_0;
 extern MDMA_HandleTypeDef hmdma_octospi1_fifo_th;
+extern RAMECC_HandleTypeDef hramecc1_m1;
+extern RAMECC_HandleTypeDef hramecc1_m2;
+extern RAMECC_HandleTypeDef hramecc1_m3;
+extern RAMECC_HandleTypeDef hramecc1_m4;
+extern RAMECC_HandleTypeDef hramecc1_m6;
+extern RAMECC_HandleTypeDef hramecc2_m1;
+extern RAMECC_HandleTypeDef hramecc2_m2;
+extern RAMECC_HandleTypeDef hramecc2_m3;
+extern RAMECC_HandleTypeDef hramecc3_m1;
+extern RAMECC_HandleTypeDef hramecc3_m2;
 extern DMA_HandleTypeDef hdma_spi1_rx;
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern DMA_HandleTypeDef hdma_spi2_rx;
@@ -69,14 +79,12 @@ extern DMA_HandleTypeDef hdma_spi3_rx;
 extern DMA_HandleTypeDef hdma_spi3_tx;
 extern DMA_HandleTypeDef hdma_spi6_rx;
 extern DMA_HandleTypeDef hdma_spi6_tx;
-extern SPI_HandleTypeDef hspi2;
-extern SPI_HandleTypeDef hspi3;
 extern DMA_HandleTypeDef hdma_tim7_up;
 extern TIM_HandleTypeDef htim2;
-extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim6;
-extern TIM_HandleTypeDef htim15;
+extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
+extern UART_HandleTypeDef huart1;
 extern WWDG_HandleTypeDef hwwdg1;
 /* USER CODE BEGIN EV */
 
@@ -223,7 +231,7 @@ void EXTI2_IRQHandler(void)
   /* USER CODE BEGIN EXTI2_IRQn 0 */
 
   /* USER CODE END EXTI2_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(LAN9252_SYNC1_Pin);
+  HAL_GPIO_EXTI_IRQHandler(LAN9252_SYNC0_Pin);
   /* USER CODE BEGIN EXTI2_IRQn 1 */
 
   /* USER CODE END EXTI2_IRQn 1 */
@@ -283,6 +291,20 @@ void DMA1_Stream1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
 
   /* USER CODE END DMA1_Stream1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA1 stream2 global interrupt.
+  */
+void DMA1_Stream2_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
+
+  /* USER CODE END DMA1_Stream2_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart1_rx);
+  /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream2_IRQn 1 */
 }
 
 /**
@@ -349,7 +371,6 @@ void EXTI9_5_IRQHandler(void)
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 
   /* USER CODE END EXTI9_5_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(nFaultY_Pin);
   HAL_GPIO_EXTI_IRQHandler(EncXZ_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
@@ -371,31 +392,17 @@ void TIM2_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles TIM3 global interrupt.
+  * @brief This function handles USART1 global interrupt.
   */
-void TIM3_IRQHandler(void)
+void USART1_IRQHandler(void)
 {
-  /* USER CODE BEGIN TIM3_IRQn 0 */
+  /* USER CODE BEGIN USART1_IRQn 0 */
 
-  /* USER CODE END TIM3_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim3);
-  /* USER CODE BEGIN TIM3_IRQn 1 */
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
 
-  /* USER CODE END TIM3_IRQn 1 */
-}
-
-/**
-  * @brief This function handles SPI2 global interrupt.
-  */
-void SPI2_IRQHandler(void)
-{
-  /* USER CODE BEGIN SPI2_IRQn 0 */
-
-  /* USER CODE END SPI2_IRQn 0 */
-  HAL_SPI_IRQHandler(&hspi2);
-  /* USER CODE BEGIN SPI2_IRQn 1 */
-
-  /* USER CODE END SPI2_IRQn 1 */
+  /* USER CODE END USART1_IRQn 1 */
 }
 
 /**
@@ -408,9 +415,8 @@ void EXTI15_10_IRQHandler(void)
   /* USER CODE END EXTI15_10_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(EncYZ_Pin);
   HAL_GPIO_EXTI_IRQHandler(YJAWLMT_Pin);
-  HAL_GPIO_EXTI_IRQHandler(LAN9252_SYNC0_Pin);
+  HAL_GPIO_EXTI_IRQHandler(LAN9252_SYNC1_Pin);
   HAL_GPIO_EXTI_IRQHandler(XJAWLMT_Pin);
-  HAL_GPIO_EXTI_IRQHandler(nFaultX_Pin);
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
 
   /* USER CODE END EXTI15_10_IRQn 1 */
@@ -445,20 +451,6 @@ void FMC_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles SPI3 global interrupt.
-  */
-void SPI3_IRQHandler(void)
-{
-  /* USER CODE BEGIN SPI3_IRQn 0 */
-
-  /* USER CODE END SPI3_IRQn 0 */
-  HAL_SPI_IRQHandler(&hspi3);
-  /* USER CODE BEGIN SPI3_IRQn 1 */
-
-  /* USER CODE END SPI3_IRQn 1 */
-}
-
-/**
   * @brief This function handles TIM6 global interrupt, DAC1_CH1 and DAC1_CH2 underrun error interrupts.
   */
 void TIM6_DAC_IRQHandler(void)
@@ -484,20 +476,6 @@ void DMA2_Stream0_IRQHandler(void)
   /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
 
   /* USER CODE END DMA2_Stream0_IRQn 1 */
-}
-
-/**
-  * @brief This function handles TIM15 global interrupt.
-  */
-void TIM15_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM15_IRQn 0 */
-
-  /* USER CODE END TIM15_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim15);
-  /* USER CODE BEGIN TIM15_IRQn 1 */
-
-  /* USER CODE END TIM15_IRQn 1 */
 }
 
 /**
@@ -569,6 +547,29 @@ void BDMA_Channel2_IRQHandler(void)
   /* USER CODE BEGIN BDMA_Channel2_IRQn 1 */
 
   /* USER CODE END BDMA_Channel2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles RAM ECC diagnostic global interrupt.
+  */
+void ECC_IRQHandler(void)
+{
+  /* USER CODE BEGIN ECC_IRQn 0 */
+
+  /* USER CODE END ECC_IRQn 0 */
+  HAL_RAMECC_IRQHandler(&hramecc1_m1);
+  HAL_RAMECC_IRQHandler(&hramecc1_m2);
+  HAL_RAMECC_IRQHandler(&hramecc1_m3);
+  HAL_RAMECC_IRQHandler(&hramecc1_m4);
+  HAL_RAMECC_IRQHandler(&hramecc1_m6);
+  HAL_RAMECC_IRQHandler(&hramecc2_m1);
+  HAL_RAMECC_IRQHandler(&hramecc2_m2);
+  HAL_RAMECC_IRQHandler(&hramecc2_m3);
+  HAL_RAMECC_IRQHandler(&hramecc3_m1);
+  HAL_RAMECC_IRQHandler(&hramecc3_m2);
+  /* USER CODE BEGIN ECC_IRQn 1 */
+
+  /* USER CODE END ECC_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

@@ -3,5 +3,6 @@
 
 #define GIT_BRANCH  "@GIT_BRANCH@"
 #define GIT_HASH    "@GIT_HASH@"
+#define GIT_TAG     "@GIT_TAG@"
 
 #endif

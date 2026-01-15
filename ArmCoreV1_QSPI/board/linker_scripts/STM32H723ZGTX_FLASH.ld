@@ -21,7 +21,7 @@
 *****************************************************************************
 ** @attention
 **
-** Copyright (c) 2024 STMicroelectronics.
+** Copyright (c) 2025 STMicroelectronics.
 ** All rights reserved.
 **
 ** This software is licensed under terms that can be found in the LICENSE file
@@ -50,6 +50,7 @@ MEMORY
   RAM_D2  (xrw)    : ORIGIN = 0x30000000,   LENGTH = 32K
   RAM_D3  (xrw)    : ORIGIN = 0x38000000,   LENGTH = 16K
   RAM_BKP  (rw)    : ORIGIN = 0x38800000,   LENGTH = 4K
+  EXT_SDRAM (xrw)  : ORIGIN = 0xC0000000,   LENGTH = 64M
 }
 
 /* Define output sections */
@@ -87,7 +88,7 @@ SECTIONS
     KEEP(*(.patch_functions_4))
     __patch_table_end = .;
   } >FLASH
-  
+
   /* The program code and other data goes into FLASH */
   .text :
   {
@@ -225,7 +226,32 @@ SECTIONS
     . = ALIGN(4);
     KEEP(*(.ram_d3))
   } >RAM_D3
-  
+
+  .ram_itcm (NOLOAD) :
+  {
+    . = ALIGN(4);
+    KEEP(*(.ram_itcm))
+  } >ITCMRAM
+
+  .ram_dtcm (NOLOAD) :
+  {
+    . = ALIGN(4);
+    KEEP(*(.ram_dtcm))
+  } >DTCMRAM
+
+  .sdram_ext (NOLOAD) :
+  {
+    . = ALIGN(4);
+    KEEP(*(.sdram_ext))
+  } >EXT_SDRAM
+
+  .sdram_ext_remain (NOLOAD) :
+  {
+    . = ORIGIN(EXT_SDRAM) + LENGTH(EXT_SDRAM) - 0x400000;
+    . = ALIGN(4);
+    KEEP(*(.sdram_ext_remain))
+  } >EXT_SDRAM
+
   /* Remove information from the standard libraries */
   /DISCARD/ :
   {

@@ -78,7 +78,7 @@ typedef struct
     uint32_t event_flag;
     osMutexId_t pdo_output_update_mutex;
     osMutexId_t pdo_input_update_mutex;
-    
+
     // void (*appl_input_update)(void);
     void (*appl_output_update)(uint16_t *pData);
 

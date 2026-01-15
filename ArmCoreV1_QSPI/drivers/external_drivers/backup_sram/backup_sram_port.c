@@ -94,7 +94,7 @@ int8_t backup_sram_read(uint32_t addr_offset, uint8_t *buf, uint16_t len)
     {
         printf("addr + len must less than 0x%x\r\n", BACKUP_SRAM_SIZE);
         return -1;
-    } 
+    }
 
     if (buf == NULL)
     {
@@ -232,7 +232,7 @@ void bkp_sram_log_test(void)
 
     struct backup_sram_log *bkp_sram_log = backup_sram_log_info_get();
     printf("addr_start:%x, line_num:%d, addr_offset:%x\r\n", bkp_sram_log->log_addr_start, bkp_sram_log->log_line_num, bkp_sram_log->log_addr_offset);
-    
+
     ret = backup_sram_log_info_set(8, 1);
     if (ret != 0)
     {

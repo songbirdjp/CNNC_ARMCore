@@ -129,7 +129,7 @@ int8_t gpio_common_init(struct drv_gpio *gpio_config)
     gpio_config->write = gpio_write;
     gpio_config->read = gpio_read;
     gpio_config->ioctl = gpio_ioctl;
-    
+
     return 0;
 }
 
