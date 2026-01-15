@@ -21,8 +21,6 @@ static __IO uint8_t* pSDRAMCAL;
 static uint16_t *feedback, feedback16Len;
 BEAM_DATA rtBeamData;
 REALTIME_FEEDBACK rtFeedback;
-uint16_t jawPlanPos[2] = {0, 0};
-uint16_t jawPlanMotionTime = 0;
 INTERLOCK_FEEDBACK interlockFeedback;
 SECOND_POS_FEEDBACK secondPosFeedback;
 static FRAME_HEAD frameHead;
@@ -465,18 +463,35 @@ uint8_t sendCPtoDevice(uint16_t beamIndex, uint16_t RIIndex, struct JawFlagType 
     for(uint8_t i = 0; i < sndCtrl.singleSize[24]; i++)  LOG_I("%x ",sndCtrl.cmdSendBuf[i]);
     LOG_I("\r\n");*/
 #else
-    memmove(send_buf, pBeamData, 166);
+memmove(send_buf, pBeamData, 166);
     pBeamData += 166;
 
+    // 1. 提取位置 (原逻辑)
     uint16_t pos[2];
     pos[X] = (pBeamData[1] << 8) + pBeamData[0];
     pos[Y] = (pBeamData[3] << 8) + pBeamData[2];
-    messageToJawTask(JawPos, PLAN_DATA, XY, pos);
     
+    // 2. 提取时间 (提前读取，不要等后面)
+    // 根据你原来的代码: jawPlanMotionTime = (pBeamData[4+17] << 8) + pBeamData[4+16];
+    // pBeamData 当前指向 JawPos，时间在 JawPos 之后的第 16 字节
+    // 跳过 4字节(JawPos) + 16字节(其他) = 偏移 20 字节处是 TimeLow
+    uint16_t motionTime = (pBeamData[21] << 8) + pBeamData[20]; 
+
+    // 3. 打包数据 (X位置, Y位置, 时间)
+    uint16_t msg_payload[3];
+    msg_payload[0] = pos[X];
+    msg_payload[1] = pos[Y];
+    msg_payload[2] = motionTime;
+
+    // 4. 发送给 Jaw 任务 (携带了时间!)
+    messageToJawTask(JawPos, PLAN_DATA, XY, msg_payload);
+    
+    // 5. 更新全局变量 (保持你原有的逻辑，防止其他地方用到)
     pBeamData += 4;//skip X/Y Jaw pos
     jawPlanPos[X] = pos[X];
     jawPlanPos[Y] = pos[Y];
-    jawPlanMotionTime = (pBeamData[17] << 8) + pBeamData[16];
+    jawPlanMotionTime = motionTime;
+
     memmove(&send_buf[166], pBeamData, 18);
   //  LOG_I("car pos %x %x\r\n", send_buf[164], send_buf[165]);
     make_cmd_to_fpga(CMD_TAR_SET, send_buf);

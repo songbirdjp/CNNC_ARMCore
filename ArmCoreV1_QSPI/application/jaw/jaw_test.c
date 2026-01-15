@@ -87,55 +87,117 @@ static float pid_increase_calculate(struct PID_IncTypeDef *pid, float setpoint, 
 static struct PID_IncTypeDef jaw_pid_inst = {0};
 static uint32_t position_code_tar = 0, position_time_ms = 0, position_code_prev = 0;
 static float velocity_code_tar = 0.0f, velocity_code_cur = 0.0f;
-
-static void jaw_pwm_position_ctrl_periodically(TIM_HandleTypeDef *htim)
+volatile float g_RI_End_Pos_X = 0.0f;    // 当前 RI 段的终点
+volatile float g_RI_End_Pos_Y = 0.0f;
+volatile float g_RI_Cur_Ref_X = 0.0f;    // 插补器当前的理论位置 ("兔子")
+volatile float g_RI_Cur_Ref_Y = 0.0f;
+volatile float g_RI_V_FF_X    = 0.0f;    // 计算出的前馈速度
+volatile float g_RI_V_FF_Y    = 0.0f;
+volatile uint8_t g_Is_Moving  = 0;       // 插补运行标志位
+// 速度滤波用的静态变量建议放在函数内部或此处
+static float g_last_vel_X = 0.0f;
+static float g_last_vel_Y = 0.0f;
+static float LowPassFilter(float new_val, float prev_val) 
 {
-    // 确保是控制回路定时器 (TIM4)
+    // 简单的 一阶滞后滤波
+    // 系数 0.3 表示新值占 30%，旧值占 70%。可根据噪声情况调整 (0.1~0.5)
+    return 0.3f * new_val + 0.7f * prev_val; 
+}
+
+
+// C. 核心逻辑：接收 RI 数据并启动插补 (供 jaw_control.c 调用)
+// ==========================================
+void Update_RI_Target(struct JawFlagType *recvMsg)
+{
+    float time_s;
+    
+    // 1. 更新终点坐标
+    g_RI_End_Pos_X = (float)recvMsg->cmdPos[X];
+    g_RI_End_Pos_Y = (float)recvMsg->cmdPos[Y];
+    
+    // 2. 初始化插补起点
+    // 如果之前是静止状态，说明是新的一段运动，以当前实际位置作为起点
+    // 如果已经在运动，则保持 g_RI_Cur_Ref 连续，不要突变
+    if (g_Is_Moving == 0) {
+        g_RI_Cur_Ref_X = (float)rtFeedback.jawRTPos[X];
+        g_RI_Cur_Ref_Y = (float)rtFeedback.jawRTPos[Y];
+        g_Is_Moving = 1; // 标记开始运动
+    }
+
+    // 3. 计算时间 (ms -> s)
+    if(recvMsg->cmdTime > 0) {
+        time_s = (float)recvMsg->cmdTime / 1000.0f;
+    } else {
+        time_s = 0.001f; // 防止除以0
+    }
+    
+    // 4. 计算前馈速度 V_FF = (终点 - 当前理论起点) / 时间
+    // 注意：这里用 g_RI_Cur_Ref 而不是实际位置，保证速度规划的平滑性
+    g_RI_V_FF_X = (g_RI_End_Pos_X - g_RI_Cur_Ref_X) / time_s;
+    g_RI_V_FF_Y = (g_RI_End_Pos_Y - g_RI_Cur_Ref_Y) / time_s;
+}
+
+
+// D. 定时器中断：1ms 双环控制 + 插补
+// ==========================================
+void jaw_pwm_position_ctrl_periodically(TIM_HandleTypeDef *htim)
+{
     if (htim->Instance == TIM4)
     {
-        static uint8_t inited = 0;
-        static float last_pos_X = 0.0f;
-        static float last_pos_Y = 0.0f;
-
+        // --- 1. 获取反馈与速度计算 ---
         getEncodeTotalValue(X);
         getEncodeTotalValue(Y);
+        
+        float pos_act_X = (float)rtFeedback.jawRTPos[X];
+        float pos_act_Y = (float)rtFeedback.jawRTPos[Y];
+        
+        // 计算 X 轴速度 (Count/s) 并滤波
+        float raw_vel_X = (float)jawControlByAxes[X].encoderDelta32 * 1000.0f; // encoderDelta32 是1ms内的增量
+        float vel_act_X = LowPassFilter(raw_vel_X, g_last_vel_X);
+        g_last_vel_X = vel_act_X;
 
-        float pos_cur_X = (float)rtFeedback.jawRTPos[X];
-        float pos_cur_Y = (float)rtFeedback.jawRTPos[Y];
+        // 计算 Y 轴速度 (Count/s) 并滤波
+        float raw_vel_Y = (float)jawControlByAxes[Y].encoderDelta32 * 1000.0f;
+        float vel_act_Y = LowPassFilter(raw_vel_Y, g_last_vel_Y);
+        g_last_vel_Y = vel_act_Y;
 
-        if (inited == 0)
+        // --- 2. 轨迹插补 (Trajectory Interpolation) ---
+        // 只有当需要运动时才更新“兔子”的位置
+        if (g_Is_Moving) 
         {
-            last_pos_X = pos_cur_X;
-            last_pos_Y = pos_cur_Y;
-            inited = 1;
-        }
-        
-        float vel_act_X = pos_cur_X - last_pos_X;
-        float vel_act_Y = pos_cur_Y - last_pos_Y;
-        
-        float v_ref_X = 0.0f;
-        float v_ref_Y = 0.0f;
-        if (jawPlanMotionTime != 0)
-        {
-            v_ref_X = (float)jawPlanPos[X] / (float)jawPlanMotionTime;
-            v_ref_Y = (float)jawPlanPos[Y] / (float)jawPlanMotionTime;
+            // X 轴插补
+            g_RI_Cur_Ref_X += g_RI_V_FF_X * 0.001f; // 理论位置 + V_ff * 1ms
+            
+            // Y 轴插补
+            g_RI_Cur_Ref_Y += g_RI_V_FF_Y * 0.001f;
+            
+            // (可选) 增加一个判断：如果插补位置超过了终点，就钳位到终点并停止插补
+            // 为了简单起见，这里先让它一直跑，直到下一条 RI 进来刷新
         }
 
-        // 2. 位置环 + 前馈：Vcmd = PosPID + Vref
-        float v_cmd_X = pid_increase_calculate(&hPID_X, g_target_pos_X, pos_cur_X) + v_ref_X;
-        float v_cmd_Y = pid_increase_calculate(&hPID_Y, g_target_pos_Y, pos_cur_Y) + v_ref_Y;
+        // --- 3. X 轴双环控制 (带前馈) ---
         
-        // 3. 速度环：PWM = VelPID(Vcmd - Vact)
-        float output_X = pid_increase_calculate(&hPID_Vel_X, v_cmd_X, vel_act_X);
-        float output_Y = pid_increase_calculate(&hPID_Vel_Y, v_cmd_Y, vel_act_Y);
-        
-        // 4. 执行电机驱动
-        // 你的 motorCtrlByPWM 已经包含了死区处理和正反转逻辑
-        motorCtrlByPWM((double)output_X, X);
-        motorCtrlByPWM((double)output_Y, Y);
+        // 位置环 (P控制): 追“插补点”，而不是追“终点”
+        float pos_err_X = g_RI_Cur_Ref_X - pos_act_X;
+        float v_comp_X  = hPID_X.Kp * pos_err_X; 
 
-        last_pos_X = pos_cur_X;
-        last_pos_Y = pos_cur_Y;
+        // 速度指令合成: 前馈 + 补偿
+        float v_cmd_X   = g_RI_V_FF_X + v_comp_X;
+
+        // 速度环 (PI控制): 执行最终速度
+        float pwm_X     = pid_increase_calculate(&hPID_Vel_X, v_cmd_X, vel_act_X);
+
+
+        // --- 4. Y 轴双环控制 (带前馈) ---
+        
+        float pos_err_Y = g_RI_Cur_Ref_Y - pos_act_Y;
+        float v_comp_Y  = hPID_Y.Kp * pos_err_Y; 
+        float v_cmd_Y   = g_RI_V_FF_Y + v_comp_Y;
+        float pwm_Y     = pid_increase_calculate(&hPID_Vel_Y, v_cmd_Y, vel_act_Y);
+
+        // --- 5. 硬件输出 ---
+        motorCtrlByPWM(pwm_X, X);
+        motorCtrlByPWM(pwm_Y, Y);
     }
 }
 

@@ -89,6 +89,7 @@ struct JawFlagType
     uint16_t JawLimit[2];
     uint16_t stateCmd[2];
     uint16_t cmdPos[2];
+    uint16_t cmdTime; // <--- 新增：用于存放 RI 的运动时间 (ms)
 };
 
 typedef struct

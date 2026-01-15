@@ -119,6 +119,7 @@ void messageToJawTask(struct JawFlagType source, uint16_t signalType, uint8_t ax
     switch(signalType)
     {
         case COMMAND:
+            // ... (原代码保持不变)
             if(axes == XY)
             {
                 rtFeedback.jawCurFsm = value[X];
@@ -127,14 +128,21 @@ void messageToJawTask(struct JawFlagType source, uint16_t signalType, uint8_t ax
             }
             else source.stateCmd[axes] = *value;
         break;
-        case PLAN_DATA:
+        
+        case PLAN_DATA: // <--- 修改这里
             if(axes == XY)
             {
-                source.cmdPos[X] = value[X];
-                source.cmdPos[Y] = value[Y];
+                source.cmdPos[X] = value[0]; // value[0] 是 X 位置
+                source.cmdPos[Y] = value[1]; // value[1] 是 Y 位置
+                source.cmdTime  = value[2];  // <--- 新增：value[2] 是 时间
             }
-            else source.cmdPos[axes] = *value;
+            else 
+            {
+                source.cmdPos[axes] = value[0];
+                source.cmdTime = value[1]; // 如果是单轴，value[1] 传时间
+            }
         break;
+        
         default: break;
     }  
     osMessageQueuePut(motor_signal_queueHandle, &source, 0, 0);
@@ -881,8 +889,8 @@ void JAWCtrlTask(void *argument)
     /* USER CODE BEGIN JAWCtrlTask */
     struct JawFlagType JawRecvCmd;
    
-    // memset(&JawRecvCmd, 0, sizeof(struct JawFlagType));
-    // osMessageQueuePut(motor_signal_queueHandle, &JawRecvCmd, 0, 0);
+    memset(&JawRecvCmd, 0, sizeof(struct JawFlagType));
+    osMessageQueuePut(motor_signal_queueHandle, &JawRecvCmd, 0, 0);
     jawDeviceInit();
     motorEnable(Y);
     /* Infinite loop */
@@ -892,14 +900,18 @@ void JAWCtrlTask(void *argument)
 
     for (;;)
     {
-        // osMessageQueueGet(motor_signal_queueHandle, &JawRecvCmd, 0, osWaitForever);
-        motorCtrlByPWM(-95, Y); // 正转
+        osMessageQueueGet(motor_signal_queueHandle, &JawRecvCmd, 0, osWaitForever);
+        if (JawRecvCmd.cmdTime > 0) 
+        {
+            Update_RI_Target(&JawRecvCmd);
+        }
+        motorCtrlByPWM(-15, Y); // 正转
         osDelay(500);
         
         motorCtrlByPWM(0.0, Y); // 停止
         osDelay(500);
 
-        motorCtrlByPWM(+95,Y); // 反转
+        motorCtrlByPWM(+15,Y); // 反转
         osDelay(500);
 
         motorCtrlByPWM(0.0,Y); // 停止
