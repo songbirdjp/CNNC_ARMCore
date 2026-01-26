@@ -1,0 +1,465 @@
+#include "fpga_rw.h"
+#include "stm32h7xx_hal.h"
+#include "fpga_port.h"
+#include "init_call.h"
+#include "spi.h"
+#include "ulog.h"
+
+//SEND_CONTROL sndCtrl;
+static uint8_t totalCmdNum;
+
+SEND_PARAM sendCmd[] = {
+        CMD_BANK_SET, 1,//0
+        CMD_TAR_MOD,1,//1
+        CMD_PWM_MOD,1,//2
+        CMD_SINGLE_BANK,1,//4
+        CMD_CHECK_PASS,1,//5
+        CMD_CTRL_VALID,12,//0x11
+        CMD_SCREEN_2ND,12,//0x12
+        CMD_INPLACE_STOP,12,//0x13
+        CMD_POS_MNI,14,//0x14
+        CMD_POS_ADJ,166,//0x15
+        CMD_OOT_TH,4,//0x16
+        CMD_WAIT_POS,4,//0x18
+        CMD_REF_OFFSET,166,//0x19
+        CMD_SEEK_STEP,2,//0x1a
+        CMD_VEL_SET,12,//0x1b
+        CMD_HOME_VEL_SET,4,//0x1c
+        CMD_PARK_POS,4,//0x1d
+        CMD_PID_LEAF,12,//0x20
+        CMD_PID_BOX,6,//0x21
+        CMD_PWM_LIMIT,4,//0x22
+        CMD_2ND_K,164,//0x24
+        CMD_2ND_B,164,//0x25
+        CMD_2ND_TH,2,//0x26
+        CMD_ADC_MNI,4,//0x27
+        CMD_2ND_OFFSET,1,//0x28
+        CMD_DEBUG_ENB,11,//0x30
+        CMD_DEBUG_REF,11,//0x31
+        CMD_DEBUG_PWM,2,//0x32
+        CMD_TAR_SET,174,//0x40
+        CMD_SPD_ANA,4,//0x41
+        CMD_MOV_TIM,2,
+        CMD_JAW_POS,4,//0x48
+        CMD_STA_REQ,1,//0x50
+        CMD_CFG_DONE,1//0x60
+};
+#if 0
+void makeSingleSendAry(uint8_t index, uint8_t * pData, uint8_t size, bool isFirstSegment, bool isCmd)
+{
+    if(size < 1)    return;
+
+    if(isFirstSegment)
+    {
+        memset(sndCtrl.cmdSendBuf,0,MAX_CMD_DATA_SIZE);
+        sndCtrl.cmdSendBuf[0] = TX_SYNC_BYTE_H;
+        sndCtrl.cmdSendBuf[1] = TX_SYNC_BYTE_L;
+        sndCtrl.cmdSendBuf[2] = 0;
+        sndCtrl.cmdSendBuf[3] = sendCmd[index].TxLen;
+        sndCtrl.cmdSendBuf[4] = sendCmd[index].cmd;
+        sndCtrl.cmdSendBuf[sndCtrl.singleSize[index] - 1] = sndCtrl.cmdSendBuf[2]
+                                                                   + sndCtrl.cmdSendBuf[3] + sndCtrl.cmdSendBuf[4];
+        sndCtrl.writeIndex[index] = 5;
+    }
+    else
+    {
+        if(sndCtrl.writeIndex[index] >= sndCtrl.singleSize[index])
+        {
+            LOG_E("Error data fill in: send buf %d is full!\r\n", index);
+            return;
+        }
+    }
+
+    for(uint8_t i = 0; i < size; i+=2)
+    {
+        if(pData == NULL){
+            sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i] = 0;
+            sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i + 1] = 0;
+          //  LOG_I("fill 0!\r\n");
+        }
+        else if(size == 1){
+            sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i] = pData[i];
+            sndCtrl.cmdSendBuf[sndCtrl.singleSize[index] - 1] += pData[i];//checksum
+           // LOG_I("size = 1!\r\n");
+        }
+        else{
+            sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i] = pData[i+1];
+            sndCtrl.cmdSendBuf[sndCtrl.writeIndex[index] + i + 1] = pData[i];
+            sndCtrl.cmdSendBuf[sndCtrl.singleSize[index] - 1] += (pData[i] + pData[i+1]);//checksum
+         //   LOG_I("size > 1!\r\n");
+        }
+    }
+    sndCtrl.writeIndex[index] += size;//size;
+
+   // for(uint16_t j=0; j < sndCtrl.singleSize[index]; j++) LOG_I("0x%x ", sndCtrl.cmdSendBuf[j]);
+   // LOG_I("\r\n");
+    if(isCmd) return;
+    if(sndCtrl.writeIndex[index] >= (sndCtrl.singleSize[index] - 1))
+    {
+        memcpy(sndCtrl.pCrt, sndCtrl.cmdSendBuf, sndCtrl.singleSize[index]);
+        sndCtrl.pCrt += sndCtrl.singleSize[index];
+      /*  if(index == 24){
+            sndCtrl.writeIndex[index] = 5;  //prepare for rt position send to FPGA
+            sndCtrl.cmdSendBuf[sndCtrl.singleSize[index] - 1] = sndCtrl.cmdSendBuf[2]
+                                                                + sndCtrl.cmdSendBuf[3] + sndCtrl.cmdSendBuf[4];
+        }*/
+       // else memset(sndCtrl.cmdSendBuf,0,sndCtrl.singleSize[index]);
+    }
+}
+
+void makeParamSendAry(uint8_t * pData)
+{
+    sndCtrl.pCrt = sndCtrl.paramSendBuf;
+
+    makeSingleSendAry(0, &pData[6], sendCmd[0].TxLen,1,0);//0
+    makeSingleSendAry(1, &pData[58], sendCmd[1].TxLen,1,0);//1
+    makeSingleSendAry(8, &pData[34], sendCmd[8].TxLen,1,0);//0x14
+    makeSingleSendAry(11, &pData[54], sendCmd[11].TxLen,1,0);//0x18
+    makeSingleSendAry(12, &pData[418], 164,1,0);//0x19
+    makeSingleSendAry(12, &pData[52], 2,0,0);//0x19
+    makeSingleSendAry(14, &pData[8], sendCmd[14].TxLen,1,0);//0x20
+    makeSingleSendAry(17, &pData[90],sendCmd[17].TxLen,1,0);//0x24
+    makeSingleSendAry(18, &pData[254], sendCmd[18].TxLen,1,0);//0x25
+    makeSingleSendAry(19, &pData[30], sendCmd[19].TxLen,1,0);//0x26
+    makeSingleSendAry(20, &pData[60], sendCmd[20].TxLen,1,0);//0x27
+    uint16_t initPos[82];
+    for(uint8_t i =0; i < 82; i++)  initPos[i] = 3250;
+    makeSingleSendAry(24, (uint8_t*)initPos, 164,1,0);//0x40
+    makeSingleSendAry(24, &pData[56], 2,0,0);//0x40
+  //  for(uint8_t i = 0; i < 2; i++)  LOG_I("0x%x ", pData[56+i]);
+    initPos[0] = initPos[2] = 35100;
+    initPos[1] = initPos[3] = 5687;
+    makeSingleSendAry(24, (uint8_t*)initPos, 8,0,0);//0x40
+}
+
+void dataOut_CS_Select(void)
+{
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+}
+
+void dataOut_CS_Deselect(void)
+{
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_SET);
+}
+
+void FPGA_WriteByteArray(uint8_t *pTxData, uint16_t size)
+{
+   // LOG_I("write param!!!");
+    if(DMATransmitting)  return;
+
+    dataOut_CS_Select();// cs high in interrupt callback
+    DMATransmitting = 1;
+    // HAL_SPI_Transmit_DMA(&hspi3,pTxData,size);
+
+    //HAL_SPI_Transmit(&hspi3,pTxData,size,100);
+  //  dataOut_CS_Deselect();
+}
+
+void FPGA_ReadByteArray(uint8_t *pRxData, uint16_t size)
+{
+   // uint8_t pTxData[size];
+   // memset(pTxData, 0, size);
+
+ // HAL_SPI_Receive_DMA(&hspi2,  pRxData , size);
+  //  LOG_I("read: ");
+  //  for(uint16_t i = 0; i < size; i++)  LOG_I("0x%x ",pRxData[i]);
+  //  LOG_I("\r\n");
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    // if(hspi == &hspi3)
+    {
+       // LOG_I("send irq!!!\r\n");
+        dataOut_CS_Deselect();// set cs here
+        DMATransmitting = 0;
+    }
+}
+
+void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+  //   if(hspi == &hspi2)
+    {
+        // ringb_push(&ringbufCtrl, dmaBuf);
+        // FPGA_ReadByteArray(&ringbufCtrl.array[ringbufCtrl.tail*RECV_BUF_LEN], RECV_BUF_LEN);
+       // ringbufCtrl.tail = (ringbufCtrl.tail + 1) % ringbufCtrl.size ;
+      //  DMACnt++;
+       // FPGA_ReadByteArray(recvBuf, RECV_BUF_LEN);
+      //  DMAReceived = 1;
+         //  LOG_I("0x%x 0x%x", dmaBuf[0], dmaBuf[1]);
+       // for(uint16_t i = 0; i < 8; i++)   LOG_I("0x%x ",recvBufCpy[4+MAX_RECV_PACK_SIZE*i]);
+     //   LOG_I("\r\n");
+    }
+}
+#endif
+
+/************************************************************************************************************/
+static uint8_t recv_buf[RECV_BUF_LEN];
+
+static int8_t recv_from_fpga_init(osMessageQueueId_t queue)
+{
+    int8_t ret = 0;
+
+    if (queue == NULL)
+    {
+        LOG_E("queue is null\r\n");
+        return -1;
+    }
+
+    ret = device_recv_from_fpga_init(DEVICE_RECV_FROM_FPGA_NAME_DEFAULT);
+    if (ret != 0)
+    {
+        LOG_E("device %s init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        return -2;
+
+    }
+
+    ret = device_recv_from_fpga_buffer_init(recv_buf, sizeof(recv_buf));
+    if (ret != 0)
+    {
+        LOG_E("device %s buffer init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        return -3;
+    }
+
+    ret = device_recv_from_fpga_queue_init(queue);
+    if (ret != 0)
+    {
+        LOG_E("device %s queue init err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        return -4;
+    }
+
+    // ret = device_recv_from_fpga_open();
+    // if (ret != 0)
+    // {
+    //     LOG_E("device %s open err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+    //     return -5;
+    // }
+
+    return ret;
+
+}
+
+static int8_t send_to_fpga_init(void)
+{
+    int8_t ret = 0;
+
+    ret = device_send_to_fpga_init(DEVICE_SEND_TO_FPGA_NAME_DEFAULT);
+    if (ret != 0)
+    {
+        LOG_E("device %s init err:%d\r\n", DEVICE_SEND_TO_FPGA_NAME_DEFAULT, ret);
+        return -1;
+    }
+
+    device_send_to_fpga_open();
+    totalCmdNum = sizeof(sendCmd)/sizeof(SEND_PARAM);
+
+    return 0;
+}
+
+static int8_t send_to_fpga_write(uint8_t *buf, uint16_t size, uint32_t timeout)
+{
+    return device_send_to_fpga_write(buf, size, timeout);
+}
+
+/*
+ * thread init
+*/
+static osMessageQueueId_t recv_from_fpga_queueHandle = NULL;
+static osMessageQueueId_t send_to_fpga_queueHandle = NULL;
+
+static void fpga_communication_entry(void *argument)
+{
+  /* USER CODE BEGIN fpga_communication_entry */
+  /* Infinite loop */
+  int8_t ret = 0;
+  osStatus_t stat = osOK;
+  struct send_to_fpga_msg recv_buf = {0};
+
+  send_to_fpga_init();
+  recv_from_fpga_init(recv_from_fpga_queueHandle);
+  
+  for(;;)
+  {
+    stat = osMessageQueueGet(send_to_fpga_queueHandle, &recv_buf, 0, osWaitForever);
+    if (stat != osOK)
+    {
+        LOG_E("get queue err:%d\r\n", stat);
+    }
+  
+    ret = send_to_fpga_write(recv_buf.buf, recv_buf.len, 1000);
+    if (ret != 0)
+    {
+        LOG_E("send data to fpga err:%d\r\n", ret);
+    }
+
+    // LOG_I("recv_buf.len:%d\r\n", recv_buf.len);
+    // LOG_I("%x %x %x %x %x %x\r\n", recv_buf.buf[0], recv_buf.buf[1], recv_buf.buf[2], recv_buf.buf[3], recv_buf.buf[4], recv_buf.buf[5]);
+  }
+  /* USER CODE END fpga_communication_entry */
+}
+
+static int8_t fpga_thread_init(void)
+{
+    osThreadAttr_t fpga_communication_thread_attributes = {
+    .name = "fpga_communication_thread",
+    .stack_size = 512 * 4,
+    .priority = (osPriority_t) osPriorityNormal7,
+    };
+
+    send_to_fpga_queueHandle = osMessageQueueNew (10, sizeof(struct send_to_fpga_msg), NULL);
+    if (send_to_fpga_queueHandle == NULL)
+    {
+        LOG_E("queue send to fpga create failed\r\n");
+        return -1;
+    }
+
+    recv_from_fpga_queueHandle = osMessageQueueNew (3, RECV_BUF_LEN, NULL);
+    if (recv_from_fpga_queueHandle == NULL)
+    {
+        LOG_E("queue recv from fpga create failed\r\n");
+        return -1;
+    }
+
+    osThreadId_t fpga_communication_threadHandle = osThreadNew(fpga_communication_entry, NULL, &fpga_communication_thread_attributes);
+    if (fpga_communication_threadHandle == NULL)
+    {
+        LOG_E("thread fpga communication create failed\r\n");
+        return -1;
+    }
+
+    return 0;
+}
+INIT_APP_EXPORT(fpga_thread_init);
+
+int8_t recv_from_fpga_data_start(void)
+{
+    return device_recv_from_fpga_open();
+}
+
+int8_t send_to_fpga_data_start(void)
+{
+    return device_send_to_fpga_open();
+}
+
+osStatus_t recv_from_fpga_data_get(uint8_t *buf)
+{
+    return osMessageQueueGet(recv_from_fpga_queueHandle, buf, 0, 0);
+}
+
+void make_cmd_to_fpga(uint8_t cmd, uint8_t *pData)
+{
+    osStatus_t stat;
+    struct send_to_fpga_msg send_buf = {0};
+    uint8_t index = 0xff, size;
+    uint8_t singleSize;
+
+    for(uint8_t i = 0; i < totalCmdNum; i++)
+    {
+        if(cmd == sendCmd[i].cmd){
+            index = i; 
+            break;
+        }  
+    }
+    if(index == 0xff)   return;
+    size = sendCmd[index].TxLen;
+    singleSize = size + 6;//head + checksum = 6
+
+    send_buf.len = 5;
+    send_buf.buf[0] = TX_SYNC_BYTE_H;
+    send_buf.buf[1] = TX_SYNC_BYTE_L;
+    send_buf.buf[2] = 0;
+    send_buf.buf[3] = size;
+    send_buf.buf[4] = cmd;
+
+    for(uint8_t i = 0; i < size; i+=2)
+    {
+        if(pData == NULL)
+        {
+            send_buf.buf[send_buf.len + i] = 0;
+            send_buf.buf[send_buf.len + i + 1] = 0;
+        }
+        else if(size == 1)
+        {
+            send_buf.buf[send_buf.len + i] = pData[i];
+        }
+        else
+        {
+            send_buf.buf[send_buf.len + i] = pData[i+1];
+            send_buf.buf[send_buf.len + i + 1] = pData[i];
+        }
+    }
+    send_buf.len += size;//size;
+    
+
+    for (uint8_t i = 2; i < send_buf.len; i++)
+    {
+         send_buf.buf[singleSize - 1] += send_buf.buf[i];
+    }
+
+    send_buf.len = singleSize;
+    stat = osMessageQueuePut(send_to_fpga_queueHandle, &send_buf, 0, 1000);
+    if (stat != osOK)
+    {
+        LOG_E("spi3 queue put err:%d\r\n", stat);
+    }
+}
+
+void make_para_for_fpga(uint8_t *pData)
+{
+    uint8_t buf[166] = {0},i;
+    uint8_t configureDone = 0;
+
+    make_cmd_to_fpga(CMD_BANK_SET, &pData[6]);//0
+    make_cmd_to_fpga(CMD_TAR_MOD, &pData[80]);//1
+    make_cmd_to_fpga(CMD_CTRL_VALID, &pData[660]);//0x11
+   // for(i = 0; i < 12; i++) LOG_I("%x ",pData[660+i]);
+  //  LOG_I("\r\n");
+    make_cmd_to_fpga(CMD_SCREEN_2ND, &pData[672]);//0x12
+  //  for(i = 0; i < 12; i++) LOG_I("%x ",pData[672+i]);
+   // LOG_I("\r\n");
+    make_cmd_to_fpga(CMD_INPLACE_STOP, &pData[684]);//0x13
+  //  for(i = 0; i < 12; i++) LOG_I("%x ",pData[684+i]);
+   // LOG_I("\r\n");
+    make_cmd_to_fpga(CMD_POS_MNI, &pData[40]);//0x14
+    make_cmd_to_fpga(CMD_WAIT_POS, &pData[56]);//0x18
+    memcpy(buf, &pData[496], 164);
+    memcpy(&buf[164], &pData[54], 2);
+    make_cmd_to_fpga(CMD_REF_OFFSET, buf);//0x19
+    make_cmd_to_fpga(CMD_VEL_SET, &pData[60]);//0x1b
+    make_cmd_to_fpga(CMD_HOME_VEL_SET, &pData[72]);//0x1c
+    make_cmd_to_fpga(CMD_PARK_POS, &pData[76]);//0x1d
+
+    make_cmd_to_fpga(CMD_PID_LEAF, &pData[8]);//0x20
+    make_cmd_to_fpga(CMD_PID_BOX, &pData[20]);//0x21
+    make_cmd_to_fpga(CMD_2ND_K, &pData[166]);//0x24
+    make_cmd_to_fpga(CMD_2ND_B, &pData[330]);//0x25
+    make_cmd_to_fpga(CMD_2ND_TH, &pData[36]);//0x26
+    make_cmd_to_fpga(CMD_ADC_MNI, &pData[82]);//0x27
+    make_cmd_to_fpga(CMD_2ND_OFFSET, &pData[494]);//0x28
+    make_cmd_to_fpga(CMD_CFG_DONE, &configureDone);//0x60
+#if 0
+    uint16_t initPos[87];
+    for(uint8_t i = 0; i < 82; i++)
+    {
+        initPos[i] = 3250;
+    }
+    
+    initPos[82] = (pData[57] << 8) + pData[56];
+    initPos[83] = initPos[85] = 35100;
+    initPos[84] = initPos[86] = 5687;
+
+    make_cmd_to_fpga(24, (uint8_t*)initPos);//0x40
+#endif
+}
+
+int8_t recv_from_fpga_callback_register(int8_t (*cb)(void *arg))
+{
+    int8_t ret = device_recv_from_fpga_callback_register(cb);
+    if (ret != 0)
+    {
+        LOG_E("device %s callback register err:%d\r\n", DEVICE_RECV_FROM_FPGA_NAME_DEFAULT, ret);
+        return -1;
+    }
+
+    return 0;
+}

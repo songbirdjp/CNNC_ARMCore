@@ -1,0 +1,356 @@
+#include "w5500_port.h"
+#include "socket.h"
+#include "tcp_tasks.h"
+#include "stdbool.h"
+#include "init_call.h"
+#include "main.h"
+#include "websocket.h"
+#include "gpio_port.h"
+#include "ulog.h"
+
+#define SOCK_TCPS   0
+
+#ifndef IS_TCP_SERVER
+static uint8_t remote_ip[4] = {192, 168, 10, 110};
+static uint16_t remote_port = 8000;
+#endif
+
+static wiz_NetInfo local_net_info = {
+#ifdef BANKA
+        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x72},
+        .ip =  {192, 168, 10, 71},
+#else
+        .mac = {0x78, 0x83, 0x68, 0x88, 0x56, 0x71},
+        .ip =  {192, 168, 10, 72},
+#endif
+        .sn =  {255, 255, 255, 0},
+        .gw =  {192, 168, 0, 1},
+        .dns = {180, 76, 76, 76},
+        .dhcp = NETINFO_DHCP
+};
+
+static wiz_NetInfo *local_netinfo_get(void)
+{
+    return &local_net_info;
+}
+
+#ifndef IS_TCP_SERVER
+uint8_t *remote_ip_get(void)
+{
+    return remote_ip;
+}
+
+uint16_t remote_port_get(void)
+{
+    return remote_port;
+}
+#endif
+static TCP_DATA_t recvInfo = {0};
+static volatile uint8_t tcp_link_state = false;
+uint8_t tcp_link_status_get(void)
+{
+    return tcp_link_state;
+}
+
+// uint8_t socket_status_reg_get(uint8_t sn)//return 1：connect  0：disconnect
+// {
+//     uint8_t reg_sn_ir = getSn_IR(sn), ret = 1;
+
+//     if((reg_sn_ir & Sn_IR_DISCON) || (reg_sn_ir & Sn_IR_TIMEOUT))   ret = 0;
+
+//     return ret;
+// }
+
+static void (*fun_ptr)(uint8_t sn);
+
+void tcp_establish_cb(uint8_t sn)
+{
+    if (fun_ptr != NULL)
+    {
+        fun_ptr(sn);
+    }
+}
+
+int8_t tcp_establish_cb_register(void (*fun_cb)(uint8_t sn))
+{
+    fun_ptr = fun_cb;
+
+    return 0;
+}
+
+int8_t tcp_recv_data_callback_register(void (*fun_cb)(void *arg))
+{
+    return device_w5500_rx_callback_register(fun_cb);
+}
+
+#ifdef IS_TCP_SERVER
+static int8_t do_tcp_server_send(uint8_t sn)
+{
+    int8_t ret = 0;
+
+    switch (getSn_SR(sn))
+    {
+    case SOCK_INIT:
+    //    LOG_I("SOCK_INIT\r\n");
+        ret = listen(sn);
+        break;
+    case SOCK_ESTABLISHED:
+    //    LOG_I("SOCK_ESTABLISHED\r\n");
+        tcp_establish_cb(sn); // period feedback here
+        break;
+    case SOCK_CLOSE_WAIT:
+        osDelay(500);
+        ret = disconnect(sn);
+        break;
+    case SOCK_CLOSED:
+    //    LOG_I("SOCK_CLOSED\r\n");
+        clearClientInfo(sn);
+        ret = socket(sn, Sn_MR_TCP, 80, 0);
+        break;
+    default:    break;
+    }
+
+    return ret;
+}
+#else 
+static int8_t do_tcp_client(uint8_t sn)
+{
+    int8_t ret = 0;
+
+    switch (getSn_SR(sn))                  /*获取socket的状态*/
+    {
+        case SOCK_CLOSED:/*socket处于关闭状态*/
+            ret = socket(sn, Sn_MR_TCP, 8123, Sn_MR_ND);
+            if (ret < 0)
+            {
+                LOG_E("tcp socket err:%d\r\n", ret);
+            }
+            break;
+            
+        case SOCK_INIT:                      /*socket处于初始化状态*/
+            ret = connect(sn, remote_ip, remote_port);/*socket连接服务器*/
+            if (ret != SOCK_OK)
+            {
+                LOG_E("tcp connect err:%d\r\n", ret);
+            }
+            break;
+
+        case SOCK_ESTABLISHED:               /*socket处于连接建立状态*/
+            tcp_establish_cb(sn);
+            break;
+
+        case SOCK_CLOSE_WAIT:        /*socket处于等待关闭状态*/
+            close(sn);
+            LOG_I("SOCK_CLOSE_WAIT\r\n");
+            break;
+    }
+
+    return ret;
+}
+#endif
+
+static uint8_t socket_num_get(void)
+{
+    return SOCK_TCPS;
+}
+
+static int8_t tcp_init(osMessageQueueId_t queue)
+{
+    int8_t ret = 0;
+
+    ret = device_w5500_init(local_netinfo_get(), DEVICE_NAME_DEFAULT);
+    if (ret != 0)
+    {
+        LOG_E("device w5500 init err\r\n");
+        return ret;
+    }
+
+    device_w5500_interrupt_init(MAX_CLIENT_NUM);
+   // W5500_interrupt_status_print(0);
+
+    device_w5500_rx_buffer_init(recvInfo.gDATABUF, sizeof(recvInfo.gDATABUF));
+
+    device_w5500_rx_queue_init(queue);
+#ifdef IS_TCP_SERVER
+    tcp_server_init();
+#endif
+    return 0;
+}
+
+static uint8_t tcp_link_detect(void)
+{
+    uint8_t ret = device_w5500_phy_link_status_get();
+    tcp_link_state =  (ret == PHY_LINK_OFF) ? false : true;
+    return tcp_link_state;
+}
+
+static int8_t tcp_link_state_recover(void)
+{
+    return device_w5500_link_state_recover(socket_num_get());
+}
+
+static int8_t tcp_data_recv_with_block(void)
+{
+    return device_w5500_data_recv_with_block();
+}
+
+/*
+ * tcp init
+*/
+
+static osMessageQueueId_t tcp_rx_queueHandle = NULL;
+static osMutexId_t tcp_access_mutexHandle = NULL;
+
+static void TCPSendTask(void *argument)
+{
+  /* USER CODE BEGIN TCPClientTask */
+
+    int8_t ret = 0;
+
+    ret = tcp_init(tcp_rx_queueHandle);
+    if (ret != 0)
+    {
+        LOG_E("tcp init err\r\n");
+        return;
+    }
+    /* Infinite loop */
+    for(;;)
+    {
+        osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
+        while(tcp_link_detect() == false)
+        {
+            // LOG_E("tcp link off\r\n");
+
+            tcp_link_state_recover();
+
+            osDelay(100);
+        }
+ 
+    #ifdef IS_TCP_SERVER
+        for(uint8_t i = 0; i < MAX_CLIENT_NUM; i++)
+        {
+            ret = do_tcp_server_send(i);
+            if (ret != 0)
+            {
+                LOG_E("do_tcp_client err:%d sn = %d\r\n", ret, i);
+            }
+        }
+    #else
+        ret = do_tcp_client(socket_num_get());
+    #endif
+        osMutexRelease(tcp_access_mutexHandle);
+
+        osDelay(1);
+    }
+  /* USER CODE END TCPClientTask */
+}
+
+static void tcp_recv_entry(void *argument)
+{
+  /* USER CODE BEGIN tcp_client_entry */
+  /* Infinite loop */
+  int32_t ret = 0;
+
+  for(;;)
+  {
+        while(tcp_link_status_get() == false)
+        {
+            osDelay(100);
+        }
+
+        ret = tcp_data_recv_with_block();
+        if (ret < 0)
+        {
+            LOG_E("tcp recv data err:%d\r\n", ret);
+        }
+
+        // osDelay(1);
+
+        // if (gpio_common_get()->read("GPIOD_4") == 1)
+        // {
+        //     continue;
+        // }
+
+        osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
+
+        ret = device_w5500_irq_process();
+        if (ret < 0)
+        {
+            LOG_E("irq process err:%d\r\n", ret);
+        }
+
+        osMutexRelease(tcp_access_mutexHandle);
+  }
+  /* USER CODE END tcp_client_entry */
+}
+
+static int8_t tcp_thread_init(void)
+{
+    osThreadAttr_t tcp_irq_thread_attributes = {
+    .name = "tcp_irq_thread",
+    .stack_size = 2048 * 4,
+    .priority = (osPriority_t) osPriorityAboveNormal,
+    };
+     osThreadAttr_t tcp_send_attributes = {
+    .name = "tcp_send_thread",
+    .stack_size = 2048 * 4,
+    .priority = (osPriority_t) osPriorityNormal,
+    };
+    osMutexAttr_t tcp_access_mutex_attributes = {
+    .name = "tcp_access_mutex",
+    .attr_bits = osMutexRecursive | osMutexPrioInherit
+    };
+    osMessageQueueAttr_t tcp_rx_queue_attributes = {
+    .name = "tcp_rx_queue"
+    };
+
+    tcp_access_mutexHandle = osMutexNew(&tcp_access_mutex_attributes);
+    if (tcp_access_mutexHandle == NULL)
+    {
+        LOG_E("mutex tcp access create failed\r\n");
+        return -1;
+    }
+
+    tcp_rx_queueHandle = osMessageQueueNew (3, sizeof(TCP_DATA_t), &tcp_rx_queue_attributes);
+    if (tcp_rx_queueHandle == NULL)
+    {
+        LOG_E("queue tcp rx create failed\r\n");
+        return -1;
+    }
+
+    osThreadId_t tcp_irq_threadHandle = osThreadNew(tcp_recv_entry, NULL, &tcp_irq_thread_attributes);
+    if (tcp_irq_threadHandle == NULL)
+    {
+        LOG_E("thread tcp irq create failed\r\n");
+        return -1;
+    }
+    osThreadId_t tcp_sendHandle = osThreadNew(TCPSendTask, NULL, &tcp_send_attributes);
+    if (tcp_sendHandle == NULL)
+    {
+        LOG_E("thread tcp create failed\r\n");
+        return -1;
+    }
+
+    return 0;
+}
+INIT_APP_EXPORT(tcp_thread_init);
+
+osStatus_t tcp_client_data_recv_get_with_block(TCP_DATA_t *buf, uint32_t timeout)
+{
+    return osMessageQueueGet(tcp_rx_queueHandle, buf, 0, timeout);
+}
+
+int32_t tcp_client_data_send(uint8_t s, uint8_t *buf, uint16_t len)
+{
+    osMutexAcquire(tcp_access_mutexHandle, osWaitForever);
+
+    int32_t ret = send(s, buf, len);
+    if (ret <= SOCK_BUSY)
+    {
+        LOG_E("tcp send err:%d\r\n", ret);
+    }
+
+    osMutexRelease(tcp_access_mutexHandle);
+
+    return ret;
+}
